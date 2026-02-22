@@ -30,31 +30,20 @@ def ensure_workspace(chat_id: int) -> Path:
           MEMORY.md
     """
     workspace = WORKSPACES_DIR / f"c{chat_id}"
-    if workspace.exists():
-        _sync_workspace_links(workspace)
-        return workspace
+    is_new = not workspace.exists()
 
     workspace.mkdir(parents=True, exist_ok=True)
     base = Path(WORKING_DIR)
 
-    # Symlink shared files
-    for fname in _SYMLINKED_FILES:
-        src = base / fname
-        dst = workspace / fname
-        if src.exists() and not dst.exists():
-            dst.symlink_to(os.path.relpath(src, workspace))
+    _sync_workspace_links(workspace)
 
-    # Symlink shared directories
-    for dname in _SYMLINKED_DIRS:
-        src = base / dname
-        dst = workspace / dname
-        if src.exists() and not dst.exists():
-            dst.symlink_to(os.path.relpath(src, workspace))
-
-    # Always copy BOOTSTRAP.md fresh so new sessions run the first-run ritual
-    bootstrap = base / _BOOTSTRAP_FILE
-    if bootstrap.exists():
-        shutil.copy2(bootstrap, workspace / _BOOTSTRAP_FILE)
+    # Copy BOOTSTRAP.md if the workspace hasn't been initialized yet
+    # (directory may already exist because the logger creates it early)
+    _initialized = (workspace / "SOUL.md").exists() or (workspace / "IDENTITY.md").exists()
+    if not _initialized:
+        bootstrap = base / _BOOTSTRAP_FILE
+        if bootstrap.exists():
+            shutil.copy2(bootstrap, workspace / _BOOTSTRAP_FILE)
 
     # Create isolated memory directory
     mem_dir = workspace / "memory"
@@ -64,7 +53,8 @@ def ensure_workspace(chat_id: int) -> Path:
     if mem_template.exists() and not mem_dst.exists():
         shutil.copy2(mem_template, mem_dst)
 
-    logger.info("Created workspace for chat %d at %s", chat_id, workspace)
+    if is_new:
+        logger.info("Created workspace for chat %d at %s", chat_id, workspace)
     return workspace
 
 
