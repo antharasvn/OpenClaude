@@ -154,4 +154,5 @@ def build_sdk_options(is_admin: bool, cwd: str, thread_id: int,
         env=env,
         include_partial_messages=streaming,
         can_use_tool=make_permission_handler(is_admin, cwd),
+        add_dirs=["/var/cache/apt", "/var/lib/apt", "/var/lib/dpkg", "/etc/apt"],
     )
