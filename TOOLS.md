@@ -60,6 +60,15 @@ You have access to these tools when invoked via the Telegram bot:
   ```
 - **Credentials:** Read from the user's workspace `.env` file (`VPS_HOST`, `VPS_PORT`, `VPS_USER`, `VPS_PASSWORD`). Never hardcode credentials.
 
+### moodle
+- **Location:** `skills/moodle/run.sh`
+- **Purpose:** Log into Innopolis University Moodle via SSO and fetch upcoming deadlines
+- **Usage:** `./skills/moodle/run.sh [deadlines|courses]`
+- **Commands:**
+  - `deadlines` (default) — upcoming assignment deadlines (next 90 days)
+  - `courses` — list current semester [S26] courses
+- **Credentials:** Read from workspace `.env` (`MOODLE_USERNAME`, `MOODLE_PASSWORD`)
+
 ### daily-brief (planned)
 - **Location:** `skills/daily-brief/`
 - **Purpose:** Generate and deliver daily briefings
