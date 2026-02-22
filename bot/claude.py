@@ -69,7 +69,8 @@ def finished_line(active_line: str) -> str:
 
 async def stream_claude(message: str, chat_id: int, thread_id: int, user_id: int,
                         working_dir: str | None = None, verbose: bool = False,
-                        stop_event: asyncio.Event | None = None):
+                        stop_event: asyncio.Event | None = None,
+                        real_user_id: int | None = None):
     """Stream Claude output and yield events as they arrive.
 
     Yields dicts with keys:
@@ -83,12 +84,14 @@ async def stream_claude(message: str, chat_id: int, thread_id: int, user_id: int
     if HAS_SDK:
         async for event in _stream_claude_sdk(message, chat_id, thread_id, user_id,
                                                working_dir=working_dir, verbose=verbose,
-                                               stop_event=stop_event):
+                                               stop_event=stop_event,
+                                               real_user_id=real_user_id):
             yield event
     else:
         async for event in _stream_claude_subprocess(message, chat_id, thread_id, user_id,
                                                       working_dir=working_dir, verbose=verbose,
-                                                      stop_event=stop_event):
+                                                      stop_event=stop_event,
+                                                      real_user_id=real_user_id):
             yield event
 
 
@@ -121,7 +124,8 @@ def _build_preamble(is_admin: bool, sid: str | None) -> str | None:
 
 async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id: int,
                               working_dir: str | None = None, verbose: bool = False,
-                              stop_event: asyncio.Event | None = None):
+                              stop_event: asyncio.Event | None = None,
+                              real_user_id: int | None = None):
     """SDK-based streaming."""
     cwd = working_dir or WORKING_DIR
     sid = get_session_id(chat_id, thread_id, user_id)
@@ -131,7 +135,7 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
     add_active_stream(chat_id, thread_id, user_id)
 
     try:
-        is_admin = ADMIN_USER_ID and user_id == ADMIN_USER_ID
+        is_admin = ADMIN_USER_ID and (real_user_id or user_id) == ADMIN_USER_ID
         skey = session_key(chat_id, thread_id, user_id)
 
         preamble = _build_preamble(is_admin, sid)
@@ -237,7 +241,8 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
 
 async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, user_id: int,
                                      working_dir: str | None = None, verbose: bool = False,
-                                     stop_event: asyncio.Event | None = None):
+                                     stop_event: asyncio.Event | None = None,
+                                     real_user_id: int | None = None):
     """Legacy subprocess-based streaming."""
     cwd = working_dir or WORKING_DIR
     sid = get_session_id(chat_id, thread_id, user_id)
@@ -247,7 +252,7 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
     add_active_stream(chat_id, thread_id, user_id)
 
     try:
-        is_admin = ADMIN_USER_ID and user_id == ADMIN_USER_ID
+        is_admin = ADMIN_USER_ID and (real_user_id or user_id) == ADMIN_USER_ID
 
         preamble = _build_preamble(is_admin, sid)
         if preamble:

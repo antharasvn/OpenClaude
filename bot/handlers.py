@@ -416,7 +416,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         try:
             async for event in stream_claude(claude_message, chat_id, thread_id, session_user_id,
                                              working_dir=chat_working_dir, verbose=streaming,
-                                             stop_event=stop_event):
+                                             stop_event=stop_event,
+                                             real_user_id=user_id):
                 etype = event.get("type")
 
                 if etype == "tool_use":
