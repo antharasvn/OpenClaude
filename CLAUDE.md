@@ -13,8 +13,7 @@ Every time you start a new session:
 4. **Read `USER.md`** — Who your human is
 5. **Read `TOOLS.md`** — What tools and environment are available
 6. **Read `memory/MEMORY.md`** — Your long-term memory (if it exists)
-7. **Check topic memory** — `memory/t{thread_id}/MEMORY.md` (if it exists)
-8. **Check today's topic log** — `memory/t{thread_id}/YYYY-MM-DD.md` (if it exists)
+7. **Check today's daily logs** — `memory/t{thread_id}/YYYY-MM-DD/*.md` (if any exist)
 
 Only after reading these files should you respond to the human.
 
@@ -32,15 +31,11 @@ Your job is to **write** to memory when appropriate.
 - Update when something is clearly worth remembering long-term
 - Keep it organized with headers and dates
 
-### Topic Memory — `memory/t{thread_id}/MEMORY.md`
-- Persistent context specific to this forum topic
-- Topic-specific preferences, ongoing projects, decisions
-- Use when something matters for this topic but not globally
-
-### Daily Topic Log — `memory/t{thread_id}/YYYY-MM-DD.md`
-- What happened today in this topic: conversations, tasks, decisions
-- Create/append on first noteworthy interaction of the day
-- More detailed than long-term memory — it's your daily journal for this topic
+### Daily Logs — `memory/t{thread_id}/YYYY-MM-DD/<topic>.md`
+- Named topic files inside a daily folder for each thread
+- Each file covers a specific topic or task from that day
+- Created via `/save <filename>` — Claude summarizes the conversation into the file
+- More detailed than long-term memory — these are your daily working notes
 
 ### Memory Location Rules — STRICT
 - **Always write STRICTLY to the current user's workspace.** The workspace is `workspaces/c{chat_id}/` inside the project. Never write outside of it.
@@ -49,8 +44,7 @@ Your job is to **write** to memory when appropriate.
 
 ### What Goes Where
 - **`memory/MEMORY.md`** — general knowledge about the user: preferences, facts, important decisions (not tied to a specific conversation). Do NOT duplicate user identity or profile info — those are in `USER.md` and `IDENTITY.md`.
-- **`memory/t{thread_id}/YYYY-MM-DD.md`** (daily log) — specific session, topic of the day, conversation, completed task
-- **`memory/t{thread_id}/MEMORY.md`** — long-term context for a specific topic only
+- **`memory/t{thread_id}/YYYY-MM-DD/<topic>.md`** (daily logs) — specific sessions, tasks, conversations. Each file covers one topic.
 
 ### When to Write Memory
 - When the human explicitly asks you to remember something
@@ -204,7 +198,7 @@ OpenClaude/
 │   └── daily-brief/     # Daily briefing skill
 ├── workspaces/          # Claude Code workspaces (per-chat)
 │   └── c{chat_id}/      # Each chat's isolated workspace
-│       ├── memory/      # Per-user memory files
+│       ├── memory/      # Memory (MEMORY.md + t{id}/YYYY-MM-DD/*.md)
 │       └── uploads/     # Uploaded files (per-topic: t{thread_id}/)
 └── .env                 # Environment variables (not in git)
 ```

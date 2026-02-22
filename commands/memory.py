@@ -1,4 +1,4 @@
-"""Memory commands: /forget, /memory, /save, /remember, /history."""
+"""Memory commands: /forget, /memory, /save, /remember, /history, /daily."""
 
 import html
 from datetime import datetime
@@ -15,8 +15,9 @@ from bot.handlers import run_with_streaming
 
 # (command_name, description) — used by /start listing
 COMMANDS = [
-    ("memory", "Show current memory contents"),
-    ("save", "Save a note to today's daily log"),
+    ("memory", "Show long-term memory"),
+    ("daily", "Show today's daily logs (or /daily YYYY-MM-DD)"),
+    ("save", "Save conversation summary (/save <filename>)"),
     ("remember", "Save a note to long-term memory"),
     ("forget", "Ask Claude to remove something from memory"),
     ("history", "Summarize recent conversation"),
@@ -24,18 +25,18 @@ COMMANDS = [
 
 
 def _get_memory_paths(chat_id: int, thread_id: int) -> dict[str, Path]:
-    """Return paths to all memory files for a chat/thread."""
+    """Return paths to memory locations for a chat/thread."""
     workspace = ensure_workspace(chat_id)
     mem_dir = workspace / "memory"
+    today = f"{datetime.now():%Y-%m-%d}"
     return {
         "shared": mem_dir / "MEMORY.md",
-        "topic": mem_dir / f"t{thread_id}" / "MEMORY.md",
-        "daily": mem_dir / f"t{thread_id}" / f"{datetime.now():%Y-%m-%d}.md",
+        "daily_dir": mem_dir / f"t{thread_id}" / today,
     }
 
 
 async def cmd_memory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Show contents of all memory files for this chat/thread."""
+    """Show contents of long-term memory (MEMORY.md)."""
     user = update.effective_user
     if not is_authorized(user.id):
         return
@@ -44,21 +45,74 @@ async def cmd_memory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     thread_id = get_thread_id(update)
     paths = _get_memory_paths(chat_id, thread_id)
 
-    sections = []
-    for label, path in paths.items():
-        if path.exists():
-            content = path.read_text().strip()
-            if content:
-                sections.append(
-                    f"<b>{html.escape(label)} memory</b> ({path.name}):\n"
-                    f"<pre>{html.escape(content[:1500])}</pre>"
-                )
-            else:
-                sections.append(f"<b>{html.escape(label)} memory</b> ({path.name}): <i>empty</i>")
+    mem_file = paths["shared"]
+    if mem_file.exists():
+        content = mem_file.read_text().strip()
+        if content:
+            text = (
+                f"<b>Long-term memory</b> (MEMORY.md):\n"
+                f"<pre>{html.escape(content[:3000])}</pre>"
+            )
         else:
-            sections.append(f"<b>{html.escape(label)} memory</b>: <i>not created yet</i>")
+            text = "<b>Long-term memory</b> (MEMORY.md): <i>empty</i>"
+    else:
+        text = "<b>Long-term memory</b>: <i>not created yet</i>"
 
-    text = "\n\n".join(sections)
+    tg_thread = thread_id or None
+    for chunk in split_message(text):
+        try:
+            await update.message.reply_text(
+                chunk, parse_mode=ParseMode.HTML, message_thread_id=tg_thread,
+            )
+        except Exception:
+            await update.message.reply_text(chunk, message_thread_id=tg_thread)
+
+
+async def cmd_daily(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show daily log files for today (or a specific date)."""
+    user = update.effective_user
+    if not is_authorized(user.id):
+        return
+
+    chat_id = update.effective_chat.id
+    thread_id = get_thread_id(update)
+    workspace = ensure_workspace(chat_id)
+    mem_dir = workspace / "memory"
+
+    # Accept optional date argument, default to today
+    date_str = context.args[0] if context.args else f"{datetime.now():%Y-%m-%d}"
+    daily_dir = mem_dir / f"t{thread_id}" / date_str
+
+    if not daily_dir.exists() or not daily_dir.is_dir():
+        await update.message.reply_text(
+            f"No daily logs for <b>{html.escape(date_str)}</b> (t{thread_id}).",
+            parse_mode=ParseMode.HTML,
+            message_thread_id=thread_id or None,
+        )
+        return
+
+    md_files = sorted(daily_dir.glob("*.md"))
+    if not md_files:
+        await update.message.reply_text(
+            f"No daily logs for <b>{html.escape(date_str)}</b> (t{thread_id}).",
+            parse_mode=ParseMode.HTML,
+            message_thread_id=thread_id or None,
+        )
+        return
+
+    sections = []
+    for f in md_files:
+        content = f.read_text().strip()
+        if content:
+            sections.append(
+                f"<b>{html.escape(f.stem)}</b>:\n"
+                f"<pre>{html.escape(content[:1500])}</pre>"
+            )
+        else:
+            sections.append(f"<b>{html.escape(f.stem)}</b>: <i>empty</i>")
+
+    header = f"<b>Daily logs — {html.escape(date_str)} (t{thread_id})</b>\n\n"
+    text = header + "\n\n".join(sections)
     tg_thread = thread_id or None
 
     for chunk in split_message(text):
@@ -71,32 +125,34 @@ async def cmd_memory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 
 async def cmd_save(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Save a note to today's daily log."""
+    """Save a conversation summary to a named daily log file via Claude."""
     user = update.effective_user
     if not is_authorized(user.id):
         return
 
-    note = " ".join(context.args) if context.args else ""
-    if not note:
-        await update.message.reply_text("Usage: /save <note>")
+    filename = context.args[0] if context.args else ""
+    if not filename:
+        await update.message.reply_text("Usage: /save <filename>")
         return
+
+    # Strip .md extension if user added it
+    if filename.endswith(".md"):
+        filename = filename[:-3]
 
     chat_id = update.effective_chat.id
     thread_id = get_thread_id(update)
-    paths = _get_memory_paths(chat_id, thread_id)
-    daily = paths["daily"]
-    daily.parent.mkdir(parents=True, exist_ok=True)
+    today = f"{datetime.now():%Y-%m-%d}"
 
-    timestamp = datetime.now().strftime("%H:%M")
-    entry = f"- [{timestamp}] {note}\n"
-
-    with open(daily, "a") as f:
-        f.write(entry)
-
-    await update.message.reply_text(
-        "Saved to daily log.",
-        message_thread_id=thread_id or None,
+    prompt = (
+        f"[System command: /save {filename}]\n"
+        f"Summarize this conversation and save it to "
+        f"memory/t{thread_id}/{today}/{filename}.md\n\n"
+        f"Create the directory if needed (mkdir -p). Write a concise but useful "
+        f"summary of what was discussed, decided, and done. Use markdown formatting. "
+        f"Keep it focused — this is a daily working note, not a transcript."
     )
+
+    await run_with_streaming(update, context, chat_id, thread_id, user.id, prompt)
 
 
 async def cmd_remember(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -145,8 +201,8 @@ async def cmd_forget(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     prompt = (
         f"[System command: /forget]\n"
         f"The user wants you to remove the following from your memory files: \"{what}\"\n\n"
-        f"Read your memory files (memory/MEMORY.md, memory/t{thread_id}/MEMORY.md, "
-        f"memory/t{thread_id}/*.md) and remove any entries matching what the user described. "
+        f"Read your memory files (memory/MEMORY.md, memory/t{thread_id}/**/*.md) "
+        f"and remove any entries matching what the user described. "
         f"Use the Edit tool to surgically remove only the relevant lines. "
         f"Then confirm what you removed."
     )
@@ -176,6 +232,7 @@ async def cmd_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 def register(app: Application) -> None:
     """Register memory command handlers."""
     app.add_handler(CommandHandler("memory", cmd_memory))
+    app.add_handler(CommandHandler("daily", cmd_daily))
     app.add_handler(CommandHandler("save", cmd_save))
     app.add_handler(CommandHandler("remember", cmd_remember))
     app.add_handler(CommandHandler("forget", cmd_forget))
