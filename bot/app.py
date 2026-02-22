@@ -65,6 +65,7 @@ def main() -> None:
             BotCommand("start", "Show welcome message"),
             BotCommand("new", "Start a new conversation"),
             BotCommand("status", "Show session info"),
+            BotCommand("stop", "Stop current generation"),
         ]
         for name, desc in ALL_COMMANDS:
             bot_commands.append(BotCommand(name, desc))
@@ -187,6 +188,7 @@ def main() -> None:
     app.add_handler(CommandHandler("start", handlers.cmd_start))
     app.add_handler(CommandHandler("new", handlers.cmd_new))
     app.add_handler(CommandHandler("status", handlers.cmd_status))
+    app.add_handler(CommandHandler("stop", handlers.cmd_stop))
     register_all(app)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handlers.handle_message))
     app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, handlers.handle_voice))

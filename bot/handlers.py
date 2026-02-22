@@ -19,7 +19,7 @@ from bot.logging_setup import logger, get_workspace_logger
 from bot.sessions import session_key, get_session_id, load_sessions, clear_session
 from bot.workspaces import ensure_workspace, get_working_dir
 from bot.renderer import TelegramRenderer, split_message
-from bot.claude import stream_claude, finished_line, format_tool_status
+from bot.claude import stream_claude, finished_line, format_tool_status, _active_procs
 from bot.sdk_session import sdk_sessions, SDKSession
 
 # Populated at startup via post_init callback
@@ -29,6 +29,9 @@ renderer = TelegramRenderer()
 
 # Per-user locks to prevent concurrent Claude calls for the same user
 _user_locks: dict[int, asyncio.Lock] = {}
+
+# Per-session stop events for /stop command
+_stop_events: dict[str, asyncio.Event] = {}
 
 
 def _get_user_lock(user_id: int) -> asyncio.Lock:
@@ -157,6 +160,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     cmd_lines = [
         "/new \u2014 Start a new conversation",
+        "/stop \u2014 Stop current generation",
         "/status \u2014 Show session info",
     ]
     for name, desc in ALL_COMMANDS:
@@ -231,6 +235,48 @@ async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         parse_mode=ParseMode.HTML,
         message_thread_id=thread_id or None,
     )
+
+
+async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /stop command — cancel current Claude generation."""
+    user = update.effective_user
+    if not is_authorized(user.id):
+        return
+
+    chat_id = update.effective_chat.id
+    thread_id = get_thread_id(update)
+    session_uid = user.id if update.effective_chat.type == "private" else 0
+    skey = session_key(chat_id, thread_id, session_uid)
+    tg_thread_id = thread_id or None
+
+    stop_event = _stop_events.get(skey)
+    if not stop_event:
+        await update.message.reply_text(
+            "Nothing to stop.",
+            message_thread_id=tg_thread_id,
+        )
+        return
+
+    # Signal the streaming loop to stop
+    stop_event.set()
+
+    # Immediately unblock: disconnect SDK session or kill subprocess
+    sdk_session = sdk_sessions.get(skey)
+    if sdk_session and sdk_session.connected:
+        await sdk_session.disconnect()
+
+    proc = _active_procs.pop(skey, None)
+    if proc and proc.returncode is None:
+        try:
+            proc.kill()
+        except ProcessLookupError:
+            pass
+
+    await update.message.reply_text(
+        "Generation stopped.",
+        message_thread_id=tg_thread_id,
+    )
+    logger.info("User %d stopped generation in chat %d thread %d", user.id, chat_id, thread_id)
 
 
 # ---------------------------------------------------------------------------
@@ -359,42 +405,53 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
             pass
 
     response_text = None
+    stopped = False
     chat_working_dir = get_working_dir(chat_id)
     in_tool = False
+    skey = session_key(chat_id, thread_id, session_user_id)
 
     async with _get_user_lock(session_user_id):
-        async for event in stream_claude(claude_message, chat_id, thread_id, session_user_id,
-                                         working_dir=chat_working_dir, verbose=streaming):
-            etype = event.get("type")
+        stop_event = asyncio.Event()
+        _stop_events[skey] = stop_event
+        try:
+            async for event in stream_claude(claude_message, chat_id, thread_id, session_user_id,
+                                             working_dir=chat_working_dir, verbose=streaming,
+                                             stop_event=stop_event):
+                etype = event.get("type")
 
-            if etype == "tool_use":
-                in_tool = True
-                live_text = ""
-                if show_tools:
-                    if current_active:
-                        finished_lines.append(finished_line(current_active))
-                    await _update_status(event["status"])
+                if etype == "tool_use":
+                    in_tool = True
+                    live_text = ""
+                    if show_tools:
+                        if current_active:
+                            finished_lines.append(finished_line(current_active))
+                        await _update_status(event["status"])
 
-            elif etype == "tool_result":
-                in_tool = False
-                if show_tools:
-                    if current_active:
-                        finished_lines.append(finished_line(current_active))
-                        await _update_status("")
+                elif etype == "tool_result":
+                    in_tool = False
+                    if show_tools:
+                        if current_active:
+                            finished_lines.append(finished_line(current_active))
+                            await _update_status("")
 
-            elif etype == "partial":
-                if not in_tool:
-                    live_text += event["text"]
-                    await _update_live(live_text)
+                elif etype == "partial":
+                    if not in_tool:
+                        live_text += event["text"]
+                        await _update_live(live_text)
 
-            elif etype == "result":
-                response_text = event.get("text", "")
+                elif etype == "result":
+                    response_text = event.get("text", "")
 
-            elif etype == "error":
-                response_text = event.get("text", "An error occurred.")
+                elif etype == "error":
+                    response_text = event.get("text", "An error occurred.")
 
-            elif etype == "silent":
-                response_text = ""
+                elif etype == "silent":
+                    response_text = ""
+
+                elif etype == "stopped":
+                    stopped = True
+        finally:
+            _stop_events.pop(skey, None)
 
     # Clean up status message
     if status_msg:
@@ -402,6 +459,15 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
             await status_msg.delete()
         except Exception:
             pass
+
+    # Handle /stop cancellation
+    if stopped:
+        if live_msg:
+            try:
+                await live_msg.delete()
+            except Exception:
+                pass
+        return
 
     if response_text is None:
         response_text = "Claude processed the request but returned no text output."

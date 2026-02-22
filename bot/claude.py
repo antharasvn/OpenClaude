@@ -20,6 +20,10 @@ from bot.sdk_session import (
 )
 
 
+# Active subprocess references for /stop support
+_active_procs: dict[str, asyncio.subprocess.Process] = {}
+
+
 def format_tool_status(tool_name: str, tool_input: dict) -> str:
     """Format a human-readable status line for an active tool call."""
     if tool_name == "Read":
@@ -64,7 +68,8 @@ def finished_line(active_line: str) -> str:
 
 
 async def stream_claude(message: str, chat_id: int, thread_id: int, user_id: int,
-                        working_dir: str | None = None, verbose: bool = False):
+                        working_dir: str | None = None, verbose: bool = False,
+                        stop_event: asyncio.Event | None = None):
     """Stream Claude output and yield events as they arrive.
 
     Yields dicts with keys:
@@ -73,14 +78,17 @@ async def stream_claude(message: str, chat_id: int, thread_id: int, user_id: int
       - {"type": "partial", "text": "..."} (only when verbose=True)
       - {"type": "result", "text": "...", "session_id": "..."}
       - {"type": "error", "text": "..."}
+      - {"type": "stopped"}  (generation cancelled via /stop)
     """
     if HAS_SDK:
         async for event in _stream_claude_sdk(message, chat_id, thread_id, user_id,
-                                               working_dir=working_dir, verbose=verbose):
+                                               working_dir=working_dir, verbose=verbose,
+                                               stop_event=stop_event):
             yield event
     else:
         async for event in _stream_claude_subprocess(message, chat_id, thread_id, user_id,
-                                                      working_dir=working_dir, verbose=verbose):
+                                                      working_dir=working_dir, verbose=verbose,
+                                                      stop_event=stop_event):
             yield event
 
 
@@ -112,7 +120,8 @@ def _build_preamble(is_admin: bool, sid: str | None) -> str | None:
 
 
 async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id: int,
-                              working_dir: str | None = None, verbose: bool = False):
+                              working_dir: str | None = None, verbose: bool = False,
+                              stop_event: asyncio.Event | None = None):
     """SDK-based streaming."""
     cwd = working_dir or WORKING_DIR
     sid = get_session_id(chat_id, thread_id, user_id)
@@ -165,6 +174,10 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
             sdk_session.last_activity = __import__("time").time()
 
             async for msg in sdk_session.client.receive_response():
+                if stop_event and stop_event.is_set():
+                    logger.info("Stop event set — aborting SDK stream for user %d", user_id)
+                    yield {"type": "stopped"}
+                    return
                 if msg is None:
                     continue
                 if isinstance(msg, AssistantMessage):
@@ -223,7 +236,8 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
 
 
 async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, user_id: int,
-                                     working_dir: str | None = None, verbose: bool = False):
+                                     working_dir: str | None = None, verbose: bool = False,
+                                     stop_event: asyncio.Event | None = None):
     """Legacy subprocess-based streaming."""
     cwd = working_dir or WORKING_DIR
     sid = get_session_id(chat_id, thread_id, user_id)
@@ -275,71 +289,92 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
             limit=10 * 1024 * 1024,
         )
 
+        skey = session_key(chat_id, thread_id, user_id)
+        _active_procs[skey] = proc
+
         result_text = None
         new_session_id = None
         deadline = asyncio.get_event_loop().time() + CLAUDE_TIMEOUT
 
-        while True:
-            remaining = deadline - asyncio.get_event_loop().time()
-            if remaining <= 0:
-                proc.kill()
-                await proc.communicate()
-                logger.error("Claude CLI timed out after %ds for user %d", CLAUDE_TIMEOUT, user_id)
-                yield {"type": "error", "text": "Claude took too long to respond. Try again or /new to start fresh."}
-                return
+        try:
+            while True:
+                if stop_event and stop_event.is_set():
+                    logger.info("Stop event set — killing subprocess for user %d", user_id)
+                    proc.kill()
+                    await proc.communicate()
+                    yield {"type": "stopped"}
+                    return
 
-            try:
-                line = await asyncio.wait_for(proc.stdout.readline(), timeout=remaining)
-            except asyncio.TimeoutError:
-                proc.kill()
-                await proc.communicate()
-                logger.error("Claude CLI timed out after %ds for user %d", CLAUDE_TIMEOUT, user_id)
-                yield {"type": "error", "text": "Claude took too long to respond. Try again or /new to start fresh."}
-                return
+                remaining = deadline - asyncio.get_event_loop().time()
+                if remaining <= 0:
+                    proc.kill()
+                    await proc.communicate()
+                    logger.error("Claude CLI timed out after %ds for user %d", CLAUDE_TIMEOUT, user_id)
+                    yield {"type": "error", "text": "Claude took too long to respond. Try again or /new to start fresh."}
+                    return
 
-            if not line:
-                break
+                try:
+                    line = await asyncio.wait_for(proc.stdout.readline(), timeout=min(remaining, 1.0))
+                except asyncio.TimeoutError:
+                    if stop_event and stop_event.is_set():
+                        logger.info("Stop event set during readline — killing subprocess for user %d", user_id)
+                        proc.kill()
+                        await proc.communicate()
+                        yield {"type": "stopped"}
+                        return
+                    if remaining <= 1.0:
+                        proc.kill()
+                        await proc.communicate()
+                        logger.error("Claude CLI timed out after %ds for user %d", CLAUDE_TIMEOUT, user_id)
+                        yield {"type": "error", "text": "Claude took too long to respond. Try again or /new to start fresh."}
+                        return
+                    continue
 
-            decoded = line.decode().strip()
-            if not decoded:
-                continue
+                if not line:
+                    break
 
-            try:
-                event = json.loads(decoded)
-            except json.JSONDecodeError:
-                logger.debug("Non-JSON line from Claude: %s", decoded[:200])
-                continue
+                decoded = line.decode().strip()
+                if not decoded:
+                    continue
 
-            event_type = event.get("type")
+                try:
+                    event = json.loads(decoded)
+                except json.JSONDecodeError:
+                    logger.debug("Non-JSON line from Claude: %s", decoded[:200])
+                    continue
 
-            if event_type == "assistant":
-                msg_data = event.get("message", {})
-                content = msg_data.get("content", [])
-                for block in content:
-                    if isinstance(block, dict) and block.get("type") == "tool_use":
-                        tool_name = block.get("name", "")
-                        tool_input = block.get("input", {})
-                        ws_log.info("Tool: %s \u2014 %s", tool_name, _summarize_input(tool_input))
-                        status = format_tool_status(tool_name, tool_input)
-                        yield {"type": "tool_use", "status": status}
-            elif event_type == "tool_result":
-                yield {"type": "tool_result"}
+                event_type = event.get("type")
 
-            elif event_type == "stream_event" and verbose:
-                delta = event.get("event", {}).get("delta", {})
-                if delta.get("type") == "text_delta":
-                    chunk = delta.get("text", "")
-                    if chunk:
-                        yield {"type": "partial", "text": chunk}
+                if event_type == "assistant":
+                    msg_data = event.get("message", {})
+                    content = msg_data.get("content", [])
+                    for block in content:
+                        if isinstance(block, dict) and block.get("type") == "tool_use":
+                            tool_name = block.get("name", "")
+                            tool_input = block.get("input", {})
+                            ws_log.info("Tool: %s \u2014 %s", tool_name, _summarize_input(tool_input))
+                            status = format_tool_status(tool_name, tool_input)
+                            yield {"type": "tool_use", "status": status}
+                elif event_type == "tool_result":
+                    yield {"type": "tool_result"}
 
-            elif event_type == "result":
-                result_text = event.get("result", "")
-                new_session_id = event.get("session_id")
-                if new_session_id:
-                    set_session_id(chat_id, thread_id, user_id, new_session_id)
-                    logger.info("Session updated for user %d: %s", user_id, new_session_id)
-                ws_log.info("Result \u2014 session=%s, len=%d", new_session_id, len(result_text or ""))
-                yield {"type": "result", "text": result_text, "session_id": new_session_id}
+                elif event_type == "stream_event" and verbose:
+                    delta = event.get("event", {}).get("delta", {})
+                    if delta.get("type") == "text_delta":
+                        chunk = delta.get("text", "")
+                        if chunk:
+                            yield {"type": "partial", "text": chunk}
+
+                elif event_type == "result":
+                    result_text = event.get("result", "")
+                    new_session_id = event.get("session_id")
+                    if new_session_id:
+                        set_session_id(chat_id, thread_id, user_id, new_session_id)
+                        logger.info("Session updated for user %d: %s", user_id, new_session_id)
+                    ws_log.info("Result \u2014 session=%s, len=%d", new_session_id, len(result_text or ""))
+                    yield {"type": "result", "text": result_text, "session_id": new_session_id}
+        finally:
+            _active_procs.pop(skey, None)
 
         await proc.wait()
 
