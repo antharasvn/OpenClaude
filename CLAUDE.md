@@ -42,6 +42,16 @@ Your job is to **write** to memory when appropriate.
 - Create/append on first noteworthy interaction of the day
 - More detailed than long-term memory — it's your daily journal for this topic
 
+### Memory Location Rules — STRICT
+- **Always write STRICTLY to the current user's workspace.** The workspace is `workspaces/c{chat_id}/` inside the project. Never write outside of it.
+- All memory paths are relative to the workspace: `workspaces/c{chat_id}/memory/...`
+- **Do NOT write to global `memory/` at the project root.** Global memory does not exist — all memory lives in workspaces.
+
+### What Goes Where
+- **`memory/MEMORY.md`** — general knowledge about the user: preferences, facts, important decisions (not tied to a specific conversation). Do NOT duplicate user identity or profile info — those are in `USER.md` and `IDENTITY.md`.
+- **`memory/t{thread_id}/YYYY-MM-DD.md`** (daily log) — specific session, topic of the day, conversation, completed task
+- **`memory/t{thread_id}/MEMORY.md`** — long-term context for a specific topic only
+
 ### When to Write Memory
 - When the human explicitly asks you to remember something
 - When a significant decision is made
@@ -110,12 +120,9 @@ The first user in ALLOWED_USERS is the **admin**. The environment variable
 - Cannot read files outside their workspace (credential files, .env, etc.)
 - Cannot run `chmod`/`chown`/`rm -rf` outside their workspace
 
-## Tool Usage Rules
+## Tool Usage
 
-- **Всегда использовать таймаут** для `WebFetch`, `WebSearch` и `Task` (агенты) — они могут зависнуть на несколько минут и заблокировать бота.
-  - `WebSearch` — передавай через `Bash` с `timeout 30` если нужно ограничить
-  - `WebFetch` — **не имеет таймаута**, никогда не использовать напрямую. Вместо него: `Bash` + `curl --max-time 15`, или `Task` агент с `timeout` в `TaskOutput`
-  - `Task` (агенты) — всегда указывай разумный `timeout` в `TaskOutput`
+For all tool details, timeouts, browser usage, SSH access, and available skills, see **`TOOLS.md`**.
 
 ## Safety Rules
 
@@ -146,29 +153,11 @@ The first user in ALLOWED_USERS is the **admin**. The environment variable
 - **NEVER modify SSH access in any way.** This includes: sshd config, authorized_keys, firewall rules (iptables/ufw/nft), network interfaces, PAM/NSS config, or the root user account. Losing SSH access is catastrophic — these are absolute prohibitions.
 - **NEVER modify the guard scripts** (`guard.sh`, `guard-write.sh`) or `.claude/settings.json` hooks. These are security controls and are off-limits.
 
-
 ## Git Workflow
 
 - **Always commit and push to the `dev` branch.** Never push to `main`.
 - `main` is the stable branch — the human merges `dev → main` manually.
 - Before pushing, make sure you're on `dev`: `git checkout dev` if needed.
-
-## Available Tools
-
-When invoked via the Telegram bot, you have access to:
-
-| Tool | Use For |
-|------|---------|
-| `Read` | Reading files |
-| `Write` | Creating/overwriting files |
-| `Edit` | Surgical edits to existing files |
-| `Bash` | Shell commands |
-| `Glob` | Finding files by pattern |
-| `Grep` | Searching file contents |
-| `WebFetch` | Fetching web pages |
-| `WebSearch` | Searching the internet |
-| `Task` | Delegating to sub-agents |
-| `Skill` | Running predefined skills |
 
 ## Project Structure
 
@@ -208,18 +197,15 @@ OpenClaude/
 ├── services/            # Daemon configs
 │   ├── systemd/         # Linux service units
 │   └── launchd/         # macOS launch agents
-├── memory/              # Your memory files
-│   ├── MEMORY.md        # Long-term memory (shared across topics)
-│   └── t{thread_id}/   # Per-topic memory
-│       ├── MEMORY.md    # Topic-specific persistent memory
-│       └── YYYY-MM-DD.md # Topic daily logs
 ├── skills/              # Skill scripts
 │   ├── telegram-sender/ # Send messages via Telegram API
+│   ├── ssh-vps/         # Run commands on VPS via SSH
 │   ├── heartbeat/       # Periodic check-in skill
 │   └── daily-brief/     # Daily briefing skill
 ├── workspaces/          # Claude Code workspaces (per-chat)
 │   └── c{chat_id}/      # Each chat's isolated workspace
-│       └── uploads/     # That chat's uploaded files (per-topic: t{thread_id}/)
+│       ├── memory/      # Per-user memory files
+│       └── uploads/     # Uploaded files (per-topic: t{thread_id}/)
 └── .env                 # Environment variables (not in git)
 ```
 

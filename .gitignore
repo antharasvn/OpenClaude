@@ -16,9 +16,8 @@ build/
 
 # Uploads (inside workspaces, already gitignored)
 
-# Memory contents (keep directory)
-memory/*
-!memory/MEMORY.md
+# Memory (all memory lives in workspaces, not here)
+memory/
 
 # Media files
 *.ogg
