@@ -21,11 +21,13 @@ CMD="${1:-deadlines}"
 
 # Validate command
 case "$CMD" in
-    deadlines|courses) ;;
+    deadlines|courses|lectures|download) ;;
     *)
-        echo "Usage: $0 [deadlines|courses]"
-        echo "  deadlines — upcoming assignment deadlines (default)"
-        echo "  courses   — list current semester courses"
+        echo "Usage: $0 <command> [args]"
+        echo "  deadlines              — upcoming deadlines (default)"
+        echo "  courses                — list current semester [S26] courses"
+        echo "  lectures [course_id]   — list resources for a course (default: NLP)"
+        echo "  download <resource_id> [outdir]  — download a file resource"
         exit 1
         ;;
 esac
@@ -43,5 +45,5 @@ if ! curl -s http://localhost:9222/json/version --max-time 3 > /dev/null 2>&1; t
     sleep 4
 fi
 
-# Run the Python script
-exec python3 "$SCRIPT_DIR/moodle.py" "$CMD"
+# Run the Python script (pass all args)
+exec python3 "$SCRIPT_DIR/moodle.py" "$@"

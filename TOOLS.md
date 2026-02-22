@@ -67,6 +67,8 @@ You have access to these tools when invoked via the Telegram bot:
 - **Commands:**
   - `deadlines` (default) — upcoming assignment deadlines (next 90 days)
   - `courses` — list current semester [S26] courses
+  - `lectures [course_id]` — list resources for a course (default: NLP id=3440)
+  - `download <resource_id> [outdir]` — download a file; prints saved path to stdout
 - **Credentials:** Read from workspace `.env` (`MOODLE_USERNAME`, `MOODLE_PASSWORD`)
 
 ### daily-brief (planned)
