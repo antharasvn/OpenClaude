@@ -118,6 +118,12 @@ The first user in ALLOWED_USERS is the **admin**. The environment variable
 
 For all tool details, timeouts, browser usage, SSH access, and available skills, see **`TOOLS.md`**.
 
+### Creating Skills
+Before creating any new skill, **read `skills/create-skill/SKILL.md`** for the template and mandatory safety rules. Key points:
+- User-facing skills must only source `$PWD/.env` (workspace), never the project root `.env`
+- Never create skills that exfiltrate user data, modify system services, or bypass security
+- Validate all inputs, prevent path traversal, use timeouts for network operations
+
 ## Safety Rules
 
 ### Always OK (no permission needed)
@@ -194,6 +200,8 @@ OpenClaude/
 ├── skills/              # Skill scripts
 │   ├── telegram-sender/ # Send messages via Telegram API
 │   ├── ssh-vps/         # Run commands on VPS via SSH
+│   ├── ai-news/         # Daily AI news digest (cron)
+│   ├── create-skill/    # Skill template & safety guidelines
 │   ├── heartbeat/       # Periodic check-in skill
 │   └── daily-brief/     # Daily briefing skill
 ├── workspaces/          # Claude Code workspaces (per-chat)

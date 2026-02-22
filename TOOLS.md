@@ -33,6 +33,16 @@ You have access to these tools when invoked via the Telegram bot:
 
 ## Skills
 
+### create-skill (template) — READ FIRST
+- **Location:** `skills/create-skill/SKILL.md`
+- **Purpose:** Template and safety guidelines for creating new skills
+- **Usage:** Read `skills/create-skill/SKILL.md` before creating any new skill. Follow all safety rules.
+- **Key rules:**
+  - User-facing skills source **only `$PWD/.env`** (workspace), never project root `.env`
+  - Never hardcode credentials, never exfiltrate user data
+  - Never modify system services, guard scripts, or security hooks
+  - Validate all inputs, prevent path traversal, use timeouts
+
 ### telegram-sender
 - **Location:** `skills/telegram-sender/send.sh`
 - **Purpose:** Send messages and files to Telegram chats directly

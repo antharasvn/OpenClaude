@@ -2,7 +2,6 @@
 
 import asyncio
 import html
-import io
 import re
 from datetime import datetime
 from pathlib import Path

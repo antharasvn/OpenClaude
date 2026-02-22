@@ -1,6 +1,7 @@
 """Memory commands: /forget, /memory, /save, /remember, /history, /daily."""
 
 import html
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -24,15 +25,10 @@ COMMANDS = [
 ]
 
 
-def _get_memory_paths(chat_id: int, thread_id: int) -> dict[str, Path]:
-    """Return paths to memory locations for a chat/thread."""
+def _get_shared_memory_path(chat_id: int) -> Path:
+    """Return path to shared long-term memory file."""
     workspace = ensure_workspace(chat_id)
-    mem_dir = workspace / "memory"
-    today = f"{datetime.now():%Y-%m-%d}"
-    return {
-        "shared": mem_dir / "MEMORY.md",
-        "daily_dir": mem_dir / f"t{thread_id}" / today,
-    }
+    return workspace / "memory" / "MEMORY.md"
 
 
 async def cmd_memory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -43,9 +39,8 @@ async def cmd_memory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
     chat_id = update.effective_chat.id
     thread_id = get_thread_id(update)
-    paths = _get_memory_paths(chat_id, thread_id)
 
-    mem_file = paths["shared"]
+    mem_file = _get_shared_memory_path(chat_id)
     if mem_file.exists():
         content = mem_file.read_text().strip()
         if content:
@@ -81,6 +76,12 @@ async def cmd_daily(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Accept optional date argument, default to today
     date_str = context.args[0] if context.args else f"{datetime.now():%Y-%m-%d}"
+    if not re.match(r'^\d{4}-\d{2}-\d{2}$', date_str):
+        await update.message.reply_text(
+            "Invalid date format. Use YYYY-MM-DD.",
+            message_thread_id=thread_id or None,
+        )
+        return
     daily_dir = mem_dir / f"t{thread_id}" / date_str
 
     if not daily_dir.exists() or not daily_dir.is_dir():
@@ -139,6 +140,13 @@ async def cmd_save(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if filename.endswith(".md"):
         filename = filename[:-3]
 
+    if not re.match(r'^[\w\-]+$', filename):
+        await update.message.reply_text(
+            "Filename must be alphanumeric (a-z, 0-9, -, _).",
+            message_thread_id=get_thread_id(update) or None,
+        )
+        return
+
     chat_id = update.effective_chat.id
     thread_id = get_thread_id(update)
     today = f"{datetime.now():%Y-%m-%d}"
@@ -168,8 +176,7 @@ async def cmd_remember(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     chat_id = update.effective_chat.id
     thread_id = get_thread_id(update)
-    paths = _get_memory_paths(chat_id, thread_id)
-    mem = paths["shared"]
+    mem = _get_shared_memory_path(chat_id)
     mem.parent.mkdir(parents=True, exist_ok=True)
 
     date = datetime.now().strftime("%Y-%m-%d")

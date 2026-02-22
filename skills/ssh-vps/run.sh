@@ -8,14 +8,12 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# Source .env — project first, then cwd (workspace overrides)
-for env_file in "$PROJECT_DIR/.env" "$PWD/.env"; do
-    if [[ -f "$env_file" ]]; then
-        set -a
-        source "$env_file"
-        set +a
-    fi
-done
+# Source workspace .env only (user credentials, not project secrets)
+if [[ -f "$PWD/.env" ]]; then
+    set -a
+    source "$PWD/.env"
+    set +a
+fi
 
 # Validate required env vars
 : "${VPS_HOST:?VPS_HOST not set in .env}"
@@ -31,7 +29,8 @@ if [[ -z "$REMOTE_CMD" ]]; then
     exit 0
 fi
 
-sshpass -p "$VPS_PASSWORD" ssh \
+export SSHPASS="$VPS_PASSWORD"
+sshpass -e ssh \
     -o StrictHostKeyChecking=no \
     -o ConnectTimeout=15 \
     -p "$VPS_PORT" \
