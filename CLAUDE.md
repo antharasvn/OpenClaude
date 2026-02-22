@@ -25,33 +25,53 @@ It also tells you the current topic thread ID and where to write daily memory.
 
 Your job is to **write** to memory when appropriate.
 
-### Long-term Memory — `memory/MEMORY.md` (shared)
-- Persistent facts, preferences, and context that matter across all topics
-- Major decisions, project milestones, relationship context
-- Update when something is clearly worth remembering long-term
-- Keep it organized with headers and dates
+### Memory Architecture — 3 Tiers
 
-### Daily Logs — `memory/t{thread_id}/YYYY-MM-DD/<topic>.md`
+| Tier | File | Purpose |
+|---|---|---|
+| 1 | `memory/MEMORY.md` | Who the user is — preferences, facts, personal context |
+| 2 | `memory/<topic>.md` | Cross-session technical knowledge — conventions, recurring bugs, project patterns |
+| 3 | `memory/t{thread_id}/YYYY-MM-DD/<topic>.md` | What happened in sessions — decisions, outcomes, tasks |
+
+### Tier 1 — `memory/MEMORY.md` (user knowledge)
+- User preferences, communication style, personal facts
+- **Only things about the person, not about projects or code**
+- Do NOT put decisions, approaches, or technical notes here
+- Do NOT duplicate info already in `USER.md` or `IDENTITY.md`
+
+### Tier 2 — `memory/<topic>.md` (persistent technical knowledge)
+- `conventions.md` — coding patterns, style choices, project-specific rules
+- `bugs.md` — recurring bugs and root causes, so future sessions don't repeat them
+- Create new topic files as needed for stable, reusable knowledge
+- These are permanent files, not date-tied
+
+### Tier 3 — `memory/t{thread_id}/YYYY-MM-DD/<topic>.md` (daily logs)
 - Named topic files inside a daily folder for each thread
-- Each file covers a specific topic or task from that day
-- Created via `/save <filename>` — Claude summarizes the conversation into the file
-- More detailed than long-term memory — these are your daily working notes
+- Decisions made, approaches chosen, tasks completed, session outcomes
+- Created via `/save <filename>` or written proactively at end of a substantive session
+- More detailed than long-term memory — these are your working notes
 
 ### Memory Location Rules — STRICT
 - **Always write STRICTLY to the current user's workspace.** The workspace is `workspaces/c{chat_id}/` inside the project. Never write outside of it.
 - All memory paths are relative to the workspace: `workspaces/c{chat_id}/memory/...`
 - **Do NOT write to global `memory/` at the project root.** Global memory does not exist — all memory lives in workspaces.
 
-### What Goes Where
-- **`memory/MEMORY.md`** — general knowledge about the user: preferences, facts, important decisions (not tied to a specific conversation). Do NOT duplicate user identity or profile info — those are in `USER.md` and `IDENTITY.md`.
-- **`memory/t{thread_id}/YYYY-MM-DD/<topic>.md`** (daily logs) — specific sessions, tasks, conversations. Each file covers one topic.
-
 ### When to Write Memory
-- When the human explicitly asks you to remember something
-- When a significant decision is made
-- When you learn something important about the human or their projects
-- When a task is completed that's worth recording
-- **Don't over-remember.** Not every message is worth recording.
+
+**Do this automatically (no user prompt needed):**
+- After completing any non-trivial task — write a brief daily log with what was done and outcome
+- When you learn something about the user's preferences or workflow → `MEMORY.md`
+- When a significant decision or approach is chosen → daily log
+- When you encounter a recurring bug or establish a convention → `bugs.md` / `conventions.md`
+- At the end of a substantive session — write a daily log summarizing what happened
+
+**On explicit request:**
+- When the human asks to remember something or runs `/save`
+
+**Don't:**
+- Record trivial chit-chat or one-off answers
+- Put project/technical info into `MEMORY.md`
+- Over-remember — quality over quantity
 
 ## Telegram Constraints
 
