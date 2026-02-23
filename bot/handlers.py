@@ -16,7 +16,7 @@ from bot.config import (
     get_thread_id,
 )
 from bot.logging_setup import logger, get_workspace_logger
-from bot.sessions import session_key, get_session_id, load_sessions, clear_session, set_usage
+from bot.sessions import session_key, get_session_id, load_sessions, clear_session, set_usage, get_context_pct
 from bot.workspaces import ensure_workspace, get_working_dir
 from bot.renderer import TelegramRenderer, split_message
 from bot.claude import stream_claude, finished_line, format_tool_status, _active_procs
@@ -337,7 +337,7 @@ async def _flush_batch(key: str) -> None:
 
 async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                              chat_id: int, thread_id: int, user_id: int,
-                             claude_message: str) -> None:
+                             claude_message: str, _is_compact: bool = False) -> None:
     """Stream Claude output, show tool progress, then send final response."""
     session_user_id = user_id if update.effective_chat.type == "private" else 0
     tg_thread_id = thread_id or None
@@ -437,7 +437,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
                 elif etype == "result":
                     response_text = event.get("text", "")
-                    usage_data = {k: event.get(k) for k in ("usage", "cost", "num_turns", "duration_ms", "duration_api_ms") if event.get(k) is not None}
+                    usage_data = {k: event.get(k) for k in ("usage", "cost", "num_turns", "duration_ms", "duration_api_ms", "model_usage") if event.get(k) is not None}
                     if usage_data:
                         set_usage(chat_id, thread_id, session_user_id, usage_data)
 
@@ -504,6 +504,24 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
             await send_rendered(update, response_text, context)
     else:
         await send_rendered(update, response_text, context)
+
+    # Context usage warnings and auto-compact
+    if not _is_compact:
+        ctx = get_context_pct(chat_id, thread_id, session_user_id)
+        if ctx:
+            pct, used, window = ctx
+            if pct >= 0.8:
+                await update.message.reply_text(
+                    f"Context at {pct:.0%} \u2014 auto-compacting\u2026",
+                    message_thread_id=tg_thread_id,
+                )
+                await run_with_streaming(update, context, chat_id, thread_id,
+                                         user_id, "/compact", _is_compact=True)
+            elif pct >= 0.6:
+                await update.message.reply_text(
+                    f"Context at {pct:.0%} \u2014 consider using /compact",
+                    message_thread_id=tg_thread_id,
+                )
 
 
 # ---------------------------------------------------------------------------

@@ -10,16 +10,8 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from bot.config import ADMIN_USER_ID, is_authorized, get_claude_model, set_claude_model, get_thread_id
 from bot.logging_setup import logger
 from bot.renderer import split_message
-from bot.sessions import get_session_id, get_usage
+from bot.sessions import get_session_id, get_usage, get_context_pct
 from bot.workspaces import ensure_workspace
-
-# Known context window sizes for Claude models (tokens)
-_CONTEXT_WINDOWS: dict[str, int] = {
-    "claude-sonnet-4-20250514": 200_000,
-    "claude-opus-4-20250514": 200_000,
-    "claude-haiku-4-5-20251001": 200_000,
-}
-_DEFAULT_CONTEXT_WINDOW = 200_000
 
 COMMANDS = [
     ("model", "Show or switch the Claude model"),
@@ -193,23 +185,6 @@ def _context_bar(used: int, total: int, width: int = 20) -> str:
     return f"[{bar}] {pct:.0%}"
 
 
-def _get_context_window(usage_dict: dict | None) -> int:
-    """Try to extract context window from modelUsage, fall back to default."""
-    if isinstance(usage_dict, dict):
-        model_usage = usage_dict.get("modelUsage")
-        if isinstance(model_usage, dict):
-            for mu in model_usage.values():
-                cw = mu.get("contextWindow")
-                if cw:
-                    return int(cw)
-    model = get_claude_model()
-    if model:
-        for key, size in _CONTEXT_WINDOWS.items():
-            if key in model or model in key:
-                return size
-    return _DEFAULT_CONTEXT_WINDOW
-
-
 async def cmd_context(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show context/token usage for the current conversation."""
     user = update.effective_user
@@ -230,25 +205,24 @@ async def cmd_context(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         return
 
     usage_dict = usage.get("usage")
-    ctx_window = _get_context_window(usage_dict)
 
     lines = ["<b>Context Usage</b>", ""]
 
-    # Context window bar (input tokens = context consumed)
-    input_tok = None
+    ctx = get_context_pct(chat_id, thread_id, session_uid)
+    if ctx:
+        pct, used, ctx_window = ctx
+        bar = _context_bar(used, ctx_window)
+        lines.append(f"<code>{bar}</code>")
+        lines.append(f"<b>Used:</b> {used:,} / {ctx_window:,} tokens")
+        lines.append("")
+
+    # Additional token breakdown
     cache_tok = None
     output_tok = None
     if isinstance(usage_dict, dict):
-        input_tok = usage_dict.get("input_tokens") or usage_dict.get("inputTokens")
         cache_tok = (usage_dict.get("cache_read_input_tokens")
                      or usage_dict.get("cacheReadInputTokens"))
         output_tok = usage_dict.get("output_tokens") or usage_dict.get("outputTokens")
-
-    if input_tok is not None:
-        bar = _context_bar(input_tok, ctx_window)
-        lines.append(f"<code>{bar}</code>")
-        lines.append(f"<b>Used:</b> {input_tok:,} / {ctx_window:,} tokens")
-        lines.append("")
 
     if cache_tok is not None:
         lines.append(f"<b>Cached:</b> {cache_tok:,}")
@@ -305,7 +279,8 @@ async def cmd_compact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     # Lazy import to avoid circular dependency (handlers imports from commands.config)
     from bot.handlers import run_with_streaming
-    await run_with_streaming(update, context, chat_id, thread_id, user.id, "/compact")
+    await run_with_streaming(update, context, chat_id, thread_id, user.id, "/compact",
+                             _is_compact=True)
 
     try:
         await status_msg.edit_text("Compaction complete.")

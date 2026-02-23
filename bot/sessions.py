@@ -91,3 +91,37 @@ def set_usage(chat_id: int, thread_id: int, user_id: int, data: dict) -> None:
 def get_usage(chat_id: int, thread_id: int, user_id: int) -> dict | None:
     """Get usage data for a session, or None if not available."""
     return _usage_cache.get(session_key(chat_id, thread_id, user_id))
+
+
+# ---------------------------------------------------------------------------
+# Context percentage helper
+# ---------------------------------------------------------------------------
+
+_DEFAULT_CONTEXT_WINDOW = 200_000
+
+
+def get_context_pct(chat_id: int, thread_id: int, user_id: int) -> tuple[float, int, int] | None:
+    """Return (percentage, used_tokens, window_size) or None."""
+    data = get_usage(chat_id, thread_id, user_id)
+    if not data:
+        return None
+    usage = data.get("usage")
+    if not isinstance(usage, dict):
+        return None
+    used = (
+        (usage.get("input_tokens") or 0)
+        + (usage.get("cache_read_input_tokens") or 0)
+        + (usage.get("cache_creation_input_tokens") or 0)
+    )
+    if used == 0:
+        return None
+    # Real window from modelUsage, else default
+    window = _DEFAULT_CONTEXT_WINDOW
+    mu = data.get("model_usage")
+    if isinstance(mu, dict):
+        for v in mu.values():
+            if isinstance(v, dict) and v.get("contextWindow"):
+                window = int(v["contextWindow"])
+                break
+    pct = used / window if window else 0
+    return (pct, used, window)
