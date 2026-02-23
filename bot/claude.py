@@ -172,6 +172,7 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
 
         result_text = None
         new_session_id = None
+        early_session_id = None  # captured from StreamEvent before ResultMessage
 
         try:
             await sdk_session.client.query(message)
@@ -196,12 +197,19 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                             if block.text:
                                 yield {"type": "text_block", "text": block.text}
 
-                elif isinstance(msg, StreamEvent) and verbose:
-                    delta = msg.event.get("delta", {})
-                    if delta.get("type") == "text_delta":
-                        chunk = delta.get("text", "")
-                        if chunk:
-                            yield {"type": "partial", "text": chunk}
+                elif isinstance(msg, StreamEvent):
+                    # Save session_id early — don't wait for ResultMessage
+                    if not early_session_id and msg.session_id:
+                        early_session_id = msg.session_id
+                        set_session_id(chat_id, thread_id, user_id, early_session_id)
+                        sdk_session.session_id = early_session_id
+                        logger.info("Session ID captured early for user %d: %s", user_id, early_session_id)
+                    if verbose:
+                        delta = msg.event.get("delta", {})
+                        if delta.get("type") == "text_delta":
+                            chunk = delta.get("text", "")
+                            if chunk:
+                                yield {"type": "partial", "text": chunk}
 
                 elif isinstance(msg, ResultMessage):
                     new_session_id = msg.session_id

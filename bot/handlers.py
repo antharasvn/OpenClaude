@@ -420,19 +420,15 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 etype = event.get("type")
 
                 if etype == "text_block":
-                    # Completed text block (before tool use) — flush live
+                    # Completed text block (before tool use) — flush live in place
                     if live_msg and live_text:
                         try:
                             rendered = renderer.render(event["text"])
-                            if len(rendered) <= TELEGRAM_MAX_LENGTH:
-                                await live_msg.edit_text(
-                                    rendered,
-                                    parse_mode=ParseMode.HTML,
-                                    disable_web_page_preview=True,
-                                )
-                            else:
-                                await live_msg.delete()
-                                await send_rendered(update, event["text"], context)
+                            await live_msg.edit_text(
+                                rendered[:TELEGRAM_MAX_LENGTH],
+                                parse_mode=ParseMode.HTML,
+                                disable_web_page_preview=True,
+                            )
                         except Exception:
                             pass
                         live_msg = None
@@ -443,15 +439,11 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                     if live_msg and live_text:
                         try:
                             rendered = renderer.render(live_text)
-                            if len(rendered) <= TELEGRAM_MAX_LENGTH:
-                                await live_msg.edit_text(
-                                    rendered,
-                                    parse_mode=ParseMode.HTML,
-                                    disable_web_page_preview=True,
-                                )
-                            else:
-                                await live_msg.delete()
-                                await send_rendered(update, live_text, context)
+                            await live_msg.edit_text(
+                                rendered[:TELEGRAM_MAX_LENGTH],
+                                parse_mode=ParseMode.HTML,
+                                disable_web_page_preview=True,
+                            )
                         except Exception:
                             pass
                         live_msg = None
