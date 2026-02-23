@@ -195,12 +195,17 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                         elif isinstance(block, TextBlock):
                             pass
 
-                elif isinstance(msg, StreamEvent) and verbose:
-                    delta = msg.event.get("delta", {})
-                    if delta.get("type") == "text_delta":
-                        chunk = delta.get("text", "")
-                        if chunk:
-                            yield {"type": "partial", "text": chunk}
+                elif isinstance(msg, StreamEvent):
+                    # Log non-content stream events to discover available fields
+                    raw = msg.event if hasattr(msg, "event") else {}
+                    if isinstance(raw, dict) and raw.get("type") not in ("content_block_delta", "content_block_start", "content_block_stop"):
+                        ws_log.info("StreamEvent type=%s keys=%s", raw.get("type"), sorted(raw.keys()))
+                    if verbose:
+                        delta = msg.event.get("delta", {})
+                        if delta.get("type") == "text_delta":
+                            chunk = delta.get("text", "")
+                            if chunk:
+                                yield {"type": "partial", "text": chunk}
 
                 elif isinstance(msg, ResultMessage):
                     new_session_id = msg.session_id
