@@ -116,10 +116,13 @@ def main() -> None:
 
         infra_logger.info("Resuming %d interrupted generation(s)", len(interrupted))
 
+        RESUME_TIMEOUT = 120  # seconds — kill resume if it takes longer
+
         async def _resume_chat(entry: dict) -> None:
             cid = entry["chat_id"]
             tid = entry["thread_id"]
             uid = entry["user_id"]
+            tg_thread_id = tid or None
             try:
                 session_id = get_session_id(cid, tid, uid)
                 if not session_id:
@@ -127,22 +130,33 @@ def main() -> None:
                         "No session for chat=%d thread=%d user=%d, skipping resume",
                         cid, tid, uid,
                     )
+                    # Still notify the user
+                    try:
+                        await bot.send_message(
+                            chat_id=cid,
+                            text="\u26a0\ufe0f Bot restarted — no session to resume. Send a new message to continue.",
+                            message_thread_id=tg_thread_id,
+                        )
+                    except Exception:
+                        pass
                     return
                 resume_msg = (
-                    "[System: The bot just restarted. Continue where you left off "
-                    "and deliver the result to the user.]"
+                    "[System: The bot just restarted. Your previous response was "
+                    "interrupted. Briefly summarize what you were doing and ask "
+                    "the user if they want you to continue.]"
                 )
                 chat_working_dir = get_working_dir(cid)
                 result_text = None
+                stop_event = asyncio.Event()
                 async for event in stream_claude(resume_msg, cid, tid, uid,
-                                                 working_dir=chat_working_dir):
+                                                 working_dir=chat_working_dir,
+                                                 stop_event=stop_event):
                     if event.get("type") == "result":
                         result_text = event.get("text", "")
                     elif event.get("type") == "error":
                         result_text = event.get("text", "")
                 if result_text:
                     md_chunks = split_message(result_text)
-                    tg_thread_id = tid or None
                     for md_chunk in md_chunks:
                         rendered = renderer.render(md_chunk)
                         try:
@@ -166,9 +180,41 @@ def main() -> None:
                 infra_logger.error(
                     "Failed to resume chat=%d thread=%d user=%d: %s", cid, tid, uid, e
                 )
+                try:
+                    await bot.send_message(
+                        chat_id=cid,
+                        text="\u26a0\ufe0f Bot restarted — couldn't resume your previous task. Send a new message to continue.",
+                        message_thread_id=tg_thread_id,
+                    )
+                except Exception:
+                    pass
 
-        await asyncio.gather(*[_resume_chat(e) for e in interrupted.values()])
-        infra_logger.info("Restart recovery complete")
+        async def _resume_with_timeout(entry: dict) -> None:
+            try:
+                await asyncio.wait_for(_resume_chat(entry), timeout=RESUME_TIMEOUT)
+            except asyncio.TimeoutError:
+                cid = entry["chat_id"]
+                tid = entry["thread_id"]
+                uid = entry["user_id"]
+                infra_logger.error(
+                    "Resume timed out after %ds for chat=%d thread=%d user=%d",
+                    RESUME_TIMEOUT, cid, tid, uid,
+                )
+                try:
+                    await bot.send_message(
+                        chat_id=cid,
+                        text="\u26a0\ufe0f Bot restarted — resume timed out. Send a new message to continue.",
+                        message_thread_id=tid or None,
+                    )
+                except Exception:
+                    pass
+
+        # Run resumes in background so the bot can accept new messages immediately
+        async def _run_resumes() -> None:
+            await asyncio.gather(*[_resume_with_timeout(e) for e in interrupted.values()])
+            infra_logger.info("Restart recovery complete")
+
+        asyncio.create_task(_run_resumes())
 
     async def post_shutdown(application: Application) -> None:
         """Clean up SDK sessions on shutdown."""
