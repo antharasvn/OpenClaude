@@ -73,3 +73,21 @@ def clear_session(chat_id: int, thread_id: int, user_id: int) -> None:
     if key in sessions:
         del sessions[key]
         save_sessions(sessions)
+    _usage_cache.pop(key, None)
+
+
+# ---------------------------------------------------------------------------
+# Ephemeral usage cache (lost on restart — that's fine)
+# ---------------------------------------------------------------------------
+
+_usage_cache: dict[str, dict] = {}
+
+
+def set_usage(chat_id: int, thread_id: int, user_id: int, data: dict) -> None:
+    """Store usage data for a session."""
+    _usage_cache[session_key(chat_id, thread_id, user_id)] = data
+
+
+def get_usage(chat_id: int, thread_id: int, user_id: int) -> dict | None:
+    """Get usage data for a session, or None if not available."""
+    return _usage_cache.get(session_key(chat_id, thread_id, user_id))

@@ -16,7 +16,7 @@ from bot.config import (
     get_thread_id,
 )
 from bot.logging_setup import logger, get_workspace_logger
-from bot.sessions import session_key, get_session_id, load_sessions, clear_session
+from bot.sessions import session_key, get_session_id, load_sessions, clear_session, set_usage
 from bot.workspaces import ensure_workspace, get_working_dir
 from bot.renderer import TelegramRenderer, split_message
 from bot.claude import stream_claude, finished_line, format_tool_status, _active_procs
@@ -352,7 +352,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     live_msg = None
     live_text = ""
     last_live_edit: float = 0
-    LIVE_EDIT_INTERVAL = 2.0
+    LIVE_EDIT_INTERVAL = 1.0
 
     async def _update_status(new_active: str = "") -> None:
         nonlocal status_msg, current_active, last_edit_time
@@ -407,7 +407,6 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     response_text = None
     stopped = False
     chat_working_dir = get_working_dir(chat_id)
-    in_tool = False
     skey = session_key(chat_id, thread_id, session_user_id)
 
     async with _get_user_lock(session_user_id):
@@ -421,27 +420,26 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 etype = event.get("type")
 
                 if etype == "tool_use":
-                    in_tool = True
-                    live_text = ""
                     if show_tools:
                         if current_active:
                             finished_lines.append(finished_line(current_active))
                         await _update_status(event["status"])
 
                 elif etype == "tool_result":
-                    in_tool = False
                     if show_tools:
                         if current_active:
                             finished_lines.append(finished_line(current_active))
                             await _update_status("")
 
                 elif etype == "partial":
-                    if not in_tool:
-                        live_text += event["text"]
-                        await _update_live(live_text)
+                    live_text += event["text"]
+                    await _update_live(live_text)
 
                 elif etype == "result":
                     response_text = event.get("text", "")
+                    usage_data = {k: event.get(k) for k in ("usage", "cost", "num_turns") if event.get(k) is not None}
+                    if usage_data:
+                        set_usage(chat_id, thread_id, session_user_id, usage_data)
 
                 elif etype == "error":
                     response_text = event.get("text", "An error occurred.")
@@ -451,6 +449,10 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
                 elif etype == "stopped":
                     stopped = True
+
+            # Final flush of any buffered live text
+            if live_text:
+                await _update_live(live_text)
         finally:
             _stop_events.pop(skey, None)
 

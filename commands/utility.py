@@ -1,4 +1,4 @@
-"""Utility commands: /model, /whoami, /files, /clean."""
+"""Utility commands: /model, /whoami, /files, /clean, /context, /compact."""
 
 import html
 import shutil
@@ -10,6 +10,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from bot.config import ADMIN_USER_ID, is_authorized, get_claude_model, set_claude_model, get_thread_id
 from bot.logging_setup import logger
 from bot.renderer import split_message
+from bot.sessions import get_session_id, get_usage
 from bot.workspaces import ensure_workspace
 
 COMMANDS = [
@@ -17,6 +18,8 @@ COMMANDS = [
     ("whoami", "Show what the bot knows about you"),
     ("files", "List files in your workspace"),
     ("clean", "Clean uploaded files"),
+    ("context", "Show context usage for current conversation"),
+    ("compact", "Compact current conversation to free context"),
 ]
 
 
@@ -174,9 +177,101 @@ async def cmd_clean(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                  user.id, chat_id, file_count, size_str)
 
 
+async def cmd_context(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show context/token usage for the current conversation."""
+    user = update.effective_user
+    if not is_authorized(user.id):
+        return
+
+    chat_id = update.effective_chat.id
+    thread_id = get_thread_id(update)
+    session_uid = user.id if update.effective_chat.type == "private" else 0
+    tg_thread_id = thread_id or None
+
+    usage = get_usage(chat_id, thread_id, session_uid)
+    if not usage:
+        await update.message.reply_text(
+            "No usage data yet \u2014 send a message first.",
+            message_thread_id=tg_thread_id,
+        )
+        return
+
+    lines = ["<b>Context Usage</b>", ""]
+
+    usage_dict = usage.get("usage")
+    if isinstance(usage_dict, dict):
+        input_tok = usage_dict.get("input_tokens") or usage_dict.get("inputTokens")
+        cache_tok = (usage_dict.get("cache_read_input_tokens")
+                     or usage_dict.get("cacheReadInputTokens"))
+        output_tok = usage_dict.get("output_tokens") or usage_dict.get("outputTokens")
+        if input_tok is not None:
+            lines.append(f"<b>Input tokens:</b> {input_tok:,}")
+        if cache_tok is not None:
+            lines.append(f"<b>Cached tokens:</b> {cache_tok:,}")
+        if output_tok is not None:
+            lines.append(f"<b>Output tokens:</b> {output_tok:,}")
+
+        # Per-model breakdown (subprocess result may have modelUsage)
+        model_usage = usage_dict.get("modelUsage")
+        if isinstance(model_usage, dict):
+            for model_name, mu in model_usage.items():
+                ctx_window = mu.get("contextWindow")
+                if ctx_window:
+                    lines.append(f"<b>Context window ({html.escape(model_name)}):</b> {ctx_window:,}")
+
+    cost = usage.get("cost")
+    if cost is not None:
+        lines.append(f"<b>Cost:</b> ${cost:.4f}")
+
+    num_turns = usage.get("num_turns")
+    if num_turns is not None:
+        lines.append(f"<b>Turns:</b> {num_turns}")
+
+    sid = get_session_id(chat_id, thread_id, session_uid)
+    if sid:
+        lines.extend(["", f"<b>Session:</b> <code>{sid[:16]}...</code>"])
+
+    await update.message.reply_text(
+        "\n".join(lines),
+        parse_mode=ParseMode.HTML,
+        message_thread_id=tg_thread_id,
+    )
+
+
+async def cmd_compact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Compact the current conversation to free context."""
+    user = update.effective_user
+    if not is_authorized(user.id):
+        return
+
+    chat_id = update.effective_chat.id
+    thread_id = get_thread_id(update)
+    session_uid = user.id if update.effective_chat.type == "private" else 0
+    tg_thread_id = thread_id or None
+
+    sid = get_session_id(chat_id, thread_id, session_uid)
+    if not sid:
+        await update.message.reply_text(
+            "No active session to compact.",
+            message_thread_id=tg_thread_id,
+        )
+        return
+
+    await update.message.reply_text(
+        "Compacting conversation...",
+        message_thread_id=tg_thread_id,
+    )
+
+    # Lazy import to avoid circular dependency (handlers imports from commands.config)
+    from bot.handlers import run_with_streaming
+    await run_with_streaming(update, context, chat_id, thread_id, user.id, "/compact")
+
+
 def register(app: Application) -> None:
     """Register utility command handlers."""
     app.add_handler(CommandHandler("model", cmd_model))
     app.add_handler(CommandHandler("whoami", cmd_whoami))
     app.add_handler(CommandHandler("files", cmd_files))
     app.add_handler(CommandHandler("clean", cmd_clean))
+    app.add_handler(CommandHandler("context", cmd_context))
+    app.add_handler(CommandHandler("compact", cmd_compact))

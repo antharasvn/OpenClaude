@@ -210,7 +210,10 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                         sdk_session.session_id = new_session_id
                         logger.info("Session updated for user %d: %s", user_id, new_session_id)
                     ws_log.info("Result \u2014 session=%s, len=%d", new_session_id, len(result_text))
-                    yield {"type": "result", "text": result_text, "session_id": new_session_id}
+                    yield {"type": "result", "text": result_text, "session_id": new_session_id,
+                           "usage": getattr(msg, "usage", None),
+                           "cost": getattr(msg, "total_cost_usd", None),
+                           "num_turns": getattr(msg, "num_turns", None)}
 
         except Exception as e:
             err_str = str(e)
@@ -377,7 +380,10 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
                         set_session_id(chat_id, thread_id, user_id, new_session_id)
                         logger.info("Session updated for user %d: %s", user_id, new_session_id)
                     ws_log.info("Result \u2014 session=%s, len=%d", new_session_id, len(result_text or ""))
-                    yield {"type": "result", "text": result_text, "session_id": new_session_id}
+                    yield {"type": "result", "text": result_text, "session_id": new_session_id,
+                           "usage": event.get("usage"),
+                           "cost": event.get("total_cost_usd"),
+                           "num_turns": event.get("num_turns")}
         finally:
             _active_procs.pop(skey, None)
 
