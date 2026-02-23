@@ -20,17 +20,6 @@ You have access to these tools when invoked via the Telegram bot:
 | `Task` | Run a sub-agent for complex tasks |
 | `Skill` | Execute predefined skill scripts |
 
-## Tool Usage Rules
-
-- **Always use timeouts** for `WebFetch`, `WebSearch`, and `Task` (agents) — they can hang for several minutes and block the bot.
-  - `WebSearch` — run via `Bash` with `timeout 30` if you need to limit it
-  - `WebFetch` — **has no timeout**, never use directly. Instead: `Bash` + `pinchtab "<url>"` or `curl --max-time 15`
-  - `Task` (agents) — always set a reasonable `timeout` in `TaskOutput`
-- **pinchtab is the default browser** (`/usr/local/bin/pinchtab`). Use via `Bash`: `pinchtab "<url>"`. Supports JS and page rendering. AppArmor is disabled, Chrome is installed.
-  - pinchtab runs as an HTTP API server on `localhost:3000`. Chrome runs separately on port 9222.
-  - To get page text: `pinchtab-fetch "<url>"` (wrapper script)
-  - API: `POST /navigate`, `GET /text`, `GET /snapshot`, `POST /click`, `POST /type`, `POST /screenshot`
-
 ## Skills
 
 ### create-skill (template) — READ FIRST

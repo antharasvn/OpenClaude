@@ -135,7 +135,18 @@ The first user in ALLOWED_USERS is the **admin**. The environment variable
 
 ## Tool Usage
 
-For all tool details, timeouts, browser usage, SSH access, and available skills, see **`TOOLS.md`**.
+For all tool details, SSH access, and available skills, see **`TOOLS.md`**.
+
+### Timeouts & Browser
+
+- **Always use timeouts** for `WebFetch`, `WebSearch`, and `Task` (agents) — they can hang for several minutes and block the bot.
+  - `WebSearch` — run via `Bash` with `timeout 30` if you need to limit it
+  - `WebFetch` — **has no timeout**, never use directly. Instead: `Bash` + `pinchtab "<url>"` or `curl --max-time 15`
+  - `Task` (agents) — always set a reasonable `timeout` in `TaskOutput`
+- **pinchtab is the default browser** (`/usr/local/bin/pinchtab`). Use via `Bash`: `pinchtab "<url>"`. Supports JS and page rendering. AppArmor is disabled, Chrome is installed.
+  - pinchtab runs as an HTTP API server on `localhost:3000`. Chrome runs separately on port 9222.
+  - To get page text: `pinchtab-fetch "<url>"` (wrapper script)
+  - API: `POST /navigate`, `GET /text`, `GET /snapshot`, `POST /click`, `POST /type`, `POST /screenshot`
 
 ### Creating Skills
 Before creating any new skill, **read `skills/create-skill/SKILL.md`** for the template and mandatory safety rules. Key points:
