@@ -298,14 +298,19 @@ async def cmd_compact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         )
         return
 
-    await update.message.reply_text(
-        "Compacting conversation...",
+    status_msg = await update.message.reply_text(
+        "Compacting conversation\u2026",
         message_thread_id=tg_thread_id,
     )
 
     # Lazy import to avoid circular dependency (handlers imports from commands.config)
     from bot.handlers import run_with_streaming
     await run_with_streaming(update, context, chat_id, thread_id, user.id, "/compact")
+
+    try:
+        await status_msg.edit_text("Compaction complete.")
+    except Exception:
+        pass
 
 
 def register(app: Application) -> None:
