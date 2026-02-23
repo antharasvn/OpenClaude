@@ -376,6 +376,7 @@ async def cmd_download(ws):
             url_path = pluginfile_url.split("?")[0]
             filename = urllib.parse.unquote(url_path.split("/")[-1]) or filename
 
+        filename = os.path.basename(filename)
         filepath = os.path.join(out_dir, filename)
         data = resp.read()
         with open(filepath, "wb") as f:
