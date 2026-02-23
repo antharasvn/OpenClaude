@@ -29,23 +29,23 @@ Your job is to **write** to memory when appropriate.
 
 | Tier | File | Purpose |
 |---|---|---|
-| 1 | `memory/MEMORY.md` | Who the user is — preferences, facts, personal context |
-| 2 | `memory/<topic>.md` | Cross-session technical knowledge — conventions, recurring bugs, project patterns |
-| 3 | `memory/t{thread_id}/YYYY-MM-DD/<topic>.md` | What happened in sessions — decisions, outcomes, tasks |
+| 1 | `memory/MEMORY.md` | Workspace-wide knowledge — user preferences, cross-topic facts |
+| 2 | `memory/t{TID}/MEMORY.md` | Per-topic persistent knowledge — project context, conventions, recurring patterns |
+| 3 | `memory/t{TID}/YYYY-MM-DD/<topic>.md` | Daily session logs — decisions, outcomes, tasks |
 
-### Tier 1 — `memory/MEMORY.md` (user knowledge)
+### Tier 1 — `memory/MEMORY.md` (workspace-wide knowledge)
 - User preferences, communication style, personal facts
-- **Only things about the person, not about projects or code**
-- Do NOT put decisions, approaches, or technical notes here
+- Cross-topic knowledge that applies everywhere
 - Do NOT duplicate info already in `USER.md` or `IDENTITY.md`
 
-### Tier 2 — `memory/<topic>.md` (persistent technical knowledge)
-- `conventions.md` — coding patterns, style choices, project-specific rules
-- `bugs.md` — recurring bugs and root causes, so future sessions don't repeat them
-- Create new topic files as needed for stable, reusable knowledge
-- These are permanent files, not date-tied
+### Tier 2 — `memory/t{TID}/MEMORY.md` (per-topic persistent knowledge)
+- Project context, conventions, recurring bugs specific to this topic/thread
+- Each forum topic accumulates its own knowledge across sessions
+- For `t0` (private chats & supergroup General): symlinked to `memory/MEMORY.md` — same file
+- Always write topic-specific knowledge to `memory/t{TID}/MEMORY.md`
+- Always write workspace-wide knowledge (about the user, cross-topic) to `memory/MEMORY.md`
 
-### Tier 3 — `memory/t{thread_id}/YYYY-MM-DD/<topic>.md` (daily logs)
+### Tier 3 — `memory/t{TID}/YYYY-MM-DD/<topic>.md` (daily logs)
 - Named topic files inside a daily folder for each thread
 - Decisions made, approaches chosen, tasks completed, session outcomes
 - Created via `/save <filename>` or written proactively at end of a substantive session

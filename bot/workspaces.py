@@ -53,6 +53,13 @@ def ensure_workspace(chat_id: int) -> Path:
     if mem_template.exists() and not mem_dst.exists():
         shutil.copy2(mem_template, mem_dst)
 
+    # Symlink t0/MEMORY.md → ../MEMORY.md so Claude uses a uniform write path
+    t0_dir = mem_dir / "t0"
+    t0_dir.mkdir(exist_ok=True)
+    t0_mem = t0_dir / "MEMORY.md"
+    if not t0_mem.exists():
+        t0_mem.symlink_to("../MEMORY.md")
+
     if is_new:
         logger.info("Created workspace for chat %d at %s", chat_id, workspace)
     return workspace

@@ -25,34 +25,48 @@ COMMANDS = [
 ]
 
 
-def _get_shared_memory_path(chat_id: int) -> Path:
-    """Return path to shared long-term memory file."""
-    workspace = ensure_workspace(chat_id)
-    return workspace / "memory" / "MEMORY.md"
-
-
 async def cmd_memory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Show contents of long-term memory (MEMORY.md)."""
+    """Show contents of workspace memory and topic memory."""
     user = update.effective_user
     if not is_authorized(user.id):
         return
 
     chat_id = update.effective_chat.id
     thread_id = get_thread_id(update)
+    workspace = ensure_workspace(chat_id)
 
-    mem_file = _get_shared_memory_path(chat_id)
+    sections = []
+
+    # Workspace memory
+    mem_file = workspace / "memory" / "MEMORY.md"
     if mem_file.exists():
         content = mem_file.read_text().strip()
         if content:
-            text = (
-                f"<b>Long-term memory</b> (MEMORY.md):\n"
+            sections.append(
+                f"<b>Workspace memory</b> (MEMORY.md):\n"
                 f"<pre>{html.escape(content[:3000])}</pre>"
             )
         else:
-            text = "<b>Long-term memory</b> (MEMORY.md): <i>empty</i>"
+            sections.append("<b>Workspace memory</b> (MEMORY.md): <i>empty</i>")
     else:
-        text = "<b>Long-term memory</b>: <i>not created yet</i>"
+        sections.append("<b>Workspace memory</b>: <i>not created yet</i>")
 
+    # Topic memory (only show separately for non-zero TID)
+    if thread_id != 0:
+        topic_mem = workspace / "memory" / f"t{thread_id}" / "MEMORY.md"
+        if topic_mem.exists():
+            content = topic_mem.read_text().strip()
+            if content:
+                sections.append(
+                    f"<b>Topic memory</b> (t{thread_id}/MEMORY.md):\n"
+                    f"<pre>{html.escape(content[:3000])}</pre>"
+                )
+            else:
+                sections.append(f"<b>Topic memory</b> (t{thread_id}/MEMORY.md): <i>empty</i>")
+        else:
+            sections.append(f"<b>Topic memory</b> (t{thread_id}): <i>not created yet</i>")
+
+    text = "\n\n".join(sections)
     tg_thread = thread_id or None
     for chunk in split_message(text):
         try:
@@ -164,7 +178,7 @@ async def cmd_save(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def cmd_remember(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Save a note to long-term shared memory (MEMORY.md)."""
+    """Save a note to memory. Topic memory if in a topic, workspace memory otherwise."""
     user = update.effective_user
     if not is_authorized(user.id):
         return
@@ -176,7 +190,17 @@ async def cmd_remember(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     chat_id = update.effective_chat.id
     thread_id = get_thread_id(update)
-    mem = _get_shared_memory_path(chat_id)
+    workspace = ensure_workspace(chat_id)
+
+    if thread_id != 0:
+        # Write to topic memory
+        mem = workspace / "memory" / f"t{thread_id}" / "MEMORY.md"
+        label = f"topic memory (t{thread_id})"
+    else:
+        # Write to workspace memory
+        mem = workspace / "memory" / "MEMORY.md"
+        label = "workspace memory"
+
     mem.parent.mkdir(parents=True, exist_ok=True)
 
     date = datetime.now().strftime("%Y-%m-%d")
@@ -186,7 +210,7 @@ async def cmd_remember(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         f.write(entry)
 
     await update.message.reply_text(
-        "Saved to long-term memory.",
+        f"Saved to {label}.",
         message_thread_id=thread_id or None,
     )
 
@@ -208,9 +232,9 @@ async def cmd_forget(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     prompt = (
         f"[System command: /forget]\n"
         f"The user wants you to remove the following from your memory files: \"{what}\"\n\n"
-        f"Read your memory files (memory/MEMORY.md, memory/t{thread_id}/**/*.md) "
-        f"and remove any entries matching what the user described. "
-        f"Use the Edit tool to surgically remove only the relevant lines. "
+        f"Read your memory files (memory/MEMORY.md, memory/t{thread_id}/MEMORY.md, "
+        f"memory/t{thread_id}/**/*.md) and remove any entries matching what the user "
+        f"described. Use the Edit tool to surgically remove only the relevant lines. "
         f"Then confirm what you removed."
     )
 
