@@ -351,6 +351,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
     live_msg = None
     live_text = ""
+    flushed_text = ""  # text already rendered into a finalized message
     last_live_edit: float = 0
     LIVE_EDIT_INTERVAL = 1.0
 
@@ -431,6 +432,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                             )
                         except Exception:
                             pass
+                        flushed_text = event["text"]
                         live_msg = None
                         live_text = ""
 
@@ -446,6 +448,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                             )
                         except Exception:
                             pass
+                        flushed_text = live_text
                         live_msg = None
                         live_text = ""
                     if show_tools:
@@ -512,7 +515,10 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 pass
         return
 
-    if live_msg and streaming:
+    # Skip sending if the text was already flushed into a finalized message
+    if flushed_text and response_text == flushed_text:
+        pass
+    elif live_msg and streaming:
         try:
             rendered = renderer.render(response_text)
             if len(rendered) <= TELEGRAM_MAX_LENGTH:
