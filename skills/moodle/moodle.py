@@ -77,8 +77,15 @@ async def login(ws):
     await navigate(ws, "https://moodle.innopolis.university/login/index.php", 4, wait=4)
     sso_href = await js(ws, """
     (function() {
+        // First: look for oauth2 link (most specific)
         for(var a of document.querySelectorAll('a')) {
-            if(a.href && (a.href.includes('oauth2') || a.textContent.includes('Innopolis'))) {
+            if(a.href && a.href.includes('oauth2')) {
+                return a.href;
+            }
+        }
+        // Fallback: Innopolis text but must have auth in href
+        for(var a of document.querySelectorAll('a')) {
+            if(a.href && a.textContent.includes('Innopolis') && a.href.includes('auth')) {
                 return a.href;
             }
         }
