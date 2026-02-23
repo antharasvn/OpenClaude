@@ -419,7 +419,43 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                                              real_user_id=user_id):
                 etype = event.get("type")
 
-                if etype == "tool_use":
+                if etype == "text_block":
+                    # Completed text block (before tool use) — flush live
+                    if live_msg and live_text:
+                        try:
+                            rendered = renderer.render(event["text"])
+                            if len(rendered) <= TELEGRAM_MAX_LENGTH:
+                                await live_msg.edit_text(
+                                    rendered,
+                                    parse_mode=ParseMode.HTML,
+                                    disable_web_page_preview=True,
+                                )
+                            else:
+                                await live_msg.delete()
+                                await send_rendered(update, event["text"], context)
+                        except Exception:
+                            pass
+                        live_msg = None
+                        live_text = ""
+
+                elif etype == "tool_use":
+                    # Flush any remaining live text before showing tool status
+                    if live_msg and live_text:
+                        try:
+                            rendered = renderer.render(live_text)
+                            if len(rendered) <= TELEGRAM_MAX_LENGTH:
+                                await live_msg.edit_text(
+                                    rendered,
+                                    parse_mode=ParseMode.HTML,
+                                    disable_web_page_preview=True,
+                                )
+                            else:
+                                await live_msg.delete()
+                                await send_rendered(update, live_text, context)
+                        except Exception:
+                            pass
+                        live_msg = None
+                        live_text = ""
                     if show_tools:
                         if current_active:
                             finished_lines.append(finished_line(current_active))

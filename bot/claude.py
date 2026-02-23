@@ -193,7 +193,8 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                         elif isinstance(block, ToolResultBlock):
                             yield {"type": "tool_result"}
                         elif isinstance(block, TextBlock):
-                            pass
+                            if block.text:
+                                yield {"type": "text_block", "text": block.text}
 
                 elif isinstance(msg, StreamEvent) and verbose:
                     delta = msg.event.get("delta", {})
