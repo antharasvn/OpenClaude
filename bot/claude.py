@@ -382,7 +382,7 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
                     if new_session_id:
                         set_session_id(chat_id, thread_id, user_id, new_session_id)
                         logger.info("Session updated for user %d: %s", user_id, new_session_id)
-                    ws_log.info("Result \u2014 session=%s, len=%d", new_session_id, len(result_text or ""))
+                    ws_log.info("Result \u2014 session=%s, len=%d, keys=%s", new_session_id, len(result_text or ""), sorted(event.keys()))
                     yield {"type": "result", "text": result_text, "session_id": new_session_id,
                            "usage": event.get("usage"),
                            "cost": event.get("total_cost_usd"),
