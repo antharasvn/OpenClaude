@@ -213,7 +213,9 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                     yield {"type": "result", "text": result_text, "session_id": new_session_id,
                            "usage": getattr(msg, "usage", None),
                            "cost": getattr(msg, "total_cost_usd", None),
-                           "num_turns": getattr(msg, "num_turns", None)}
+                           "num_turns": getattr(msg, "num_turns", None),
+                           "duration_ms": getattr(msg, "duration_ms", None),
+                           "duration_api_ms": getattr(msg, "duration_api_ms", None)}
 
         except Exception as e:
             err_str = str(e)
@@ -383,7 +385,9 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
                     yield {"type": "result", "text": result_text, "session_id": new_session_id,
                            "usage": event.get("usage"),
                            "cost": event.get("total_cost_usd"),
-                           "num_turns": event.get("num_turns")}
+                           "num_turns": event.get("num_turns"),
+                           "duration_ms": event.get("duration_ms"),
+                           "duration_api_ms": event.get("duration_api_ms")}
         finally:
             _active_procs.pop(skey, None)
 

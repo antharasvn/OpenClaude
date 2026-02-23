@@ -13,6 +13,14 @@ from bot.renderer import split_message
 from bot.sessions import get_session_id, get_usage
 from bot.workspaces import ensure_workspace
 
+# Known context window sizes for Claude models (tokens)
+_CONTEXT_WINDOWS: dict[str, int] = {
+    "claude-sonnet-4-20250514": 200_000,
+    "claude-opus-4-20250514": 200_000,
+    "claude-haiku-4-5-20251001": 200_000,
+}
+_DEFAULT_CONTEXT_WINDOW = 200_000
+
 COMMANDS = [
     ("model", "Show or switch the Claude model"),
     ("whoami", "Show what the bot knows about you"),
@@ -177,6 +185,31 @@ async def cmd_clean(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                  user.id, chat_id, file_count, size_str)
 
 
+def _context_bar(used: int, total: int, width: int = 20) -> str:
+    """Build a text progress bar: [========····] 42%"""
+    pct = min(used / total, 1.0) if total else 0
+    filled = round(pct * width)
+    bar = "\u2588" * filled + "\u2591" * (width - filled)
+    return f"[{bar}] {pct:.0%}"
+
+
+def _get_context_window(usage_dict: dict | None) -> int:
+    """Try to extract context window from modelUsage, fall back to default."""
+    if isinstance(usage_dict, dict):
+        model_usage = usage_dict.get("modelUsage")
+        if isinstance(model_usage, dict):
+            for mu in model_usage.values():
+                cw = mu.get("contextWindow")
+                if cw:
+                    return int(cw)
+    model = get_claude_model()
+    if model:
+        for key, size in _CONTEXT_WINDOWS.items():
+            if key in model or model in key:
+                return size
+    return _DEFAULT_CONTEXT_WINDOW
+
+
 async def cmd_context(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show context/token usage for the current conversation."""
     user = update.effective_user
@@ -196,28 +229,31 @@ async def cmd_context(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         )
         return
 
+    usage_dict = usage.get("usage")
+    ctx_window = _get_context_window(usage_dict)
+
     lines = ["<b>Context Usage</b>", ""]
 
-    usage_dict = usage.get("usage")
+    # Context window bar (input tokens = context consumed)
+    input_tok = None
+    cache_tok = None
+    output_tok = None
     if isinstance(usage_dict, dict):
         input_tok = usage_dict.get("input_tokens") or usage_dict.get("inputTokens")
         cache_tok = (usage_dict.get("cache_read_input_tokens")
                      or usage_dict.get("cacheReadInputTokens"))
         output_tok = usage_dict.get("output_tokens") or usage_dict.get("outputTokens")
-        if input_tok is not None:
-            lines.append(f"<b>Input tokens:</b> {input_tok:,}")
-        if cache_tok is not None:
-            lines.append(f"<b>Cached tokens:</b> {cache_tok:,}")
-        if output_tok is not None:
-            lines.append(f"<b>Output tokens:</b> {output_tok:,}")
 
-        # Per-model breakdown (subprocess result may have modelUsage)
-        model_usage = usage_dict.get("modelUsage")
-        if isinstance(model_usage, dict):
-            for model_name, mu in model_usage.items():
-                ctx_window = mu.get("contextWindow")
-                if ctx_window:
-                    lines.append(f"<b>Context window ({html.escape(model_name)}):</b> {ctx_window:,}")
+    if input_tok is not None:
+        bar = _context_bar(input_tok, ctx_window)
+        lines.append(f"<code>{bar}</code>")
+        lines.append(f"<b>Used:</b> {input_tok:,} / {ctx_window:,} tokens")
+        lines.append("")
+
+    if cache_tok is not None:
+        lines.append(f"<b>Cached:</b> {cache_tok:,}")
+    if output_tok is not None:
+        lines.append(f"<b>Output:</b> {output_tok:,}")
 
     cost = usage.get("cost")
     if cost is not None:
@@ -226,6 +262,11 @@ async def cmd_context(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     num_turns = usage.get("num_turns")
     if num_turns is not None:
         lines.append(f"<b>Turns:</b> {num_turns}")
+
+    duration_ms = usage.get("duration_ms")
+    if duration_ms is not None:
+        secs = duration_ms / 1000
+        lines.append(f"<b>Duration:</b> {secs:.1f}s")
 
     sid = get_session_id(chat_id, thread_id, session_uid)
     if sid:
