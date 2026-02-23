@@ -31,7 +31,7 @@ fi
 
 export SSHPASS="$VPS_PASSWORD"
 sshpass -e ssh \
-    -o StrictHostKeyChecking=no \
+    -o StrictHostKeyChecking=accept-new \
     -o ConnectTimeout=15 \
     -p "$VPS_PORT" \
     "${VPS_USER}@${VPS_HOST}" \

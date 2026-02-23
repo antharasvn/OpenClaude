@@ -24,6 +24,18 @@ from bot.sdk_session import (
 _active_procs: dict[str, asyncio.subprocess.Process] = {}
 
 
+def kill_active_proc(skey: str) -> bool:
+    """Kill the active subprocess for a session key. Returns True if killed."""
+    proc = _active_procs.pop(skey, None)
+    if proc and proc.returncode is None:
+        try:
+            proc.kill()
+            return True
+        except ProcessLookupError:
+            pass
+    return False
+
+
 def format_tool_status(tool_name: str, tool_input: dict) -> str:
     """Format a human-readable status line for an active tool call."""
     if tool_name == "Read":
@@ -176,7 +188,7 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
 
         try:
             await sdk_session.client.query(message)
-            sdk_session.last_activity = __import__("time").time()
+            sdk_session.last_activity = asyncio.get_event_loop().time()
 
             async for msg in sdk_session.client.receive_response():
                 if stop_event and stop_event.is_set():
@@ -234,6 +246,11 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                 await sdk_session.disconnect()
                 sdk_sessions.pop(skey, None)
                 yield {"type": "silent"}
+                return
+            # Stop event triggered — disconnect causes exception, treat as stopped
+            if stop_event and stop_event.is_set():
+                logger.info("SDK stream interrupted by /stop for user %d", user_id)
+                yield {"type": "stopped"}
                 return
             logger.exception("SDK streaming error")
             await sdk_session.disconnect()
@@ -399,8 +416,13 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
                            "duration_api_ms": event.get("duration_api_ms")}
         finally:
             _active_procs.pop(skey, None)
-
-        await proc.wait()
+            # Ensure process is terminated before waiting
+            if proc.returncode is None:
+                try:
+                    proc.kill()
+                except ProcessLookupError:
+                    pass
+            await proc.wait()
 
         if proc.returncode != 0:
             if proc.returncode < 0:

@@ -154,7 +154,7 @@ async def cmd_save(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if filename.endswith(".md"):
         filename = filename[:-3]
 
-    if not re.match(r'^[\w\-]+$', filename):
+    if not re.match(r'^[a-zA-Z0-9_-]+$', filename):
         await update.message.reply_text(
             "Filename must be alphanumeric (a-z, 0-9, -, _).",
             message_thread_id=get_thread_id(update) or None,

@@ -108,9 +108,10 @@ def get_context_pct(chat_id: int, thread_id: int, user_id: int) -> tuple[float, 
     usage = data.get("usage")
     if not isinstance(usage, dict):
         return None
+    # input_tokens already includes cached tokens; only add cache_creation
+    # (tokens written to cache for the first time, not counted in input_tokens)
     used = (
         (usage.get("input_tokens") or 0)
-        + (usage.get("cache_read_input_tokens") or 0)
         + (usage.get("cache_creation_input_tokens") or 0)
     )
     if used == 0:

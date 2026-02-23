@@ -19,7 +19,7 @@ from bot.logging_setup import logger, get_workspace_logger
 from bot.sessions import session_key, get_session_id, load_sessions, clear_session, set_usage, get_context_pct
 from bot.workspaces import ensure_workspace, get_working_dir
 from bot.renderer import TelegramRenderer, split_message
-from bot.claude import stream_claude, finished_line, format_tool_status, _active_procs
+from bot.claude import stream_claude, finished_line, format_tool_status, kill_active_proc
 from bot.sdk_session import sdk_sessions, SDKSession
 
 # Populated at startup via post_init callback
@@ -106,6 +106,8 @@ def get_reply_prefix(update: Update) -> str:
     if len(quoted) > 500:
         quoted = quoted[:500] + "…"
 
+    # Sanitize to reduce prompt injection risk from quoted text
+    quoted = quoted.replace("[", "(").replace("]", ")")
     return f'[User is replying to this message from {sender}:\n"{quoted}"]\n'
 
 
@@ -265,12 +267,7 @@ async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if sdk_session and sdk_session.connected:
         await sdk_session.disconnect()
 
-    proc = _active_procs.pop(skey, None)
-    if proc and proc.returncode is None:
-        try:
-            proc.kill()
-        except ProcessLookupError:
-            pass
+    kill_active_proc(skey)
 
     await update.message.reply_text(
         "Generation stopped.",
@@ -541,7 +538,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
     # Context usage warnings and auto-compact
     if not _is_compact:
-        ctx = get_context_pct(chat_id, thread_id, session_user_id)
+        sid = get_session_id(chat_id, thread_id, session_user_id)
+        ctx = get_context_pct(chat_id, thread_id, session_user_id) if sid else None
         if ctx:
             pct, used, window = ctx
             if pct >= 0.8:
