@@ -85,11 +85,14 @@ class SDKSession:
 
 async def cleanup_idle_sessions():
     """Periodic task to disconnect idle SDK sessions."""
+    from bot.streams import load_active_streams
     while True:
         await asyncio.sleep(60)
         now = time.time()
+        active = load_active_streams()
         expired = [k for k, s in sdk_sessions.items()
-                   if now - s.last_activity > SDK_IDLE_TIMEOUT]
+                   if now - s.last_activity > SDK_IDLE_TIMEOUT
+                   and k not in active]
         for key in expired:
             session = sdk_sessions.pop(key)
             logger.info("Disconnecting idle SDK session: %s", key)

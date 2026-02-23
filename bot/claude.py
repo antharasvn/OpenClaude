@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 import shutil
+import time
 from pathlib import Path
 
 from bot.config import (
@@ -188,9 +189,11 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
 
         try:
             await sdk_session.client.query(message)
-            sdk_session.last_activity = asyncio.get_event_loop().time()
+            sdk_session.last_activity = time.time()
 
             async for msg in sdk_session.client.receive_response():
+                # Keep session alive during long tool invocations
+                sdk_session.last_activity = time.time()
                 if stop_event and stop_event.is_set():
                     logger.info("Stop event set — aborting SDK stream for user %d", user_id)
                     yield {"type": "stopped"}
