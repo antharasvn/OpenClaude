@@ -41,10 +41,19 @@ def _load_settings() -> dict:
 
 
 def _save_settings(settings: dict) -> None:
+    import os
+    import tempfile
+    f = _settings_file()
     try:
-        _settings_file().write_text(json.dumps(settings, indent=2))
-    except OSError as e:
-        logger.error("Failed to save chat settings: %s", e)
+        fd, tmp_path = tempfile.mkstemp(dir=f.parent, suffix=".tmp")
+        with os.fdopen(fd, "w") as fh:
+            json.dump(settings, fh, indent=2)
+        os.replace(tmp_path, f)
+    except OSError:
+        try:
+            f.write_text(json.dumps(settings, indent=2))
+        except OSError as e:
+            logger.error("Failed to save chat settings: %s", e)
 
 
 def _setting_key(chat_id: int, thread_id: int) -> str:
@@ -126,8 +135,11 @@ async def callback_stream(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if len(parts) != 4:
         return
     _, action, chat_id_str, thread_id_str = parts
-    chat_id = int(chat_id_str)
-    thread_id = int(thread_id_str)
+    try:
+        chat_id = int(chat_id_str)
+        thread_id = int(thread_id_str)
+    except ValueError:
+        return
 
     new_value = action == "on"
     _set_setting(chat_id, thread_id, "streaming", new_value)
@@ -186,8 +198,11 @@ async def callback_verbose(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if len(parts) != 4:
         return
     _, action, chat_id_str, thread_id_str = parts
-    chat_id = int(chat_id_str)
-    thread_id = int(thread_id_str)
+    try:
+        chat_id = int(chat_id_str)
+        thread_id = int(thread_id_str)
+    except ValueError:
+        return
 
     new_value = action == "on"
     _set_setting(chat_id, thread_id, "verbose", new_value)
@@ -250,8 +265,11 @@ async def callback_respond(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if len(parts) != 4:
         return
     _, mode, chat_id_str, thread_id_str = parts
-    chat_id = int(chat_id_str)
-    thread_id = int(thread_id_str)
+    try:
+        chat_id = int(chat_id_str)
+        thread_id = int(thread_id_str)
+    except ValueError:
+        return
 
     if mode not in ("mention", "all"):
         return

@@ -41,7 +41,7 @@ async def transcribe(audio_path: Path) -> str:
             )
             return response.results.channels[0].alternatives[0].transcript
 
-        text = await asyncio.to_thread(_transcribe)
+        text = await asyncio.wait_for(asyncio.to_thread(_transcribe), timeout=30)
         text = text.strip() if text else ""
         if not text:
             return "[Transcription produced no text]"

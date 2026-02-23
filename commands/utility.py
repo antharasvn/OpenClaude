@@ -99,7 +99,9 @@ async def cmd_files(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     workspace = ensure_workspace(chat_id)
 
     lines = []
-    for item in sorted(workspace.rglob("*")):
+    for item in sorted(workspace.rglob("*"), key=lambda p: str(p)):
+        if item.is_symlink():
+            continue
         rel = item.relative_to(workspace)
         if str(rel).startswith(".claude"):
             continue
@@ -110,7 +112,10 @@ async def cmd_files(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if item.is_dir():
             lines.append(f"{indent}{rel.name}/")
         else:
-            size = item.stat().st_size
+            try:
+                size = item.stat().st_size
+            except OSError:
+                continue
             if size > 1024 * 1024:
                 size_str = f"{size / 1024 / 1024:.1f}MB"
             elif size > 1024:

@@ -52,6 +52,9 @@ except ImportError:
 sdk_sessions: dict[str, "SDKSession"] = {}
 
 
+DISCONNECT_TIMEOUT = 10  # seconds
+
+
 class SDKSession:
     """Wraps a ClaudeSDKClient with lifecycle management."""
 
@@ -59,7 +62,6 @@ class SDKSession:
         self.client = None
         self.session_id: str | None = None
         self.last_activity: float = time.time()
-        self.lock: asyncio.Lock = asyncio.Lock()
         self.connected: bool = False
 
     async def ensure_connected(self, options) -> None:
@@ -72,10 +74,12 @@ class SDKSession:
         self.last_activity = time.time()
 
     async def disconnect(self) -> None:
-        """Disconnect the SDK client."""
+        """Disconnect the SDK client (with timeout to prevent hangs)."""
         if self.client:
             try:
-                await self.client.disconnect()
+                await asyncio.wait_for(self.client.disconnect(), timeout=DISCONNECT_TIMEOUT)
+            except asyncio.TimeoutError:
+                logger.warning("SDKSession disconnect timed out after %ds", DISCONNECT_TIMEOUT)
             except Exception as e:
                 logger.debug("SDKSession disconnect error: %s", e)
             finally:
@@ -87,21 +91,28 @@ async def cleanup_idle_sessions():
     """Periodic task to disconnect idle SDK sessions."""
     from bot.streams import load_active_streams
     while True:
-        await asyncio.sleep(60)
-        now = time.time()
-        active = load_active_streams()
-        expired = [k for k, s in sdk_sessions.items()
-                   if now - s.last_activity > SDK_IDLE_TIMEOUT
-                   and k not in active]
-        for key in expired:
-            session = sdk_sessions.pop(key)
-            logger.info("Disconnecting idle SDK session: %s", key)
-            await session.disconnect()
+        try:
+            await asyncio.sleep(60)
+            now = time.time()
+            active = load_active_streams()
+            expired = [k for k, s in sdk_sessions.items()
+                       if now - s.last_activity > SDK_IDLE_TIMEOUT
+                       and k not in active]
+            for key in expired:
+                session = sdk_sessions.pop(key, None)
+                if session:
+                    logger.info("Disconnecting idle SDK session: %s", key)
+                    await session.disconnect()
+        except Exception:
+            logger.exception("Error in cleanup_idle_sessions loop")
 
 
 async def shutdown_sdk_sessions():
     """Disconnect all SDK sessions (called on bot shutdown)."""
+    tasks = []
     for key, session in list(sdk_sessions.items()):
         logger.info("Shutting down SDK session: %s", key)
-        await session.disconnect()
+        tasks.append(session.disconnect())
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
     sdk_sessions.clear()

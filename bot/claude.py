@@ -190,13 +190,23 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
         try:
             await sdk_session.client.query(message)
             sdk_session.last_activity = time.time()
+            sdk_deadline = asyncio.get_event_loop().time() + CLAUDE_TIMEOUT
 
             async for msg in sdk_session.client.receive_response():
                 # Keep session alive during long tool invocations
                 sdk_session.last_activity = time.time()
+                sdk_deadline = asyncio.get_event_loop().time() + CLAUDE_TIMEOUT
                 if stop_event and stop_event.is_set():
                     logger.info("Stop event set — aborting SDK stream for user %d", user_id)
+                    await sdk_session.disconnect()
+                    sdk_sessions.pop(skey, None)
                     yield {"type": "stopped"}
+                    return
+                if asyncio.get_event_loop().time() > sdk_deadline:
+                    logger.error("SDK stream timed out after %ds for user %d", CLAUDE_TIMEOUT, user_id)
+                    await sdk_session.disconnect()
+                    sdk_sessions.pop(skey, None)
+                    yield {"type": "error", "text": "Claude took too long to respond. Try again or /new to start fresh."}
                     return
                 if msg is None:
                     continue
@@ -322,7 +332,7 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
         proc = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
             cwd=cwd,
             env=env,
             limit=10 * 1024 * 1024,
@@ -434,12 +444,10 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
                 if result_text is None:
                     yield {"type": "silent"}
                 return
-            stderr_data = await proc.stderr.read()
-            error_msg = stderr_data.decode().strip() if stderr_data else "Unknown error"
-            logger.error("Claude CLI error (rc=%d): %s", proc.returncode, error_msg)
-            ws_log.error("CLI error rc=%d: %s", proc.returncode, error_msg[:200])
+            logger.error("Claude CLI error (rc=%d)", proc.returncode)
+            ws_log.error("CLI error rc=%d", proc.returncode)
             if result_text is None:
-                yield {"type": "error", "text": f"Claude CLI error:\n{error_msg}"}
+                yield {"type": "error", "text": f"Claude CLI error (exit code {proc.returncode})"}
             return
 
         if result_text is None:

@@ -138,10 +138,13 @@ async def send_rendered(
             plain = re.sub(r"<[^>]+>", "", chunk)
             plain_chunks = split_message(plain)
             for pc in plain_chunks:
-                await update.message.reply_text(
-                    pc,
-                    message_thread_id=thread_id or None,
-                )
+                try:
+                    await update.message.reply_text(
+                        pc,
+                        message_thread_id=thread_id or None,
+                    )
+                except Exception:
+                    logger.warning("Plain text fallback also failed")
 
 
 # ---------------------------------------------------------------------------
@@ -184,12 +187,21 @@ async def cmd_new(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     thread_id = get_thread_id(update)
     session_uid = user.id if update.effective_chat.type == "private" else 0
+    skey = session_key(chat_id, thread_id, session_uid)
+
+    # Stop any active generation first (uses the same mechanism as /stop)
+    stop_event = _stop_events.get(skey)
+    if stop_event:
+        stop_event.set()
+        kill_active_proc(skey)
 
     # Disconnect SDK session if active
-    sdk_key = session_key(chat_id, thread_id, session_uid)
-    sdk_session = sdk_sessions.pop(sdk_key, None)
+    sdk_session = sdk_sessions.pop(skey, None)
     if sdk_session:
-        await sdk_session.disconnect()
+        try:
+            await asyncio.wait_for(sdk_session.disconnect(), timeout=5)
+        except (asyncio.TimeoutError, Exception):
+            pass
 
     clear_session(chat_id, thread_id, session_uid)
     await update.message.reply_text(
@@ -407,7 +419,20 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     chat_working_dir = get_working_dir(chat_id)
     skey = session_key(chat_id, thread_id, session_user_id)
 
-    async with _get_user_lock(session_user_id):
+    try:
+        await asyncio.wait_for(_get_user_lock(session_user_id).acquire(), timeout=300)
+    except asyncio.TimeoutError:
+        logger.error("Lock acquisition timed out for user %d in chat %d", session_user_id, chat_id)
+        try:
+            await update.message.reply_text(
+                "Still processing a previous request. Use /stop to cancel it.",
+                message_thread_id=tg_thread_id,
+            )
+        except Exception:
+            pass
+        return
+
+    try:
         stop_event = asyncio.Event()
         _stop_events[skey] = stop_event
         try:
@@ -483,6 +508,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 await _update_live(live_text)
         finally:
             _stop_events.pop(skey, None)
+    finally:
+        _get_user_lock(session_user_id).release()
 
     # Clean up status message
     if status_msg:
@@ -749,11 +776,12 @@ def _normalize_image(path: Path) -> Path:
             # Re-save as JPEG to ensure valid format
             new_path = path.with_suffix(".jpg")
             img.save(new_path, format="JPEG", quality=85, optimize=True)
-            if new_path != path:
-                path.unlink(missing_ok=True)
             # If still too large, reduce quality further
             if new_path.stat().st_size > _MAX_IMAGE_BYTES:
                 img.save(new_path, format="JPEG", quality=60, optimize=True)
+            # Delete original only after new file is confirmed written
+            if new_path != path:
+                path.unlink(missing_ok=True)
             return new_path
     except Exception as e:
         logger.warning("Image normalization failed for %s: %s", path, e)
@@ -796,7 +824,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     file = await context.bot.get_file(photo.file_id)
     await file.download_to_drive(dest)
-    dest = _normalize_image(dest)
+    dest = await asyncio.get_event_loop().run_in_executor(None, _normalize_image, dest)
 
     caption = update.message.caption or ""
     claude_msg = f"[Photo received: {dest.relative_to(workspace)}]"
