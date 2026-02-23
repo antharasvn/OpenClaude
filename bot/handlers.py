@@ -437,7 +437,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
                 elif etype == "result":
                     response_text = event.get("text", "")
-                    usage_data = {k: event.get(k) for k in ("usage", "cost", "num_turns", "duration_ms", "duration_api_ms", "model_usage") if event.get(k) is not None}
+                    usage_data = {k: event.get(k) for k in ("usage", "cost", "num_turns", "duration_ms", "duration_api_ms") if event.get(k) is not None}
                     if usage_data:
                         set_usage(chat_id, thread_id, session_user_id, usage_data)
 

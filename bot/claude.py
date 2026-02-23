@@ -195,17 +195,12 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                         elif isinstance(block, TextBlock):
                             pass
 
-                elif isinstance(msg, StreamEvent):
-                    # Log non-content stream events to discover available fields
-                    raw = msg.event if hasattr(msg, "event") else {}
-                    if isinstance(raw, dict) and raw.get("type") not in ("content_block_delta", "content_block_start", "content_block_stop"):
-                        ws_log.info("StreamEvent type=%s keys=%s", raw.get("type"), sorted(raw.keys()))
-                    if verbose:
-                        delta = msg.event.get("delta", {})
-                        if delta.get("type") == "text_delta":
-                            chunk = delta.get("text", "")
-                            if chunk:
-                                yield {"type": "partial", "text": chunk}
+                elif isinstance(msg, StreamEvent) and verbose:
+                    delta = msg.event.get("delta", {})
+                    if delta.get("type") == "text_delta":
+                        chunk = delta.get("text", "")
+                        if chunk:
+                            yield {"type": "partial", "text": chunk}
 
                 elif isinstance(msg, ResultMessage):
                     new_session_id = msg.session_id
@@ -220,8 +215,7 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                            "cost": getattr(msg, "total_cost_usd", None),
                            "num_turns": getattr(msg, "num_turns", None),
                            "duration_ms": getattr(msg, "duration_ms", None),
-                           "duration_api_ms": getattr(msg, "duration_api_ms", None),
-                           "model_usage": None}
+                           "duration_api_ms": getattr(msg, "duration_api_ms", None)}
 
         except Exception as e:
             err_str = str(e)
@@ -387,14 +381,13 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
                     if new_session_id:
                         set_session_id(chat_id, thread_id, user_id, new_session_id)
                         logger.info("Session updated for user %d: %s", user_id, new_session_id)
-                    ws_log.info("Result \u2014 session=%s, len=%d, keys=%s", new_session_id, len(result_text or ""), sorted(event.keys()))
+                    ws_log.info("Result \u2014 session=%s, len=%d", new_session_id, len(result_text or ""))
                     yield {"type": "result", "text": result_text, "session_id": new_session_id,
                            "usage": event.get("usage"),
                            "cost": event.get("total_cost_usd"),
                            "num_turns": event.get("num_turns"),
                            "duration_ms": event.get("duration_ms"),
-                           "duration_api_ms": event.get("duration_api_ms"),
-                           "model_usage": event.get("modelUsage")}
+                           "duration_api_ms": event.get("duration_api_ms")}
         finally:
             _active_procs.pop(skey, None)
 

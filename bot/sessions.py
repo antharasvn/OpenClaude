@@ -115,13 +115,6 @@ def get_context_pct(chat_id: int, thread_id: int, user_id: int) -> tuple[float, 
     )
     if used == 0:
         return None
-    # Real window from modelUsage, else default
     window = _DEFAULT_CONTEXT_WINDOW
-    mu = data.get("model_usage")
-    if isinstance(mu, dict):
-        for v in mu.values():
-            if isinstance(v, dict) and v.get("contextWindow"):
-                window = int(v["contextWindow"])
-                break
     pct = used / window if window else 0
     return (pct, used, window)
