@@ -193,21 +193,22 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
             sdk_deadline = asyncio.get_event_loop().time() + CLAUDE_TIMEOUT
 
             async for msg in sdk_session.client.receive_response():
-                # Keep session alive during long tool invocations
-                sdk_session.last_activity = time.time()
-                sdk_deadline = asyncio.get_event_loop().time() + CLAUDE_TIMEOUT
+                now = asyncio.get_event_loop().time()
                 if stop_event and stop_event.is_set():
                     logger.info("Stop event set — aborting SDK stream for user %d", user_id)
                     await sdk_session.disconnect()
                     sdk_sessions.pop(skey, None)
                     yield {"type": "stopped"}
                     return
-                if asyncio.get_event_loop().time() > sdk_deadline:
+                if now > sdk_deadline:
                     logger.error("SDK stream timed out after %ds for user %d", CLAUDE_TIMEOUT, user_id)
                     await sdk_session.disconnect()
                     sdk_sessions.pop(skey, None)
                     yield {"type": "error", "text": "Claude took too long to respond. Try again or /new to start fresh."}
                     return
+                # Keep session alive and reset deadline after checks pass
+                sdk_session.last_activity = time.time()
+                sdk_deadline = now + CLAUDE_TIMEOUT
                 if msg is None:
                     continue
                 if isinstance(msg, AssistantMessage):
@@ -427,27 +428,31 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
                            "num_turns": event.get("num_turns"),
                            "duration_ms": event.get("duration_ms"),
                            "duration_api_ms": event.get("duration_api_ms")}
+
+            # Capture returncode from natural exit (before finally may kill it)
+            await proc.wait()
+            natural_rc = proc.returncode
         finally:
             _active_procs.pop(skey, None)
-            # Ensure process is terminated before waiting
+            # Ensure process is terminated if still running
             if proc.returncode is None:
                 try:
                     proc.kill()
                 except ProcessLookupError:
                     pass
-            await proc.wait()
+                await proc.wait()
 
-        if proc.returncode != 0:
-            if proc.returncode < 0:
-                sig = -proc.returncode
+        if natural_rc != 0:
+            if natural_rc < 0:
+                sig = -natural_rc
                 logger.info("Claude CLI killed by signal %d (likely bot restart)", sig)
                 if result_text is None:
                     yield {"type": "silent"}
                 return
-            logger.error("Claude CLI error (rc=%d)", proc.returncode)
-            ws_log.error("CLI error rc=%d", proc.returncode)
+            logger.error("Claude CLI error (rc=%d)", natural_rc)
+            ws_log.error("CLI error rc=%d", natural_rc)
             if result_text is None:
-                yield {"type": "error", "text": f"Claude CLI error (exit code {proc.returncode})"}
+                yield {"type": "error", "text": f"Claude CLI error (exit code {natural_rc})"}
             return
 
         if result_text is None:
