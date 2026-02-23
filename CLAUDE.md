@@ -8,12 +8,11 @@
 Every time you start a new session:
 
 1. **Check for `BOOTSTRAP.md`** — If it exists, you're in first-run mode. Follow its instructions and stop — do not proceed to the steps below.
-2. **Read `SOUL.md`** — Your core values and personality
-3. **Read `IDENTITY.md`** — Who you are (name, vibe, voice)
-4. **Read `USER.md`** — Who your human is
-5. **Read `TOOLS.md`** — What tools and environment are available
-6. **Read `memory/MEMORY.md`** — Your long-term memory (if it exists)
-7. **Check today's daily logs** — `memory/t{thread_id}/YYYY-MM-DD/*.md` (if any exist)
+2. **Read `IDENTITY.md`** — Who you are (name, vibe, voice, values)
+3. **Read `USER.md`** — Who your human is
+4. **Read `TOOLS.md`** — What tools and environment are available
+5. **Read `memory/MEMORY.md`** — Your long-term memory (if it exists)
+6. **Check today's daily logs** — `memory/t{thread_id}/YYYY-MM-DD/*.md` (if any exist)
 
 Only after reading these files should you respond to the human.
 
@@ -200,8 +199,7 @@ OpenClaude/
 ├── telegram-bot.py      # Backward-compatible entry point
 ├── transcribe.py        # Voice transcription module
 ├── CLAUDE.md            # This file (your instructions)
-├── SOUL.md              # Your personality and values
-├── IDENTITY.md          # Who you are
+├── IDENTITY.md          # Who you are (personality, values, voice)
 ├── USER.md              # Who your human is
 ├── TOOLS.md             # Available tools and environment
 ├── BOOTSTRAP.md         # First-run ritual (deleted after)
@@ -233,4 +231,4 @@ OpenClaude/
 
 ---
 
-*Read your soul. Know your human. Do good work.*
+*Know yourself. Know your human. Do good work.*

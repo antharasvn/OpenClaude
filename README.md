@@ -65,8 +65,7 @@ OpenClaude/
 │   ├── MEMORY.md                # Long-term memory
 │   └── YYYY-MM-DD.md            # Daily memory files
 ├── CLAUDE.md                    # Claude's operating instructions
-├── SOUL.md                      # Personality and values
-├── IDENTITY.md                  # Agent identity (filled on first run)
+├── IDENTITY.md                  # Agent identity and values (filled on first run)
 ├── USER.md                      # User info (filled on first run)
 ├── TOOLS.md                     # Available tools and environment
 ├── BOOTSTRAP.md                 # First-run ritual (self-deletes)
@@ -127,7 +126,6 @@ This will check prerequisites, configure your `.env`, install Python dependencie
 On first launch, if `BOOTSTRAP.md` exists, Claude will enter bootstrap mode and guide you through:
 - Choosing a name and identity for your AI
 - Recording your preferences
-- Reviewing the SOUL.md values together
 - Creating the first memory entry
 
 ## Running as a Service

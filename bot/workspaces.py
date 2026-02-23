@@ -22,7 +22,6 @@ def ensure_workspace(chat_id: int) -> Path:
         TOOLS.md       -> symlink to ../../TOOLS.md
         CLAUDE.md      -> symlink to ../../CLAUDE.md
         .claude/       -> symlink to ../../.claude
-        SOUL.md        <- independent copy (set up via BOOTSTRAP.md)
         IDENTITY.md    <- independent copy (set up via BOOTSTRAP.md)
         USER.md        <- independent copy
         BOOTSTRAP.md   <- fresh copy every new session
@@ -39,7 +38,7 @@ def ensure_workspace(chat_id: int) -> Path:
 
     # Copy BOOTSTRAP.md if the workspace hasn't been initialized yet
     # (directory may already exist because the logger creates it early)
-    _initialized = (workspace / "SOUL.md").exists() or (workspace / "IDENTITY.md").exists()
+    _initialized = (workspace / "IDENTITY.md").exists()
     if not _initialized:
         bootstrap = base / _BOOTSTRAP_FILE
         if bootstrap.exists():
