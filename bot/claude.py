@@ -26,14 +26,19 @@ _active_procs: dict[str, asyncio.subprocess.Process] = {}
 
 
 def kill_active_proc(skey: str) -> bool:
-    """Kill the active subprocess for a session key. Returns True if killed."""
+    """Kill the active subprocess and all its children. Returns True if killed."""
+    from bot.sdk_session import _kill_tree
     proc = _active_procs.pop(skey, None)
     if proc and proc.returncode is None:
         try:
-            proc.kill()
+            _kill_tree(proc.pid)
             return True
-        except ProcessLookupError:
-            pass
+        except Exception:
+            try:
+                proc.kill()
+                return True
+            except ProcessLookupError:
+                pass
     return False
 
 
@@ -253,18 +258,19 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                            "duration_api_ms": getattr(msg, "duration_api_ms", None)}
 
         except Exception as e:
-            err_str = str(e)
-            # SIGTERM during restart — not a real error
-            if "exit code -15" in err_str or "exit code: -15" in err_str:
-                logger.info("SDK process killed by SIGTERM (likely bot restart)")
-                await sdk_session.disconnect()
-                sdk_sessions.pop(skey, None)
-                yield {"type": "silent"}
-                return
-            # Stop event triggered — disconnect causes exception, treat as stopped
+            # Stop event triggered — /stop hard-killed the process
             if stop_event and stop_event.is_set():
                 logger.info("SDK stream interrupted by /stop for user %d", user_id)
                 yield {"type": "stopped"}
+                return
+            err_str = str(e)
+            # SIGTERM/SIGKILL during restart — not a real error
+            if any(s in err_str for s in ("exit code -15", "exit code: -15",
+                                           "exit code -9", "exit code: -9")):
+                logger.info("SDK process killed by signal (likely bot restart)")
+                await sdk_session.disconnect()
+                sdk_sessions.pop(skey, None)
+                yield {"type": "silent"}
                 return
             logger.exception("SDK streaming error")
             await sdk_session.disconnect()

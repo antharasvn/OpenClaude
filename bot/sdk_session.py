@@ -1,6 +1,8 @@
 """SDKSession class, idle cleanup, shutdown."""
 
 import asyncio
+import os
+import signal
 import time
 
 from bot.config import SDK_IDLE_TIMEOUT
@@ -55,6 +57,46 @@ sdk_sessions: dict[str, "SDKSession"] = {}
 DISCONNECT_TIMEOUT = 10  # seconds
 
 
+def _kill_tree(pid: int) -> None:
+    """Recursively SIGKILL a process and all its descendants."""
+    # Collect all descendant PIDs first (bottom-up)
+    children = []
+    try:
+        with open(f"/proc/{pid}/task/{pid}/children") as f:
+            child_pids = [int(p) for p in f.read().split()]
+        for cpid in child_pids:
+            children.extend(_get_descendants(cpid))
+            children.append(cpid)
+    except (FileNotFoundError, ValueError, OSError):
+        pass
+
+    # Kill children bottom-up, then the root
+    for cpid in reversed(children):
+        try:
+            os.kill(cpid, signal.SIGKILL)
+        except (ProcessLookupError, OSError):
+            pass
+    try:
+        os.kill(pid, signal.SIGKILL)
+        logger.info("Hard-killed process tree rooted at pid=%d (%d children)", pid, len(children))
+    except ProcessLookupError:
+        pass
+
+
+def _get_descendants(pid: int) -> list[int]:
+    """Get all descendant PIDs of a process."""
+    result = []
+    try:
+        with open(f"/proc/{pid}/task/{pid}/children") as f:
+            child_pids = [int(p) for p in f.read().split()]
+        for cpid in child_pids:
+            result.extend(_get_descendants(cpid))
+            result.append(cpid)
+    except (FileNotFoundError, ValueError, OSError):
+        pass
+    return result
+
+
 class SDKSession:
     """Wraps a ClaudeSDKClient with lifecycle management."""
 
@@ -73,13 +115,28 @@ class SDKSession:
         self.connected = True
         self.last_activity = time.time()
 
+    def _get_subprocess_pid(self) -> int | None:
+        """Extract the PID of the underlying Claude Code subprocess."""
+        try:
+            return self.client._query.transport._process.pid
+        except (AttributeError, TypeError):
+            return None
+
+    def hard_kill(self) -> None:
+        """Kill the subprocess and all its descendants (SIGKILL)."""
+        pid = self._get_subprocess_pid()
+        if not pid:
+            return
+        _kill_tree(pid)
+
     async def disconnect(self) -> None:
         """Disconnect the SDK client (with timeout to prevent hangs)."""
         if self.client:
             try:
                 await asyncio.wait_for(self.client.disconnect(), timeout=DISCONNECT_TIMEOUT)
             except asyncio.TimeoutError:
-                logger.warning("SDKSession disconnect timed out after %ds", DISCONNECT_TIMEOUT)
+                logger.warning("SDKSession disconnect timed out after %ds — hard-killing", DISCONNECT_TIMEOUT)
+                self.hard_kill()
             except Exception as e:
                 logger.debug("SDKSession disconnect error: %s", e)
             finally:

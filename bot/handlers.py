@@ -274,10 +274,13 @@ async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Signal the streaming loop to stop
     stop_event.set()
 
-    # Immediately unblock: disconnect SDK session or kill subprocess
+    # Hard-kill the subprocess tree first (immediate), then clean up
     sdk_session = sdk_sessions.get(skey)
-    if sdk_session and sdk_session.connected:
-        await sdk_session.disconnect()
+    if sdk_session:
+        sdk_session.hard_kill()
+        if sdk_session.connected:
+            await sdk_session.disconnect()
+        sdk_sessions.pop(skey, None)
 
     kill_active_proc(skey)
 
