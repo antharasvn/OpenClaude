@@ -22,6 +22,47 @@ from bot.renderer import TelegramRenderer, split_message
 from bot.claude import stream_claude, finished_line, format_tool_status, kill_active_proc
 from bot.sdk_session import sdk_sessions, SDKSession
 
+# Image URL detection patterns
+_IMAGE_EXTENSIONS = re.compile(r'\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s)]*)?$', re.IGNORECASE)
+_MD_IMAGE_RE = re.compile(r'!\[([^\]]*)\]\(([^)]+)\)')
+_BARE_URL_RE = re.compile(r'(?<!\()(https?://\S+\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s)]*)?)(?!\))', re.IGNORECASE)
+
+
+def _extract_image_urls(text: str) -> tuple[str, list[str]]:
+    """Extract image URLs from markdown and return (cleaned_text, urls)."""
+    urls: list[str] = []
+
+    # Extract markdown images: ![alt](url)
+    for match in _MD_IMAGE_RE.finditer(text):
+        url = match.group(2)
+        if _IMAGE_EXTENSIONS.search(url):
+            urls.append(url)
+
+    # Remove markdown image syntax for extracted images
+    cleaned = _MD_IMAGE_RE.sub(
+        lambda m: '' if _IMAGE_EXTENSIONS.search(m.group(2)) else m.group(0),
+        text,
+    )
+
+    # Extract bare image URLs (not already captured in markdown syntax)
+    for match in _BARE_URL_RE.finditer(cleaned):
+        url = match.group(1)
+        if url not in urls:
+            urls.append(url)
+
+    # Remove bare image URLs from text
+    if urls:
+        cleaned = _BARE_URL_RE.sub(
+            lambda m: '' if m.group(1) in urls else m.group(0),
+            cleaned,
+        )
+
+    # Clean up leftover blank lines
+    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned).strip()
+
+    return cleaned, urls
+
+
 # Populated at startup via post_init callback
 BOT_USERNAME: str = ""
 
@@ -542,9 +583,19 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 pass
         return
 
+    # Extract image URLs from response and send as Telegram photos
+    response_text, image_urls = _extract_image_urls(response_text)
+
     # Skip sending if the text was already flushed into a finalized message
     if flushed_text and response_text == flushed_text:
         pass
+    elif not response_text and image_urls:
+        # Only images, no text — delete live msg if any
+        if live_msg:
+            try:
+                await live_msg.delete()
+            except Exception:
+                pass
     elif live_msg and streaming:
         try:
             rendered = renderer.render(response_text)
@@ -565,6 +616,25 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
             await send_rendered(update, response_text, context)
     else:
         await send_rendered(update, response_text, context)
+
+    # Send extracted images as Telegram photos
+    for img_url in image_urls:
+        try:
+            await context.bot.send_photo(
+                chat_id=chat_id,
+                photo=img_url,
+                message_thread_id=tg_thread_id,
+            )
+        except Exception:
+            logger.warning("Failed to send photo URL: %s", img_url)
+            try:
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=img_url,
+                    message_thread_id=tg_thread_id,
+                )
+            except Exception:
+                pass
 
     # Context usage warnings and auto-compact
     if not _is_compact:
