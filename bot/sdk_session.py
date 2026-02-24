@@ -111,7 +111,15 @@ class SDKSession:
         if self.connected and self.client:
             return
         self.client = ClaudeSDKClient(options=options)
-        await self.client.connect()
+        try:
+            await self.client.connect()
+        except Exception:
+            # connect() may have spawned a subprocess before failing —
+            # kill it so it doesn't become an orphan
+            self.hard_kill()
+            self.client = None
+            self.connected = False
+            raise
         self.connected = True
         self.last_activity = time.time()
 
@@ -138,7 +146,8 @@ class SDKSession:
                 logger.warning("SDKSession disconnect timed out after %ds — hard-killing", DISCONNECT_TIMEOUT)
                 self.hard_kill()
             except Exception as e:
-                logger.debug("SDKSession disconnect error: %s", e)
+                logger.warning("SDKSession disconnect error: %s — hard-killing", e)
+                self.hard_kill()
             finally:
                 self.client = None
                 self.connected = False
