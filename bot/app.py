@@ -259,9 +259,11 @@ def main() -> None:
             cid = entry["chat_id"]
             tid = entry["thread_id"]
             uid = entry["user_id"]
+            # Group chats use uid=0 for shared sessions (same as handlers.py)
+            session_uid = 0 if cid < 0 else uid
             tg_thread_id = tid or None
             try:
-                session_id = get_session_id(cid, tid, uid)
+                session_id = get_session_id(cid, tid, session_uid)
                 if not session_id:
                     infra_logger.warning(
                         "No session for chat=%d thread=%d user=%d, skipping resume",
@@ -285,9 +287,10 @@ def main() -> None:
                 chat_working_dir = get_working_dir(cid)
                 result_text = None
                 stop_event = asyncio.Event()
-                async for event in stream_claude(resume_msg, cid, tid, uid,
+                async for event in stream_claude(resume_msg, cid, tid, session_uid,
                                                  working_dir=chat_working_dir,
-                                                 stop_event=stop_event):
+                                                 stop_event=stop_event,
+                                                 real_user_id=uid):
                     if event.get("type") == "result":
                         result_text = event.get("text", "")
                     elif event.get("type") == "error":
