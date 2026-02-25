@@ -56,6 +56,30 @@ sdk_sessions: dict[str, "SDKSession"] = {}
 
 DISCONNECT_TIMEOUT = 10  # seconds
 
+# Cache the bot's own process group so we never kill ourselves
+_BOT_PGID = os.getpgid(os.getpid())
+
+
+def _killpg_safe(pid: int) -> bool:
+    """Kill the process group of *pid* via SIGKILL, if it differs from the bot's.
+
+    Returns True if killpg was sent successfully, False otherwise.
+    """
+    try:
+        pgid = os.getpgid(pid)
+    except (ProcessLookupError, OSError):
+        return False
+    if pgid == _BOT_PGID:
+        logger.debug("Skipping killpg — pgid %d matches bot's own process group", pgid)
+        return False
+    try:
+        os.killpg(pgid, signal.SIGKILL)
+        logger.info("Killed process group pgid=%d (from pid=%d)", pgid, pid)
+        return True
+    except (ProcessLookupError, PermissionError, OSError) as exc:
+        logger.debug("killpg(pgid=%d) failed: %s", pgid, exc)
+        return False
+
 
 def _kill_tree(pid: int) -> None:
     """Recursively SIGKILL a process and all its descendants."""
@@ -131,10 +155,18 @@ class SDKSession:
             return None
 
     def hard_kill(self) -> None:
-        """Kill the subprocess and all its descendants (SIGKILL)."""
+        """Kill the subprocess and all its descendants (SIGKILL).
+
+        Uses process-group killing first so that background sub-agents
+        (which may have been reparented to PID 1) are caught.  Falls
+        back to ``_kill_tree`` for any processes that changed their
+        process group.
+        """
         pid = self._get_subprocess_pid()
         if not pid:
             return
+        _killpg_safe(pid)
+        # Fallback: pick off any stragglers not in the same pgid
         _kill_tree(pid)
 
     async def disconnect(self) -> None:
