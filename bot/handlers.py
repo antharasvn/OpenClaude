@@ -776,7 +776,7 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await file.download_to_drive(dest)
 
     caption = update.message.caption or ""
-    claude_msg = f"[File received: {dest.relative_to(workspace)}]"
+    claude_msg = f"[User attached a file: {dest.relative_to(workspace)} — read it before responding.]"
     if caption:
         claude_msg += f' User says: "{caption}"'
 
@@ -820,7 +820,7 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await file.download_to_drive(dest)
 
     caption = update.message.caption or ""
-    claude_msg = f"[Video received: {dest.relative_to(workspace)}]"
+    claude_msg = f"[User attached a video: {dest.relative_to(workspace)} — read it before responding.]"
     if caption:
         claude_msg += f' User says: "{caption}"'
 
@@ -900,7 +900,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     dest = await asyncio.get_event_loop().run_in_executor(None, _normalize_image, dest)
 
     caption = update.message.caption or ""
-    claude_msg = f"[Photo received: {dest.relative_to(workspace)}]"
+    claude_msg = f"[User attached a photo: {dest.relative_to(workspace)} — read it before responding.]"
     if caption:
         claude_msg += f' User says: "{caption}"'
 
