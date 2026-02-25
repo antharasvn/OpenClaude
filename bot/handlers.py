@@ -74,6 +74,9 @@ _user_locks: dict[int, asyncio.Lock] = {}
 # Per-session stop events for /stop command
 _stop_events: dict[str, asyncio.Event] = {}
 
+# Per-session streaming task references for /stop cancellation
+_streaming_tasks: dict[str, asyncio.Task] = {}
+
 
 def _get_user_lock(user_id: int) -> asyncio.Lock:
     if user_id not in _user_locks:
@@ -230,19 +233,9 @@ async def cmd_new(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     session_uid = user.id if update.effective_chat.type == "private" else 0
     skey = session_key(chat_id, thread_id, session_uid)
 
-    # Stop any active generation first (uses the same mechanism as /stop)
-    stop_event = _stop_events.get(skey)
-    if stop_event:
-        stop_event.set()
-        kill_active_proc(skey)
-
-    # Disconnect SDK session if active
-    sdk_session = sdk_sessions.pop(skey, None)
-    if sdk_session:
-        try:
-            await asyncio.wait_for(sdk_session.disconnect(), timeout=5)
-        except (asyncio.TimeoutError, Exception):
-            pass
+    # Stop any active generation first (same full cleanup as /stop)
+    if _stop_events.get(skey):
+        await _force_stop_session(skey, chat_id, thread_id, session_uid)
 
     clear_session(chat_id, thread_id, session_uid)
     await update.message.reply_text(
@@ -292,6 +285,48 @@ async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     )
 
 
+async def _force_stop_session(skey: str, chat_id: int, thread_id: int, session_uid: int) -> None:
+    """Kill subprocess, cancel streaming task, and force-cleanup lock/streams.
+
+    Shared by /stop and /new to ensure full cleanup.
+    """
+    from bot.streams import remove_active_stream
+
+    stop_event = _stop_events.get(skey)
+    if stop_event:
+        stop_event.set()
+
+    # Hard-kill the subprocess tree
+    sdk_session = sdk_sessions.get(skey)
+    if sdk_session:
+        sdk_session.hard_kill()
+        if sdk_session.connected:
+            await sdk_session.disconnect()
+        sdk_sessions.pop(skey, None)
+
+    kill_active_proc(skey)
+
+    # Cancel the streaming asyncio task so finally blocks run
+    task = _streaming_tasks.get(skey)
+    if task and not task.done():
+        task.cancel()
+        try:
+            await asyncio.wait_for(task, timeout=5)
+        except (asyncio.TimeoutError, asyncio.CancelledError, Exception):
+            pass
+
+    # Force cleanup in case the task didn't finish or clean up properly
+    _streaming_tasks.pop(skey, None)
+    _stop_events.pop(skey, None)
+    remove_active_stream(chat_id, thread_id, session_uid)
+    lock = _user_locks.get(session_uid)
+    if lock and lock.locked():
+        try:
+            lock.release()
+        except RuntimeError:
+            pass
+
+
 async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /stop command — cancel current Claude generation."""
     user = update.effective_user
@@ -312,18 +347,7 @@ async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
         return
 
-    # Signal the streaming loop to stop
-    stop_event.set()
-
-    # Hard-kill the subprocess tree first (immediate), then clean up
-    sdk_session = sdk_sessions.get(skey)
-    if sdk_session:
-        sdk_session.hard_kill()
-        if sdk_session.connected:
-            await sdk_session.disconnect()
-        sdk_sessions.pop(skey, None)
-
-    kill_active_proc(skey)
+    await _force_stop_session(skey, chat_id, thread_id, session_uid)
 
     await update.message.reply_text(
         "Generation stopped.",
@@ -477,8 +501,13 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         return
 
     try:
+        # Only register task/stop_event for primary calls — auto-compact is nested
+        # and must not clobber the outer call's registration.
+        if not _is_compact:
+            _streaming_tasks[skey] = asyncio.current_task()
         stop_event = asyncio.Event()
-        _stop_events[skey] = stop_event
+        if not _is_compact:
+            _stop_events[skey] = stop_event
         try:
             async for event in stream_claude(claude_message, chat_id, thread_id, session_user_id,
                                              working_dir=chat_working_dir, verbose=streaming,
@@ -551,24 +580,32 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
             if live_text:
                 await _update_live(live_text)
         finally:
-            _stop_events.pop(skey, None)
+            if not _is_compact:
+                _stop_events.pop(skey, None)
+    except asyncio.CancelledError:
+        stopped = True
+        raise
     finally:
-        _get_user_lock(session_user_id).release()
-
-    # Clean up status message
-    if status_msg:
+        if not _is_compact:
+            _streaming_tasks.pop(skey, None)
         try:
-            await status_msg.delete()
-        except Exception:
-            pass
-
-    # Handle /stop cancellation
-    if stopped:
-        if live_msg:
+            _get_user_lock(session_user_id).release()
+        except RuntimeError:
+            pass  # already released by /stop
+        # Clean up Telegram messages (must run even on CancelledError)
+        if status_msg:
+            try:
+                await status_msg.delete()
+            except Exception:
+                pass
+        if stopped and live_msg:
             try:
                 await live_msg.delete()
             except Exception:
                 pass
+
+    # Handle /stop cancellation
+    if stopped:
         return
 
     if response_text is None:
