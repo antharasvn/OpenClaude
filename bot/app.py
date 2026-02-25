@@ -1,5 +1,7 @@
 """Application builder, post_init, post_shutdown, main()."""
 
+import nonexistent_module_for_rollback_test  # INTENTIONAL BREAK: testing rollback
+
 import asyncio
 import atexit
 import json
