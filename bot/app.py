@@ -29,6 +29,44 @@ from bot import handlers
 from commands import register_all, ALL_COMMANDS
 
 
+# Monkey-patch asyncio event loop to diagnose tight loop (CPU spike)
+_original_run_once = asyncio.BaseEventLoop._run_once
+_loop_iteration_count = 0
+_loop_iteration_start = None
+
+def _instrumented_run_once(self, timeout=None):
+    """Instrumented version of _run_once to detect tight loops."""
+    import time
+    global _loop_iteration_count, _loop_iteration_start
+
+    if _loop_iteration_start is None:
+        _loop_iteration_start = time.time()
+
+    _loop_iteration_count += 1
+
+    # Log every 10000 iterations or every 5 seconds
+    now = time.time()
+    elapsed = now - _loop_iteration_start
+    if _loop_iteration_count >= 10000 or elapsed >= 5.0:
+        rate = _loop_iteration_count / elapsed if elapsed > 0 else 0
+        if rate > 1000:  # More than 1000 iterations/sec = tight loop
+            # Log diagnostic info about ready queue and scheduled callbacks
+            ready_len = len(self._ready)
+            scheduled_len = len(self._scheduled)
+            logger.warning(
+                "Event loop tight loop: %d iter in %.2fs (%.0f/sec), "
+                "ready=%d, scheduled=%d, timeout=%s",
+                _loop_iteration_count, elapsed, rate,
+                ready_len, scheduled_len, timeout
+            )
+        _loop_iteration_count = 0
+        _loop_iteration_start = now
+
+    return _original_run_once(self)
+
+asyncio.BaseEventLoop._run_once = _instrumented_run_once
+
+
 def main() -> None:
     """Start the bot."""
     if not TELEGRAM_BOT_TOKEN:
@@ -52,6 +90,89 @@ def main() -> None:
 
     renderer = TelegramRenderer()
 
+    async def _monitor_cpu_usage() -> None:
+        """Monitor bot CPU usage and log warnings if it spikes."""
+        import os
+        import psutil
+        bot_pid = os.getpid()
+        process = psutil.Process(bot_pid)
+
+        while True:
+            try:
+                await asyncio.sleep(30)  # Check every 30 seconds
+                cpu_percent = process.cpu_percent(interval=1.0)
+
+                if cpu_percent > 50.0:
+                    # Get thread count and memory usage for context
+                    num_threads = process.num_threads()
+                    mem_mb = process.memory_info().rss / 1024 / 1024
+
+                    logger.warning(
+                        "High CPU usage detected: %.1f%% (threads=%d, mem=%.0fMB)",
+                        cpu_percent, num_threads, mem_mb
+                    )
+                    infra_logger.warning(
+                        "High CPU: %.1f%% (pid=%d, threads=%d, mem=%.0fMB)",
+                        cpu_percent, bot_pid, num_threads, mem_mb
+                    )
+            except Exception as e:
+                logger.error("CPU monitoring error: %s", e)
+                await asyncio.sleep(60)  # Back off on error
+
+    async def _cleanup_orphan_claude_processes() -> None:
+        """Kill orphan claude processes from previous bot run (not children of this bot)."""
+        import os
+        import subprocess
+        try:
+            bot_pid = os.getpid()
+            # Find all claude stream-json processes
+            result = subprocess.run(
+                ["pgrep", "-f", "claude.*stream-json"],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode != 0:
+                return  # No claude processes found
+
+            all_pids = result.stdout.strip().split("\n")
+            all_pids = [int(p) for p in all_pids if p.strip().isdigit()]
+
+            # Get children of current bot process (these are legitimate)
+            children_result = subprocess.run(
+                ["pgrep", "-P", str(bot_pid)],
+                capture_output=True,
+                text=True,
+            )
+            child_pids = set()
+            if children_result.returncode == 0:
+                child_pids = {int(p) for p in children_result.stdout.strip().split("\n") if p.strip().isdigit()}
+
+            # Orphans = all claude pids - children of this bot
+            orphans = [p for p in all_pids if p not in child_pids]
+
+            if not orphans:
+                return
+
+            # Kill orphans (SIGTERM first, then SIGKILL)
+            for pid in orphans:
+                try:
+                    subprocess.run(["kill", str(pid)], check=False)
+                except Exception:
+                    pass
+            # Give them 2 seconds to gracefully exit
+            await asyncio.sleep(2)
+            # Force kill any survivors
+            for pid in orphans:
+                try:
+                    subprocess.run(["kill", "-9", str(pid)], check=False)
+                except Exception:
+                    pass
+
+            infra_logger.info("Cleaned up %d orphan claude process(es)", len(orphans))
+            logger.info("Cleaned up %d orphan claude process(es)", len(orphans))
+        except Exception as e:
+            logger.warning("Failed to cleanup orphan processes: %s", e)
+
     async def post_init(application: Application) -> None:
         """Fetch bot info at startup and resume interrupted generations."""
         bot = application.bot
@@ -72,9 +193,20 @@ def main() -> None:
         await bot.set_my_commands(bot_commands)
         logger.info("Registered %d bot commands with Telegram", len(bot_commands))
 
+        # Cleanup orphan claude processes from previous run
+        await _cleanup_orphan_claude_processes()
+
         if HAS_SDK:
             asyncio.create_task(cleanup_idle_sessions())
             logger.info("SDK idle session cleanup task started")
+
+        # Start CPU monitoring task
+        try:
+            import psutil
+            asyncio.create_task(_monitor_cpu_usage())
+            logger.info("CPU monitoring task started")
+        except ImportError:
+            logger.warning("psutil not installed, CPU monitoring disabled")
 
         # Edit "Restarting..." messages to show success
         if RESTART_MESSAGES_FILE.exists():
