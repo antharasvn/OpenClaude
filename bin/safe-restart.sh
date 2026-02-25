@@ -9,6 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SERVICE="claude-telegram-bot"
 KNOWN_GOOD_FILE="$PROJECT_DIR/backups/known-good-commit"
+ROLLBACK_LOCK="$PROJECT_DIR/backups/rollback-lock"
 MAX_RETRIES=3
 STARTUP_WAIT=15
 
@@ -80,6 +81,27 @@ sync_dev() {
         return 0
     fi
 
+    # If we previously rolled back, don't merge until remote moves past the bad commit
+    if [[ -f "$ROLLBACK_LOCK" ]]; then
+        local bad_commit remote_head
+        bad_commit=$(cat "$ROLLBACK_LOCK")
+        remote_head=$(git -C "$PROJECT_DIR" rev-parse origin/dev 2>/dev/null || echo "")
+
+        if git -C "$PROJECT_DIR" merge-base --is-ancestor "$bad_commit" "$remote_head" 2>/dev/null; then
+            # Remote still contains the bad commit — check if it has moved past it
+            if [[ "$remote_head" == "$bad_commit" ]]; then
+                log "Rollback lock active — remote still at bad commit ${bad_commit:0:7}, skipping sync"
+                return 0
+            fi
+            # Remote has new commits on top of the bad one — try them (fix may have been pushed)
+            log "Rollback lock: remote has new commits past ${bad_commit:0:7}, attempting sync"
+        fi
+
+        # Remote moved past the bad commit or diverged — clear the lock and sync
+        rm -f "$ROLLBACK_LOCK"
+        log "Rollback lock cleared"
+    fi
+
     # Only merge if there's something to merge
     local local_head remote_head
     local_head=$(git rev-parse HEAD 2>/dev/null)
@@ -138,20 +160,50 @@ rollback() {
 
     log "Rolling back from $(get_short_hash) to ${good_commit:0:7}..."
     git -C "$PROJECT_DIR" reset --hard "$good_commit"
+
+    # Lock out sync_dev so ouroboros doesn't re-merge the bad commit
+    echo "$current_commit" > "$ROLLBACK_LOCK"
+    log "Rollback lock set — blocking sync until remote moves past ${current_commit:0:7}"
     return 0
 }
 
 start_service() {
     log "Starting $SERVICE..."
+    # Stop first to reset systemd's restart counter, then start fresh
+    systemctl --user stop "$SERVICE" 2>/dev/null || true
+    sleep 2
     systemctl --user start "$SERVICE"
-    sleep "$STARTUP_WAIT"
-    if systemctl --user is-active "$SERVICE" &>/dev/null; then
-        log "$SERVICE started successfully"
-        return 0
-    else
-        log "$SERVICE failed to start after ${STARTUP_WAIT}s"
+
+    # Record the initial PID
+    local pid_start
+    pid_start=$(systemctl --user show "$SERVICE" -p MainPID --value 2>/dev/null || echo "0")
+    if [[ "$pid_start" == "0" ]]; then
+        log "$SERVICE failed to start (no PID)"
         return 1
     fi
+
+    # Check that the SAME process stays alive for the full wait period.
+    # A crash-looping bot may briefly appear active between systemd restarts,
+    # so we verify PID stability, not just is-active.
+    local checks=3
+    local interval=$(( STARTUP_WAIT / checks ))
+    for i in $(seq 1 "$checks"); do
+        sleep "$interval"
+        local pid_now
+        pid_now=$(systemctl --user show "$SERVICE" -p MainPID --value 2>/dev/null || echo "0")
+        if [[ "$pid_now" != "$pid_start" ]]; then
+            log "$SERVICE PID changed ($pid_start -> $pid_now) during check $i/$checks — crash-looping"
+            systemctl --user stop "$SERVICE" 2>/dev/null || true
+            return 1
+        fi
+        if ! systemctl --user is-active "$SERVICE" &>/dev/null; then
+            log "$SERVICE died during startup check $i/$checks"
+            return 1
+        fi
+    done
+
+    log "$SERVICE started successfully (PID $pid_start, stable for ${STARTUP_WAIT}s)"
+    return 0
 }
 
 # ── Main flow ────────────────────────────────────────────────────────
@@ -171,6 +223,9 @@ for attempt in $(seq 1 "$MAX_RETRIES"); do
         if start_service; then
             record_good
             log "Bot is alive and healthy"
+            if (( attempt > 1 )); then
+                notify "[safe-restart] Recovered after rollback to $(get_short_hash). Bot is running."
+            fi
             exit 0
         else
             # Startup failed despite tests passing
