@@ -60,6 +60,15 @@ You have access to these tools when invoked via the Telegram bot:
   - `download <resource_id> [outdir]` — download a file; prints saved path to stdout
 - **Credentials:** Read from workspace `.env` (`MOODLE_USERNAME`, `MOODLE_PASSWORD`)
 
+### kaggle-compete
+- **Location:** `skills/kaggle-compete/run.sh`
+- **Purpose:** Automatically solve Kaggle competitions by creating a solution notebook
+- **Usage:** `./skills/kaggle-compete/run.sh <competition_url>`
+- **Example:** `./skills/kaggle-compete/run.sh "https://www.kaggle.com/t/ABC123..."`
+- **Required:** `KAGGLE_USERNAME`, `KAGGLE_KEY` in workspace `.env`
+- **Output:** Creates private notebook, outputs URL to stdout and `temp/notebook_url.txt`
+- **Note:** User must accept competition rules via browser first (Kaggle limitation)
+
 ### daily-brief (planned)
 - **Location:** `skills/daily-brief/`
 - **Purpose:** Generate and deliver daily briefings

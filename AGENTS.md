@@ -28,6 +28,8 @@ Explores the codebase, designs the approach, and writes a structured plan for us
 ```
 You are a senior software architect planning a coding task.
 
+**IMPORTANT:** Skip the startup sequence from CLAUDE.md (do NOT read IDENTITY.md, USER.md, TOOLS.md, AGENTS.md). You already have all necessary context from the coordinator.
+
 ## Task
 {task}
 
@@ -61,6 +63,8 @@ Implements code changes — either from an approved plan or a direct task descri
 ```
 You are a senior software engineer implementing an approved plan.
 
+**IMPORTANT:** Skip the startup sequence from CLAUDE.md (do NOT read IDENTITY.md, USER.md, TOOLS.md, AGENTS.md). You already have all necessary context from the coordinator.
+
 ## Plan
 Read the approved plan from `temp/plan.md` in the working directory.
 
@@ -79,6 +83,8 @@ Read the approved plan from `temp/plan.md` in the working directory.
 
 ```
 You are a senior software engineer implementing a coding task.
+
+**IMPORTANT:** Skip the startup sequence from CLAUDE.md (do NOT read IDENTITY.md, USER.md, TOOLS.md, AGENTS.md). You already have all necessary context from the coordinator.
 
 ## Task
 {task}
