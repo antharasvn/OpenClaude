@@ -100,7 +100,10 @@ def main() -> None:
         while True:
             try:
                 await asyncio.sleep(30)  # Check every 30 seconds
-                cpu_percent = process.cpu_percent(interval=1.0)
+                loop = asyncio.get_running_loop()
+                cpu_percent = await loop.run_in_executor(
+                    None, process.cpu_percent, 1.0
+                )
 
                 if cpu_percent > 50.0:
                     # Get thread count and memory usage for context
