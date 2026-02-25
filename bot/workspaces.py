@@ -8,7 +8,7 @@ from bot.config import WORKSPACES_DIR, WORKING_DIR
 from bot.logging_setup import logger
 
 # Shared files are symlinked into each workspace so updates propagate automatically
-_SYMLINKED_FILES = ["TOOLS.md", "CLAUDE.md"]
+_SYMLINKED_FILES = ["TOOLS.md", "CLAUDE.md", "AGENTS.md"]
 _SYMLINKED_DIRS = [".claude"]
 # BOOTSTRAP.md is always freshly copied so new sessions run the first-run ritual
 _BOOTSTRAP_FILE = "BOOTSTRAP.md"
