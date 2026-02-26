@@ -140,10 +140,52 @@ def make_permission_handler(is_admin: bool, workspace: str):
     return handler
 
 
+def _make_task_posttool_hook():
+    """Create a PostToolUse hook callback that truncates Task (sub-agent) results.
+
+    When the Task tool returns a large result (the full agent transcript),
+    this hook tells Claude to respond concisely and not re-summarize the
+    agent's entire output.
+    """
+    async def hook_callback(input_data, tool_use_id, context):
+        tool_name = input_data.get("tool_name", "") if input_data else ""
+        if tool_name != "Task":
+            return {}
+
+        # Check if the tool_response is large
+        tool_response = input_data.get("tool_response", "")
+        response_str = str(tool_response) if tool_response else ""
+
+        if len(response_str) < 2000:
+            return {}
+
+        logger.info(
+            "Task tool result truncation hook fired — response length: %d chars",
+            len(response_str),
+        )
+
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PostToolUse",
+                "additionalContext": (
+                    "The sub-agent completed its task. Its output was very long. "
+                    "DO NOT re-summarize or re-explain the agent's full output. "
+                    "Instead, give the user a brief, concise summary (2-4 sentences max) "
+                    "of what was accomplished and the outcome. "
+                    "If the agent produced code changes, mention the files changed. "
+                    "If there were errors, mention only the key error."
+                ),
+            }
+        }
+
+    return hook_callback
+
+
 def build_sdk_options(is_admin: bool, cwd: str, thread_id: int,
                       session_id: str | None, streaming: bool):
     """Build ClaudeCodeOptions for an SDK session."""
     from bot.sdk_session import ClaudeCodeOptions
+    from claude_code_sdk.types import HookMatcher
     env = build_env(is_admin, cwd, thread_id)
     return ClaudeCodeOptions(
         allowed_tools=ALL_TOOLS.split(","),
@@ -155,4 +197,12 @@ def build_sdk_options(is_admin: bool, cwd: str, thread_id: int,
         include_partial_messages=streaming,
         can_use_tool=make_permission_handler(is_admin, cwd),
         add_dirs=["/var/cache/apt", "/var/lib/apt", "/var/lib/dpkg", "/etc/apt"],
+        hooks={
+            "PostToolUse": [
+                HookMatcher(
+                    matcher="Task",
+                    hooks=[_make_task_posttool_hook()],
+                ),
+            ],
+        },
     )
