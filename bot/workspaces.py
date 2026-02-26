@@ -13,6 +13,11 @@ _SYMLINKED_DIRS = [".claude"]
 # BOOTSTRAP.md is always freshly copied so new sessions run the first-run ritual
 _BOOTSTRAP_FILE = "BOOTSTRAP.md"
 
+# ---------------------------------------------------------------------------
+# Workspace existence cache — skip filesystem ops for already-initialized chats
+# ---------------------------------------------------------------------------
+_initialized_workspaces: set[int] = set()
+
 
 def ensure_workspace(chat_id: int) -> Path:
     """Create and return an isolated workspace directory for the given chat.
@@ -28,6 +33,10 @@ def ensure_workspace(chat_id: int) -> Path:
         memory/        <- isolated per-chat memory
           MEMORY.md
     """
+    # Fast path: if we already initialized this workspace this process lifetime, skip
+    if chat_id in _initialized_workspaces:
+        return WORKSPACES_DIR / f"c{chat_id}"
+
     workspace = WORKSPACES_DIR / f"c{chat_id}"
     is_new = not workspace.exists()
 
@@ -61,6 +70,9 @@ def ensure_workspace(chat_id: int) -> Path:
 
     if is_new:
         logger.info("Created workspace for chat %d at %s", chat_id, workspace)
+
+    # Add to cache after successful initialization
+    _initialized_workspaces.add(chat_id)
     return workspace
 
 

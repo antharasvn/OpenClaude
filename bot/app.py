@@ -19,52 +19,14 @@ from bot.config import (
     RESTART_STATE_FILE, SESSION_FILE, TELEGRAM_BOT_TOKEN, WORKING_DIR,
 )
 from bot.logging_setup import logger, infra_logger
-from bot.sessions import get_session_id
-from bot.streams import load_active_streams
+from bot.sessions import get_session_id, flush_sessions
+from bot.streams import load_active_streams, start_streams_flusher, stop_streams_flusher, flush_streams
 from bot.workspaces import get_working_dir
 from bot.renderer import TelegramRenderer, split_message
 from bot.claude import stream_claude, _active_procs
 from bot.sdk_session import HAS_SDK, cleanup_idle_sessions, shutdown_sdk_sessions
 from bot import handlers
 from commands import register_all, ALL_COMMANDS
-
-
-# Monkey-patch asyncio event loop to diagnose tight loop (CPU spike)
-_original_run_once = asyncio.BaseEventLoop._run_once
-_loop_iteration_count = 0
-_loop_iteration_start = None
-
-def _instrumented_run_once(self, timeout=None):
-    """Instrumented version of _run_once to detect tight loops."""
-    import time
-    global _loop_iteration_count, _loop_iteration_start
-
-    if _loop_iteration_start is None:
-        _loop_iteration_start = time.time()
-
-    _loop_iteration_count += 1
-
-    # Log every 10000 iterations or every 5 seconds
-    now = time.time()
-    elapsed = now - _loop_iteration_start
-    if _loop_iteration_count >= 10000 or elapsed >= 5.0:
-        rate = _loop_iteration_count / elapsed if elapsed > 0 else 0
-        if rate > 1000:  # More than 1000 iterations/sec = tight loop
-            # Log diagnostic info about ready queue and scheduled callbacks
-            ready_len = len(self._ready)
-            scheduled_len = len(self._scheduled)
-            logger.warning(
-                "Event loop tight loop: %d iter in %.2fs (%.0f/sec), "
-                "ready=%d, scheduled=%d, timeout=%s",
-                _loop_iteration_count, elapsed, rate,
-                ready_len, scheduled_len, timeout
-            )
-        _loop_iteration_count = 0
-        _loop_iteration_start = now
-
-    return _original_run_once(self)
-
-asyncio.BaseEventLoop._run_once = _instrumented_run_once
 
 
 def main() -> None:
@@ -87,6 +49,9 @@ def main() -> None:
     infra_logger.info("Bot starting — users=%s, workdir=%s", ALLOWED_USERS, WORKING_DIR)
 
     atexit.register(lambda: infra_logger.info("Bot process exiting"))
+    # Register atexit handlers for cache flush (safety net)
+    atexit.register(flush_sessions)
+    atexit.register(flush_streams)
 
     renderer = TelegramRenderer()
 
@@ -210,6 +175,9 @@ def main() -> None:
             logger.info("CPU monitoring task started")
         except ImportError:
             logger.warning("psutil not installed, CPU monitoring disabled")
+
+        # Start streams flusher background task
+        start_streams_flusher()
 
         # Edit "Restarting..." messages to show success
         if RESTART_MESSAGES_FILE.exists():
@@ -355,7 +323,7 @@ def main() -> None:
         asyncio.create_task(_run_resumes())
 
     async def post_shutdown(application: Application) -> None:
-        """Clean up SDK sessions and active subprocesses on shutdown."""
+        """Clean up SDK sessions, caches, and active subprocesses on shutdown."""
         # Kill all active subprocesses
         for skey, proc in list(_active_procs.items()):
             if proc.returncode is None:
@@ -365,6 +333,11 @@ def main() -> None:
                 except ProcessLookupError:
                     pass
         _active_procs.clear()
+
+        # Flush caches before shutdown
+        flush_sessions()
+        await stop_streams_flusher()
+        infra_logger.info("Caches flushed on shutdown")
 
         if HAS_SDK:
             await shutdown_sdk_sessions()
