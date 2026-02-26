@@ -98,6 +98,13 @@ def flush_streams() -> None:
         _write_to_disk()
 
 
+def _reset_cache() -> None:
+    """Reset the in-memory cache. Call between tests."""
+    global _streams_cache, _cache_dirty
+    _streams_cache = None
+    _cache_dirty = False
+
+
 def save_active_streams(streams: dict) -> None:
     """Update cache (backward-compat entry point)."""
     global _streams_cache, _cache_dirty
@@ -110,6 +117,12 @@ def load_active_streams() -> dict:
     return _ensure_cache()
 
 
+def _maybe_flush() -> None:
+    """Flush immediately if no background flusher is running (test mode)."""
+    if _flusher_task is None and _cache_dirty:
+        _write_to_disk()
+
+
 def add_active_stream(chat_id: int, thread_id: int, user_id: int) -> None:
     """Register a stream start. Survives crashes via periodic flush."""
     global _cache_dirty
@@ -117,6 +130,7 @@ def add_active_stream(chat_id: int, thread_id: int, user_id: int) -> None:
     key = session_key(chat_id, thread_id, user_id)
     streams[key] = {"chat_id": chat_id, "thread_id": thread_id, "user_id": user_id}
     _cache_dirty = True
+    _maybe_flush()
 
 
 def remove_active_stream(chat_id: int, thread_id: int, user_id: int) -> None:
@@ -127,3 +141,4 @@ def remove_active_stream(chat_id: int, thread_id: int, user_id: int) -> None:
     if key in streams:
         del streams[key]
         _cache_dirty = True
+        _maybe_flush()

@@ -20,6 +20,14 @@ _cache_dirty: bool = False
 _WRITE_BEHIND_DELAY = 1.0  # max 1 second debounce
 
 
+def _reset_cache() -> None:
+    """Reset the in-memory session cache. Used by tests."""
+    global _sessions_cache, _write_behind_handle, _cache_dirty
+    _sessions_cache = None
+    _write_behind_handle = None
+    _cache_dirty = False
+
+
 def _ensure_cache() -> dict:
     """Load sessions from disk into cache on first access."""
     global _sessions_cache

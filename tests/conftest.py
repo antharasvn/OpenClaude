@@ -3,6 +3,25 @@
 import os
 import pytest
 
+from bot.sessions import _reset_cache
+from bot.streams import _reset_cache as _reset_streams_cache
+
+
+@pytest.fixture(autouse=True)
+def _reset_sessions_cache():
+    """Clear the sessions in-memory cache before each test."""
+    _reset_cache()
+    yield
+    _reset_cache()
+
+
+@pytest.fixture(autouse=True)
+def _reset_streams_cache_fixture():
+    """Clear the streams in-memory cache before each test."""
+    _reset_streams_cache()
+    yield
+    _reset_streams_cache()
+
 
 @pytest.fixture(autouse=True)
 def dummy_env(monkeypatch, tmp_path):
