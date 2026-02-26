@@ -71,12 +71,16 @@ renderer = TelegramRenderer()
 TYPING_INTERVAL = 4  # seconds between typing indicator refreshes (Telegram expires at ~5s)
 
 
-async def _typing_loop(bot, chat_id: int) -> None:
+async def _typing_loop(bot, chat_id: int, thread_id: int | None = None) -> None:
     """Send 'typing' chat action periodically until cancelled."""
     try:
         while True:
             try:
-                await bot.send_chat_action(chat_id=chat_id, action="typing")
+                await bot.send_chat_action(
+                    chat_id=chat_id,
+                    action="typing",
+                    message_thread_id=thread_id if thread_id else None,
+                )
             except Exception:
                 logger.debug("typing indicator send failed for chat %d", chat_id)
             await asyncio.sleep(TYPING_INTERVAL)
@@ -528,7 +532,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
             _stop_events[skey] = stop_event
 
         # Start typing indicator — runs until cancelled
-        typing_task = asyncio.create_task(_typing_loop(context.bot, chat_id))
+        typing_task = asyncio.create_task(_typing_loop(context.bot, chat_id, tg_thread_id))
         try:
             async for event in stream_claude(claude_message, chat_id, thread_id, session_user_id,
                                              working_dir=chat_working_dir, verbose=streaming,
