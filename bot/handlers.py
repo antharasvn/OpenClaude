@@ -68,6 +68,22 @@ BOT_USERNAME: str = ""
 
 renderer = TelegramRenderer()
 
+TYPING_INTERVAL = 4  # seconds between typing indicator refreshes (Telegram expires at ~5s)
+
+
+async def _typing_loop(bot, chat_id: int) -> None:
+    """Send 'typing' chat action periodically until cancelled."""
+    try:
+        while True:
+            try:
+                await bot.send_chat_action(chat_id=chat_id, action="typing")
+            except Exception:
+                logger.debug("typing indicator send failed for chat %d", chat_id)
+            await asyncio.sleep(TYPING_INTERVAL)
+    except asyncio.CancelledError:
+        pass
+
+
 # Per-user locks to prevent concurrent Claude calls for the same user
 _user_locks: dict[int, asyncio.Lock] = {}
 
@@ -487,6 +503,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     chat_working_dir = get_working_dir(chat_id)
     skey = session_key(chat_id, thread_id, session_user_id)
 
+    typing_task = None
+
     try:
         await asyncio.wait_for(_get_user_lock(session_user_id).acquire(), timeout=300)
     except asyncio.TimeoutError:
@@ -508,6 +526,9 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         stop_event = asyncio.Event()
         if not _is_compact:
             _stop_events[skey] = stop_event
+
+        # Start typing indicator — runs until cancelled
+        typing_task = asyncio.create_task(_typing_loop(context.bot, chat_id))
         try:
             async for event in stream_claude(claude_message, chat_id, thread_id, session_user_id,
                                              working_dir=chat_working_dir, verbose=streaming,
@@ -559,6 +580,9 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
                 elif etype == "partial":
                     live_text += event["text"]
+                    # Stop typing once visible output is streaming
+                    if typing_task and not typing_task.done():
+                        typing_task.cancel()
                     await _update_live(live_text)
 
                 elif etype == "result":
@@ -586,6 +610,9 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         stopped = True
         raise
     finally:
+        # Always cancel typing indicator
+        if typing_task and not typing_task.done():
+            typing_task.cancel()
         if not _is_compact:
             _streaming_tasks.pop(skey, None)
         try:
