@@ -906,38 +906,29 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 pass
         return
 
-    # Extract image URLs from response and send as Telegram photos
-    response_text, image_urls = _extract_image_urls(response_text)
-
-    # Split remaining text into inline segments (text chunks + file groups)
+    # Check for 📎 file markers in the FULL response text
     workspace_path = str(ensure_workspace(chat_id))
-    remaining_raw = response_text[sent_offset:] if sent_offset < len(response_text) else ""
-    segments = _split_file_segments(remaining_raw, workspace_path) if remaining_raw else []
-    has_files = any(s["type"] == "files" for s in segments)
+    normalized_check = _FILE_MARKER_NORM.sub('📎 ', response_text)
+    has_file_markers = bool(_FILE_MARKER_RE.search(normalized_check))
 
-    if not segments and not image_urls:
-        # Everything already displayed — just finalize live_msg if needed
-        if live_msg:
-            chunk_md = live_text[sent_offset:]
-            if chunk_md:
-                try:
-                    rendered = renderer.render(chunk_md)
-                    await live_msg.edit_text(
-                        rendered[:TELEGRAM_MAX_LENGTH],
-                        parse_mode=ParseMode.HTML,
-                        disable_web_page_preview=True,
-                    )
-                except Exception:
-                    pass
-    else:
-        # Delete live_msg — we'll re-send remaining content properly
+    if has_file_markers:
+        # 📎 markers were likely displayed during streaming — delete all
+        # streamed messages and re-send the full response with inline files
         if live_msg:
             try:
                 await live_msg.delete()
             except Exception:
                 pass
+        for fm in finalized_msgs:
+            try:
+                await fm.delete()
+            except Exception:
+                pass
 
-        # Send segments in order (text and files inline)
+        # Extract image URLs, then split full text into segments
+        response_text, image_urls = _extract_image_urls(response_text)
+        segments = _split_file_segments(response_text, workspace_path)
+
         for segment in segments:
             if segment["type"] == "text":
                 await send_rendered(update, segment["content"], context)
@@ -955,6 +946,52 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                             )
                         except Exception:
                             pass
+    else:
+        # No file markers — normal flow
+        response_text, image_urls = _extract_image_urls(response_text)
+        remaining = response_text[sent_offset:] if sent_offset < len(response_text) else ""
+
+        if not remaining and not image_urls:
+            # Everything already displayed — just finalize live_msg if needed
+            if live_msg:
+                chunk_md = live_text[sent_offset:]
+                if chunk_md:
+                    try:
+                        rendered = renderer.render(chunk_md)
+                        await live_msg.edit_text(
+                            rendered[:TELEGRAM_MAX_LENGTH],
+                            parse_mode=ParseMode.HTML,
+                            disable_web_page_preview=True,
+                        )
+                    except Exception:
+                        pass
+        elif live_msg and streaming and remaining:
+            # Finalize live_msg with the remaining text
+            try:
+                rendered = renderer.render(remaining)
+                if len(rendered) <= TELEGRAM_MAX_LENGTH:
+                    await live_msg.edit_text(
+                        rendered,
+                        parse_mode=ParseMode.HTML,
+                        disable_web_page_preview=True,
+                    )
+                else:
+                    await live_msg.delete()
+                    await send_rendered(update, remaining, context)
+            except Exception:
+                try:
+                    await live_msg.delete()
+                except Exception:
+                    pass
+                await send_rendered(update, remaining, context)
+        elif remaining:
+            # No live_msg or streaming off — send remaining as new messages
+            if live_msg:
+                try:
+                    await live_msg.delete()
+                except Exception:
+                    pass
+            await send_rendered(update, remaining, context)
 
     # Send extracted image URLs as Telegram photos
     for img_url in image_urls:
