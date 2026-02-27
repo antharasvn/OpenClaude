@@ -80,8 +80,31 @@ class TelegramRenderer:
         return text.strip()
 
 
+def _find_md_split(text: str, max_chars: int) -> int:
+    """Find the best split point in markdown text within max_chars.
+
+    Prefers: paragraph break > line break > sentence end > space.
+    """
+    if len(text) <= max_chars:
+        return len(text)
+    split_at = max_chars
+    para = text.rfind("\n\n", 0, max_chars)
+    if para > max_chars // 3:
+        return para
+    line = text.rfind("\n", 0, max_chars)
+    if line > max_chars // 3:
+        return line
+    sent = text.rfind(". ", 0, max_chars)
+    if sent > max_chars // 3:
+        return sent + 1
+    space = text.rfind(" ", 0, max_chars)
+    if space > max_chars // 3:
+        return space
+    return split_at
+
+
 def split_message(text: str, max_length: int = TELEGRAM_MAX_LENGTH) -> list[str]:
-    """Split a message into chunks that fit within Telegram's limit."""
+    """Split a markdown message into chunks that fit within Telegram's limit."""
     if len(text) <= max_length:
         return [text]
 
@@ -93,19 +116,7 @@ def split_message(text: str, max_length: int = TELEGRAM_MAX_LENGTH) -> list[str]
             chunks.append(remaining)
             break
 
-        split_at = max_length
-
-        # Try paragraph break
-        para_break = remaining.rfind("\n\n", 0, max_length)
-        if para_break > max_length // 3:
-            split_at = para_break
-        elif (line_break := remaining.rfind("\n", 0, max_length)) > max_length // 3:
-            split_at = line_break
-        elif (sentence_end := remaining.rfind(". ", 0, max_length)) > max_length // 3:
-            split_at = sentence_end + 1
-        elif (space := remaining.rfind(" ", 0, max_length)) > max_length // 3:
-            split_at = space
-
+        split_at = _find_md_split(remaining, max_length)
         chunk = remaining[:split_at].rstrip()
         remaining = remaining[split_at:].lstrip()
 
@@ -113,3 +124,37 @@ def split_message(text: str, max_length: int = TELEGRAM_MAX_LENGTH) -> list[str]
             chunks.append(chunk)
 
     return chunks
+
+
+_MD_CHECK_THRESHOLD = 2500   # only render-check when markdown exceeds this
+_HTML_SAFE_LIMIT = 3800      # split target — well under Telegram's 4096
+
+
+def find_overflow_split(md_text: str, renderer) -> int | None:
+    """Check if rendered HTML of md_text would exceed the safe limit.
+
+    Returns the markdown split position if overflow detected, None otherwise.
+    Uses a cheap length check first — only renders when markdown is long enough.
+    """
+    if len(md_text) <= _MD_CHECK_THRESHOLD:
+        return None
+
+    rendered = renderer.render(md_text)
+    if len(rendered) <= _HTML_SAFE_LIMIT:
+        return None
+
+    # Binary search: find largest markdown prefix whose HTML fits in safe limit
+    lo, hi = 0, len(md_text)
+    best = hi // 2
+    for _ in range(8):
+        mid = (lo + hi) // 2
+        split = _find_md_split(md_text, mid)
+        if split <= lo:
+            break
+        test_html = renderer.render(md_text[:split])
+        if len(test_html) <= _HTML_SAFE_LIMIT:
+            best = split
+            lo = split + 1
+        else:
+            hi = split
+    return best
