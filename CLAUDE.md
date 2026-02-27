@@ -95,6 +95,16 @@ When responding through the Telegram bot:
 - Code blocks, bold, italic, links, and lists are all supported
 - Don't write raw HTML — the converter handles that
 
+### Sending Files to the User
+To deliver a file you created (image, document, audio, video) to the user, write a `📎` marker line in your response:
+```
+📎 /absolute/path/to/file optional caption
+```
+- The bot strips the line and sends the file as the correct Telegram media type (photo, video, audio, or document)
+- The path **must** be absolute and inside the workspace
+- Consecutive `📎` lines are grouped into a single album/message
+- **Never** try to show a local file by reading it back — use `📎` instead
+
 ### Response Style for Telegram
 - **Be concise.** Telegram is a chat interface, not a document.
 - Prefer short, direct answers over long explanations
