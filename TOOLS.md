@@ -89,5 +89,34 @@ _None configured yet — document available APIs here as they're added_
 ### Local Services
 _None running yet — document local services (databases, servers, etc.) here_
 
+## Sending Files to the User
+
+To deliver a file you created to the user in Telegram, write a line in your response using the 📎 marker:
+
+```
+📎 /absolute/path/to/file optional caption here
+```
+
+The bot will:
+1. Strip the 📎 line from the displayed message
+2. Send the file using the appropriate Telegram media type based on extension:
+   - **Photos:** `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.bmp`
+   - **Videos:** `.mp4`, `.mov`, `.avi`, `.mkv`, `.webm`
+   - **Audio:** `.mp3`, `.ogg`, `.wav`, `.flac`, `.aac`, `.m4a`, `.opus`
+   - **Documents:** everything else (`.pdf`, `.zip`, `.py`, `.txt`, etc.)
+3. Include the caption (if provided) with the file
+
+**Rules:**
+- The path must be **absolute** and inside the current workspace directory (security enforced)
+- The file must exist on disk at the time the response is sent
+- You can include multiple 📎 lines in a single response
+- Each 📎 must be on its own line
+
+**Example:**
+```
+Here's the chart you requested:
+📎 /root/OpenClaude/workspaces/c12345/output/chart.png Sales data visualization
+```
+
 ## Notes
 _Add environment-specific notes here as you discover them_

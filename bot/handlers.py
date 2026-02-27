@@ -2,6 +2,7 @@
 
 import asyncio
 import html
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -26,6 +27,13 @@ from bot.sdk_session import sdk_sessions, SDKSession
 _IMAGE_EXTENSIONS = re.compile(r'\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s)]*)?$', re.IGNORECASE)
 _MD_IMAGE_RE = re.compile(r'!\[([^\]]*)\]\(([^)]+)\)')
 _BARE_URL_RE = re.compile(r'(?<!\()(https?://\S+\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s)]*)?)(?!\))', re.IGNORECASE)
+
+# Local file attachment marker: 📎 /path/to/file [optional caption]
+_FILE_MARKER_RE = re.compile(r'^📎\s+(\S+)(?:\s+(.+))?$', re.MULTILINE)
+
+_IMAGE_FILE_EXTS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'}
+_VIDEO_FILE_EXTS = {'.mp4', '.mov', '.avi', '.mkv', '.webm'}
+_AUDIO_FILE_EXTS = {'.mp3', '.ogg', '.wav', '.flac', '.aac', '.m4a', '.opus'}
 
 
 def _extract_image_urls(text: str) -> tuple[str, list[str]]:
@@ -61,6 +69,74 @@ def _extract_image_urls(text: str) -> tuple[str, list[str]]:
     cleaned = re.sub(r'\n{3,}', '\n\n', cleaned).strip()
 
     return cleaned, urls
+
+
+def _extract_local_files(text: str, workspace: str) -> tuple[str, list[dict]]:
+    """Extract 📎 /path/to/file lines and return (cleaned_text, file_info_list).
+
+    Each file_info dict has keys: path, caption, media_type.
+    Only files within the workspace directory are accepted.
+    """
+    files: list[dict] = []
+    ws_real = os.path.realpath(workspace)
+
+    for match in _FILE_MARKER_RE.finditer(text):
+        raw_path = match.group(1)
+        caption = match.group(2) or ""
+        real_path = os.path.realpath(raw_path)
+
+        # Security: must be within workspace
+        if not real_path.startswith(ws_real + os.sep) and real_path != ws_real:
+            logger.warning("📎 path outside workspace, skipping: %s", raw_path)
+            continue
+
+        if not os.path.isfile(real_path):
+            logger.warning("📎 file not found, skipping: %s", raw_path)
+            continue
+
+        ext = os.path.splitext(real_path)[1].lower()
+        if ext in _IMAGE_FILE_EXTS:
+            media_type = "photo"
+        elif ext in _VIDEO_FILE_EXTS:
+            media_type = "video"
+        elif ext in _AUDIO_FILE_EXTS:
+            media_type = "audio"
+        else:
+            media_type = "document"
+
+        files.append({"path": real_path, "caption": caption.strip(), "media_type": media_type})
+
+    # Remove 📎 lines from text
+    cleaned = _FILE_MARKER_RE.sub('', text)
+    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned).strip()
+
+    return cleaned, files
+
+
+async def _send_local_file(
+    bot,
+    chat_id: int,
+    file_info: dict,
+    thread_id: int | None = None,
+) -> None:
+    """Send a local file to Telegram using the appropriate media method."""
+    path = file_info["path"]
+    caption = file_info.get("caption") or None
+    media_type = file_info["media_type"]
+
+    with open(path, "rb") as f:
+        if media_type == "photo":
+            await bot.send_photo(chat_id=chat_id, photo=f, caption=caption,
+                                 message_thread_id=thread_id)
+        elif media_type == "video":
+            await bot.send_video(chat_id=chat_id, video=f, caption=caption,
+                                 message_thread_id=thread_id)
+        elif media_type == "audio":
+            await bot.send_audio(chat_id=chat_id, audio=f, caption=caption,
+                                 message_thread_id=thread_id)
+        else:
+            await bot.send_document(chat_id=chat_id, document=f, caption=caption,
+                                    message_thread_id=thread_id)
 
 
 # Populated at startup via post_init callback
@@ -734,13 +810,18 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 pass
         return
 
+    # Extract local file attachments (📎 markers) before image URL extraction
+    local_files: list[dict] = []
+    workspace_path = str(ensure_workspace(chat_id))
+    response_text, local_files = _extract_local_files(response_text, workspace_path)
+
     # Extract image URLs from response and send as Telegram photos
     response_text, image_urls = _extract_image_urls(response_text)
 
     # What's left to display? Everything after sent_offset.
     remaining = response_text[sent_offset:] if sent_offset < len(response_text) else ""
 
-    if not remaining and not image_urls:
+    if not remaining and not image_urls and not local_files:
         # Everything already displayed — just finalize live_msg if needed
         if live_msg:
             chunk_md = live_text[sent_offset:]
@@ -796,6 +877,21 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 await context.bot.send_message(
                     chat_id=chat_id,
                     text=img_url,
+                    message_thread_id=tg_thread_id,
+                )
+            except Exception:
+                pass
+
+    # Send local file attachments (📎 markers)
+    for file_info in local_files:
+        try:
+            await _send_local_file(context.bot, chat_id, file_info, tg_thread_id)
+        except Exception:
+            logger.warning("Failed to send local file: %s", file_info["path"])
+            try:
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=f"[File: {file_info['path']}]",
                     message_thread_id=tg_thread_id,
                 )
             except Exception:
