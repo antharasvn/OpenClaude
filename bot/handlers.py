@@ -75,31 +75,49 @@ def _extract_image_urls(text: str) -> tuple[str, list[str]]:
     return cleaned, urls
 
 
-def _extract_local_files(text: str, workspace: str) -> tuple[str, list[dict]]:
-    """Extract 📎 /path/to/file lines and return (cleaned_text, file_info_list).
+def _split_file_segments(text: str, workspace: str) -> list[dict]:
+    """Split text into ordered segments of text and file groups.
 
-    Each file_info dict has keys: path, caption, media_type.
+    Returns a list of:
+      {"type": "text", "content": "..."}
+      {"type": "files", "files": [{"path":..., "caption":..., "media_type":...}, ...]}
+
+    Consecutive 📎 lines are grouped together so they can be sent as a media group.
     Only files within the workspace directory are accepted.
-    Handles 📎 on its own line with path on the next line.
     """
     # Normalize: join 📎 split across lines into single-line form
     text = _FILE_MARKER_NORM.sub('📎 ', text)
 
-    files: list[dict] = []
     ws_real = os.path.realpath(workspace)
+    segments: list[dict] = []
+    last_end = 0
+    pending_files: list[dict] = []
 
     for match in _FILE_MARKER_RE.finditer(text):
+        # Text between previous match and this one
+        gap = text[last_end:match.start()]
+        gap_clean = _FILE_MARKER_STRAY.sub('', gap).strip()
+
+        # If there's real text between file markers, flush pending files first
+        if gap_clean and pending_files:
+            segments.append({"type": "files", "files": pending_files})
+            pending_files = []
+        if gap_clean:
+            segments.append({"type": "text", "content": gap_clean})
+
         raw_path = match.group(1)
-        caption = match.group(2) or ""
+        caption = (match.group(2) or "").strip()
         real_path = os.path.realpath(raw_path)
 
         # Security: must be within workspace
         if not real_path.startswith(ws_real + os.sep) and real_path != ws_real:
             logger.warning("📎 path outside workspace, skipping: %s", raw_path)
+            last_end = match.end()
             continue
 
         if not os.path.isfile(real_path):
             logger.warning("📎 file not found, skipping: %s", raw_path)
+            last_end = match.end()
             continue
 
         ext = os.path.splitext(real_path)[1].lower()
@@ -112,59 +130,83 @@ def _extract_local_files(text: str, workspace: str) -> tuple[str, list[dict]]:
         else:
             media_type = "document"
 
-        files.append({"path": real_path, "caption": caption.strip(), "media_type": media_type})
+        pending_files.append({"path": real_path, "caption": caption, "media_type": media_type})
+        last_end = match.end()
 
-    # Remove matched 📎 lines and any stray 📎 markers without paths
-    cleaned = _FILE_MARKER_RE.sub('', text)
-    cleaned = _FILE_MARKER_STRAY.sub('', cleaned)
-    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned).strip()
+    # Flush remaining pending files
+    if pending_files:
+        segments.append({"type": "files", "files": pending_files})
 
-    return cleaned, files
+    # Trailing text after the last match
+    tail = text[last_end:]
+    tail = _FILE_MARKER_STRAY.sub('', tail)
+    tail = re.sub(r'\n{3,}', '\n\n', tail).strip()
+    if tail:
+        segments.append({"type": "text", "content": tail})
+
+    return segments
 
 
-async def _send_local_files(
+async def _send_file_group(
     bot,
     chat_id: int,
     files: list[dict],
     thread_id: int | None = None,
 ) -> None:
-    """Send local files to Telegram grouped by media type when possible.
+    """Send a group of files as a Telegram media group when possible.
 
-    Photos are sent as a media group (album) if there are multiple.
-    Other types are sent individually.
+    Telegram constraints: photos+videos can mix; documents only with
+    documents; audio only with audio.  Falls back to individual sends
+    for incompatible mixes or single files.
     """
     from telegram import InputMediaPhoto, InputMediaVideo, InputMediaAudio, InputMediaDocument
 
-    # Group files by media type for potential batching
-    photos = [f for f in files if f["media_type"] == "photo"]
-    others = [f for f in files if f["media_type"] != "photo"]
+    if len(files) == 1:
+        await _send_single_file(bot, chat_id, files[0], thread_id)
+        return
 
-    # Send photos as media group if multiple, or single if one
-    if len(photos) > 1:
+    media_types = {f["media_type"] for f in files}
+    can_group = (
+        media_types <= {"photo", "video"}
+        or media_types == {"document"}
+        or media_types == {"audio"}
+    )
+
+    if can_group:
+        type_map = {
+            "photo": InputMediaPhoto,
+            "video": InputMediaVideo,
+            "audio": InputMediaAudio,
+            "document": InputMediaDocument,
+        }
         media = []
-        for i, f in enumerate(photos):
-            caption = f.get("caption") or None
-            media.append(InputMediaPhoto(media=open(f["path"], "rb"), caption=caption))
+        for f in files:
+            cls = type_map[f["media_type"]]
+            media.append(cls(media=open(f["path"], "rb"), caption=f.get("caption") or None))
         try:
             await bot.send_media_group(
                 chat_id=chat_id, media=media, message_thread_id=thread_id,
             )
         except Exception:
-            logger.warning("Failed to send photo media group, falling back to individual sends")
-            for f in photos:
-                await _send_single_file(bot, chat_id, f, thread_id)
+            logger.warning("Media group send failed, falling back to individual sends")
+            for f in files:
+                try:
+                    await _send_single_file(bot, chat_id, f, thread_id)
+                except Exception:
+                    logger.warning("Failed to send file: %s", f["path"])
         finally:
             for m in media:
                 try:
                     m.media.close()
                 except Exception:
                     pass
-    elif photos:
-        await _send_single_file(bot, chat_id, photos[0], thread_id)
-
-    # Send non-photo files individually
-    for f in others:
-        await _send_single_file(bot, chat_id, f, thread_id)
+    else:
+        # Mixed types that can't be grouped — send individually
+        for f in files:
+            try:
+                await _send_single_file(bot, chat_id, f, thread_id)
+            except Exception:
+                logger.warning("Failed to send file: %s", f["path"])
 
 
 async def _send_single_file(
@@ -864,18 +906,16 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 pass
         return
 
-    # Extract local file attachments (📎 markers) before image URL extraction
-    local_files: list[dict] = []
-    workspace_path = str(ensure_workspace(chat_id))
-    response_text, local_files = _extract_local_files(response_text, workspace_path)
-
     # Extract image URLs from response and send as Telegram photos
     response_text, image_urls = _extract_image_urls(response_text)
 
-    # What's left to display? Everything after sent_offset.
-    remaining = response_text[sent_offset:] if sent_offset < len(response_text) else ""
+    # Split remaining text into inline segments (text chunks + file groups)
+    workspace_path = str(ensure_workspace(chat_id))
+    remaining_raw = response_text[sent_offset:] if sent_offset < len(response_text) else ""
+    segments = _split_file_segments(remaining_raw, workspace_path) if remaining_raw else []
+    has_files = any(s["type"] == "files" for s in segments)
 
-    if not remaining and not image_urls and not local_files:
+    if not segments and not image_urls:
         # Everything already displayed — just finalize live_msg if needed
         if live_msg:
             chunk_md = live_text[sent_offset:]
@@ -889,35 +929,34 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                     )
                 except Exception:
                     pass
-    elif live_msg and streaming and remaining:
-        # Finalize live_msg with the remaining text
-        try:
-            rendered = renderer.render(remaining)
-            if len(rendered) <= TELEGRAM_MAX_LENGTH:
-                await live_msg.edit_text(
-                    rendered,
-                    parse_mode=ParseMode.HTML,
-                    disable_web_page_preview=True,
-                )
-            else:
-                await live_msg.delete()
-                await send_rendered(update, remaining, context)
-        except Exception:
-            try:
-                await live_msg.delete()
-            except Exception:
-                pass
-            await send_rendered(update, remaining, context)
-    elif remaining:
-        # No live_msg or streaming off — send remaining as new messages
+    else:
+        # Delete live_msg — we'll re-send remaining content properly
         if live_msg:
             try:
                 await live_msg.delete()
             except Exception:
                 pass
-        await send_rendered(update, remaining, context)
 
-    # Send extracted images as Telegram photos
+        # Send segments in order (text and files inline)
+        for segment in segments:
+            if segment["type"] == "text":
+                await send_rendered(update, segment["content"], context)
+            elif segment["type"] == "files":
+                try:
+                    await _send_file_group(context.bot, chat_id, segment["files"], tg_thread_id)
+                except Exception:
+                    logger.warning("Failed to send file group")
+                    for fi in segment["files"]:
+                        try:
+                            await context.bot.send_message(
+                                chat_id=chat_id,
+                                text=f"[File: {fi['path']}]",
+                                message_thread_id=tg_thread_id,
+                            )
+                        except Exception:
+                            pass
+
+    # Send extracted image URLs as Telegram photos
     for img_url in image_urls:
         try:
             await context.bot.send_photo(
@@ -935,22 +974,6 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 )
             except Exception:
                 pass
-
-    # Send local file attachments (📎 markers)
-    if local_files:
-        try:
-            await _send_local_files(context.bot, chat_id, local_files, tg_thread_id)
-        except Exception:
-            logger.warning("Failed to send local files")
-            for file_info in local_files:
-                try:
-                    await context.bot.send_message(
-                        chat_id=chat_id,
-                        text=f"[File: {file_info['path']}]",
-                        message_thread_id=tg_thread_id,
-                    )
-                except Exception:
-                    pass
 
     # Context usage warnings and auto-compact
     if not _is_compact:
