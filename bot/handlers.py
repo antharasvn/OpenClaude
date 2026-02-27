@@ -209,6 +209,14 @@ async def _send_file_group(
                 logger.warning("Failed to send file: %s", f["path"])
 
 
+def _clean_file_markers(text: str) -> str:
+    """Remove 📎 marker lines from text for display purposes."""
+    text = _FILE_MARKER_NORM.sub('📎 ', text)
+    text = _FILE_MARKER_RE.sub('', text)
+    text = _FILE_MARKER_STRAY.sub('', text)
+    return re.sub(r'\n{3,}', '\n\n', text).strip()
+
+
 async def _send_single_file(
     bot,
     chat_id: int,
@@ -780,19 +788,30 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                     block_text = event["text"]
                     if live_msg:
                         chunk_md = live_text[sent_offset:]
-                        try:
-                            rendered = renderer.render(chunk_md)
-                            await live_msg.edit_text(
-                                rendered[:TELEGRAM_MAX_LENGTH],
-                                parse_mode=ParseMode.HTML,
-                                disable_web_page_preview=True,
-                            )
-                        except Exception:
-                            pass
-                        finalized_msgs.append(live_msg)
+                        # Strip 📎 markers so they never appear in finalized messages
+                        display_md = _clean_file_markers(chunk_md)
+                        if display_md:
+                            try:
+                                rendered = renderer.render(display_md)
+                                await live_msg.edit_text(
+                                    rendered[:TELEGRAM_MAX_LENGTH],
+                                    parse_mode=ParseMode.HTML,
+                                    disable_web_page_preview=True,
+                                )
+                            except Exception:
+                                pass
+                            finalized_msgs.append(live_msg)
+                        else:
+                            # Only 📎 markers, no real text — delete the message
+                            try:
+                                await live_msg.delete()
+                            except Exception:
+                                pass
                     elif block_text:
-                        # No streaming — send block directly
-                        await send_rendered(update, block_text, context)
+                        # No streaming — send block directly (strip 📎)
+                        display_text = _clean_file_markers(block_text)
+                        if display_text:
+                            await send_rendered(update, display_text, context)
                     sent_offset = len(live_text)
                     live_msg = None
 
@@ -800,16 +819,23 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                     # Flush any remaining live text before showing tool status
                     if live_msg:
                         chunk_md = live_text[sent_offset:]
-                        try:
-                            rendered = renderer.render(chunk_md)
-                            await live_msg.edit_text(
-                                rendered[:TELEGRAM_MAX_LENGTH],
-                                parse_mode=ParseMode.HTML,
-                                disable_web_page_preview=True,
-                            )
-                        except Exception:
-                            pass
-                        finalized_msgs.append(live_msg)
+                        display_md = _clean_file_markers(chunk_md)
+                        if display_md:
+                            try:
+                                rendered = renderer.render(display_md)
+                                await live_msg.edit_text(
+                                    rendered[:TELEGRAM_MAX_LENGTH],
+                                    parse_mode=ParseMode.HTML,
+                                    disable_web_page_preview=True,
+                                )
+                            except Exception:
+                                pass
+                            finalized_msgs.append(live_msg)
+                        else:
+                            try:
+                                await live_msg.delete()
+                            except Exception:
+                                pass
                         sent_offset = len(live_text)
                         live_msg = None
                     if show_tools:
@@ -906,92 +932,87 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 pass
         return
 
-    # Check for 📎 file markers in the FULL response text
+    # Extract image URLs from response
+    response_text, image_urls = _extract_image_urls(response_text)
+
+    # Extract 📎 file attachments from the full response text.
+    # Text was already cleaned of 📎 during streaming finalization,
+    # so we don't need to re-send text — just extract and send files.
     workspace_path = str(ensure_workspace(chat_id))
-    normalized_check = _FILE_MARKER_NORM.sub('📎 ', response_text)
-    has_file_markers = bool(_FILE_MARKER_RE.search(normalized_check))
+    segments = _split_file_segments(response_text, workspace_path)
+    file_segments = [s for s in segments if s["type"] == "files"]
 
-    if has_file_markers:
-        # 📎 markers were likely displayed during streaming — delete all
-        # streamed messages and re-send the full response with inline files
+    # Clean response_text for remaining-text computation
+    cleaned_response = _clean_file_markers(response_text)
+    remaining = cleaned_response[min(sent_offset, len(cleaned_response)):] if cleaned_response else ""
+
+    if not remaining and not image_urls and not file_segments:
+        # Everything already displayed — just finalize live_msg if needed
         if live_msg:
-            try:
-                await live_msg.delete()
-            except Exception:
-                pass
-        for fm in finalized_msgs:
-            try:
-                await fm.delete()
-            except Exception:
-                pass
-
-        # Extract image URLs, then split full text into segments
-        response_text, image_urls = _extract_image_urls(response_text)
-        segments = _split_file_segments(response_text, workspace_path)
-
-        for segment in segments:
-            if segment["type"] == "text":
-                await send_rendered(update, segment["content"], context)
-            elif segment["type"] == "files":
+            chunk_md = _clean_file_markers(live_text[sent_offset:])
+            if chunk_md:
                 try:
-                    await _send_file_group(context.bot, chat_id, segment["files"], tg_thread_id)
-                except Exception:
-                    logger.warning("Failed to send file group")
-                    for fi in segment["files"]:
-                        try:
-                            await context.bot.send_message(
-                                chat_id=chat_id,
-                                text=f"[File: {fi['path']}]",
-                                message_thread_id=tg_thread_id,
-                            )
-                        except Exception:
-                            pass
-    else:
-        # No file markers — normal flow
-        response_text, image_urls = _extract_image_urls(response_text)
-        remaining = response_text[sent_offset:] if sent_offset < len(response_text) else ""
-
-        if not remaining and not image_urls:
-            # Everything already displayed — just finalize live_msg if needed
-            if live_msg:
-                chunk_md = live_text[sent_offset:]
-                if chunk_md:
-                    try:
-                        rendered = renderer.render(chunk_md)
-                        await live_msg.edit_text(
-                            rendered[:TELEGRAM_MAX_LENGTH],
-                            parse_mode=ParseMode.HTML,
-                            disable_web_page_preview=True,
-                        )
-                    except Exception:
-                        pass
-        elif live_msg and streaming and remaining:
-            # Finalize live_msg with the remaining text
-            try:
-                rendered = renderer.render(remaining)
-                if len(rendered) <= TELEGRAM_MAX_LENGTH:
+                    rendered = renderer.render(chunk_md)
                     await live_msg.edit_text(
-                        rendered,
+                        rendered[:TELEGRAM_MAX_LENGTH],
                         parse_mode=ParseMode.HTML,
                         disable_web_page_preview=True,
                     )
-                else:
+                except Exception:
+                    pass
+            else:
+                try:
                     await live_msg.delete()
+                except Exception:
+                    pass
+    else:
+        # Clean up live_msg — strip 📎 markers or delete if only markers
+        if live_msg:
+            display_md = _clean_file_markers(live_text[sent_offset:])
+            if display_md and remaining:
+                try:
+                    rendered = renderer.render(remaining)
+                    if len(rendered) <= TELEGRAM_MAX_LENGTH:
+                        await live_msg.edit_text(
+                            rendered,
+                            parse_mode=ParseMode.HTML,
+                            disable_web_page_preview=True,
+                        )
+                    else:
+                        await live_msg.delete()
+                        await send_rendered(update, remaining, context)
+                except Exception:
+                    try:
+                        await live_msg.delete()
+                    except Exception:
+                        pass
+                    if remaining:
+                        await send_rendered(update, remaining, context)
+            else:
+                try:
+                    await live_msg.delete()
+                except Exception:
+                    pass
+                if remaining:
                     await send_rendered(update, remaining, context)
-            except Exception:
-                try:
-                    await live_msg.delete()
-                except Exception:
-                    pass
-                await send_rendered(update, remaining, context)
         elif remaining:
-            # No live_msg or streaming off — send remaining as new messages
-            if live_msg:
+            await send_rendered(update, remaining, context)
+
+    # Send 📎 file attachments
+    for seg in file_segments:
+        try:
+            await _send_file_group(context.bot, chat_id, seg["files"], tg_thread_id)
+        except Exception:
+            logger.warning("Failed to send file group")
+            for fi in seg["files"]:
                 try:
-                    await live_msg.delete()
+                    await context.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"[File: {fi['path']}]",
+                        message_thread_id=tg_thread_id,
+                    )
                 except Exception:
                     pass
-            await send_rendered(update, remaining, context)
 
     # Send extracted image URLs as Telegram photos
     for img_url in image_urls:
