@@ -629,6 +629,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     live_msg = None          # current Telegram message being edited with ✍️
     live_text = ""           # all accumulated partial text
     sent_offset = 0          # chars of live_text already in finalized messages
+    direct_sent_len = 0      # chars of text sent directly (without streaming partials)
     finalized_msgs: list = []  # finalized Telegram messages (for /stop cleanup)
     last_live_edit: float = 0
     LIVE_EDIT_INTERVAL = 3.0
@@ -812,6 +813,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                         display_text = _clean_file_markers(block_text)
                         if display_text:
                             await send_rendered(update, display_text, context)
+                        direct_sent_len += len(block_text)
                     sent_offset = len(live_text)
                     live_msg = None
 
@@ -944,7 +946,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
     # Clean response_text for remaining-text computation
     cleaned_response = _clean_file_markers(response_text)
-    remaining = cleaned_response[min(sent_offset, len(cleaned_response)):] if cleaned_response else ""
+    effective_offset = max(sent_offset, direct_sent_len)
+    remaining = cleaned_response[min(effective_offset, len(cleaned_response)):] if cleaned_response else ""
 
     if not remaining and not image_urls and not file_segments:
         # Everything already displayed — just finalize live_msg if needed
