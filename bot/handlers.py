@@ -1083,6 +1083,9 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     # Delete intermediate assistant text messages (verbose mode cleanup)
     # These are text blocks Claude sent between tool calls (e.g. "Reading startup files...")
     # Analogous to status_msg deletion for tool call progress
+    # If nothing remains to send, the last intermediate message IS the final response — keep it.
+    if intermediate_text_msgs and not remaining:
+        intermediate_text_msgs.pop()
     for im in intermediate_text_msgs:
         try:
             await im.delete()
