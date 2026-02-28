@@ -14,6 +14,9 @@ build/
 .telegram-claude-sessions.json
 ~/.openclaude-sessions.json
 
+# Per-chat settings (contains chat IDs)
+.chat-settings.json
+
 # Uploads (inside workspaces, already gitignored)
 
 # Memory (all memory lives in workspaces, not here)
