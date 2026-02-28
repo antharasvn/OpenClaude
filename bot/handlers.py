@@ -391,6 +391,43 @@ async def send_rendered(
                     logger.warning("Plain text fallback also failed")
 
 
+async def _send_rendered_collect(
+    update: Update,
+    text: str,
+    context: ContextTypes.DEFAULT_TYPE,
+    tg_thread_id: int | None = None,
+) -> list:
+    """Like send_rendered but returns the list of sent Message objects."""
+    md_chunks = split_message(text)
+    sent: list = []
+
+    for md_chunk in md_chunks:
+        chunk = renderer.render(md_chunk)
+        try:
+            msg = await update.message.reply_text(
+                chunk,
+                parse_mode=ParseMode.HTML,
+                disable_web_page_preview=True,
+                message_thread_id=tg_thread_id,
+            )
+            sent.append(msg)
+        except Exception:
+            logger.warning("HTML send failed for chunk, falling back to plain text")
+            plain = re.sub(r"<[^>]+>", "", chunk)
+            plain_chunks = split_message(plain)
+            for pc in plain_chunks:
+                try:
+                    msg = await update.message.reply_text(
+                        pc,
+                        message_thread_id=tg_thread_id,
+                    )
+                    sent.append(msg)
+                except Exception:
+                    logger.warning("Plain text fallback also failed")
+
+    return sent
+
+
 # ---------------------------------------------------------------------------
 # Commands
 # ---------------------------------------------------------------------------
@@ -631,6 +668,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     sent_offset = 0          # chars of live_text already in finalized messages
     direct_sent_len = 0      # chars of text sent directly (without streaming partials)
     finalized_msgs: list = []  # finalized Telegram messages (for /stop cleanup)
+    intermediate_text_msgs: list = []  # intermediate assistant text messages (deleted after final response)
     last_live_edit: float = 0
     LIVE_EDIT_INTERVAL = 3.0
 
@@ -802,6 +840,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                             except Exception:
                                 pass
                             finalized_msgs.append(live_msg)
+                            if show_tools:
+                                intermediate_text_msgs.append(live_msg)
                         else:
                             # Only 📎 markers, no real text — delete the message
                             try:
@@ -812,7 +852,9 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                         # No streaming — send block directly (strip 📎)
                         display_text = _clean_file_markers(block_text)
                         if display_text:
-                            await send_rendered(update, display_text, context)
+                            sent_msgs = await _send_rendered_collect(update, display_text, context, tg_thread_id)
+                            if show_tools:
+                                intermediate_text_msgs.extend(sent_msgs)
                         direct_sent_len += len(block_text)
                     sent_offset = len(live_text)
                     live_msg = None
@@ -833,6 +875,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                             except Exception:
                                 pass
                             finalized_msgs.append(live_msg)
+                            if show_tools:
+                                intermediate_text_msgs.append(live_msg)
                         else:
                             try:
                                 await live_msg.delete()
@@ -1035,6 +1079,15 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 )
             except Exception:
                 pass
+
+    # Delete intermediate assistant text messages (verbose mode cleanup)
+    # These are text blocks Claude sent between tool calls (e.g. "Reading startup files...")
+    # Analogous to status_msg deletion for tool call progress
+    for im in intermediate_text_msgs:
+        try:
+            await im.delete()
+        except Exception:
+            pass
 
     # Context usage warnings and auto-compact
     if not _is_compact:
