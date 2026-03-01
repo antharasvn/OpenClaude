@@ -651,7 +651,8 @@ async def _flush_batch(key: str) -> None:
 
 async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                              chat_id: int, thread_id: int, user_id: int,
-                             claude_message: str, _is_compact: bool = False) -> None:
+                             claude_message: str, _is_compact: bool = False,
+                             _is_followup: bool = False) -> None:
     """Stream Claude output, show tool progress, then send final response."""
     session_user_id = user_id if update.effective_chat.type == "private" else 0
     tg_thread_id = thread_id or None
@@ -671,6 +672,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     intermediate_text_msgs: list = []  # intermediate assistant text messages (deleted after final response)
     last_live_edit: float = 0
     LIVE_EDIT_INTERVAL = 3.0
+    had_subagents = False    # True if Task (sub-agent) tools were used this turn
 
     async def _update_status(new_active: str = "") -> None:
         nonlocal status_msg, current_active, last_edit_time
@@ -860,6 +862,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                     live_msg = None
 
                 elif etype == "tool_use":
+                    if "sub-agent" in event.get("status", ""):
+                        had_subagents = True
                     # Flush any remaining live text before showing tool status
                     if live_msg:
                         chunk_md = live_text[sent_offset:]
@@ -963,6 +967,10 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
     if response_text is None:
         response_text = "Claude processed the request but returned no text output."
+
+    # Suppress empty follow-up responses (Claude had nothing pending to report)
+    if _is_followup and response_text.strip().lower() in ("ok", "ok."):
+        response_text = ""
 
     if not response_text:
         # Silent exit — clean up any live messages
@@ -1092,8 +1100,19 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         except Exception:
             pass
 
+    # Auto follow-up after subagent turns — catch late output
+    if had_subagents and not _is_followup and not _is_compact and not stopped:
+        logger.info("Sub-agent turn detected — sending follow-up for user %d", user_id)
+        await run_with_streaming(
+            update, context, chat_id, thread_id, user_id,
+            "[System: sub-agent tasks completed. If you have any pending results "
+            "or output to deliver to the user, do so now. If everything has already "
+            "been reported, respond with exactly: ok]",
+            _is_followup=True,
+        )
+
     # Context usage warnings and auto-compact
-    if not _is_compact:
+    if not _is_compact and not _is_followup:
         sid = get_session_id(chat_id, thread_id, session_user_id)
         ctx = get_context_pct(chat_id, thread_id, session_user_id) if sid else None
         if ctx:
