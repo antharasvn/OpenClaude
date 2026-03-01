@@ -971,6 +971,19 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     # Suppress empty follow-up responses (Claude had nothing pending to report)
     if _is_followup and response_text.strip().lower() in ("ok", "ok."):
         response_text = ""
+        # Also clean up any live/finalized messages that already showed "ok" via streaming
+        for fm in finalized_msgs:
+            try:
+                await fm.delete()
+            except Exception:
+                pass
+        finalized_msgs.clear()
+        if live_msg:
+            try:
+                await live_msg.delete()
+            except Exception:
+                pass
+            live_msg = None
 
     if not response_text:
         # Silent exit — clean up any live messages
@@ -1054,9 +1067,11 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
             await send_rendered(update, remaining, context)
 
     # Send 📎 file attachments
+    had_file_attachments = False
     for seg in file_segments:
         try:
             await _send_file_group(context.bot, chat_id, seg["files"], tg_thread_id)
+            had_file_attachments = True
         except Exception:
             logger.warning("Failed to send file group")
             for fi in seg["files"]:
@@ -1103,11 +1118,22 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     # Auto follow-up after subagent turns — catch late output
     if had_subagents and not _is_followup and not _is_compact and not stopped:
         logger.info("Sub-agent turn detected — sending follow-up for user %d", user_id)
+        had_output = bool(cleaned_response.strip()) or had_file_attachments
+        if had_output:
+            followup_msg = (
+                "[System: sub-agent tasks completed. "
+                "You already delivered a complete response to the user in this turn. "
+                "Do NOT repeat or re-send anything. Respond with exactly: ok]"
+            )
+        else:
+            followup_msg = (
+                "[System: sub-agent tasks completed. If you have any pending results "
+                "or output to deliver to the user, do so now. If everything has already "
+                "been reported, respond with exactly: ok]"
+            )
         await run_with_streaming(
             update, context, chat_id, thread_id, user_id,
-            "[System: sub-agent tasks completed. If you have any pending results "
-            "or output to deliver to the user, do so now. If everything has already "
-            "been reported, respond with exactly: ok]",
+            followup_msg,
             _is_followup=True,
         )
 
