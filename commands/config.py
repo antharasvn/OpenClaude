@@ -78,7 +78,7 @@ def get_respond_mode(chat_id: int, thread_id: int) -> str:
     """Get response mode for a chat/thread: 'mention' or 'all'."""
     settings = _load_settings()
     key = _setting_key(chat_id, thread_id)
-    return settings.get(key, {}).get("respond_mode", "mention")
+    return settings.get(key, {}).get("respond_mode", "all")
 
 
 def _set_setting(chat_id: int, thread_id: int, name: str, value) -> None:
