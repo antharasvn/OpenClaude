@@ -252,8 +252,9 @@ def main() -> None:
                         "[System: The bot just restarted. Your previous response "
                         "was interrupted mid-turn. Here is what you were doing:\n\n"
                         f"{restart_ctx}\n\n"
-                        "Briefly summarize this to the user and ask if they want "
-                        "you to continue.]"
+                        "Briefly notify the user that you restarted and are continuing, "
+                        "then immediately resume and complete the task without waiting "
+                        "for confirmation.]"
                     )
                 else:
                     user_msg_hint = entry.get("user_message", "")
@@ -261,14 +262,16 @@ def main() -> None:
                         resume_msg = (
                             "[System: The bot just restarted. Your previous response "
                             f'was interrupted. The user\'s message was: "{user_msg_hint}". '
-                            "Briefly summarize what you were likely doing and ask if "
-                            "they want you to continue.]"
+                            "Briefly notify the user that you restarted and are continuing, "
+                            "then immediately resume and complete the task without waiting "
+                            "for confirmation.]"
                         )
                     else:
                         resume_msg = (
                             "[System: The bot just restarted. Your previous response was "
-                            "interrupted. Briefly summarize what you were doing and ask "
-                            "the user if they want you to continue.]"
+                            "interrupted. Briefly notify the user that you restarted and "
+                            "are continuing, then resume the task without waiting for "
+                            "confirmation.]"
                         )
                 chat_working_dir = get_working_dir(cid)
                 result_text = None
