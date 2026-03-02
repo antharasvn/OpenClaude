@@ -409,6 +409,7 @@ async def _send_rendered_collect(
                 parse_mode=ParseMode.HTML,
                 disable_web_page_preview=True,
                 message_thread_id=tg_thread_id,
+                disable_notification=True,
             )
             sent.append(msg)
         except Exception:
@@ -420,6 +421,7 @@ async def _send_rendered_collect(
                     msg = await update.message.reply_text(
                         pc,
                         message_thread_id=tg_thread_id,
+                        disable_notification=True,
                     )
                     sent.append(msg)
                 except Exception:
@@ -692,6 +694,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 status_msg = await update.message.reply_text(
                     text,
                     message_thread_id=tg_thread_id,
+                    disable_notification=True,
                 )
             else:
                 await status_msg.edit_text(text)
@@ -775,6 +778,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 live_msg = await update.message.reply_text(
                     display,
                     message_thread_id=tg_thread_id,
+                    disable_notification=True,
                 )
             else:
                 await live_msg.edit_text(display)
@@ -799,6 +803,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
             await update.message.reply_text(
                 "Still processing a previous request. Use /stop to cancel it.",
                 message_thread_id=tg_thread_id,
+                disable_notification=True,
             )
         except Exception:
             pass
@@ -1099,6 +1104,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 await update.message.reply_text(
                     f"Context at {pct:.0%} \u2014 auto-compacting\u2026",
                     message_thread_id=tg_thread_id,
+                    disable_notification=True,
                 )
                 await run_with_streaming(update, context, chat_id, thread_id,
                                          user_id, "/compact", _is_compact=True)
@@ -1106,6 +1112,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 await update.message.reply_text(
                     f"Context at {pct:.0%} \u2014 consider using /compact",
                     message_thread_id=tg_thread_id,
+                    disable_notification=True,
                 )
 
 
