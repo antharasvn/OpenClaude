@@ -842,8 +842,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                             except Exception:
                                 pass
                             finalized_msgs.append(live_msg)
-                            if show_tools:
-                                intermediate_text_msgs.append(live_msg)
+                            intermediate_text_msgs.append(live_msg)
                         else:
                             # Only 📎 markers, no real text — delete the message
                             try:
@@ -857,8 +856,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                             display_text = _clean_file_markers(block_text)
                             if display_text:
                                 sent_msgs = await _send_rendered_collect(update, display_text, context, tg_thread_id)
-                                if show_tools:
-                                    intermediate_text_msgs.extend(sent_msgs)
+                                intermediate_text_msgs.extend(sent_msgs)
                         direct_sent_len += len(block_text)
                     sent_offset = len(live_text)
                     live_msg = None
@@ -881,8 +879,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                             except Exception:
                                 pass
                             finalized_msgs.append(live_msg)
-                            if show_tools:
-                                intermediate_text_msgs.append(live_msg)
+                            intermediate_text_msgs.append(live_msg)
                         else:
                             try:
                                 await live_msg.delete()
