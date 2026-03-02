@@ -269,7 +269,7 @@ async def _typing_loop(bot, chat_id: int, thread_id: int | None = None) -> None:
 
 
 # Per-user locks to prevent concurrent Claude calls for the same user
-_user_locks: dict[int, asyncio.Lock] = {}
+_user_locks: dict[str, asyncio.Lock] = {}
 
 # Per-session stop events for /stop command
 _stop_events: dict[str, asyncio.Event] = {}
@@ -278,10 +278,10 @@ _stop_events: dict[str, asyncio.Event] = {}
 _streaming_tasks: dict[str, asyncio.Task] = {}
 
 
-def _get_user_lock(user_id: int) -> asyncio.Lock:
-    if user_id not in _user_locks:
-        _user_locks[user_id] = asyncio.Lock()
-    return _user_locks[user_id]
+def _get_user_lock(skey: str) -> asyncio.Lock:
+    if skey not in _user_locks:
+        _user_locks[skey] = asyncio.Lock()
+    return _user_locks[skey]
 
 
 # ---------------------------------------------------------------------------
@@ -556,7 +556,7 @@ async def _force_stop_session(skey: str, chat_id: int, thread_id: int, session_u
     _streaming_tasks.pop(skey, None)
     _stop_events.pop(skey, None)
     remove_active_stream(chat_id, thread_id, session_uid)
-    lock = _user_locks.get(session_uid)
+    lock = _user_locks.get(skey)
     if lock and lock.locked():
         try:
             lock.release()
@@ -794,7 +794,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     typing_task = None
 
     try:
-        await asyncio.wait_for(_get_user_lock(session_user_id).acquire(), timeout=300)
+        await asyncio.wait_for(_get_user_lock(skey).acquire(), timeout=300)
     except asyncio.TimeoutError:
         logger.error("Lock acquisition timed out for user %d in chat %d", session_user_id, chat_id)
         try:
@@ -946,7 +946,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         if not _is_compact:
             _streaming_tasks.pop(skey, None)
         try:
-            _get_user_lock(session_user_id).release()
+            _get_user_lock(skey).release()
         except RuntimeError:
             pass  # already released by /stop
         # Clean up Telegram messages (must run even on CancelledError)
