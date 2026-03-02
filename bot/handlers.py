@@ -852,11 +852,13 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                                 pass
                     elif block_text:
                         # No streaming — send block directly (strip 📎)
-                        display_text = _clean_file_markers(block_text)
-                        if display_text:
-                            sent_msgs = await _send_rendered_collect(update, display_text, context, tg_thread_id)
-                            if show_tools:
-                                intermediate_text_msgs.extend(sent_msgs)
+                        # Follow-up turns: don't send live — let suppression decide later
+                        if not _is_followup:
+                            display_text = _clean_file_markers(block_text)
+                            if display_text:
+                                sent_msgs = await _send_rendered_collect(update, display_text, context, tg_thread_id)
+                                if show_tools:
+                                    intermediate_text_msgs.extend(sent_msgs)
                         direct_sent_len += len(block_text)
                     sent_offset = len(live_text)
                     live_msg = None
@@ -901,6 +903,10 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
                 elif etype == "partial":
                     live_text += event["text"]
+                    # Follow-up turns: don't stream to chat — collect silently,
+                    # suppression logic after the loop decides whether to send.
+                    if _is_followup:
+                        continue
                     # Stop typing once visible output is streaming
                     if typing_task and not typing_task.done():
                         typing_task.cancel()
@@ -925,7 +931,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                     stopped = True
 
             # Final flush of any buffered live text
-            if live_text:
+            if live_text and not _is_followup:
                 await _update_live(live_text)
         finally:
             if not _is_compact:
