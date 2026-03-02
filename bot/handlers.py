@@ -651,8 +651,7 @@ async def _flush_batch(key: str) -> None:
 
 async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                              chat_id: int, thread_id: int, user_id: int,
-                             claude_message: str, _is_compact: bool = False,
-                             _is_followup: bool = False) -> None:
+                             claude_message: str, _is_compact: bool = False) -> None:
     """Stream Claude output, show tool progress, then send final response."""
     session_user_id = user_id if update.effective_chat.type == "private" else 0
     tg_thread_id = thread_id or None
@@ -672,7 +671,6 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     intermediate_text_msgs: list = []  # intermediate assistant text messages (deleted after final response)
     last_live_edit: float = 0
     LIVE_EDIT_INTERVAL = 3.0
-    had_subagents = False    # True if Task (sub-agent) tools were used this turn
 
     async def _update_status(new_active: str = "") -> None:
         nonlocal status_msg, current_active, last_edit_time
@@ -851,19 +849,15 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                                 pass
                     elif block_text:
                         # No streaming — send block directly (strip 📎)
-                        # Follow-up turns: don't send live — let suppression decide later
-                        if not _is_followup:
-                            display_text = _clean_file_markers(block_text)
-                            if display_text:
-                                sent_msgs = await _send_rendered_collect(update, display_text, context, tg_thread_id)
-                                intermediate_text_msgs.extend(sent_msgs)
+                        display_text = _clean_file_markers(block_text)
+                        if display_text:
+                            sent_msgs = await _send_rendered_collect(update, display_text, context, tg_thread_id)
+                            intermediate_text_msgs.extend(sent_msgs)
                         direct_sent_len += len(block_text)
                     sent_offset = len(live_text)
                     live_msg = None
 
                 elif etype == "tool_use":
-                    if "sub-agent" in event.get("status", ""):
-                        had_subagents = True
                     # Flush any remaining live text before showing tool status
                     if live_msg:
                         chunk_md = live_text[sent_offset:]
@@ -900,10 +894,6 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
                 elif etype == "partial":
                     live_text += event["text"]
-                    # Follow-up turns: don't stream to chat — collect silently,
-                    # suppression logic after the loop decides whether to send.
-                    if _is_followup:
-                        continue
                     # Stop typing once visible output is streaming
                     if typing_task and not typing_task.done():
                         typing_task.cancel()
@@ -928,7 +918,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                     stopped = True
 
             # Final flush of any buffered live text
-            if live_text and not _is_followup:
+            if live_text:
                 await _update_live(live_text)
         finally:
             if not _is_compact:
@@ -970,23 +960,6 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
     if response_text is None:
         response_text = "Claude processed the request but returned no text output."
-
-    # Suppress empty follow-up responses (Claude had nothing pending to report)
-    if _is_followup and response_text.strip().lower() in ("ok", "ok."):
-        response_text = ""
-        # Also clean up any live/finalized messages that already showed "ok" via streaming
-        for fm in finalized_msgs:
-            try:
-                await fm.delete()
-            except Exception:
-                pass
-        finalized_msgs.clear()
-        if live_msg:
-            try:
-                await live_msg.delete()
-            except Exception:
-                pass
-            live_msg = None
 
     if not response_text:
         # Silent exit — clean up any live messages
@@ -1070,11 +1043,9 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
             await send_rendered(update, remaining, context)
 
     # Send 📎 file attachments
-    had_file_attachments = False
     for seg in file_segments:
         try:
             await _send_file_group(context.bot, chat_id, seg["files"], tg_thread_id)
-            had_file_attachments = True
         except Exception:
             logger.warning("Failed to send file group")
             for fi in seg["files"]:
@@ -1118,30 +1089,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         except Exception:
             pass
 
-    # Auto follow-up after subagent turns — catch late output
-    if had_subagents and not _is_followup and not _is_compact and not stopped:
-        logger.info("Sub-agent turn detected — sending follow-up for user %d", user_id)
-        had_output = bool(cleaned_response.strip()) or had_file_attachments
-        if had_output:
-            followup_msg = (
-                "[System: sub-agent tasks completed. "
-                "You already delivered a complete response to the user in this turn. "
-                "Do NOT repeat or re-send anything. Respond with exactly: ok]"
-            )
-        else:
-            followup_msg = (
-                "[System: sub-agent tasks completed. If you have any pending results "
-                "or output to deliver to the user, do so now. If everything has already "
-                "been reported, respond with exactly: ok]"
-            )
-        await run_with_streaming(
-            update, context, chat_id, thread_id, user_id,
-            followup_msg,
-            _is_followup=True,
-        )
-
     # Context usage warnings and auto-compact
-    if not _is_compact and not _is_followup:
+    if not _is_compact:
         sid = get_session_id(chat_id, thread_id, session_user_id)
         ctx = get_context_pct(chat_id, thread_id, session_user_id) if sid else None
         if ctx:

@@ -235,7 +235,7 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
         result_text = None
         new_session_id = None
         early_session_id = None  # captured from StreamEvent before ResultMessage
-        tool_active = False  # True while a tool is executing (no messages expected)
+        tool_active_count = 0  # incremented per tool start, decremented per result
 
         try:
             await sdk_session.client.query(message)
@@ -251,7 +251,7 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                     yield {"type": "stopped"}
                     return
                 # Skip deadline check while a tool is running (e.g. long Bash)
-                if not tool_active and now > sdk_deadline:
+                if tool_active_count == 0 and now > sdk_deadline:
                     logger.error("SDK stream timed out after %ds for user %d", CLAUDE_TIMEOUT, user_id)
                     await sdk_session.disconnect()
                     sdk_sessions.pop(skey, None)
@@ -265,13 +265,13 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                 if isinstance(msg, AssistantMessage):
                     for block in msg.content:
                         if isinstance(block, ToolUseBlock):
-                            tool_active = True
+                            tool_active_count += 1
                             ws_log.info("Tool: %s \u2014 %s", block.name, _summarize_input(block.input))
                             status = format_tool_status(block.name, block.input)
                             _append_restart_context(chat_id, f"Tool: {status}")
                             yield {"type": "tool_use", "status": status}
                         elif isinstance(block, ToolResultBlock):
-                            tool_active = False
+                            tool_active_count -= 1
                             _append_restart_context(chat_id, "Tool completed")
                             yield {"type": "tool_result"}
                         elif isinstance(block, TextBlock):
