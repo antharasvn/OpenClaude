@@ -1110,7 +1110,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     # These are text blocks Claude sent between tool calls (e.g. "Reading startup files...")
     # Analogous to status_msg deletion for tool call progress
     # If nothing remains to send, the last intermediate message IS the final response — keep it.
-    if intermediate_text_msgs and not remaining:
+    if intermediate_text_msgs and not remaining and not image_urls and not file_segments:
         intermediate_text_msgs.pop()
     for im in intermediate_text_msgs:
         try:
