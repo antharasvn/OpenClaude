@@ -123,12 +123,16 @@ def _maybe_flush() -> None:
         _write_to_disk()
 
 
-def add_active_stream(chat_id: int, thread_id: int, user_id: int) -> None:
+def add_active_stream(chat_id: int, thread_id: int, user_id: int,
+                      user_message: str = "") -> None:
     """Register a stream start. Survives crashes via periodic flush."""
     global _cache_dirty
     streams = _ensure_cache()
     key = session_key(chat_id, thread_id, user_id)
-    streams[key] = {"chat_id": chat_id, "thread_id": thread_id, "user_id": user_id}
+    entry = {"chat_id": chat_id, "thread_id": thread_id, "user_id": user_id}
+    if user_message:
+        entry["user_message"] = user_message
+    streams[key] = entry
     _cache_dirty = True
     _maybe_flush()
 

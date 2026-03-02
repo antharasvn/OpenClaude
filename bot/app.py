@@ -23,7 +23,7 @@ from bot.sessions import get_session_id, flush_sessions
 from bot.streams import load_active_streams, start_streams_flusher, stop_streams_flusher, flush_streams
 from bot.workspaces import get_working_dir
 from bot.renderer import TelegramRenderer, split_message
-from bot.claude import stream_claude, _active_procs
+from bot.claude import stream_claude, _active_procs, _read_restart_context
 from bot.sdk_session import HAS_SDK, cleanup_idle_sessions, shutdown_sdk_sessions
 from bot import handlers
 from commands import register_all, ALL_COMMANDS
@@ -245,11 +245,31 @@ def main() -> None:
                     except Exception:
                         pass
                     return
-                resume_msg = (
-                    "[System: The bot just restarted. Your previous response was "
-                    "interrupted. Briefly summarize what you were doing and ask "
-                    "the user if they want you to continue.]"
-                )
+                # Build a context-rich resume message
+                restart_ctx = _read_restart_context(cid)
+                if restart_ctx:
+                    resume_msg = (
+                        "[System: The bot just restarted. Your previous response "
+                        "was interrupted mid-turn. Here is what you were doing:\n\n"
+                        f"{restart_ctx}\n\n"
+                        "Briefly summarize this to the user and ask if they want "
+                        "you to continue.]"
+                    )
+                else:
+                    user_msg_hint = entry.get("user_message", "")
+                    if user_msg_hint:
+                        resume_msg = (
+                            "[System: The bot just restarted. Your previous response "
+                            f'was interrupted. The user\'s message was: "{user_msg_hint}". '
+                            "Briefly summarize what you were likely doing and ask if "
+                            "they want you to continue.]"
+                        )
+                    else:
+                        resume_msg = (
+                            "[System: The bot just restarted. Your previous response was "
+                            "interrupted. Briefly summarize what you were doing and ask "
+                            "the user if they want you to continue.]"
+                        )
                 chat_working_dir = get_working_dir(cid)
                 result_text = None
                 stop_event = asyncio.Event()

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from bot.config import (
     ADMIN_USER_ID, ALL_TOOLS, CLAUDE_MODEL, CLAUDE_TIMEOUT, WORKING_DIR,
+    WORKSPACES_DIR,
 )
 from bot.logging_setup import logger, get_workspace_logger, _summarize_input
 from bot.sessions import session_key, get_session_id, set_session_id
@@ -23,6 +24,42 @@ from bot.sdk_session import (
 
 # Active subprocess references for /stop support
 _active_procs: dict[str, asyncio.subprocess.Process] = {}
+
+
+# ---------------------------------------------------------------------------
+# Restart context helpers — breadcrumb file for crash recovery
+# ---------------------------------------------------------------------------
+
+def _restart_context_path(chat_id: int) -> Path:
+    """Return the path to the restart-context file for a chat."""
+    return WORKSPACES_DIR / f"c{chat_id}" / "temp" / "restart-context.md"
+
+
+def _append_restart_context(chat_id: int, line: str) -> None:
+    """Append a line to the restart-context file (creates dir if needed)."""
+    path = _restart_context_path(chat_id)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "a") as f:
+            f.write(line + "\n")
+    except OSError:
+        pass  # best-effort
+
+
+def _clear_restart_context(chat_id: int) -> None:
+    """Delete the restart-context file."""
+    _restart_context_path(chat_id).unlink(missing_ok=True)
+
+
+def _read_restart_context(chat_id: int) -> str | None:
+    """Read and delete the restart-context file. Returns content or None."""
+    path = _restart_context_path(chat_id)
+    try:
+        text = path.read_text()
+        path.unlink(missing_ok=True)
+        return text.strip() or None
+    except OSError:
+        return None
 
 
 def kill_active_proc(skey: str) -> bool:
@@ -153,7 +190,11 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
     ws_log = get_workspace_logger(chat_id)
     ws_log.info("Claude SDK invocation \u2014 user=%d, session=%s", user_id, sid or "new")
 
-    add_active_stream(chat_id, thread_id, user_id)
+    add_active_stream(chat_id, thread_id, user_id, user_message=message[:300])
+
+    # Restart context breadcrumbs
+    _clear_restart_context(chat_id)
+    _append_restart_context(chat_id, f"User message: {message[:200]}")
 
     try:
         is_admin = ADMIN_USER_ID and (real_user_id or user_id) == ADMIN_USER_ID
@@ -227,12 +268,15 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                             tool_active = True
                             ws_log.info("Tool: %s \u2014 %s", block.name, _summarize_input(block.input))
                             status = format_tool_status(block.name, block.input)
+                            _append_restart_context(chat_id, f"Tool: {status}")
                             yield {"type": "tool_use", "status": status}
                         elif isinstance(block, ToolResultBlock):
                             tool_active = False
+                            _append_restart_context(chat_id, "Tool completed")
                             yield {"type": "tool_result"}
                         elif isinstance(block, TextBlock):
                             if block.text:
+                                _append_restart_context(chat_id, f"Output started: {block.text[:100]}")
                                 yield {"type": "text_block", "text": block.text}
 
                 elif isinstance(msg, StreamEvent):
@@ -250,6 +294,7 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                                 yield {"type": "partial", "text": chunk}
 
                 elif isinstance(msg, ResultMessage):
+                    _clear_restart_context(chat_id)
                     new_session_id = msg.session_id
                     result_text = msg.result or ""
                     if new_session_id:
@@ -307,7 +352,11 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
     ws_log = get_workspace_logger(chat_id)
     ws_log.info("Claude invocation (subprocess) \u2014 user=%d, session=%s", user_id, sid or "new")
 
-    add_active_stream(chat_id, thread_id, user_id)
+    add_active_stream(chat_id, thread_id, user_id, user_message=message[:300])
+
+    # Restart context breadcrumbs
+    _clear_restart_context(chat_id)
+    _append_restart_context(chat_id, f"User message: {message[:200]}")
 
     try:
         is_admin = ADMIN_USER_ID and (real_user_id or user_id) == ADMIN_USER_ID
@@ -417,8 +466,10 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
                             tool_input = block.get("input", {})
                             ws_log.info("Tool: %s \u2014 %s", tool_name, _summarize_input(tool_input))
                             status = format_tool_status(tool_name, tool_input)
+                            _append_restart_context(chat_id, f"Tool: {status}")
                             yield {"type": "tool_use", "status": status}
                 elif event_type == "tool_result":
+                    _append_restart_context(chat_id, "Tool completed")
                     yield {"type": "tool_result"}
 
                 elif event_type == "stream_event" and verbose:
@@ -429,6 +480,7 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
                             yield {"type": "partial", "text": chunk}
 
                 elif event_type == "result":
+                    _clear_restart_context(chat_id)
                     result_text = event.get("result", "")
                     new_session_id = event.get("session_id")
                     if new_session_id:
