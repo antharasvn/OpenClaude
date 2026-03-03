@@ -175,6 +175,17 @@ class FileBackedCache(Generic[T]):
         if self._dirty and self._data is not None:
             self._write_to_disk()
 
+    def flush_now(self) -> None:
+        """Flush to disk immediately, unconditionally.
+
+        Use for critical data that must be persisted before an external
+        process (e.g. restart.sh) might snapshot the file.  Unlike
+        ``maybe_flush``, this writes even when a periodic flusher task
+        is running.
+        """
+        if self._dirty and self._data is not None:
+            self._write_to_disk()
+
     def maybe_flush(self) -> None:
         """Flush immediately if no background flusher is running (test helper)."""
         if self._flusher_task is None and self._dirty:

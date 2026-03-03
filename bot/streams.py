@@ -54,13 +54,13 @@ def load_active_streams() -> dict:
 
 def add_active_stream(chat_id: int, thread_id: int, user_id: int,
                       user_message: str = "") -> None:
-    """Register a stream start. Survives crashes via periodic flush."""
+    """Register a stream start. Persisted immediately for restart recovery."""
     key = session_key(chat_id, thread_id, user_id)
     entry: dict = {"chat_id": chat_id, "thread_id": thread_id, "user_id": user_id}
     if user_message:
         entry["user_message"] = user_message
     _cache.set(key, entry)
-    _cache.maybe_flush()
+    _cache.flush_now()
 
 
 def set_stream_session_id(chat_id: int, thread_id: int, user_id: int,
@@ -71,7 +71,7 @@ def set_stream_session_id(chat_id: int, thread_id: int, user_id: int,
     if entry is not None:
         entry["session_id"] = session_id
         _cache.set(key, entry)
-        _cache.maybe_flush()
+        _cache.flush_now()
 
 
 def get_stream_session_id(chat_id: int, thread_id: int, user_id: int) -> str | None:
