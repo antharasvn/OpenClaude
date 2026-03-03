@@ -2,6 +2,7 @@
 
 import os
 import re
+import shlex
 from pathlib import Path
 
 from bot.config import ALL_TOOLS, CLAUDE_MODEL
@@ -113,14 +114,26 @@ def make_permission_handler(is_admin: bool, workspace: str):
                         return PermissionResultDeny(message=f"BLOCKED: {msg}")
 
                 if re.search(r"\b(chmod|chown)\b", cmd, re.IGNORECASE):
-                    if workspace not in cmd:
-                        return PermissionResultDeny(
-                            message="BLOCKED: You can only change permissions on files within your workspace.")
+                    try:
+                        tokens = shlex.split(cmd)
+                        for token in tokens:
+                            resolved = os.path.realpath(token)
+                            if resolved.startswith("/") and not resolved.startswith(workspace):
+                                return PermissionResultDeny(
+                                    message="BLOCKED: You can only change permissions on files within your workspace.")
+                    except ValueError:
+                        pass
 
                 if re.search(r"\brm\s+.*-[a-zA-Z]*r[a-zA-Z]*f|\brm\s+.*-[a-zA-Z]*f[a-zA-Z]*r", cmd, re.IGNORECASE):
-                    if workspace not in cmd:
-                        return PermissionResultDeny(
-                            message="BLOCKED: You can only delete files within your workspace.")
+                    try:
+                        tokens = shlex.split(cmd)
+                        for token in tokens:
+                            resolved = os.path.realpath(token)
+                            if resolved.startswith("/") and not resolved.startswith(workspace):
+                                return PermissionResultDeny(
+                                    message="BLOCKED: You can only delete files within your workspace.")
+                    except ValueError:
+                        pass
 
         if tool_name in ("Write", "Edit"):
             filepath = input_data.get("file_path", "")

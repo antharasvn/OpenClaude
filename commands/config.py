@@ -129,6 +129,9 @@ async def cmd_stream(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 async def callback_stream(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
+    if not is_authorized(query.from_user.id):
+        await query.answer("Unauthorized", show_alert=True)
+        return
     await query.answer()
 
     parts = query.data.split(":")
@@ -192,6 +195,9 @@ async def cmd_verbose(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
 async def callback_verbose(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
+    if not is_authorized(query.from_user.id):
+        await query.answer("Unauthorized", show_alert=True)
+        return
     await query.answer()
 
     parts = query.data.split(":")
@@ -259,6 +265,9 @@ async def cmd_respond(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
 async def callback_respond(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
+    if not is_authorized(query.from_user.id):
+        await query.answer("Unauthorized", show_alert=True)
+        return
     await query.answer()
 
     parts = query.data.split(":")
