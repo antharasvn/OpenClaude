@@ -13,7 +13,7 @@ from bot.config import (
 )
 from bot.logging_setup import logger, get_workspace_logger, _summarize_input
 from bot.sessions import session_key, get_session_id, set_session_id
-from bot.streams import add_active_stream, remove_active_stream
+from bot.streams import add_active_stream, remove_active_stream, set_stream_session_id
 from bot.permissions import build_env, build_sdk_options
 from bot.sdk_session import (
     HAS_SDK, SDKSession, sdk_sessions,
@@ -284,6 +284,7 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                     if not early_session_id and msg.session_id:
                         early_session_id = msg.session_id
                         set_session_id(chat_id, thread_id, user_id, early_session_id)
+                        set_stream_session_id(chat_id, thread_id, user_id, early_session_id)
                         sdk_session.session_id = early_session_id
                         logger.info("Session ID captured early for user %d: %s", user_id, early_session_id)
                     if verbose:
@@ -299,6 +300,7 @@ async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id
                     result_text = msg.result or ""
                     if new_session_id:
                         set_session_id(chat_id, thread_id, user_id, new_session_id)
+                        set_stream_session_id(chat_id, thread_id, user_id, new_session_id)
                         sdk_session.session_id = new_session_id
                         logger.info("Session updated for user %d: %s", user_id, new_session_id)
                     ws_log.info("Result \u2014 session=%s, len=%d", new_session_id, len(result_text))
@@ -485,6 +487,7 @@ async def _stream_claude_subprocess(message: str, chat_id: int, thread_id: int, 
                     new_session_id = event.get("session_id")
                     if new_session_id:
                         set_session_id(chat_id, thread_id, user_id, new_session_id)
+                        set_stream_session_id(chat_id, thread_id, user_id, new_session_id)
                         logger.info("Session updated for user %d: %s", user_id, new_session_id)
                     ws_log.info("Result \u2014 session=%s, len=%d", new_session_id, len(result_text or ""))
                     yield {"type": "result", "text": result_text, "session_id": new_session_id,

@@ -137,6 +137,28 @@ def add_active_stream(chat_id: int, thread_id: int, user_id: int,
     _maybe_flush()
 
 
+def set_stream_session_id(chat_id: int, thread_id: int, user_id: int,
+                          session_id: str) -> None:
+    """Store session_id directly in the active stream entry for crash recovery."""
+    global _cache_dirty
+    streams = _ensure_cache()
+    key = session_key(chat_id, thread_id, user_id)
+    if key in streams:
+        streams[key]["session_id"] = session_id
+        _cache_dirty = True
+        _maybe_flush()
+
+
+def get_stream_session_id(chat_id: int, thread_id: int, user_id: int) -> str | None:
+    """Get session_id from the active stream entry (used during resume)."""
+    streams = _ensure_cache()
+    key = session_key(chat_id, thread_id, user_id)
+    entry = streams.get(key)
+    if entry:
+        return entry.get("session_id")
+    return None
+
+
 def remove_active_stream(chat_id: int, thread_id: int, user_id: int) -> None:
     """Remove a completed stream."""
     global _cache_dirty

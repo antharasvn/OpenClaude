@@ -231,6 +231,17 @@ def main() -> None:
             try:
                 session_id = get_session_id(cid, tid, session_uid)
                 if not session_id:
+                    # Fallback: session_id stored directly in the stream entry
+                    session_id = entry.get("session_id")
+                    if session_id:
+                        infra_logger.info(
+                            "Session recovered from stream entry for chat=%d thread=%d user=%d: %s",
+                            cid, tid, uid, session_id,
+                        )
+                        # Persist it to sessions cache so stream_claude can find it
+                        from bot.sessions import set_session_id as _set_sid
+                        _set_sid(cid, tid, session_uid, session_id)
+                if not session_id:
                     infra_logger.warning(
                         "No session for chat=%d thread=%d user=%d, skipping resume",
                         cid, tid, uid,
