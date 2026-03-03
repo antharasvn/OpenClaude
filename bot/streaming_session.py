@@ -1,0 +1,503 @@
+"""StreamingSession — encapsulates all state and event handling for a single
+streaming Claude response.
+
+Extracted from the monolithic run_with_streaming() in handlers.py (Phase 3.1).
+This is a pure structural refactoring — behavior is identical.
+"""
+
+import asyncio
+import re
+import logging
+
+from telegram import Update
+from telegram.constants import ParseMode
+from telegram.ext import ContextTypes
+
+from bot.config import TELEGRAM_MAX_LENGTH
+from bot.renderer import TelegramRenderer, split_message, find_overflow_split
+from bot.formatting import finished_line
+from bot.logging_setup import infra_logger
+
+logger = logging.getLogger(__name__)
+
+# Module-level renderer instance (shared)
+renderer = TelegramRenderer()
+
+# Live-edit throttle interval (seconds)
+LIVE_EDIT_INTERVAL = 3.0
+
+
+def _clean_file_markers(text: str) -> str:
+    """Remove 📎 marker lines from text for display purposes.
+
+    Imported lazily from handlers to avoid circular imports.
+    """
+    from bot.handlers import _clean_file_markers as _cfm
+    return _cfm(text)
+
+
+class StreamingSession:
+    """Holds all mutable state for a single streaming response cycle.
+
+    Replaces the ~20 local variables and nested closures that previously
+    lived inside run_with_streaming().
+    """
+
+    def __init__(
+        self,
+        update: Update,
+        context: ContextTypes.DEFAULT_TYPE,
+        chat_id: int,
+        thread_id: int,
+        tg_thread_id: int | None,
+        streaming: bool,
+        show_tools: bool,
+    ) -> None:
+        self.update = update
+        self.context = context
+        self.chat_id = chat_id
+        self.thread_id = thread_id
+        self.tg_thread_id = tg_thread_id
+        self.streaming = streaming
+        self.show_tools = show_tools
+
+        # Tool-status message state
+        self.status_msg = None
+        self.finished_lines: list[str] = []
+        self.current_active: str = ""
+        self.last_edit_time: float = 0
+
+        # Live streaming message state
+        self.live_msg = None           # current Telegram message being edited with ✍️
+        self.live_text: str = ""       # all accumulated partial text
+        self.sent_offset: int = 0      # chars of live_text already in finalized messages
+        self.finalized_msgs: list = [] # finalized Telegram messages (for /stop cleanup)
+        self.last_live_edit: float = 0
+
+        # Speculative / intermediate message tracking
+        self._speculative: list = []         # messages since last tool_use
+        self._to_delete: list = []           # confirmed intermediate — delete at end
+        self._speculative_sent_len: int = 0  # chars sent via non-streaming text_blocks
+
+        # Flood control
+        self.flood_until: float = 0
+
+        # Final result
+        self.response_text: str | None = None
+        self.stopped: bool = False
+
+    # ------------------------------------------------------------------
+    # Event dispatch
+    # ------------------------------------------------------------------
+
+    async def handle_event(self, event: dict) -> None:
+        """Dispatch a single stream event to the appropriate handler."""
+        etype = event.get("type")
+
+        if etype == "text_block":
+            await self._on_text_block(event)
+        elif etype == "tool_use":
+            await self._on_tool_use(event)
+        elif etype == "tool_result":
+            await self._on_tool_result(event)
+        elif etype == "partial":
+            await self._on_partial(event)
+        elif etype == "result":
+            self._on_result(event)
+        elif etype == "error":
+            self.response_text = event.get("text", "An error occurred.")
+        elif etype == "silent":
+            self.response_text = ""
+        elif etype == "stopped":
+            self.stopped = True
+
+    # ------------------------------------------------------------------
+    # Per-event-type handlers
+    # ------------------------------------------------------------------
+
+    async def _on_text_block(self, event: dict) -> None:
+        """Handle a completed text block (before tool use or at stream end)."""
+        from bot.handlers import _send_rendered_collect
+
+        block_text = event["text"]
+        if self.live_msg:
+            chunk_md = self.live_text[self.sent_offset:]
+            display_md = _clean_file_markers(chunk_md)
+            if display_md:
+                try:
+                    rendered = renderer.render(display_md)
+                    await self.live_msg.edit_text(
+                        rendered[:TELEGRAM_MAX_LENGTH],
+                        parse_mode=ParseMode.HTML,
+                        disable_web_page_preview=True,
+                    )
+                except Exception:
+                    pass
+                self.finalized_msgs.append(self.live_msg)
+                self._speculative.append(self.live_msg)
+            else:
+                # Only 📎 markers, no real text — delete the message
+                try:
+                    await self.live_msg.delete()
+                except Exception:
+                    pass
+        elif block_text:
+            # No streaming — send block directly (strip 📎)
+            display_text = _clean_file_markers(block_text)
+            if display_text:
+                sent_msgs = await _send_rendered_collect(
+                    self.update, display_text, self.context, self.tg_thread_id,
+                )
+                self.finalized_msgs.extend(sent_msgs)
+                self._speculative.extend(sent_msgs)
+                self._speculative_sent_len += len(block_text)
+        self.sent_offset = len(self.live_text)
+        self.live_msg = None
+
+    async def _on_tool_use(self, event: dict) -> None:
+        """Handle tool invocation start — flush live text, update status."""
+        if self.live_msg:
+            chunk_md = self.live_text[self.sent_offset:]
+            display_md = _clean_file_markers(chunk_md)
+            if display_md:
+                try:
+                    rendered = renderer.render(display_md)
+                    await self.live_msg.edit_text(
+                        rendered[:TELEGRAM_MAX_LENGTH],
+                        parse_mode=ParseMode.HTML,
+                        disable_web_page_preview=True,
+                    )
+                except Exception:
+                    pass
+                self.finalized_msgs.append(self.live_msg)
+                # Text before a tool is always preamble — add to _to_delete directly
+                self._to_delete.append(self.live_msg)
+            else:
+                try:
+                    await self.live_msg.delete()
+                except Exception:
+                    pass
+            self.sent_offset = len(self.live_text)
+            self.live_msg = None
+        # All speculative messages are now confirmed intermediate
+        self._to_delete.extend(self._speculative)
+        self._speculative.clear()
+        self._speculative_sent_len = 0
+        if self.show_tools:
+            if self.current_active:
+                self.finished_lines.append(finished_line(self.current_active))
+            await self._update_status(event["status"])
+
+    async def _on_tool_result(self, event: dict) -> None:
+        """Handle tool completion — update status display."""
+        if self.show_tools:
+            if self.current_active:
+                self.finished_lines.append(finished_line(self.current_active))
+                await self._update_status("")
+
+    async def _on_partial(self, event: dict) -> None:
+        """Handle streaming text delta."""
+        self.live_text += event["text"]
+        try:
+            await self._update_live(self.live_text)
+        except Exception:
+            logger.exception("_update_live error")
+
+    def _on_result(self, event: dict) -> None:
+        """Handle final result with usage metadata."""
+        from bot.sessions import set_usage
+
+        self.response_text = event.get("text", "")
+        usage_data = {
+            k: event.get(k)
+            for k in ("usage", "cost", "num_turns", "duration_ms", "duration_api_ms")
+            if event.get(k) is not None
+        }
+        if usage_data:
+            set_usage(
+                self.chat_id, self.thread_id,
+                # session_user_id is needed — caller must set it; we use chat_id's
+                # thread context. But set_usage is called with the same args as the
+                # outer function, so we store session_user_id on the instance.
+                getattr(self, 'session_user_id', 0),
+                usage_data,
+            )
+
+    # ------------------------------------------------------------------
+    # Status message (tool progress display)
+    # ------------------------------------------------------------------
+
+    async def _update_status(self, new_active: str = "") -> None:
+        """Create or update the tool-status message."""
+        from bot.config import STATUS_EDIT_INTERVAL
+
+        self.current_active = new_active
+        lines = list(self.finished_lines)
+        if self.current_active:
+            lines.append(self.current_active)
+        if not lines:
+            return
+
+        text = "\n".join(lines)
+
+        now = asyncio.get_event_loop().time()
+        if self.status_msg and (now - self.last_edit_time) < STATUS_EDIT_INTERVAL:
+            return
+
+        try:
+            if self.status_msg is None:
+                self.status_msg = await self.update.message.reply_text(
+                    text,
+                    message_thread_id=self.tg_thread_id,
+                )
+            else:
+                await self.status_msg.edit_text(text)
+            self.last_edit_time = asyncio.get_event_loop().time()
+        except Exception:
+            pass
+
+    # ------------------------------------------------------------------
+    # Live streaming display
+    # ------------------------------------------------------------------
+
+    def _check_flood(self, exc: Exception) -> None:
+        """If exc is a flood-control error, set backoff deadline."""
+        msg = str(exc)
+        if "Flood control" not in msg and "Too Many Requests" not in msg:
+            return
+        m = re.search(r"Retry in (\d+)", msg)
+        wait = int(m.group(1)) if m else 30
+        self.flood_until = asyncio.get_event_loop().time() + wait
+        infra_logger.warning("[STREAM] flood control — backing off %ds", wait)
+
+    async def _update_live(self, text: str) -> None:
+        """Update the live-streaming message with accumulated text."""
+        now = asyncio.get_event_loop().time()
+
+        # Respect flood control backoff
+        if now < self.flood_until:
+            return
+
+        chunk_md = text[self.sent_offset:]
+        if not chunk_md:
+            return
+
+        # Check if current chunk's HTML is approaching the limit
+        split_pos = find_overflow_split(chunk_md, renderer)
+        if split_pos is not None and self.live_msg:
+            # Finalize current message with the portion that fits
+            finalize_md = chunk_md[:split_pos].rstrip()
+            finalized = False
+            try:
+                rendered = renderer.render(finalize_md)
+                await self.live_msg.edit_text(
+                    rendered,
+                    parse_mode=ParseMode.HTML,
+                    disable_web_page_preview=True,
+                )
+                finalized = True
+            except Exception as e:
+                self._check_flood(e)
+                if now < self.flood_until:
+                    return
+                infra_logger.warning("[STREAM] finalize HTML failed: %s", e)
+                # HTML failed — try plain text
+                try:
+                    await self.live_msg.edit_text(finalize_md[:TELEGRAM_MAX_LENGTH])
+                    finalized = True
+                except Exception as e2:
+                    self._check_flood(e2)
+                    if now < self.flood_until:
+                        return
+                    infra_logger.warning("[STREAM] finalize plain failed: %s", e2)
+            if finalized:
+                self.finalized_msgs.append(self.live_msg)
+                self._speculative.append(self.live_msg)
+                self.sent_offset += split_pos
+                self.live_msg = None
+                self.last_live_edit = 0
+                chunk_md = text[self.sent_offset:]
+            # If finalization failed, skip — will retry on next partial
+
+        # Throttle display updates (but not overflow checks above)
+        if self.live_msg and (now - self.last_live_edit) < LIVE_EDIT_INTERVAL:
+            return
+
+        display = chunk_md[:TELEGRAM_MAX_LENGTH - 20] + " \u270d\ufe0f" if chunk_md else ""
+        if not display:
+            return
+
+        try:
+            if self.live_msg is None:
+                self.live_msg = await self.update.message.reply_text(
+                    display,
+                    message_thread_id=self.tg_thread_id,
+                )
+            else:
+                await self.live_msg.edit_text(display)
+            self.last_live_edit = asyncio.get_event_loop().time()
+        except Exception as e:
+            self._check_flood(e)
+            if now >= self.flood_until:
+                infra_logger.warning("[STREAM] live update failed: %s", e)
+
+    async def flush_live(self) -> None:
+        """Final flush of any buffered live text."""
+        if self.live_text:
+            await self._update_live(self.live_text)
+
+    # ------------------------------------------------------------------
+    # Cleanup
+    # ------------------------------------------------------------------
+
+    async def cleanup_on_stop(self) -> None:
+        """Delete all messages when generation was stopped/cancelled."""
+        if self.status_msg:
+            try:
+                await self.status_msg.delete()
+            except Exception:
+                pass
+        for fm in self.finalized_msgs:
+            try:
+                await fm.delete()
+            except Exception:
+                pass
+        if self.live_msg:
+            try:
+                await self.live_msg.delete()
+            except Exception:
+                pass
+
+    async def cleanup_status(self) -> None:
+        """Delete the tool-status message (always runs in finally)."""
+        if self.status_msg:
+            try:
+                await self.status_msg.delete()
+            except Exception:
+                pass
+
+    async def delete_intermediate_messages(self) -> None:
+        """Delete confirmed intermediate (preamble) messages."""
+        for msg in self._to_delete:
+            try:
+                await msg.delete()
+            except Exception:
+                pass
+
+    async def delete_speculative_messages(self) -> None:
+        """Delete speculative messages (used on silent/empty result)."""
+        for msg in self._speculative:
+            try:
+                await msg.delete()
+            except Exception:
+                pass
+        if self.live_msg:
+            try:
+                await self.live_msg.delete()
+            except Exception:
+                pass
+
+    async def finalize_response(self) -> None:
+        """Process and send the final response text.
+
+        Handles the full post-streaming flow: deleting intermediates,
+        editing/sending final text, sending files and images.
+        """
+        from bot.handlers import (
+            _extract_image_urls, _split_file_segments, _clean_file_markers,
+            _send_file_group, send_rendered,
+        )
+        from bot.workspaces import ensure_workspace
+
+        # 1. Delete confirmed intermediate messages
+        await self.delete_intermediate_messages()
+
+        # 2. Process result
+        if self.response_text is None:
+            self.response_text = "Claude processed the request but returned no text output."
+
+        if not self.response_text:
+            # Silent exit — clean up speculative and live_msg too
+            await self.delete_speculative_messages()
+            return
+
+        response_text, image_urls = _extract_image_urls(self.response_text)
+        workspace_path = str(ensure_workspace(self.chat_id))
+        segments = _split_file_segments(response_text, workspace_path)
+        file_segments = [s for s in segments if s["type"] == "files"]
+        cleaned_response = _clean_file_markers(response_text)
+
+        # effective_offset: how much of response_text was already shown
+        effective_offset = max(self.sent_offset, self._speculative_sent_len)
+        remaining = cleaned_response[min(effective_offset, len(cleaned_response)):] if cleaned_response else ""
+
+        if not remaining and not image_urls and not file_segments:
+            # Everything already displayed — just finalize live_msg if needed
+            if self.live_msg:
+                chunk_md = _clean_file_markers(self.live_text[self.sent_offset:])
+                if chunk_md:
+                    try:
+                        rendered = renderer.render(chunk_md)
+                        await self.live_msg.edit_text(
+                            rendered[:TELEGRAM_MAX_LENGTH],
+                            parse_mode=ParseMode.HTML,
+                            disable_web_page_preview=True,
+                        )
+                    except Exception:
+                        pass
+                else:
+                    try:
+                        await self.live_msg.delete()
+                    except Exception:
+                        pass
+        else:
+            if self.live_msg:
+                display_md = _clean_file_markers(self.live_text[self.sent_offset:])
+                if display_md and remaining:
+                    try:
+                        rendered = renderer.render(remaining)
+                        if len(rendered) <= TELEGRAM_MAX_LENGTH:
+                            await self.live_msg.edit_text(
+                                rendered,
+                                parse_mode=ParseMode.HTML,
+                                disable_web_page_preview=True,
+                            )
+                        else:
+                            await self.live_msg.delete()
+                            await send_rendered(self.update, remaining, self.context)
+                    except Exception:
+                        try:
+                            await self.live_msg.delete()
+                        except Exception:
+                            pass
+                        if remaining:
+                            await send_rendered(self.update, remaining, self.context)
+                else:
+                    try:
+                        await self.live_msg.delete()
+                    except Exception:
+                        pass
+                    if remaining:
+                        await send_rendered(self.update, remaining, self.context)
+            elif remaining:
+                await send_rendered(self.update, remaining, self.context)
+
+        # Send file attachments
+        for seg in file_segments:
+            try:
+                await _send_file_group(
+                    self.context.bot, self.chat_id, seg["files"], self.tg_thread_id,
+                )
+            except Exception:
+                logger.warning("Failed to send file group")
+
+        # Send image URLs
+        for img_url in image_urls:
+            try:
+                await self.context.bot.send_photo(
+                    chat_id=self.chat_id,
+                    photo=img_url,
+                    message_thread_id=self.tg_thread_id,
+                )
+            except Exception:
+                logger.warning("Failed to send photo URL: %s", img_url)

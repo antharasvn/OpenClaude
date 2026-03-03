@@ -12,7 +12,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from bot.config import (
-    ADMIN_USER_ID, ALL_TOOLS, BATCH_WINDOW, STATUS_EDIT_INTERVAL,
+    ADMIN_USER_ID, ALL_TOOLS, BATCH_WINDOW,
     TELEGRAM_MAX_LENGTH, is_authorized,
     get_thread_id,
 )
@@ -21,11 +21,10 @@ import logging
 from bot.logging_setup import infra_logger, get_workspace_logger
 
 logger = logging.getLogger(__name__)
-from bot.sessions import session_key, get_session_id, load_sessions, clear_session, set_usage, get_context_pct
+from bot.sessions import session_key, get_session_id, load_sessions, clear_session, get_context_pct
 from bot.workspaces import ensure_workspace, get_working_dir
-from bot.renderer import TelegramRenderer, split_message, find_overflow_split
+from bot.renderer import TelegramRenderer, split_message
 from bot.claude import stream_claude
-from bot.formatting import finished_line, format_tool_status
 from bot.process import kill_active_proc
 from bot.sdk_session import sdk_session_manager, SDKSession
 
@@ -658,142 +657,32 @@ async def _flush_batch(key: str) -> None:
 async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                              chat_id: int, thread_id: int, user_id: int,
                              claude_message: str, _is_compact: bool = False) -> None:
-    """Stream Claude output, show tool progress, then send final response."""
+    """Stream Claude output, show tool progress, then send final response.
+
+    All streaming state and event handling is delegated to StreamingSession.
+    This function manages the lifecycle: lock acquisition, typing indicator,
+    event loop, and cleanup.
+    """
+    from bot.streaming_session import StreamingSession
+
     session_user_id = user_id if update.effective_chat.type == "private" else 0
     tg_thread_id = thread_id or None
     from commands.config import get_streaming, get_verbose
     streaming = get_streaming(chat_id, thread_id)
     show_tools = get_verbose(chat_id, thread_id)
-    status_msg = None
-    finished_lines: list[str] = []
-    current_active: str = ""
-    last_edit_time: float = 0
 
-    live_msg = None          # current Telegram message being edited with ✍️
-    live_text = ""           # all accumulated partial text
-    sent_offset = 0          # chars of live_text already in finalized messages
-    finalized_msgs: list = []  # finalized Telegram messages (for /stop cleanup)
-    _speculative: list = []        # messages since last tool_use — keep if result follows
-    _to_delete: list = []          # confirmed intermediate — delete at end
-    _speculative_sent_len: int = 0 # chars sent in non-streaming text_blocks via speculative path
-    last_live_edit: float = 0
-    LIVE_EDIT_INTERVAL = 3.0
+    session = StreamingSession(
+        update=update,
+        context=context,
+        chat_id=chat_id,
+        thread_id=thread_id,
+        tg_thread_id=tg_thread_id,
+        streaming=streaming,
+        show_tools=show_tools,
+    )
+    # Store session_user_id for usage tracking inside _on_result
+    session.session_user_id = session_user_id
 
-    async def _update_status(new_active: str = "") -> None:
-        nonlocal status_msg, current_active, last_edit_time
-        current_active = new_active
-        lines = list(finished_lines)
-        if current_active:
-            lines.append(current_active)
-        if not lines:
-            return
-
-        text = "\n".join(lines)
-
-        now = asyncio.get_event_loop().time()
-        if status_msg and (now - last_edit_time) < STATUS_EDIT_INTERVAL:
-            return
-
-        try:
-            if status_msg is None:
-                status_msg = await update.message.reply_text(
-                    text,
-                    message_thread_id=tg_thread_id,
-                )
-            else:
-                await status_msg.edit_text(text)
-            last_edit_time = asyncio.get_event_loop().time()
-        except Exception:
-            pass
-
-    flood_until: float = 0  # backoff deadline for Telegram flood control
-
-    def _check_flood(exc: Exception) -> None:
-        """If exc is a flood-control error, set backoff deadline."""
-        nonlocal flood_until
-        msg = str(exc)
-        if "Flood control" not in msg and "Too Many Requests" not in msg:
-            return
-        # Parse "Retry in N seconds"
-        m = re.search(r"Retry in (\d+)", msg)
-        wait = int(m.group(1)) if m else 30
-        flood_until = asyncio.get_event_loop().time() + wait
-        infra_logger.warning("[STREAM] flood control — backing off %ds", wait)
-
-    async def _update_live(text: str) -> None:
-        nonlocal live_msg, last_live_edit, sent_offset, _speculative
-
-        now = asyncio.get_event_loop().time()
-
-        # Respect flood control backoff
-        if now < flood_until:
-            return
-
-        chunk_md = text[sent_offset:]
-        if not chunk_md:
-            return
-
-        # Check if current chunk's HTML is approaching the limit
-        split_pos = find_overflow_split(chunk_md, renderer)
-        if split_pos is not None and live_msg:
-            # Finalize current message with the portion that fits
-            finalize_md = chunk_md[:split_pos].rstrip()
-            finalized = False
-            try:
-                rendered = renderer.render(finalize_md)
-                await live_msg.edit_text(
-                    rendered,
-                    parse_mode=ParseMode.HTML,
-                    disable_web_page_preview=True,
-                )
-                finalized = True
-            except Exception as e:
-                _check_flood(e)
-                if now < flood_until:
-                    return
-                infra_logger.warning("[STREAM] finalize HTML failed: %s", e)
-                # HTML failed — try plain text
-                try:
-                    await live_msg.edit_text(finalize_md[:TELEGRAM_MAX_LENGTH])
-                    finalized = True
-                except Exception as e2:
-                    _check_flood(e2)
-                    if now < flood_until:
-                        return
-                    infra_logger.warning("[STREAM] finalize plain failed: %s", e2)
-            if finalized:
-                finalized_msgs.append(live_msg)
-                _speculative.append(live_msg)
-                sent_offset += split_pos
-                live_msg = None
-                last_live_edit = 0
-                chunk_md = text[sent_offset:]
-            # If finalization failed, skip — will retry on next partial
-
-        # Throttle display updates (but not overflow checks above)
-        if live_msg and (now - last_live_edit) < LIVE_EDIT_INTERVAL:
-            return
-
-        display = chunk_md[:TELEGRAM_MAX_LENGTH - 20] + " \u270d\ufe0f" if chunk_md else ""
-        if not display:
-            return
-
-        try:
-            if live_msg is None:
-                live_msg = await update.message.reply_text(
-                    display,
-                    message_thread_id=tg_thread_id,
-                )
-            else:
-                await live_msg.edit_text(display)
-            last_live_edit = asyncio.get_event_loop().time()
-        except Exception as e:
-            _check_flood(e)
-            if now >= flood_until:
-                infra_logger.warning("[STREAM] live update failed: %s", e)
-
-    response_text = None
-    stopped = False
     chat_working_dir = get_working_dir(chat_id)
     skey = session_key(chat_id, thread_id, session_user_id)
 
@@ -830,115 +719,19 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                                              real_user_id=user_id):
                 etype = event.get("type")
 
-                if etype == "text_block":
-                    # Completed text block (before tool use) — finalize live_msg
-                    block_text = event["text"]
-                    if live_msg:
-                        chunk_md = live_text[sent_offset:]
-                        # Strip 📎 markers so they never appear in finalized messages
-                        display_md = _clean_file_markers(chunk_md)
-                        if display_md:
-                            try:
-                                rendered = renderer.render(display_md)
-                                await live_msg.edit_text(
-                                    rendered[:TELEGRAM_MAX_LENGTH],
-                                    parse_mode=ParseMode.HTML,
-                                    disable_web_page_preview=True,
-                                )
-                            except Exception:
-                                pass
-                            finalized_msgs.append(live_msg)
-                            _speculative.append(live_msg)
-                        else:
-                            # Only 📎 markers, no real text — delete the message
-                            try:
-                                await live_msg.delete()
-                            except Exception:
-                                pass
-                    elif block_text:
-                        # No streaming — send block directly (strip 📎)
-                        display_text = _clean_file_markers(block_text)
-                        if display_text:
-                            sent_msgs = await _send_rendered_collect(update, display_text, context, tg_thread_id)
-                            finalized_msgs.extend(sent_msgs)
-                            _speculative.extend(sent_msgs)
-                            _speculative_sent_len += len(block_text)
-                    sent_offset = len(live_text)
-                    live_msg = None
+                # Stop typing once visible output is streaming
+                if etype == "partial" and typing_task and not typing_task.done():
+                    typing_task.cancel()
 
-                elif etype == "tool_use":
-                    # Flush any remaining live text before showing tool status
-                    if live_msg:
-                        chunk_md = live_text[sent_offset:]
-                        display_md = _clean_file_markers(chunk_md)
-                        if display_md:
-                            try:
-                                rendered = renderer.render(display_md)
-                                await live_msg.edit_text(
-                                    rendered[:TELEGRAM_MAX_LENGTH],
-                                    parse_mode=ParseMode.HTML,
-                                    disable_web_page_preview=True,
-                                )
-                            except Exception:
-                                pass
-                            finalized_msgs.append(live_msg)
-                            # Text before a tool is always preamble — add to _to_delete directly
-                            _to_delete.append(live_msg)
-                        else:
-                            try:
-                                await live_msg.delete()
-                            except Exception:
-                                pass
-                        sent_offset = len(live_text)
-                        live_msg = None
-                    # All speculative messages are now confirmed intermediate
-                    _to_delete.extend(_speculative)
-                    _speculative.clear()
-                    _speculative_sent_len = 0
-                    if show_tools:
-                        if current_active:
-                            finished_lines.append(finished_line(current_active))
-                        await _update_status(event["status"])
-
-                elif etype == "tool_result":
-                    if show_tools:
-                        if current_active:
-                            finished_lines.append(finished_line(current_active))
-                            await _update_status("")
-
-                elif etype == "partial":
-                    live_text += event["text"]
-                    # Stop typing once visible output is streaming
-                    if typing_task and not typing_task.done():
-                        typing_task.cancel()
-                    try:
-                        await _update_live(live_text)
-                    except Exception:
-                        logger.exception("_update_live error")
-
-                elif etype == "result":
-                    response_text = event.get("text", "")
-                    usage_data = {k: event.get(k) for k in ("usage", "cost", "num_turns", "duration_ms", "duration_api_ms") if event.get(k) is not None}
-                    if usage_data:
-                        set_usage(chat_id, thread_id, session_user_id, usage_data)
-
-                elif etype == "error":
-                    response_text = event.get("text", "An error occurred.")
-
-                elif etype == "silent":
-                    response_text = ""
-
-                elif etype == "stopped":
-                    stopped = True
+                await session.handle_event(event)
 
             # Final flush of any buffered live text
-            if live_text:
-                await _update_live(live_text)
+            await session.flush_live()
         finally:
             if not _is_compact:
                 _stop_events.pop(skey, None)
     except asyncio.CancelledError:
-        stopped = True
+        session.stopped = True
         raise
     finally:
         # Always cancel typing indicator
@@ -951,123 +744,16 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         except RuntimeError:
             pass  # already released by /stop
         # Clean up Telegram messages (must run even on CancelledError)
-        if status_msg:
-            try:
-                await status_msg.delete()
-            except Exception:
-                pass
-        if stopped:
-            for fm in finalized_msgs:
-                try:
-                    await fm.delete()
-                except Exception:
-                    pass
-            if live_msg:
-                try:
-                    await live_msg.delete()
-                except Exception:
-                    pass
+        await session.cleanup_status()
+        if session.stopped:
+            await session.cleanup_on_stop()
 
     # Handle /stop cancellation
-    if stopped:
+    if session.stopped:
         return
 
-    # 1. Delete confirmed intermediate messages
-    for msg in _to_delete:
-        try:
-            await msg.delete()
-        except Exception:
-            pass
-
-    # 2. Process result
-    if response_text is None:
-        response_text = "Claude processed the request but returned no text output."
-
-    if not response_text:
-        # Silent exit — clean up speculative and live_msg too
-        for msg in _speculative:
-            try:
-                await msg.delete()
-            except Exception:
-                pass
-        if live_msg:
-            try:
-                await live_msg.delete()
-            except Exception:
-                pass
-    else:
-        response_text, image_urls = _extract_image_urls(response_text)
-        workspace_path = str(ensure_workspace(chat_id))
-        segments = _split_file_segments(response_text, workspace_path)
-        file_segments = [s for s in segments if s["type"] == "files"]
-        cleaned_response = _clean_file_markers(response_text)
-
-        # effective_offset: how much of response_text was already shown
-        # In streaming mode: sent_offset tracks overflow-finalized chars of live_text
-        # In non-streaming mode: _speculative_sent_len tracks chars sent via text_blocks
-        effective_offset = max(sent_offset, _speculative_sent_len)
-        remaining = cleaned_response[min(effective_offset, len(cleaned_response)):] if cleaned_response else ""
-
-        if not remaining and not image_urls and not file_segments:
-            # Everything already displayed — just finalize live_msg if needed
-            if live_msg:
-                chunk_md = _clean_file_markers(live_text[sent_offset:])
-                if chunk_md:
-                    try:
-                        rendered = renderer.render(chunk_md)
-                        await live_msg.edit_text(rendered[:TELEGRAM_MAX_LENGTH], parse_mode=ParseMode.HTML, disable_web_page_preview=True)
-                    except Exception:
-                        pass
-                else:
-                    try:
-                        await live_msg.delete()
-                    except Exception:
-                        pass
-        else:
-            if live_msg:
-                display_md = _clean_file_markers(live_text[sent_offset:])
-                if display_md and remaining:
-                    try:
-                        rendered = renderer.render(remaining)
-                        if len(rendered) <= TELEGRAM_MAX_LENGTH:
-                            await live_msg.edit_text(rendered, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
-                        else:
-                            await live_msg.delete()
-                            await send_rendered(update, remaining, context)
-                    except Exception:
-                        try:
-                            await live_msg.delete()
-                        except Exception:
-                            pass
-                        if remaining:
-                            await send_rendered(update, remaining, context)
-                else:
-                    try:
-                        await live_msg.delete()
-                    except Exception:
-                        pass
-                    if remaining:
-                        await send_rendered(update, remaining, context)
-            elif remaining:
-                await send_rendered(update, remaining, context)
-
-        # Send file attachments
-        for seg in file_segments:
-            try:
-                await _send_file_group(context.bot, chat_id, seg["files"], tg_thread_id)
-            except Exception:
-                logger.warning("Failed to send file group")
-
-        # Send image URLs
-        for img_url in image_urls:
-            try:
-                await context.bot.send_photo(
-                    chat_id=chat_id,
-                    photo=img_url,
-                    message_thread_id=tg_thread_id,
-                )
-            except Exception:
-                logger.warning("Failed to send photo URL: %s", img_url)
+    # Finalize: delete intermediates, send final response, files, images
+    await session.finalize_response()
 
     # Context usage warnings and auto-compact
     if not _is_compact:
