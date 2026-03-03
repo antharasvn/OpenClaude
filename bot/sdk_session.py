@@ -6,7 +6,9 @@ import signal
 import time
 
 from bot.config import SDK_IDLE_TIMEOUT
-from bot.logging_setup import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Claude Code SDK — persistent session support
 try:
@@ -49,10 +51,6 @@ except ImportError:
     PermissionResultAllow = None
     PermissionResultDeny = None
     StreamEvent = None
-
-# Global dict: session_key -> SDKSession
-sdk_sessions: dict[str, "SDKSession"] = {}
-
 
 DISCONNECT_TIMEOUT = 10  # seconds
 
@@ -185,32 +183,103 @@ class SDKSession:
                 self.connected = False
 
 
-async def cleanup_idle_sessions():
-    """Periodic task to disconnect idle SDK sessions."""
-    from bot.streams import load_active_streams
-    while True:
-        try:
-            await asyncio.sleep(60)
-            now = time.time()
-            active = load_active_streams()
-            expired = [k for k, s in sdk_sessions.items()
-                       if now - s.last_activity > SDK_IDLE_TIMEOUT
-                       and k not in active]
-            for key in expired:
-                session = sdk_sessions.pop(key, None)
-                if session:
-                    logger.info("Disconnecting idle SDK session: %s", key)
-                    await session.disconnect()
-        except Exception:
-            logger.exception("Error in cleanup_idle_sessions loop")
+class SDKSessionManager:
+    """Manages the lifecycle of all SDKSession instances.
+
+    Replaces the former bare ``sdk_sessions`` dict with explicit methods for
+    creation, retrieval, disconnection, idle cleanup, and shutdown.
+    """
+
+    def __init__(self, idle_timeout: int = SDK_IDLE_TIMEOUT):
+        self._sessions: dict[str, SDKSession] = {}
+        self._idle_timeout = idle_timeout
+
+    # ── dict-like helpers (backward compat) ──────────────────────────
+
+    def get(self, key: str) -> SDKSession | None:
+        """Return the session for *key*, or ``None``."""
+        return self._sessions.get(key)
+
+    def pop(self, key: str) -> SDKSession | None:
+        """Remove and return the session for *key*, or ``None``."""
+        return self._sessions.pop(key, None)
+
+    def __contains__(self, key: str) -> bool:
+        return key in self._sessions
+
+    def __len__(self) -> int:
+        return len(self._sessions)
+
+    # ── core API ─────────────────────────────────────────────────────
+
+    def get_or_create(self, key: str, session_id: str | None = None) -> SDKSession:
+        """Return an existing session or create a new one for *key*."""
+        session = self._sessions.get(key)
+        if session is None:
+            session = SDKSession()
+            session.session_id = session_id
+            self._sessions[key] = session
+        return session
+
+    def put(self, key: str, session: SDKSession) -> None:
+        """Store *session* under *key* (replaces any existing entry)."""
+        self._sessions[key] = session
+
+    async def disconnect(self, key: str) -> None:
+        """Disconnect and remove the session identified by *key*."""
+        session = self._sessions.pop(key, None)
+        if session:
+            logger.info("Disconnecting SDK session: %s", key)
+            await session.disconnect()
+
+    async def cleanup_idle(self) -> None:
+        """Periodic task — disconnect sessions idle longer than the timeout."""
+        from bot.streams import load_active_streams
+        while True:
+            try:
+                await asyncio.sleep(60)
+                now = time.time()
+                active = load_active_streams()
+                expired = [
+                    k for k, s in self._sessions.items()
+                    if now - s.last_activity > self._idle_timeout
+                    and k not in active
+                ]
+                for key in expired:
+                    session = self._sessions.pop(key, None)
+                    if session:
+                        logger.info("Disconnecting idle SDK session: %s", key)
+                        await session.disconnect()
+            except Exception:
+                logger.exception("Error in SDKSessionManager.cleanup_idle loop")
+
+    async def shutdown_all(self) -> None:
+        """Disconnect every session (called on bot shutdown)."""
+        tasks = []
+        for key, session in list(self._sessions.items()):
+            logger.info("Shutting down SDK session: %s", key)
+            tasks.append(session.disconnect())
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        self._sessions.clear()
 
 
-async def shutdown_sdk_sessions():
-    """Disconnect all SDK sessions (called on bot shutdown)."""
-    tasks = []
-    for key, session in list(sdk_sessions.items()):
-        logger.info("Shutting down SDK session: %s", key)
-        tasks.append(session.disconnect())
-    if tasks:
-        await asyncio.gather(*tasks, return_exceptions=True)
-    sdk_sessions.clear()
+# ── Singleton instance ───────────────────────────────────────────────
+sdk_session_manager = SDKSessionManager()
+
+# Backward-compatible alias so existing ``from bot.sdk_session import sdk_sessions``
+# still works.  The manager exposes .get / .pop / __contains__ / __len__ but
+# callers should migrate to the manager's explicit API.
+sdk_sessions = sdk_session_manager
+
+
+# ── Legacy function shims (thin wrappers around the manager) ─────────
+
+async def cleanup_idle_sessions() -> None:
+    """Start the idle-cleanup loop (legacy entry-point)."""
+    await sdk_session_manager.cleanup_idle()
+
+
+async def shutdown_sdk_sessions() -> None:
+    """Disconnect all sessions (legacy entry-point)."""
+    await sdk_session_manager.shutdown_all()

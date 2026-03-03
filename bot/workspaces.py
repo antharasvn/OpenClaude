@@ -5,7 +5,9 @@ import shutil
 from pathlib import Path
 
 from bot.config import WORKSPACES_DIR, WORKING_DIR
-from bot.logging_setup import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Shared files are symlinked into each workspace so updates propagate automatically
 _SYMLINKED_FILES = ["TOOLS.md", "CLAUDE.md", "AGENTS.md"]

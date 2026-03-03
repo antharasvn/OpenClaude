@@ -16,14 +16,18 @@ from bot.config import (
     TELEGRAM_MAX_LENGTH, is_authorized,
     get_thread_id,
 )
-from bot.logging_setup import logger, infra_logger, get_workspace_logger
+import logging
+
+from bot.logging_setup import infra_logger, get_workspace_logger
+
+logger = logging.getLogger(__name__)
 from bot.sessions import session_key, get_session_id, load_sessions, clear_session, set_usage, get_context_pct
 from bot.workspaces import ensure_workspace, get_working_dir
 from bot.renderer import TelegramRenderer, split_message, find_overflow_split
 from bot.claude import stream_claude
 from bot.formatting import finished_line, format_tool_status
 from bot.process import kill_active_proc
-from bot.sdk_session import sdk_sessions, SDKSession
+from bot.sdk_session import sdk_session_manager, SDKSession
 
 # Image URL detection patterns
 _IMAGE_EXTENSIONS = re.compile(r'\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s)]*)?$', re.IGNORECASE)
@@ -536,12 +540,12 @@ async def _force_stop_session(skey: str, chat_id: int, thread_id: int, session_u
         stop_event.set()
 
     # Hard-kill the subprocess tree
-    sdk_session = sdk_sessions.get(skey)
+    sdk_session = sdk_session_manager.get(skey)
     if sdk_session:
         sdk_session.hard_kill()
         if sdk_session.connected:
             await sdk_session.disconnect()
-        sdk_sessions.pop(skey, None)
+        sdk_session_manager.pop(skey)
 
     kill_active_proc(skey)
 

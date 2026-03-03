@@ -18,7 +18,11 @@ from bot.config import (
     ALLOWED_USERS, ACTIVE_STREAMS_FILE, RESTART_MESSAGES_FILE,
     RESTART_STATE_FILE, SESSION_FILE, TELEGRAM_BOT_TOKEN, WORKING_DIR,
 )
-from bot.logging_setup import logger, infra_logger
+import logging
+
+from bot.logging_setup import setup_logging, infra_logger
+
+logger = logging.getLogger(__name__)
 from bot.sessions import get_session_id, flush_sessions
 from bot.streams import load_active_streams, start_streams_flusher, stop_streams_flusher, flush_streams
 from bot.workspaces import get_working_dir
@@ -33,6 +37,8 @@ from commands import register_all, ALL_COMMANDS
 
 def main() -> None:
     """Start the bot."""
+    setup_logging()
+
     if not TELEGRAM_BOT_TOKEN:
         logger.error("TELEGRAM_BOT_TOKEN not set. Check your .env file.")
         sys.exit(1)

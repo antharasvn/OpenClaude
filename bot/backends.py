@@ -16,13 +16,17 @@ from bot.config import (
     ALL_TOOLS, CLAUDE_MODEL, CLAUDE_TIMEOUT,
 )
 from bot.formatting import format_tool_status
-from bot.logging_setup import logger, get_workspace_logger, _summarize_input
+import logging
+
+from bot.logging_setup import get_workspace_logger, _summarize_input
+
+logger = logging.getLogger(__name__)
 from bot.permissions import build_env, build_sdk_options
 from bot.process import _active_procs
 from bot.prompts import _append_restart_context, _clear_restart_context
 from bot.sessions import session_key
 from bot.sdk_session import (
-    HAS_SDK, SDKSession, sdk_sessions,
+    HAS_SDK, SDKSession, sdk_session_manager,
     AssistantMessage, ResultMessage,
     TextBlock, ToolUseBlock, ToolResultBlock,
 )
@@ -55,11 +59,7 @@ async def stream_sdk(
 
     skey = session_key(chat_id, thread_id, user_id)
 
-    sdk_session = sdk_sessions.get(skey)
-    if sdk_session is None:
-        sdk_session = SDKSession()
-        sdk_session.session_id = sid
-        sdk_sessions[skey] = sdk_session
+    sdk_session = sdk_session_manager.get_or_create(skey, session_id=sid)
 
     options = build_sdk_options(is_admin, cwd, thread_id, sid, verbose)
 
@@ -71,7 +71,7 @@ async def stream_sdk(
         await sdk_session.disconnect()
         sdk_session = SDKSession()
         sdk_session.session_id = sid
-        sdk_sessions[skey] = sdk_session
+        sdk_session_manager.put(skey, sdk_session)
         try:
             await sdk_session.ensure_connected(options)
         except Exception as e2:
@@ -96,14 +96,14 @@ async def stream_sdk(
             if stop_event and stop_event.is_set():
                 logger.info("Stop event set — aborting SDK stream for user %d", user_id)
                 await sdk_session.disconnect()
-                sdk_sessions.pop(skey, None)
+                sdk_session_manager.pop(skey)
                 yield {"type": "stopped"}
                 return
             # Skip deadline check while a tool is running
             if tool_active_count == 0 and now > sdk_deadline:
                 logger.error("SDK stream timed out after %ds for user %d", CLAUDE_TIMEOUT, user_id)
                 await sdk_session.disconnect()
-                sdk_sessions.pop(skey, None)
+                sdk_session_manager.pop(skey)
                 yield {"type": "error", "text": "Claude took too long to respond. Try again or /new to start fresh."}
                 return
             sdk_session.last_activity = time.time()
@@ -169,12 +169,12 @@ async def stream_sdk(
                                        "exit code -9", "exit code: -9")):
             logger.info("SDK process killed by signal (likely bot restart)")
             await sdk_session.disconnect()
-            sdk_sessions.pop(skey, None)
+            sdk_session_manager.pop(skey)
             yield {"type": "silent"}
             return
         logger.exception("SDK streaming error")
         await sdk_session.disconnect()
-        sdk_sessions.pop(skey, None)
+        sdk_session_manager.pop(skey)
         if result_text is None:
             yield {"type": "error", "text": f"Claude error: {e}"}
         return

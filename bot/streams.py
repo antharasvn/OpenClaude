@@ -4,7 +4,9 @@ import sys
 
 from bot.cache import FileBackedCache
 from bot.config import ACTIVE_STREAMS_FILE  # noqa: F811
-from bot.logging_setup import logger
+import logging
+
+logger = logging.getLogger(__name__)
 from bot.sessions import session_key
 
 # ---------------------------------------------------------------------------

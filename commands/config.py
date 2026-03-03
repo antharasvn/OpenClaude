@@ -8,7 +8,9 @@ from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 from bot.config import SCRIPT_DIR, is_authorized, get_thread_id
-from bot.logging_setup import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 COMMANDS = [
     ("stream", "Toggle live streaming of Claude's response"),

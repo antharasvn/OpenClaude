@@ -13,7 +13,11 @@ from bot.config import (
     WORKSPACES_DIR, LOGS_DIR,
     is_authorized, get_claude_model, get_thread_id,
 )
-from bot.logging_setup import logger, infra_logger
+import logging
+
+from bot.logging_setup import infra_logger
+
+logger = logging.getLogger(__name__)
 from bot.sessions import load_sessions
 from bot.streams import load_active_streams
 from bot.renderer import split_message

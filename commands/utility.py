@@ -8,7 +8,9 @@ from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 from bot.config import ADMIN_USER_ID, is_authorized, get_claude_model, set_claude_model, get_thread_id
-from bot.logging_setup import logger
+import logging
+
+logger = logging.getLogger(__name__)
 from bot.renderer import split_message
 from bot.sessions import get_session_id, get_usage, get_context_pct
 from bot.workspaces import ensure_workspace

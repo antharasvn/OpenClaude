@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     allowed_users: str = Field(default="", validation_alias="ALLOWED_USERS")
     claude_model: str = ""
     working_dir: str = Field(default=str(SCRIPT_DIR))
+    log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
 
     def model_post_init(self, __context: object) -> None:
         # working_dir: fall back to SCRIPT_DIR if empty

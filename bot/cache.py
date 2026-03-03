@@ -9,7 +9,9 @@ import tempfile
 from pathlib import Path
 from typing import Callable, Generic, TypeVar, Union
 
-from bot.logging_setup import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 

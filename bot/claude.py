@@ -7,9 +7,12 @@ transport-specific work to a backend in ``bot.backends``.
 """
 
 import asyncio
+import logging
 
 from bot.config import ADMIN_USER_ID, WORKING_DIR
 from bot.logging_setup import get_workspace_logger
+
+logger = logging.getLogger(__name__)
 from bot.sessions import get_session_id, set_session_id
 from bot.streams import add_active_stream, remove_active_stream
 from bot.prompts import (
@@ -84,7 +87,6 @@ async def stream_claude(message: str, chat_id: int, thread_id: int, user_id: int
             yield event
 
     except FileNotFoundError as e:
-        from bot.logging_setup import logger
         logger.exception("FileNotFoundError in stream_claude: %s", e)
         yield {
             "type": "error",
@@ -92,7 +94,6 @@ async def stream_claude(message: str, chat_id: int, thread_id: int, user_id: int
                     "Make sure 'claude' is installed and available in PATH.",
         }
     except Exception as e:
-        from bot.logging_setup import logger
         logger.exception("Unexpected error in stream_claude")
         yield {"type": "error", "text": f"Unexpected error: {e}"}
     finally:

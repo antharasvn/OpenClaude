@@ -6,7 +6,9 @@ import shlex
 from pathlib import Path
 
 from bot.config import ALL_TOOLS, CLAUDE_MODEL
-from bot.logging_setup import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Env vars safe to pass to non-admin users
 _SAFE_ENV_KEYS = {

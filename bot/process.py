@@ -2,7 +2,9 @@
 
 import asyncio
 
-from bot.logging_setup import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Active subprocess references for /stop support
