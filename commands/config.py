@@ -33,17 +33,32 @@ def _settings_file() -> Path:
     return _SETTINGS_FILE
 
 
+_settings_cache: dict | None = None
+_settings_mtime: float = 0.0
+
+
 def _load_settings() -> dict:
+    """Load settings with mtime-based caching to avoid repeated file reads."""
+    global _settings_cache, _settings_mtime
     f = _settings_file()
-    if f.exists():
-        try:
-            return json.loads(f.read_text())
-        except (json.JSONDecodeError, OSError):
-            pass
-    return {}
+    try:
+        current_mtime = f.stat().st_mtime
+    except OSError:
+        return _settings_cache if _settings_cache is not None else {}
+
+    if _settings_cache is not None and current_mtime == _settings_mtime:
+        return _settings_cache
+
+    try:
+        _settings_cache = json.loads(f.read_text())
+        _settings_mtime = current_mtime
+        return _settings_cache
+    except (json.JSONDecodeError, OSError):
+        return _settings_cache if _settings_cache is not None else {}
 
 
 def _save_settings(settings: dict) -> None:
+    global _settings_cache, _settings_mtime
     import os
     import tempfile
     f = _settings_file()
@@ -57,6 +72,12 @@ def _save_settings(settings: dict) -> None:
             f.write_text(json.dumps(settings, indent=2))
         except OSError as e:
             logger.error("Failed to save chat settings: %s", e)
+    # Update cache immediately after save
+    _settings_cache = settings
+    try:
+        _settings_mtime = f.stat().st_mtime
+    except OSError:
+        _settings_mtime = 0.0
 
 
 def _setting_key(chat_id: int, thread_id: int) -> str:
