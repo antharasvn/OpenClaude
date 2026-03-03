@@ -8,6 +8,7 @@ from telegram import Update
 from telegram.ext import (
     Application,
     CommandHandler,
+    ContextTypes,
     MessageHandler,
     filters,
 )
@@ -231,6 +232,22 @@ def main() -> None:
     app.add_handler(MessageHandler(filters.VIDEO, handlers.handle_video))
     app.add_handler(MessageHandler(filters.Document.ALL, handlers.handle_document))
     app.add_handler(MessageHandler(filters.PHOTO, handlers.handle_photo))
+
+    # Global error handler — catch unhandled exceptions in any handler
+    async def error_handler(update: Update | None, context: ContextTypes.DEFAULT_TYPE) -> None:
+        logger.exception("Unhandled exception in handler", exc_info=context.error)
+        infra_logger.error("Unhandled exception: %s", context.error)
+        if update and update.effective_message:
+            try:
+                thread_id = getattr(update.effective_message, 'message_thread_id', None)
+                await update.effective_message.reply_text(
+                    "Something went wrong. Please try again.",
+                    message_thread_id=thread_id,
+                )
+            except Exception:
+                pass  # Can't send error message — swallow silently
+
+    app.add_error_handler(error_handler)
 
     # Start polling
     logger.info("Bot is running. Press Ctrl+C to stop.")
