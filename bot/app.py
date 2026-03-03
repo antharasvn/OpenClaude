@@ -149,7 +149,7 @@ def main() -> None:
         """Fetch bot info at startup and resume interrupted generations."""
         bot = application.bot
         me = await bot.get_me()
-        handlers.BOT_USERNAME = me.username or ""
+        handlers._set_bot_username(me.username or "")
         logger.info("Bot username: @%s", handlers.BOT_USERNAME)
         infra_logger.info("Bot username: @%s", handlers.BOT_USERNAME)
 

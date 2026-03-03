@@ -13,6 +13,7 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
+from bot.attachments import clean_file_markers
 from bot.config import TELEGRAM_MAX_LENGTH
 from bot.renderer import TelegramRenderer, split_message, find_overflow_split
 from bot.formatting import finished_line
@@ -25,15 +26,6 @@ renderer = TelegramRenderer()
 
 # Live-edit throttle interval (seconds)
 LIVE_EDIT_INTERVAL = 3.0
-
-
-def _clean_file_markers(text: str) -> str:
-    """Remove 📎 marker lines from text for display purposes.
-
-    Imported lazily from handlers to avoid circular imports.
-    """
-    from bot.handlers import _clean_file_markers as _cfm
-    return _cfm(text)
 
 
 class StreamingSession:
@@ -117,12 +109,12 @@ class StreamingSession:
 
     async def _on_text_block(self, event: dict) -> None:
         """Handle a completed text block (before tool use or at stream end)."""
-        from bot.handlers import _send_rendered_collect
+        from bot.telegram_sender import send_rendered_collect
 
         block_text = event["text"]
         if self.live_msg:
             chunk_md = self.live_text[self.sent_offset:]
-            display_md = _clean_file_markers(chunk_md)
+            display_md = clean_file_markers(chunk_md)
             if display_md:
                 try:
                     rendered = renderer.render(display_md)
@@ -143,9 +135,9 @@ class StreamingSession:
                     pass
         elif block_text:
             # No streaming — send block directly (strip 📎)
-            display_text = _clean_file_markers(block_text)
+            display_text = clean_file_markers(block_text)
             if display_text:
-                sent_msgs = await _send_rendered_collect(
+                sent_msgs = await send_rendered_collect(
                     self.update, display_text, self.context, self.tg_thread_id,
                 )
                 self.finalized_msgs.extend(sent_msgs)
@@ -158,7 +150,7 @@ class StreamingSession:
         """Handle tool invocation start — flush live text, update status."""
         if self.live_msg:
             chunk_md = self.live_text[self.sent_offset:]
-            display_md = _clean_file_markers(chunk_md)
+            display_md = clean_file_markers(chunk_md)
             if display_md:
                 try:
                     rendered = renderer.render(display_md)
@@ -403,10 +395,8 @@ class StreamingSession:
         Handles the full post-streaming flow: deleting intermediates,
         editing/sending final text, sending files and images.
         """
-        from bot.handlers import (
-            _extract_image_urls, _split_file_segments, _clean_file_markers,
-            _send_file_group, send_rendered,
-        )
+        from bot.attachments import extract_image_urls, split_file_segments, clean_file_markers
+        from bot.telegram_sender import send_file_group, send_rendered
         from bot.workspaces import ensure_workspace
 
         # 1. Delete confirmed intermediate messages
@@ -421,11 +411,11 @@ class StreamingSession:
             await self.delete_speculative_messages()
             return
 
-        response_text, image_urls = _extract_image_urls(self.response_text)
+        response_text, image_urls = extract_image_urls(self.response_text)
         workspace_path = str(ensure_workspace(self.chat_id))
-        segments = _split_file_segments(response_text, workspace_path)
+        segments = split_file_segments(response_text, workspace_path)
         file_segments = [s for s in segments if s["type"] == "files"]
-        cleaned_response = _clean_file_markers(response_text)
+        cleaned_response = clean_file_markers(response_text)
 
         # effective_offset: how much of response_text was already shown
         effective_offset = max(self.sent_offset, self._speculative_sent_len)
@@ -434,7 +424,7 @@ class StreamingSession:
         if not remaining and not image_urls and not file_segments:
             # Everything already displayed — just finalize live_msg if needed
             if self.live_msg:
-                chunk_md = _clean_file_markers(self.live_text[self.sent_offset:])
+                chunk_md = clean_file_markers(self.live_text[self.sent_offset:])
                 if chunk_md:
                     try:
                         rendered = renderer.render(chunk_md)
@@ -452,7 +442,7 @@ class StreamingSession:
                         pass
         else:
             if self.live_msg:
-                display_md = _clean_file_markers(self.live_text[self.sent_offset:])
+                display_md = clean_file_markers(self.live_text[self.sent_offset:])
                 if display_md and remaining:
                     try:
                         rendered = renderer.render(remaining)
@@ -485,7 +475,7 @@ class StreamingSession:
         # Send file attachments
         for seg in file_segments:
             try:
-                await _send_file_group(
+                await send_file_group(
                     self.context.bot, self.chat_id, seg["files"], self.tg_thread_id,
                 )
             except Exception:
