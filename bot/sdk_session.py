@@ -25,18 +25,6 @@ try:
     )
     from claude_code_sdk.types import StreamEvent
 
-    # Patch SDK to skip unknown message types (e.g. rate_limit_event)
-    import claude_code_sdk._internal.message_parser as _mp
-    _original_parse = _mp.parse_message
-    def _patched_parse(data):
-        try:
-            return _original_parse(data)
-        except _mp.MessageParseError:
-            return None
-    _mp.parse_message = _patched_parse
-    import claude_code_sdk._internal.client as _cl
-    _cl.parse_message = _patched_parse
-
     HAS_SDK = True
 except ImportError:
     HAS_SDK = False
@@ -51,6 +39,53 @@ except ImportError:
     PermissionResultAllow = None
     PermissionResultDeny = None
     StreamEvent = None
+
+def _apply_sdk_compat_patch() -> None:
+    """Apply compatibility patch for claude-code-sdk <= 0.0.25.
+
+    The SDK's ``parse_message()`` raises ``MessageParseError`` for any
+    unknown message type (e.g. ``rate_limit_event``).  This crashes the
+    streaming loop.  The patch catches the exception and returns ``None``
+    instead, which the bot's stream handler already skips (``if msg is
+    None: continue``).
+
+    Remove this patch when the SDK handles unknown message types
+    gracefully (returns ``None`` or a sentinel) in a future release.
+    """
+    if not HAS_SDK:
+        return
+
+    import claude_code_sdk
+    sdk_version = tuple(
+        int(x) for x in claude_code_sdk.__version__.split(".")[:3]
+    )
+    # TODO: update the upper bound when a fixed SDK version is released
+    if sdk_version > (0, 0, 25):
+        logger.info(
+            "SDK version %s detected — skipping parse_message compat patch "
+            "(verify unknown-type handling before removing this check)",
+            claude_code_sdk.__version__,
+        )
+        return
+
+    import claude_code_sdk._internal.message_parser as _mp
+    import claude_code_sdk._internal.client as _cl
+
+    _original_parse = _mp.parse_message
+
+    def _patched_parse(data):  # noqa: ANN001
+        try:
+            return _original_parse(data)
+        except _mp.MessageParseError:
+            logger.debug("Skipping unknown SDK message: %s", data.get("type") if isinstance(data, dict) else data)
+            return None
+
+    _mp.parse_message = _patched_parse
+    _cl.parse_message = _patched_parse
+    logger.debug("Applied SDK parse_message compat patch for version %s", claude_code_sdk.__version__)
+
+
+_apply_sdk_compat_patch()
 
 DISCONNECT_TIMEOUT = 10  # seconds
 

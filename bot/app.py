@@ -2,8 +2,6 @@
 
 import asyncio
 import atexit
-import json
-import re
 import sys
 
 from telegram import Update
@@ -15,21 +13,19 @@ from telegram.ext import (
 )
 
 from bot.config import (
-    ALLOWED_USERS, ACTIVE_STREAMS_FILE, RESTART_MESSAGES_FILE,
-    RESTART_STATE_FILE, SESSION_FILE, TELEGRAM_BOT_TOKEN, WORKING_DIR,
+    ALLOWED_USERS, SESSION_FILE, TELEGRAM_BOT_TOKEN, WORKING_DIR,
 )
 import logging
 
 from bot.logging_setup import setup_logging, infra_logger
 
 logger = logging.getLogger(__name__)
-from bot.sessions import get_session_id, flush_sessions
-from bot.streams import load_active_streams, start_streams_flusher, stop_streams_flusher, flush_streams
-from bot.workspaces import get_working_dir
-from bot.renderer import TelegramRenderer, split_message
+from bot.sessions import flush_sessions
+from bot.streams import start_streams_flusher, stop_streams_flusher, flush_streams
+from bot.renderer import TelegramRenderer
 from bot.claude import stream_claude
 from bot.process import _active_procs
-from bot.prompts import _read_restart_context
+from bot.restart_recovery import RestartRecoveryService
 from bot.sdk_session import HAS_SDK, cleanup_idle_sessions, shutdown_sdk_sessions
 from bot import handlers
 from commands import register_all, ALL_COMMANDS
@@ -187,182 +183,13 @@ def main() -> None:
         # Start streams flusher background task
         start_streams_flusher()
 
-        # Edit "Restarting..." messages to show success
-        if RESTART_MESSAGES_FILE.exists():
-            try:
-                msgs = json.loads(RESTART_MESSAGES_FILE.read_text())
-                for entry in msgs:
-                    try:
-                        await bot.edit_message_text(
-                            chat_id=entry["chat_id"],
-                            message_id=entry["message_id"],
-                            text="\u2705 Restart complete",
-                        )
-                    except Exception as e:
-                        infra_logger.warning(
-                            "Failed to edit restart message %s in chat %s: %s",
-                            entry.get("message_id"), entry.get("chat_id"), e,
-                        )
-            except (json.JSONDecodeError, OSError) as e:
-                infra_logger.warning("Failed to read restart messages file: %s", e)
-            finally:
-                RESTART_MESSAGES_FILE.unlink(missing_ok=True)
-
-        # Collect interrupted chats from restart state and active streams
-        interrupted: dict[str, dict] = {}
-
-        for state_file in (RESTART_STATE_FILE, ACTIVE_STREAMS_FILE):
-            if not state_file.exists():
-                continue
-            try:
-                data = json.loads(state_file.read_text())
-                interrupted.update(data)
-            except (json.JSONDecodeError, OSError):
-                pass
-            finally:
-                state_file.unlink(missing_ok=True)
-
-        if not interrupted:
-            return
-
-        infra_logger.info("Resuming %d interrupted generation(s)", len(interrupted))
-
-        RESUME_TIMEOUT = 120  # seconds — kill resume if it takes longer
-
-        async def _resume_chat(entry: dict) -> None:
-            cid = entry["chat_id"]
-            tid = entry["thread_id"]
-            uid = entry["user_id"]
-            # Group chats use uid=0 for shared sessions (same as handlers.py)
-            session_uid = 0 if cid < 0 else uid
-            tg_thread_id = tid or None
-            try:
-                session_id = get_session_id(cid, tid, session_uid)
-                if not session_id:
-                    # Fallback: session_id stored directly in the stream entry
-                    session_id = entry.get("session_id")
-                    if session_id:
-                        infra_logger.info(
-                            "Session recovered from stream entry for chat=%d thread=%d user=%d: %s",
-                            cid, tid, uid, session_id,
-                        )
-                        # Persist it to sessions cache so stream_claude can find it
-                        from bot.sessions import set_session_id as _set_sid
-                        _set_sid(cid, tid, session_uid, session_id)
-                if not session_id:
-                    infra_logger.warning(
-                        "No session for chat=%d thread=%d user=%d, skipping resume",
-                        cid, tid, uid,
-                    )
-                    # Still notify the user
-                    try:
-                        await bot.send_message(
-                            chat_id=cid,
-                            text="\u26a0\ufe0f Bot restarted — no session to resume. Send a new message to continue.",
-                            message_thread_id=tg_thread_id,
-                        )
-                    except Exception:
-                        pass
-                    return
-                # Build a context-rich resume message
-                restart_ctx = _read_restart_context(cid)
-                if restart_ctx:
-                    resume_msg = (
-                        "[System: The bot just restarted. Your previous response "
-                        "was interrupted mid-turn. Here is what you were doing:\n\n"
-                        f"{restart_ctx}\n\n"
-                        "Briefly notify the user that you restarted and are continuing, "
-                        "then immediately resume and complete the task without waiting "
-                        "for confirmation.]"
-                    )
-                else:
-                    user_msg_hint = entry.get("user_message", "")
-                    if user_msg_hint:
-                        resume_msg = (
-                            "[System: The bot just restarted. Your previous response "
-                            f'was interrupted. The user\'s message was: "{user_msg_hint}". '
-                            "Briefly notify the user that you restarted and are continuing, "
-                            "then immediately resume and complete the task without waiting "
-                            "for confirmation.]"
-                        )
-                    else:
-                        resume_msg = (
-                            "[System: The bot just restarted. Your previous response was "
-                            "interrupted. Briefly notify the user that you restarted and "
-                            "are continuing, then resume the task without waiting for "
-                            "confirmation.]"
-                        )
-                chat_working_dir = get_working_dir(cid)
-                result_text = None
-                stop_event = asyncio.Event()
-                async for event in stream_claude(resume_msg, cid, tid, session_uid,
-                                                 working_dir=chat_working_dir,
-                                                 stop_event=stop_event,
-                                                 real_user_id=uid):
-                    if event.get("type") == "result":
-                        result_text = event.get("text", "")
-                    elif event.get("type") == "error":
-                        result_text = event.get("text", "")
-                if result_text:
-                    md_chunks = split_message(result_text)
-                    for md_chunk in md_chunks:
-                        rendered = renderer.render(md_chunk)
-                        try:
-                            await bot.send_message(
-                                chat_id=cid,
-                                text=rendered,
-                                parse_mode="HTML",
-                                disable_web_page_preview=True,
-                                message_thread_id=tg_thread_id,
-                            )
-                        except Exception:
-                            plain = re.sub(r"<[^>]+>", "", rendered)
-                            for pc in split_message(plain):
-                                await bot.send_message(
-                                    chat_id=cid,
-                                    text=pc,
-                                    message_thread_id=tg_thread_id,
-                                )
-                infra_logger.info("Resumed chat=%d thread=%d user=%d", cid, tid, uid)
-            except Exception as e:
-                infra_logger.error(
-                    "Failed to resume chat=%d thread=%d user=%d: %s", cid, tid, uid, e
-                )
-                try:
-                    await bot.send_message(
-                        chat_id=cid,
-                        text="\u26a0\ufe0f Bot restarted — couldn't resume your previous task. Send a new message to continue.",
-                        message_thread_id=tg_thread_id,
-                    )
-                except Exception:
-                    pass
-
-        async def _resume_with_timeout(entry: dict) -> None:
-            try:
-                await asyncio.wait_for(_resume_chat(entry), timeout=RESUME_TIMEOUT)
-            except asyncio.TimeoutError:
-                cid = entry["chat_id"]
-                tid = entry["thread_id"]
-                uid = entry["user_id"]
-                infra_logger.error(
-                    "Resume timed out after %ds for chat=%d thread=%d user=%d",
-                    RESUME_TIMEOUT, cid, tid, uid,
-                )
-                try:
-                    await bot.send_message(
-                        chat_id=cid,
-                        text="\u26a0\ufe0f Bot restarted — resume timed out. Send a new message to continue.",
-                        message_thread_id=tid or None,
-                    )
-                except Exception:
-                    pass
-
-        # Run resumes in background so the bot can accept new messages immediately
-        async def _run_resumes() -> None:
-            await asyncio.gather(*[_resume_with_timeout(e) for e in interrupted.values()])
-            infra_logger.info("Restart recovery complete")
-
-        asyncio.create_task(_run_resumes())
+        # Restart recovery — edit "Restarting..." messages & resume interrupted sessions
+        recovery = RestartRecoveryService(
+            bot=bot,
+            renderer=renderer,
+            stream_fn=stream_claude,
+        )
+        await recovery.recover_interrupted_sessions()
 
     async def post_shutdown(application: Application) -> None:
         """Clean up SDK sessions, caches, and active subprocesses on shutdown."""
