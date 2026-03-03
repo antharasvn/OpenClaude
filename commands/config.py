@@ -1,14 +1,15 @@
-"""Config commands: /stream, /respond — with inline keyboard toggles."""
+"""Config commands: /stream, /verbose, /respond — with inline keyboard toggles."""
 
 import json
+import logging
 from pathlib import Path
+from typing import Any
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 from bot.config import SCRIPT_DIR, is_authorized, get_thread_id
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -62,168 +63,143 @@ def _setting_key(chat_id: int, thread_id: int) -> str:
     return f"{chat_id}:{thread_id}"
 
 
-def get_streaming(chat_id: int, thread_id: int) -> bool:
-    """Get live streaming setting for a chat/thread."""
+def _get_setting(chat_id: int, thread_id: int, name: str, default: Any = None) -> Any:
+    """Get a single setting value for a chat/thread."""
     settings = _load_settings()
     key = _setting_key(chat_id, thread_id)
-    return settings.get(key, {}).get("streaming", False)
+    return settings.get(key, {}).get(name, default)
 
 
-def get_verbose(chat_id: int, thread_id: int) -> bool:
-    """Get verbose (tool progress) setting for a chat/thread. Default: ON."""
-    settings = _load_settings()
-    key = _setting_key(chat_id, thread_id)
-    return settings.get(key, {}).get("verbose", True)
-
-
-def get_respond_mode(chat_id: int, thread_id: int) -> str:
-    """Get response mode for a chat/thread: 'mention' or 'all'."""
-    settings = _load_settings()
-    key = _setting_key(chat_id, thread_id)
-    return settings.get(key, {}).get("respond_mode", "all")
-
-
-def _set_setting(chat_id: int, thread_id: int, name: str, value) -> None:
+def _set_setting(chat_id: int, thread_id: int, name: str, value: Any) -> None:
     settings = _load_settings()
     key = _setting_key(chat_id, thread_id)
     settings.setdefault(key, {})[name] = value
     _save_settings(settings)
 
 
-# ---------------------------------------------------------------------------
-# /stream — toggle live response streaming
-# ---------------------------------------------------------------------------
-
-def _stream_keyboard(is_on: bool, chat_id: int, thread_id: int) -> InlineKeyboardMarkup:
-    on_label = "\u2713 ON" if is_on else "ON"
-    off_label = "\u2713 OFF" if not is_on else "OFF"
-    return InlineKeyboardMarkup([[
-        InlineKeyboardButton(on_label, callback_data=f"stream:on:{chat_id}:{thread_id}"),
-        InlineKeyboardButton(off_label, callback_data=f"stream:off:{chat_id}:{thread_id}"),
-    ]])
+# Public getters used by other modules
+def get_streaming(chat_id: int, thread_id: int) -> bool:
+    """Get live streaming setting for a chat/thread."""
+    return _get_setting(chat_id, thread_id, "streaming", False)
 
 
-def _stream_text(is_on: bool) -> str:
-    state = "ON" if is_on else "OFF"
-    if is_on:
-        desc = "Response appears live as Claude types, then gets replaced with the final formatted version."
-    else:
-        desc = "Tool progress is shown while working, then the full response appears at once."
-    return f"<b>Streaming:</b> {state}\n\n{desc}"
+def get_verbose(chat_id: int, thread_id: int) -> bool:
+    """Get verbose (tool progress) setting for a chat/thread. Default: ON."""
+    return _get_setting(chat_id, thread_id, "verbose", True)
 
 
-async def cmd_stream(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user
-    if not is_authorized(user.id):
-        return
-
-    chat_id = update.effective_chat.id
-    thread_id = get_thread_id(update)
-    is_on = get_streaming(chat_id, thread_id)
-
-    await update.message.reply_text(
-        _stream_text(is_on),
-        parse_mode=ParseMode.HTML,
-        reply_markup=_stream_keyboard(is_on, chat_id, thread_id),
-        message_thread_id=thread_id or None,
-    )
-
-
-async def callback_stream(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-    if not is_authorized(query.from_user.id):
-        await query.answer("Unauthorized", show_alert=True)
-        return
-    await query.answer()
-
-    parts = query.data.split(":")
-    if len(parts) != 4:
-        return
-    _, action, chat_id_str, thread_id_str = parts
-    try:
-        chat_id = int(chat_id_str)
-        thread_id = int(thread_id_str)
-    except ValueError:
-        return
-
-    new_value = action == "on"
-    _set_setting(chat_id, thread_id, "streaming", new_value)
-
-    await query.edit_message_text(
-        _stream_text(new_value),
-        parse_mode=ParseMode.HTML,
-        reply_markup=_stream_keyboard(new_value, chat_id, thread_id),
-    )
+def get_respond_mode(chat_id: int, thread_id: int) -> str:
+    """Get response mode for a chat/thread: 'mention' or 'all'."""
+    return _get_setting(chat_id, thread_id, "respond_mode", "all")
 
 
 # ---------------------------------------------------------------------------
-# /verbose — toggle tool usage display
+# ToggleSetting — generic on/off toggle with inline keyboard
 # ---------------------------------------------------------------------------
 
-def _verbose_keyboard(is_on: bool, chat_id: int, thread_id: int) -> InlineKeyboardMarkup:
-    on_label = "\u2713 ON" if is_on else "ON"
-    off_label = "\u2713 OFF" if not is_on else "OFF"
-    return InlineKeyboardMarkup([[
-        InlineKeyboardButton(on_label, callback_data=f"verbose:on:{chat_id}:{thread_id}"),
-        InlineKeyboardButton(off_label, callback_data=f"verbose:off:{chat_id}:{thread_id}"),
-    ]])
+class ToggleSetting:
+    """Reusable on/off toggle with persistent storage and inline keyboard.
+
+    Reduces the per-setting boilerplate from ~60 lines to a declaration.
+    """
+
+    def __init__(
+        self,
+        key: str,
+        label: str,
+        default: bool,
+        on_desc: str,
+        off_desc: str,
+    ) -> None:
+        self.key = key
+        self.label = label
+        self.default = default
+        self.on_desc = on_desc
+        self.off_desc = off_desc
+
+    def get(self, chat_id: int, thread_id: int) -> bool:
+        return _get_setting(chat_id, thread_id, self.key, self.default)
+
+    def set(self, chat_id: int, thread_id: int, value: bool) -> None:
+        _set_setting(chat_id, thread_id, self.key, value)
+
+    def text(self, is_on: bool) -> str:
+        state = "ON" if is_on else "OFF"
+        desc = self.on_desc if is_on else self.off_desc
+        return f"<b>{self.label}:</b> {state}\n\n{desc}"
+
+    def keyboard(self, is_on: bool, chat_id: int, thread_id: int) -> InlineKeyboardMarkup:
+        on_label = "\u2713 ON" if is_on else "ON"
+        off_label = "\u2713 OFF" if not is_on else "OFF"
+        return InlineKeyboardMarkup([[
+            InlineKeyboardButton(on_label, callback_data=f"{self.key}:on:{chat_id}:{thread_id}"),
+            InlineKeyboardButton(off_label, callback_data=f"{self.key}:off:{chat_id}:{thread_id}"),
+        ]])
+
+    async def command_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        user = update.effective_user
+        if not is_authorized(user.id):
+            return
+
+        chat_id = update.effective_chat.id
+        thread_id = get_thread_id(update)
+        is_on = self.get(chat_id, thread_id)
+
+        await update.message.reply_text(
+            self.text(is_on),
+            parse_mode=ParseMode.HTML,
+            reply_markup=self.keyboard(is_on, chat_id, thread_id),
+            message_thread_id=thread_id or None,
+        )
+
+    async def callback_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        query = update.callback_query
+        if not is_authorized(query.from_user.id):
+            await query.answer("Unauthorized", show_alert=True)
+            return
+        await query.answer()
+
+        parts = query.data.split(":")
+        if len(parts) != 4:
+            return
+        _, action, chat_id_str, thread_id_str = parts
+        try:
+            chat_id = int(chat_id_str)
+            thread_id = int(thread_id_str)
+        except ValueError:
+            return
+
+        new_value = action == "on"
+        self.set(chat_id, thread_id, new_value)
+
+        await query.edit_message_text(
+            self.text(new_value),
+            parse_mode=ParseMode.HTML,
+            reply_markup=self.keyboard(new_value, chat_id, thread_id),
+        )
 
 
-def _verbose_text(is_on: bool) -> str:
-    state = "ON" if is_on else "OFF"
-    if is_on:
-        desc = "Shows tool usage while Claude is working (reading files, running commands, etc.)."
-    else:
-        desc = "No tool progress shown — only the final response."
-    return f"<b>Tool display:</b> {state}\n\n{desc}"
+# --- Concrete toggle instances ---
 
+_stream_toggle = ToggleSetting(
+    key="streaming",
+    label="Streaming",
+    default=False,
+    on_desc="Response appears live as Claude types, then gets replaced with the final formatted version.",
+    off_desc="Tool progress is shown while working, then the full response appears at once.",
+)
 
-async def cmd_verbose(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user
-    if not is_authorized(user.id):
-        return
-
-    chat_id = update.effective_chat.id
-    thread_id = get_thread_id(update)
-    is_on = get_verbose(chat_id, thread_id)
-
-    await update.message.reply_text(
-        _verbose_text(is_on),
-        parse_mode=ParseMode.HTML,
-        reply_markup=_verbose_keyboard(is_on, chat_id, thread_id),
-        message_thread_id=thread_id or None,
-    )
-
-
-async def callback_verbose(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-    if not is_authorized(query.from_user.id):
-        await query.answer("Unauthorized", show_alert=True)
-        return
-    await query.answer()
-
-    parts = query.data.split(":")
-    if len(parts) != 4:
-        return
-    _, action, chat_id_str, thread_id_str = parts
-    try:
-        chat_id = int(chat_id_str)
-        thread_id = int(thread_id_str)
-    except ValueError:
-        return
-
-    new_value = action == "on"
-    _set_setting(chat_id, thread_id, "verbose", new_value)
-
-    await query.edit_message_text(
-        _verbose_text(new_value),
-        parse_mode=ParseMode.HTML,
-        reply_markup=_verbose_keyboard(new_value, chat_id, thread_id),
-    )
+_verbose_toggle = ToggleSetting(
+    key="verbose",
+    label="Tool display",
+    default=True,
+    on_desc="Shows tool usage while Claude is working (reading files, running commands, etc.).",
+    off_desc="No tool progress shown \u2014 only the final response.",
+)
 
 
 # ---------------------------------------------------------------------------
-# /respond — group response mode (mention / all)
+# /respond — group response mode (multi-value, not a simple toggle)
 # ---------------------------------------------------------------------------
 
 def _respond_keyboard(mode: str, chat_id: int, thread_id: int) -> InlineKeyboardMarkup:
@@ -299,9 +275,9 @@ async def callback_respond(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 # ---------------------------------------------------------------------------
 
 def register(app: Application) -> None:
-    app.add_handler(CommandHandler("stream", cmd_stream))
-    app.add_handler(CommandHandler("verbose", cmd_verbose))
+    app.add_handler(CommandHandler("stream", _stream_toggle.command_handler))
+    app.add_handler(CommandHandler("verbose", _verbose_toggle.command_handler))
     app.add_handler(CommandHandler("respond", cmd_respond))
-    app.add_handler(CallbackQueryHandler(callback_stream, pattern=r"^stream:"))
-    app.add_handler(CallbackQueryHandler(callback_verbose, pattern=r"^verbose:"))
+    app.add_handler(CallbackQueryHandler(_stream_toggle.callback_handler, pattern=r"^streaming:"))
+    app.add_handler(CallbackQueryHandler(_verbose_toggle.callback_handler, pattern=r"^verbose:"))
     app.add_handler(CallbackQueryHandler(callback_respond, pattern=r"^respond:"))
