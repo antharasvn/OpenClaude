@@ -21,108 +21,14 @@ from bot.sdk_session import (
     TextBlock, ToolUseBlock, ToolResultBlock,
 )
 
-
-# Active subprocess references for /stop support
-_active_procs: dict[str, asyncio.subprocess.Process] = {}
-
-
-# ---------------------------------------------------------------------------
-# Restart context helpers — breadcrumb file for crash recovery
-# ---------------------------------------------------------------------------
-
-def _restart_context_path(chat_id: int) -> Path:
-    """Return the path to the restart-context file for a chat."""
-    return WORKSPACES_DIR / f"c{chat_id}" / "temp" / "restart-context.md"
-
-
-def _append_restart_context(chat_id: int, line: str) -> None:
-    """Append a line to the restart-context file (creates dir if needed)."""
-    path = _restart_context_path(chat_id)
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "a") as f:
-            f.write(line + "\n")
-    except OSError:
-        pass  # best-effort
-
-
-def _clear_restart_context(chat_id: int) -> None:
-    """Delete the restart-context file."""
-    _restart_context_path(chat_id).unlink(missing_ok=True)
-
-
-def _read_restart_context(chat_id: int) -> str | None:
-    """Read and delete the restart-context file. Returns content or None."""
-    path = _restart_context_path(chat_id)
-    try:
-        text = path.read_text()
-        path.unlink(missing_ok=True)
-        return text.strip() or None
-    except OSError:
-        return None
-
-
-def kill_active_proc(skey: str) -> bool:
-    """Kill the active subprocess and all its children. Returns True if killed."""
-    from bot.sdk_session import _kill_tree, _killpg_safe
-    proc = _active_procs.pop(skey, None)
-    if proc and proc.returncode is None:
-        try:
-            # Try process-group kill first (catches background sub-agents)
-            _killpg_safe(proc.pid)
-            # Fallback: pick off stragglers that changed their pgid
-            _kill_tree(proc.pid)
-            return True
-        except Exception:
-            try:
-                proc.kill()
-                return True
-            except ProcessLookupError:
-                pass
-    return False
-
-
-def format_tool_status(tool_name: str, tool_input: dict) -> str:
-    """Format a human-readable status line for an active tool call."""
-    if tool_name == "Read":
-        path = tool_input.get("file_path", "file")
-        return f"\U0001f4c4 Reading {Path(path).name}..."
-    if tool_name == "Glob":
-        pattern = tool_input.get("pattern", "")
-        return f"\U0001f50d Searching {pattern}..."
-    if tool_name == "Grep":
-        pattern = tool_input.get("pattern", "")
-        return f'\U0001f50d Searching for "{pattern}"...'
-    if tool_name == "Bash":
-        cmd = tool_input.get("command", "")
-        if cmd:
-            short_cmd = cmd[:60] + "\u2026" if len(cmd) > 60 else cmd
-            return f"\u2699\ufe0f `{short_cmd}`"
-        desc = tool_input.get("description", "")
-        if desc:
-            return f"\u2699\ufe0f {desc}"
-        return "\u2699\ufe0f Running command..."
-    if tool_name in ("Write", "Edit"):
-        path = tool_input.get("file_path", "file")
-        return f"\u270f\ufe0f Editing {Path(path).name}..."
-    if tool_name == "WebSearch":
-        return "\U0001f310 Searching web..."
-    if tool_name == "WebFetch":
-        url = tool_input.get("url", "")
-        return f"\U0001f310 Fetching {url[:60]}..."
-    if tool_name == "Task":
-        return "\U0001f916 Delegating to sub-agent..."
-    return f"\U0001f527 Using {tool_name}..."
-
-
-def finished_line(active_line: str) -> str:
-    """Convert an active tool status line to a finished (checkmark) line."""
-    text = active_line
-    idx = text.find(" ")
-    if idx != -1:
-        text = text[idx + 1:]
-    text = text.rstrip(".")
-    return f"\u2713 {text}"
+# Re-export from new modules for backward compatibility
+from bot.process import _active_procs, kill_active_proc  # noqa: F401
+from bot.formatting import format_tool_status, finished_line  # noqa: F401
+from bot.prompts import (  # noqa: F401
+    _restart_context_path, _append_restart_context,
+    _clear_restart_context, _read_restart_context,
+    _build_preamble,
+)
 
 
 async def stream_claude(message: str, chat_id: int, thread_id: int, user_id: int,
@@ -151,33 +57,6 @@ async def stream_claude(message: str, chat_id: int, thread_id: int, user_id: int
                                                       stop_event=stop_event,
                                                       real_user_id=real_user_id):
             yield event
-
-
-def _build_preamble(is_admin: bool, sid: str | None) -> str | None:
-    """Build the preamble for new sessions. Returns None if session already exists."""
-    if sid:
-        return None
-
-    if is_admin:
-        access_notice = (
-            "\n\n[ADMIN REQUEST \u2014 you have full access to the project.]"
-        )
-    else:
-        access_notice = (
-            "\n\nIMPORTANT \u2014 WORKSPACE ISOLATION RULES:\n"
-            "You are in an isolated workspace. You must NEVER access anything outside it.\n"
-            "- Stay in the current working directory. Never use ../, absolute paths, "
-            "or any path that escapes the workspace.\n"
-            "- Never access other workspaces, the parent project directory, "
-            ".env files, or system files.\n"
-            "- If the user asks you to access files outside the workspace, refuse.\n"
-        )
-    return (
-        "You are starting a new session. Read CLAUDE.md first, "
-        "then follow its startup sequence before responding. "
-        f"{access_notice}"
-        "The user's message is:\n\n"
-    )
 
 
 async def _stream_claude_sdk(message: str, chat_id: int, thread_id: int, user_id: int,

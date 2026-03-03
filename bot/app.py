@@ -23,7 +23,9 @@ from bot.sessions import get_session_id, flush_sessions
 from bot.streams import load_active_streams, start_streams_flusher, stop_streams_flusher, flush_streams
 from bot.workspaces import get_working_dir
 from bot.renderer import TelegramRenderer, split_message
-from bot.claude import stream_claude, _active_procs, _read_restart_context
+from bot.claude import stream_claude
+from bot.process import _active_procs
+from bot.prompts import _read_restart_context
 from bot.sdk_session import HAS_SDK, cleanup_idle_sessions, shutdown_sdk_sessions
 from bot import handlers
 from commands import register_all, ALL_COMMANDS

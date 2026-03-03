@@ -20,7 +20,9 @@ from bot.logging_setup import logger, infra_logger, get_workspace_logger
 from bot.sessions import session_key, get_session_id, load_sessions, clear_session, set_usage, get_context_pct
 from bot.workspaces import ensure_workspace, get_working_dir
 from bot.renderer import TelegramRenderer, split_message, find_overflow_split
-from bot.claude import stream_claude, finished_line, format_tool_status, kill_active_proc
+from bot.claude import stream_claude
+from bot.formatting import finished_line, format_tool_status
+from bot.process import kill_active_proc
 from bot.sdk_session import sdk_sessions, SDKSession
 
 # Image URL detection patterns
