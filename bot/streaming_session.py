@@ -395,8 +395,9 @@ class StreamingSession:
         Handles the full post-streaming flow: deleting intermediates,
         editing/sending final text, sending files and images.
         """
-        from bot.attachments import extract_image_urls, split_file_segments, clean_file_markers
+        from bot.attachments import extract_image_urls, split_file_segments
         from bot.telegram_sender import send_file_group, send_rendered
+        from bot.types import FileSegment
         from bot.workspaces import ensure_workspace
 
         # 1. Delete confirmed intermediate messages
@@ -414,7 +415,7 @@ class StreamingSession:
         response_text, image_urls = extract_image_urls(self.response_text)
         workspace_path = str(ensure_workspace(self.chat_id))
         segments = split_file_segments(response_text, workspace_path)
-        file_segments = [s for s in segments if s["type"] == "files"]
+        file_segments = [s for s in segments if isinstance(s, FileSegment)]
         cleaned_response = clean_file_markers(response_text)
 
         # effective_offset: how much of response_text was already shown
@@ -476,7 +477,7 @@ class StreamingSession:
         for seg in file_segments:
             try:
                 await send_file_group(
-                    self.context.bot, self.chat_id, seg["files"], self.tg_thread_id,
+                    self.context.bot, self.chat_id, seg.files, self.tg_thread_id,
                 )
             except Exception:
                 logger.warning("Failed to send file group")

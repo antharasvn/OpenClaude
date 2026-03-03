@@ -1,7 +1,10 @@
 """Telegram message sending — file groups, single files, rendered markdown."""
 
+from __future__ import annotations
+
 import logging
 import re
+from typing import TYPE_CHECKING
 
 from telegram import Update
 from telegram.constants import ParseMode
@@ -9,6 +12,9 @@ from telegram.ext import ContextTypes
 
 from bot.config import get_thread_id
 from bot.renderer import TelegramRenderer, split_message
+
+if TYPE_CHECKING:
+    from bot.types import FileAttachment
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +25,7 @@ renderer = TelegramRenderer()
 async def send_file_group(
     bot,
     chat_id: int,
-    files: list[dict],
+    files: list[FileAttachment],
     thread_id: int | None = None,
 ) -> None:
     """Send a group of files as a Telegram media group when possible.
@@ -34,7 +40,7 @@ async def send_file_group(
         await send_single_file(bot, chat_id, files[0], thread_id)
         return
 
-    media_types = {f["media_type"] for f in files}
+    media_types = {f.media_type for f in files}
     can_group = (
         media_types <= {"photo", "video"}
         or media_types == {"document"}
@@ -50,8 +56,8 @@ async def send_file_group(
         }
         media = []
         for f in files:
-            cls = type_map[f["media_type"]]
-            media.append(cls(media=open(f["path"], "rb"), caption=f.get("caption") or None))
+            cls = type_map[f.media_type]
+            media.append(cls(media=open(f.path, "rb"), caption=f.caption or None))
         try:
             await bot.send_media_group(
                 chat_id=chat_id, media=media, message_thread_id=thread_id,
@@ -62,7 +68,7 @@ async def send_file_group(
                 try:
                     await send_single_file(bot, chat_id, f, thread_id)
                 except Exception:
-                    logger.warning("Failed to send file: %s", f["path"])
+                    logger.warning("Failed to send file: %s", f.path)
         finally:
             for m in media:
                 try:
@@ -75,19 +81,19 @@ async def send_file_group(
             try:
                 await send_single_file(bot, chat_id, f, thread_id)
             except Exception:
-                logger.warning("Failed to send file: %s", f["path"])
+                logger.warning("Failed to send file: %s", f.path)
 
 
 async def send_single_file(
     bot,
     chat_id: int,
-    file_info: dict,
+    file_info: FileAttachment,
     thread_id: int | None = None,
 ) -> None:
     """Send a single local file to Telegram using the appropriate media method."""
-    path = file_info["path"]
-    caption = file_info.get("caption") or None
-    media_type = file_info["media_type"]
+    path = file_info.path
+    caption = file_info.caption or None
+    media_type = file_info.media_type
 
     with open(path, "rb") as f:
         if media_type == "photo":

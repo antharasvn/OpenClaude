@@ -3,6 +3,9 @@
 import logging
 import os
 import re
+from typing import Union
+
+from bot.types import FileAttachment, TextSegment, FileSegment, Segment
 
 logger = logging.getLogger(__name__)
 
@@ -58,13 +61,10 @@ def extract_image_urls(text: str) -> tuple[str, list[str]]:
     return cleaned, urls
 
 
-def split_file_segments(text: str, workspace: str) -> list[dict]:
+def split_file_segments(text: str, workspace: str) -> list[Segment]:
     """Split text into ordered segments of text and file groups.
 
-    Returns a list of:
-      {"type": "text", "content": "..."}
-      {"type": "files", "files": [{"path":..., "caption":..., "media_type":...}, ...]}
-
+    Returns a list of TextSegment and FileSegment objects.
     Consecutive 📎 lines are grouped together so they can be sent as a media group.
     Only files within the workspace directory are accepted.
     """
@@ -72,9 +72,9 @@ def split_file_segments(text: str, workspace: str) -> list[dict]:
     text = _FILE_MARKER_NORM.sub('\U0001f4ce ', text)
 
     ws_real = os.path.realpath(workspace)
-    segments: list[dict] = []
+    segments: list[Segment] = []
     last_end = 0
-    pending_files: list[dict] = []
+    pending_files: list[FileAttachment] = []
 
     for match in _FILE_MARKER_RE.finditer(text):
         # Text between previous match and this one
@@ -83,10 +83,10 @@ def split_file_segments(text: str, workspace: str) -> list[dict]:
 
         # If there's real text between file markers, flush pending files first
         if gap_clean and pending_files:
-            segments.append({"type": "files", "files": pending_files})
+            segments.append(FileSegment(files=pending_files))
             pending_files = []
         if gap_clean:
-            segments.append({"type": "text", "content": gap_clean})
+            segments.append(TextSegment(content=gap_clean))
 
         raw_path = match.group(1)
         caption = (match.group(2) or "").strip()
@@ -113,19 +113,19 @@ def split_file_segments(text: str, workspace: str) -> list[dict]:
         else:
             media_type = "document"
 
-        pending_files.append({"path": real_path, "caption": caption, "media_type": media_type})
+        pending_files.append(FileAttachment(path=real_path, caption=caption, media_type=media_type))
         last_end = match.end()
 
     # Flush remaining pending files
     if pending_files:
-        segments.append({"type": "files", "files": pending_files})
+        segments.append(FileSegment(files=pending_files))
 
     # Trailing text after the last match
     tail = text[last_end:]
     tail = _FILE_MARKER_STRAY.sub('', tail)
     tail = re.sub(r'\n{3,}', '\n\n', tail).strip()
     if tail:
-        segments.append({"type": "text", "content": tail})
+        segments.append(TextSegment(content=tail))
 
     return segments
 
