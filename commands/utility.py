@@ -13,6 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 from bot.renderer import split_message
 from bot.sessions import get_session_id, get_usage, get_context_pct
+from bot.utils import format_size, context_bar
 from bot.workspaces import ensure_workspace
 
 COMMANDS = [
@@ -118,13 +119,7 @@ async def cmd_files(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 size = item.stat().st_size
             except OSError:
                 continue
-            if size > 1024 * 1024:
-                size_str = f"{size / 1024 / 1024:.1f}MB"
-            elif size > 1024:
-                size_str = f"{size / 1024:.0f}KB"
-            else:
-                size_str = f"{size}B"
-            lines.append(f"{indent}{rel.name} ({size_str})")
+            lines.append(f"{indent}{rel.name} ({format_size(size)})")
 
     if not lines:
         text = "Workspace is empty."
@@ -168,10 +163,7 @@ async def cmd_clean(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     total_size = sum(f.stat().st_size for f in uploads_dir.rglob("*") if f.is_file())
-    if total_size > 1024 * 1024:
-        size_str = f"{total_size / 1024 / 1024:.1f}MB"
-    else:
-        size_str = f"{total_size / 1024:.0f}KB"
+    size_str = format_size(total_size)
 
     shutil.rmtree(uploads_dir)
     uploads_dir.mkdir(exist_ok=True)
@@ -182,14 +174,6 @@ async def cmd_clean(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
     logger.info("User %d cleaned uploads for chat %d: %d files, %s",
                  user.id, chat_id, file_count, size_str)
-
-
-def _context_bar(used: int, total: int, width: int = 20) -> str:
-    """Build a text progress bar: [========····] 42%"""
-    pct = min(used / total, 1.0) if total else 0
-    filled = round(pct * width)
-    bar = "\u2588" * filled + "\u2591" * (width - filled)
-    return f"[{bar}] {pct:.0%}"
 
 
 async def cmd_context(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -218,7 +202,7 @@ async def cmd_context(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     ctx = get_context_pct(chat_id, thread_id, session_uid)
     if ctx:
         pct, used, ctx_window = ctx
-        bar = _context_bar(used, ctx_window)
+        bar = context_bar(used, ctx_window)
         lines.append(f"<code>{bar}</code>")
         lines.append(f"<b>Used:</b> {used:,} / {ctx_window:,} tokens")
         lines.append("")
