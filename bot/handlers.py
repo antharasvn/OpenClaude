@@ -18,6 +18,7 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
+from bot.auth import authorized
 from bot.config import (
     ADMIN_USER_ID, ALL_TOOLS, TELEGRAM_MAX_LENGTH,
     is_authorized, get_thread_id,
@@ -399,15 +400,10 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 # Message Handler
 # ---------------------------------------------------------------------------
 
+@authorized
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle incoming text messages -- route to Claude."""
     user = update.effective_user
-    if not is_authorized(user.id):
-        return
-
-    if not should_respond(update):
-        return
-
     message_text = update.message.text
     if not message_text:
         return

@@ -8,9 +8,10 @@ from pathlib import Path
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from bot.config import is_authorized, get_thread_id
+from bot.auth import authorized
+from bot.config import get_thread_id
 from bot.logging_setup import get_workspace_logger
-from bot.routing import should_respond, get_reply_prefix
+from bot.routing import get_reply_prefix
 from bot.batching import queue_message
 from bot.media import normalize_image
 from bot.workspaces import ensure_workspace
@@ -18,15 +19,10 @@ from bot.workspaces import ensure_workspace
 logger = logging.getLogger(__name__)
 
 
+@authorized
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle incoming photos."""
     user = update.effective_user
-    if not is_authorized(user.id):
-        return
-
-    if not should_respond(update):
-        return
-
     photos = update.message.photo
     if not photos:
         return
@@ -64,17 +60,12 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await queue_message(update, context, chat_id, thread_id, user.id, claude_msg)
 
 
+@authorized
 async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle incoming voice messages and audio."""
     from bot.transcribe import transcribe
 
     user = update.effective_user
-    if not is_authorized(user.id):
-        return
-
-    if not should_respond(update):
-        return
-
     voice = update.message.voice or update.message.audio
     if not voice:
         return
@@ -109,15 +100,10 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await queue_message(update, context, chat_id, thread_id, user.id, claude_msg)
 
 
+@authorized
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle incoming documents/files."""
     user = update.effective_user
-    if not is_authorized(user.id):
-        return
-
-    if not should_respond(update):
-        return
-
     doc = update.message.document
     if not doc:
         return
@@ -153,15 +139,10 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await queue_message(update, context, chat_id, thread_id, user.id, claude_msg)
 
 
+@authorized
 async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle incoming video messages."""
     user = update.effective_user
-    if not is_authorized(user.id):
-        return
-
-    if not should_respond(update):
-        return
-
     video = update.message.video
     if not video:
         return
