@@ -15,7 +15,11 @@ cp "$PROJECT_DIR/.active-streams.json" "$PROJECT_DIR/.restart-state.json" 2>/dev
     "Restarting — back in a moment..." 2>/dev/null || true
 
 if command -v systemctl &>/dev/null && systemctl --user is-active "$BOT_SERVICE" &>/dev/null 2>&1; then
-    systemctl --user restart "$BOT_SERVICE"
+    # --no-block: return immediately so that if restart.sh was invoked from
+    # inside an SDK subprocess (Claude tool use), it doesn't deadlock —
+    # systemctl would otherwise block waiting for the bot to stop, while the
+    # bot is waiting for the SDK subprocess (which is waiting for restart.sh).
+    systemctl --user --no-block restart "$BOT_SERVICE"
     echo "Bot restarted (systemd). Ouroboros still watching."
 else
     # Fallback: full stop/start cycle

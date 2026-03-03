@@ -188,18 +188,25 @@ class SDKSession:
             return None
 
     def hard_kill(self) -> None:
-        """Kill the subprocess and all its descendants (SIGKILL).
+        """Kill the subprocess and all its descendants.
 
-        Uses process-group killing first so that background sub-agents
-        (which may have been reparented to PID 1) are caught.  Falls
-        back to ``_kill_tree`` for any processes that changed their
-        process group.
+        Sends SIGTERM first so the subprocess can save session state,
+        waits briefly, then escalates to SIGKILL for any survivors.
         """
         pid = self._get_subprocess_pid()
         if not pid:
             return
+        # SIGTERM first — give the process a chance to save session state
+        try:
+            pgid = os.getpgid(pid)
+            if pgid != _BOT_PGID:
+                os.killpg(pgid, signal.SIGTERM)
+                logger.info("Sent SIGTERM to process group pgid=%d (from pid=%d)", pgid, pid)
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
+        time.sleep(2)
+        # SIGKILL any survivors
         _killpg_safe(pid)
-        # Fallback: pick off any stragglers not in the same pgid
         _kill_tree(pid)
 
     async def disconnect(self) -> None:
