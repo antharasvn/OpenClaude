@@ -667,6 +667,9 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     live_text = ""           # all accumulated partial text
     sent_offset = 0          # chars of live_text already in finalized messages
     finalized_msgs: list = []  # finalized Telegram messages (for /stop cleanup)
+    _speculative: list = []        # messages since last tool_use — keep if result follows
+    _to_delete: list = []          # confirmed intermediate — delete at end
+    _speculative_sent_len: int = 0 # chars sent in non-streaming text_blocks via speculative path
     last_live_edit: float = 0
     LIVE_EDIT_INTERVAL = 3.0
 
@@ -712,7 +715,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         infra_logger.warning("[STREAM] flood control — backing off %ds", wait)
 
     async def _update_live(text: str) -> None:
-        nonlocal live_msg, last_live_edit, sent_offset
+        nonlocal live_msg, last_live_edit, sent_offset, _speculative
 
         now = asyncio.get_event_loop().time()
 
@@ -754,6 +757,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                     infra_logger.warning("[STREAM] finalize plain failed: %s", e2)
             if finalized:
                 finalized_msgs.append(live_msg)
+                _speculative.append(live_msg)
                 sent_offset += split_pos
                 live_msg = None
                 last_live_edit = 0
@@ -838,6 +842,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                             except Exception:
                                 pass
                             finalized_msgs.append(live_msg)
+                            _speculative.append(live_msg)
                         else:
                             # Only 📎 markers, no real text — delete the message
                             try:
@@ -850,6 +855,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                         if display_text:
                             sent_msgs = await _send_rendered_collect(update, display_text, context, tg_thread_id)
                             finalized_msgs.extend(sent_msgs)
+                            _speculative.extend(sent_msgs)
+                            _speculative_sent_len += len(block_text)
                     sent_offset = len(live_text)
                     live_msg = None
 
@@ -869,6 +876,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                             except Exception:
                                 pass
                             finalized_msgs.append(live_msg)
+                            # Text before a tool is always preamble — add to _to_delete directly
+                            _to_delete.append(live_msg)
                         else:
                             try:
                                 await live_msg.delete()
@@ -876,6 +885,10 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                                 pass
                         sent_offset = len(live_text)
                         live_msg = None
+                    # All speculative messages are now confirmed intermediate
+                    _to_delete.extend(_speculative)
+                    _speculative.clear()
+                    _speculative_sent_len = 0
                     if show_tools:
                         if current_active:
                             finished_lines.append(finished_line(current_active))
@@ -953,14 +966,22 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     if stopped:
         return
 
+    # 1. Delete confirmed intermediate messages
+    for msg in _to_delete:
+        try:
+            await msg.delete()
+        except Exception:
+            pass
+
+    # 2. Process result
     if response_text is None:
         response_text = "Claude processed the request but returned no text output."
 
     if not response_text:
-        # Silent exit — clean up any live messages
-        for fm in finalized_msgs:
+        # Silent exit — clean up speculative and live_msg too
+        for msg in _speculative:
             try:
-                await fm.delete()
+                await msg.delete()
             except Exception:
                 pass
         if live_msg:
@@ -968,45 +989,79 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
                 await live_msg.delete()
             except Exception:
                 pass
-        return
+    else:
+        response_text, image_urls = _extract_image_urls(response_text)
+        workspace_path = str(ensure_workspace(chat_id))
+        segments = _split_file_segments(response_text, workspace_path)
+        file_segments = [s for s in segments if s["type"] == "files"]
+        cleaned_response = _clean_file_markers(response_text)
 
-    # Delete ALL messages sent during streaming
-    for fm in finalized_msgs:
-        try:
-            await fm.delete()
-        except Exception:
-            pass
-    if live_msg:
-        try:
-            await live_msg.delete()
-        except Exception:
-            pass
+        # effective_offset: how much of response_text was already shown
+        # In streaming mode: sent_offset tracks overflow-finalized chars of live_text
+        # In non-streaming mode: _speculative_sent_len tracks chars sent via text_blocks
+        effective_offset = max(sent_offset, _speculative_sent_len)
+        remaining = cleaned_response[min(effective_offset, len(cleaned_response)):] if cleaned_response else ""
 
-    # Send the full final response fresh
-    response_text, image_urls = _extract_image_urls(response_text)
-    workspace_path = str(ensure_workspace(chat_id))
-    segments = _split_file_segments(response_text, workspace_path)
-    file_segments = [s for s in segments if s["type"] == "files"]
+        if not remaining and not image_urls and not file_segments:
+            # Everything already displayed — just finalize live_msg if needed
+            if live_msg:
+                chunk_md = _clean_file_markers(live_text[sent_offset:])
+                if chunk_md:
+                    try:
+                        rendered = renderer.render(chunk_md)
+                        await live_msg.edit_text(rendered[:TELEGRAM_MAX_LENGTH], parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+                    except Exception:
+                        pass
+                else:
+                    try:
+                        await live_msg.delete()
+                    except Exception:
+                        pass
+        else:
+            if live_msg:
+                display_md = _clean_file_markers(live_text[sent_offset:])
+                if display_md and remaining:
+                    try:
+                        rendered = renderer.render(remaining)
+                        if len(rendered) <= TELEGRAM_MAX_LENGTH:
+                            await live_msg.edit_text(rendered, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+                        else:
+                            await live_msg.delete()
+                            await send_rendered(update, remaining, context)
+                    except Exception:
+                        try:
+                            await live_msg.delete()
+                        except Exception:
+                            pass
+                        if remaining:
+                            await send_rendered(update, remaining, context)
+                else:
+                    try:
+                        await live_msg.delete()
+                    except Exception:
+                        pass
+                    if remaining:
+                        await send_rendered(update, remaining, context)
+            elif remaining:
+                await send_rendered(update, remaining, context)
 
-    cleaned_response = _clean_file_markers(response_text)
-    if cleaned_response:
-        await send_rendered(update, cleaned_response, context)
+        # Send file attachments
+        for seg in file_segments:
+            try:
+                await _send_file_group(context.bot, chat_id, seg["files"], tg_thread_id)
+            except Exception:
+                logger.warning("Failed to send file group")
 
-    for seg in file_segments:
-        try:
-            await _send_file_group(context.bot, chat_id, seg["files"], tg_thread_id)
-        except Exception:
-            logger.warning("Failed to send file group")
-
-    for img_url in image_urls:
-        try:
-            await context.bot.send_photo(
-                chat_id=chat_id,
-                photo=img_url,
-                message_thread_id=tg_thread_id,
-            )
-        except Exception:
-            logger.warning("Failed to send photo URL: %s", img_url)
+        # Send image URLs
+        for img_url in image_urls:
+            try:
+                await context.bot.send_photo(
+                    chat_id=chat_id,
+                    photo=img_url,
+                    message_thread_id=tg_thread_id,
+                )
+            except Exception:
+                logger.warning("Failed to send photo URL: %s", img_url)
 
     # Context usage warnings and auto-compact
     if not _is_compact:
