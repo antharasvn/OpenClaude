@@ -1,67 +1,147 @@
-"""Configuration loading (.env, constants, authorization)."""
+"""Configuration loading (pydantic-settings based, with backward-compatible module-level attributes)."""
+
+from __future__ import annotations
 
 import os
+from functools import lru_cache
 from pathlib import Path
+from typing import Optional
 
 from dotenv import load_dotenv
+from pydantic import Field, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Load .env from the package's parent directory (OpenClaude/)
 SCRIPT_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(SCRIPT_DIR / ".env")
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-ALLOWED_USERS_RAW = os.getenv("ALLOWED_USERS", "")
-CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "")
-WORKING_DIR = os.getenv("WORKING_DIR") or str(SCRIPT_DIR)
 
-# Workspaces directory for per-chat isolation
-WORKSPACES_DIR = SCRIPT_DIR / "workspaces"
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
 
-# Parse allowed users (first entry is admin)
-ALLOWED_USERS: set[int] = set()
-ALLOWED_USERS_LIST: list[int] = []
-if ALLOWED_USERS_RAW.strip():
-    for uid in ALLOWED_USERS_RAW.split(","):
-        uid = uid.strip()
-        if uid.isdigit():
-            ALLOWED_USERS.add(int(uid))
-            ALLOWED_USERS_LIST.append(int(uid))
+    model_config = SettingsConfigDict(
+        env_file=str(SCRIPT_DIR / ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
-ADMIN_USER_ID: int | None = ALLOWED_USERS_LIST[0] if ALLOWED_USERS_LIST else None
+    # --- Fields loaded from environment ---
+    telegram_bot_token: SecretStr = SecretStr("")
+    allowed_users: str = Field(default="", validation_alias="ALLOWED_USERS")
+    claude_model: str = ""
+    working_dir: str = Field(default=str(SCRIPT_DIR))
 
-# Session file
-SESSION_FILE = Path.home() / ".openclaude-sessions.json"
+    def model_post_init(self, __context: object) -> None:
+        # working_dir: fall back to SCRIPT_DIR if empty
+        if not self.working_dir:
+            object.__setattr__(self, "working_dir", str(SCRIPT_DIR))
 
-# Claude CLI allowed tools
-ALL_TOOLS = "Read,Write,Edit,Bash,Glob,Grep,WebFetch,WebSearch,Task,Skill"
+    # --- Derived properties ---
 
-# Telegram message limit
-TELEGRAM_MAX_LENGTH = 4096
+    @property
+    def allowed_users_set(self) -> set[int]:
+        """Parse ALLOWED_USERS into a set of ints."""
+        result: set[int] = set()
+        raw = self.allowed_users.strip()
+        if raw:
+            for uid in raw.split(","):
+                uid = uid.strip()
+                if uid.isdigit():
+                    result.add(int(uid))
+        return result
 
-# Claude CLI timeout (seconds)
-CLAUDE_TIMEOUT = 300
+    @property
+    def allowed_users_list(self) -> list[int]:
+        """Parse ALLOWED_USERS into an ordered list of ints."""
+        result: list[int] = []
+        raw = self.allowed_users.strip()
+        if raw:
+            for uid in raw.split(","):
+                uid = uid.strip()
+                if uid.isdigit():
+                    result.append(int(uid))
+        return result
 
-# Active stream tracking
-ACTIVE_STREAMS_FILE = SCRIPT_DIR / ".active-streams.json"
+    @property
+    def admin_user_id(self) -> Optional[int]:
+        lst = self.allowed_users_list
+        return lst[0] if lst else None
 
-# Restart state
-RESTART_STATE_FILE = SCRIPT_DIR / ".restart-state.json"
+    # --- Fixed paths ---
 
-# Restart notification messages (for editing after outcome)
-RESTART_MESSAGES_FILE = SCRIPT_DIR / ".restart-messages.json"
+    @property
+    def workspaces_dir(self) -> Path:
+        return SCRIPT_DIR / "workspaces"
 
-# Minimum interval between Telegram message edits (seconds)
-STATUS_EDIT_INTERVAL = 1.5
+    @property
+    def session_file(self) -> Path:
+        return Path.home() / ".openclaude-sessions.json"
 
-# Batch window: messages arriving within this many seconds are combined
-BATCH_WINDOW = 1.5
+    @property
+    def active_streams_file(self) -> Path:
+        return SCRIPT_DIR / ".active-streams.json"
 
-# SDK idle timeout (seconds)
-SDK_IDLE_TIMEOUT = 300
+    @property
+    def restart_state_file(self) -> Path:
+        return SCRIPT_DIR / ".restart-state.json"
 
-# Logs directory
-LOGS_DIR = SCRIPT_DIR / "logs"
+    @property
+    def restart_messages_file(self) -> Path:
+        return SCRIPT_DIR / ".restart-messages.json"
 
+    @property
+    def logs_dir(self) -> Path:
+        return SCRIPT_DIR / "logs"
+
+    # --- Constants ---
+    ALL_TOOLS: str = "Read,Write,Edit,Bash,Glob,Grep,WebFetch,WebSearch,Task,Skill"
+    TELEGRAM_MAX_LENGTH: int = 4096
+    CLAUDE_TIMEOUT: int = 300
+    STATUS_EDIT_INTERVAL: float = 1.5
+    BATCH_WINDOW: float = 1.5
+    SDK_IDLE_TIMEOUT: int = 300
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Return cached Settings singleton."""
+    return Settings()  # type: ignore[call-arg]
+
+
+# ---------------------------------------------------------------------------
+# Backward-compatible module-level attributes
+# ---------------------------------------------------------------------------
+# These let existing code like `from bot.config import ALLOWED_USERS` keep working
+# without any changes to the importing modules.
+
+_settings = get_settings()
+
+TELEGRAM_BOT_TOKEN: str = _settings.telegram_bot_token.get_secret_value()
+ALLOWED_USERS_RAW: str = _settings.allowed_users
+CLAUDE_MODEL: str = _settings.claude_model
+WORKING_DIR: str = _settings.working_dir
+
+WORKSPACES_DIR: Path = _settings.workspaces_dir
+ALLOWED_USERS: set[int] = _settings.allowed_users_set
+ALLOWED_USERS_LIST: list[int] = _settings.allowed_users_list
+ADMIN_USER_ID: Optional[int] = _settings.admin_user_id
+
+SESSION_FILE: Path = _settings.session_file
+ALL_TOOLS: str = _settings.ALL_TOOLS
+TELEGRAM_MAX_LENGTH: int = _settings.TELEGRAM_MAX_LENGTH
+CLAUDE_TIMEOUT: int = _settings.CLAUDE_TIMEOUT
+ACTIVE_STREAMS_FILE: Path = _settings.active_streams_file
+RESTART_STATE_FILE: Path = _settings.restart_state_file
+RESTART_MESSAGES_FILE: Path = _settings.restart_messages_file
+STATUS_EDIT_INTERVAL: float = _settings.STATUS_EDIT_INTERVAL
+BATCH_WINDOW: float = _settings.BATCH_WINDOW
+SDK_IDLE_TIMEOUT: int = _settings.SDK_IDLE_TIMEOUT
+LOGS_DIR: Path = _settings.logs_dir
+
+
+# ---------------------------------------------------------------------------
+# Backward-compatible functions
+# ---------------------------------------------------------------------------
 
 def get_claude_model() -> str:
     """Get current CLAUDE_MODEL."""
@@ -81,7 +161,7 @@ def is_authorized(user_id: int) -> bool:
     return user_id in ALLOWED_USERS
 
 
-def get_thread_id(update) -> int:
+def get_thread_id(update: object) -> int:
     """Get the forum topic thread ID, or 0 for non-forum messages."""
-    msg = update.message
-    return msg.message_thread_id if msg and msg.message_thread_id else 0
+    msg = getattr(update, "message", None)
+    return msg.message_thread_id if msg and getattr(msg, "message_thread_id", None) else 0
