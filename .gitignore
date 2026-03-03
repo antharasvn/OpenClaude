@@ -13,6 +13,7 @@ build/
 # Session data
 .telegram-claude-sessions.json
 ~/.openclaude-sessions.json
+*.session
 
 # Per-chat settings (contains chat IDs)
 .chat-settings.json
@@ -27,6 +28,12 @@ memory/
 *.wav
 *.mp3
 *.mp4
+
+# Data exports / submissions
+submission.csv
+
+# Temp working files
+temp/
 
 # Per-chat workspaces
 workspaces/
