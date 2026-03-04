@@ -99,7 +99,10 @@ When responding through the Telegram bot:
 To deliver a file you created (image, document, audio, video) to the user, write a `📎` marker line in your response:
 ```
 📎 /absolute/path/to/file optional caption
+📎 "/absolute/path/with spaces/file.pdf" optional caption
 ```
+- **Quote the path** if it contains spaces: `📎 "/path/with spaces/file.pdf" caption`
+- Unquoted paths still work for paths without spaces (backward compatible)
 - The bot strips the line and sends the file as the correct Telegram media type (photo, video, audio, or document)
 - The path **must** be absolute and inside the workspace
 - Consecutive `📎` lines are grouped into a single album/message

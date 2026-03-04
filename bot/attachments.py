@@ -15,9 +15,10 @@ _MD_IMAGE_RE = re.compile(r'!\[([^\]]*)\]\(([^)]+)\)')
 _BARE_URL_RE = re.compile(r'(?<!\()(https?://\S+\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s)]*)?)(?!\))', re.IGNORECASE)
 
 # Local file attachment marker: 📎 /path/to/file [optional caption]
+# Supports quoted paths for spaces: 📎 "/path/with spaces/file.pdf" caption
 # Normalize pattern: join 📎 (with optional variation selector) split across lines
-_FILE_MARKER_NORM = re.compile(r'📎\uFE0F?[ \t]*\n[ \t]*(?=/)', re.MULTILINE)
-_FILE_MARKER_RE = re.compile(r'^📎\uFE0F?[ \t]+(\S+)(?:[ \t]+(.+))?$', re.MULTILINE)
+_FILE_MARKER_NORM = re.compile(r'📎\uFE0F?[ \t]*\n[ \t]*(?=["/])', re.MULTILINE)
+_FILE_MARKER_RE = re.compile(r'^📎\uFE0F?[ \t]+(?:"([^"]+)"|(\S+))(?:[ \t]+(.+))?$', re.MULTILINE)
 # Clean up stray 📎 left without a path (e.g. trailing marker)
 _FILE_MARKER_STRAY = re.compile(r'^📎\uFE0F?[ \t]*$', re.MULTILINE)
 
@@ -88,8 +89,8 @@ def split_file_segments(text: str, workspace: str) -> list[Segment]:
         if gap_clean:
             segments.append(TextSegment(content=gap_clean))
 
-        raw_path = match.group(1)
-        caption = (match.group(2) or "").strip()
+        raw_path = match.group(1) or match.group(2)
+        caption = (match.group(3) or "").strip()
         real_path = os.path.realpath(raw_path)
 
         # Security: must be within workspace
