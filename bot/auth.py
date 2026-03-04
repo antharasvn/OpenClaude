@@ -8,7 +8,7 @@ from .config import get_settings
 def is_authorized(user_id: int) -> bool:
     """Check if a user is authorized to use the bot."""
     settings = get_settings()
-    return user_id in settings.allowed_users
+    return user_id in settings.allowed_users_set
 
 
 def is_admin(user_id: int) -> bool:
