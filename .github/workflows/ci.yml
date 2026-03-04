@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+      - name: Lint with ruff
+        run: ruff check bot/ commands/ tests/
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+      - name: Run tests with coverage
+        run: pytest --cov=bot --cov=commands --cov-report=term-missing -x -q
+        env:
+          TELEGRAM_BOT_TOKEN: "0000000000:AAFakeTokenForTesting"
+          ALLOWED_USERS: "111111,222222"
+          TELEGRAM_CHAT_ID: "111111"
+          WORKING_DIR: "/tmp"

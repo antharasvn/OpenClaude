@@ -63,6 +63,72 @@ def test_import_commands_utility():
     importlib.import_module("commands.utility")
 
 
+# --- New modules from refactoring (Phases 2-3) ---
+
+def test_import_bot_events():
+    importlib.import_module("bot.events")
+
+
+def test_import_bot_backends():
+    importlib.import_module("bot.backends")
+
+
+def test_import_bot_formatting():
+    importlib.import_module("bot.formatting")
+
+
+def test_import_bot_process():
+    importlib.import_module("bot.process")
+
+
+def test_import_bot_prompts():
+    importlib.import_module("bot.prompts")
+
+
+def test_import_bot_attachments():
+    importlib.import_module("bot.attachments")
+
+
+def test_import_bot_telegram_sender():
+    importlib.import_module("bot.telegram_sender")
+
+
+def test_import_bot_media():
+    importlib.import_module("bot.media")
+
+
+def test_import_bot_routing():
+    importlib.import_module("bot.routing")
+
+
+def test_import_bot_batching():
+    importlib.import_module("bot.batching")
+
+
+def test_import_bot_media_handlers():
+    importlib.import_module("bot.media_handlers")
+
+
+def test_import_bot_auth():
+    importlib.import_module("bot.auth")
+
+
+def test_import_bot_utils():
+    importlib.import_module("bot.utils")
+
+
+def test_import_bot_streaming_session():
+    importlib.import_module("bot.streaming_session")
+
+
+def test_import_bot_types():
+    importlib.import_module("bot.types")
+
+
+def test_import_bot_exceptions():
+    importlib.import_module("bot.exceptions")
+
+
 def test_app_builds():
     """The Telegram Application object should build with dummy env vars."""
     from telegram.ext import Application
