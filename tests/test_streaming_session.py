@@ -115,14 +115,12 @@ class TestToolUseStatus:
         session._update_status.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_tool_use_moves_speculative_to_delete(self):
+    async def test_tool_use_resets_speculative_sent_len(self):
         session = _make_session(show_tools=False)
-        fake_msg = AsyncMock()
-        session._speculative = [fake_msg]
+        session._speculative_sent_len = 42
 
         await session.handle_event({"type": "tool_use", "status": "test"})
-        assert fake_msg in session._to_delete
-        assert len(session._speculative) == 0
+        assert session._speculative_sent_len == 0
 
     @pytest.mark.asyncio
     async def test_tool_result_finishes_active_line(self):
@@ -215,17 +213,6 @@ class TestCleanup:
         await session.cleanup_status()
 
     @pytest.mark.asyncio
-    async def test_delete_intermediate_messages(self):
-        session = _make_session()
-        msg1 = AsyncMock()
-        msg2 = AsyncMock()
-        session._to_delete = [msg1, msg2]
-
-        await session.delete_intermediate_messages()
-        msg1.delete.assert_called_once()
-        msg2.delete.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_delete_speculative_messages(self):
         session = _make_session()
         msg1 = AsyncMock()
@@ -278,7 +265,6 @@ class TestInitialState:
         assert session.sent_offset == 0
         assert session.finalized_msgs == []
         assert session._speculative == []
-        assert session._to_delete == []
         assert session.response_text is None
         assert session.stopped is False
         assert session.flood_until == 0

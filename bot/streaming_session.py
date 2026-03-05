@@ -68,7 +68,6 @@ class StreamingSession:
 
         # Speculative / intermediate message tracking
         self._speculative: list = []         # messages since last tool_use
-        self._to_delete: list = []           # confirmed intermediate — delete at end
         self._speculative_sent_len: int = 0  # chars sent via non-streaming text_blocks
 
         # Flood control
@@ -162,8 +161,6 @@ class StreamingSession:
                 except Exception:
                     pass
                 self.finalized_msgs.append(self.live_msg)
-                # Text before a tool is always preamble — add to _to_delete directly
-                self._to_delete.append(self.live_msg)
             else:
                 try:
                     await self.live_msg.delete()
@@ -171,9 +168,6 @@ class StreamingSession:
                     pass
             self.sent_offset = len(self.live_text)
             self.live_msg = None
-        # All speculative messages are now confirmed intermediate
-        self._to_delete.extend(self._speculative)
-        self._speculative.clear()
         self._speculative_sent_len = 0
         if self.show_tools:
             if self.current_active:
@@ -368,14 +362,6 @@ class StreamingSession:
             except Exception:
                 pass
 
-    async def delete_intermediate_messages(self) -> None:
-        """Delete confirmed intermediate (preamble) messages."""
-        for msg in self._to_delete:
-            try:
-                await msg.delete()
-            except Exception:
-                pass
-
     async def delete_speculative_messages(self) -> None:
         """Delete speculative messages (used on silent/empty result)."""
         for msg in self._speculative:
@@ -400,10 +386,7 @@ class StreamingSession:
         from bot.types import FileSegment
         from bot.workspaces import ensure_workspace
 
-        # 1. Delete confirmed intermediate messages
-        await self.delete_intermediate_messages()
-
-        # 2. Process result
+        # 1. Process result
         if self.response_text is None:
             self.response_text = "Claude processed the request but returned no text output."
 
