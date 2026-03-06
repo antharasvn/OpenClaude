@@ -395,8 +395,6 @@ class StreamingSession:
             await self.delete_speculative_messages()
             return
 
-        logger.info("DEBUG response_text repr: %r", self.response_text[:200])
-        logger.info("DEBUG live_text repr: %r", self.live_text[:200])
         response_text, image_urls = extract_image_urls(self.response_text)
         workspace_path = str(ensure_workspace(self.chat_id))
         segments = split_file_segments(response_text, workspace_path)
@@ -459,14 +457,11 @@ class StreamingSession:
                 await send_rendered(self.update, remaining, self.context)
 
         # Send file attachments
-        logger.info("DEBUG finalize: file_segments=%d remaining=%r", len(file_segments), remaining[:50] if remaining else "")
         for seg in file_segments:
-            logger.info("DEBUG sending file group: %s", [f.path for f in seg.files])
             try:
                 await send_file_group(
                     self.context.bot, self.chat_id, seg.files, self.tg_thread_id,
                 )
-                logger.info("DEBUG send_file_group OK")
             except Exception as e:
                 logger.warning("Failed to send file group: %s", e)
 
