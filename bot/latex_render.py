@@ -18,6 +18,9 @@ _INLINE_RE = re.compile(r'(?<!\$)\$(?!\$)(.+?)(?<!\$)\$(?!\$)')
 # Trivial expressions to skip (pure numbers, very short, prices)
 _PRICE_RE = re.compile(r'^\d[\d,. ]*$')
 
+# Must contain at least one LaTeX command to be considered "complex"
+_LATEX_CMD_RE = re.compile(r'\\[a-zA-Z]')
+
 
 def extract_latex_blocks(text: str, min_length: int = 4) -> list[tuple[str, str]]:
     """Extract LaTeX math expressions from text.
@@ -65,6 +68,9 @@ def _should_skip(expr: str, min_length: int = 4) -> bool:
     if len(expr) < min_length:
         return True
     if _PRICE_RE.match(expr):
+        return True
+    # Skip if no LaTeX commands (e.g. plain text like "(sin, cos)" or "$x$")
+    if not _LATEX_CMD_RE.search(expr):
         return True
     return False
 
