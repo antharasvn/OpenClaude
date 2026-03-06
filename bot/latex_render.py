@@ -215,12 +215,24 @@ try {{
             ["curl", "-s", f"{base_url}/screenshot"],
             timeout=15, capture_output=True, check=True,
         )
-        if len(result.stdout) < 1000:
-            logger.debug("KaTeX screenshot too small (%d bytes)", len(result.stdout))
+        if len(result.stdout) < 100:
+            logger.debug("KaTeX screenshot response too small (%d bytes)", len(result.stdout))
+            return False
+
+        # pinchtab returns JSON {"base64": "<png_base64>"} — decode it
+        try:
+            data = json.loads(result.stdout)
+            png_bytes = base64.b64decode(data["base64"])
+        except Exception:
+            # Fallback: assume raw PNG bytes
+            png_bytes = result.stdout
+
+        if len(png_bytes) < 1000:
+            logger.debug("KaTeX PNG too small (%d bytes)", len(png_bytes))
             return False
 
         with open(output_path, "wb") as f:
-            f.write(result.stdout)
+            f.write(png_bytes)
 
         # Crop whitespace
         _autocrop_png(output_path)
