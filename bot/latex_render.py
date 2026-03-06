@@ -19,7 +19,7 @@ _INLINE_RE = re.compile(r'(?<!\$)\$(?!\$)(.+?)(?<!\$)\$(?!\$)')
 _PRICE_RE = re.compile(r'^\d[\d,. ]*$')
 
 
-def extract_latex_blocks(text: str) -> list[tuple[str, str]]:
+def extract_latex_blocks(text: str, min_length: int = 4) -> list[tuple[str, str]]:
     """Extract LaTeX math expressions from text.
 
     Returns a list of (expression, mode) tuples where mode is
@@ -27,6 +27,12 @@ def extract_latex_blocks(text: str) -> list[tuple[str, str]]:
 
     Deduplicates by expression text. Skips trivial matches
     (pure numbers, very short strings, price-like patterns).
+
+    Args:
+        text: Source text containing LaTeX math expressions.
+        min_length: Minimum length of the expression (excluding $ delimiters)
+            to be included. Expressions shorter than this are considered
+            trivial and skipped. Default: 4.
     """
     seen: set[str] = set()
     results: list[tuple[str, str]] = []
@@ -34,7 +40,7 @@ def extract_latex_blocks(text: str) -> list[tuple[str, str]]:
     # Display math first (greedy priority over inline)
     for m in _DISPLAY_RE.finditer(text):
         expr = m.group(1).strip()
-        if _should_skip(expr):
+        if _should_skip(expr, min_length):
             continue
         if expr not in seen:
             seen.add(expr)
@@ -45,7 +51,7 @@ def extract_latex_blocks(text: str) -> list[tuple[str, str]]:
 
     for m in _INLINE_RE.finditer(text_no_display):
         expr = m.group(1).strip()
-        if _should_skip(expr):
+        if _should_skip(expr, min_length):
             continue
         if expr not in seen:
             seen.add(expr)
@@ -54,9 +60,9 @@ def extract_latex_blocks(text: str) -> list[tuple[str, str]]:
     return results
 
 
-def _should_skip(expr: str) -> bool:
+def _should_skip(expr: str, min_length: int = 4) -> bool:
     """Return True if the expression is trivial and should not be rendered."""
-    if len(expr) < 2:
+    if len(expr) < min_length:
         return True
     if _PRICE_RE.match(expr):
         return True

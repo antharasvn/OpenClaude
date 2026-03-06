@@ -476,7 +476,7 @@ class StreamingSession:
             except Exception:
                 logger.warning("Failed to send photo URL: %s", img_url)
 
-        # Send LaTeX rendered images
+        # Send LaTeX rendered images (grouped as album when multiple)
         from bot.latex_render import extract_latex_blocks, render_all_latex
         if response_text:
             latex_blocks = extract_latex_blocks(response_text)
@@ -484,13 +484,47 @@ class StreamingSession:
                 import tempfile
                 with tempfile.TemporaryDirectory() as tmpdir:
                     png_paths = render_all_latex(response_text, tmpdir)
-                    for png_path in png_paths:
+                    if len(png_paths) >= 2:
+                        # Send as a media group (album)
+                        from telegram import InputMediaPhoto
                         try:
-                            with open(png_path, 'rb') as f:
+                            media = []
+                            open_files = []
+                            for png_path in png_paths:
+                                f = open(png_path, 'rb')
+                                open_files.append(f)
+                                media.append(InputMediaPhoto(media=f))
+                            await self.context.bot.send_media_group(
+                                chat_id=self.chat_id,
+                                media=media,
+                                message_thread_id=self.tg_thread_id,
+                            )
+                        except Exception:
+                            logger.warning("Failed to send LaTeX album, falling back to individual photos")
+                            for png_path in png_paths:
+                                try:
+                                    with open(png_path, 'rb') as f:
+                                        await self.context.bot.send_photo(
+                                            chat_id=self.chat_id,
+                                            photo=f,
+                                            message_thread_id=self.tg_thread_id,
+                                        )
+                                except Exception:
+                                    logger.warning("Failed to send LaTeX image: %s", png_path)
+                        finally:
+                            for f in open_files:
+                                try:
+                                    f.close()
+                                except Exception:
+                                    pass
+                    elif len(png_paths) == 1:
+                        # Single image — send as regular photo
+                        try:
+                            with open(png_paths[0], 'rb') as f:
                                 await self.context.bot.send_photo(
                                     chat_id=self.chat_id,
                                     photo=f,
                                     message_thread_id=self.tg_thread_id,
                                 )
                         except Exception:
-                            logger.warning("Failed to send LaTeX image: %s", png_path)
+                            logger.warning("Failed to send LaTeX image: %s", png_paths[0])
