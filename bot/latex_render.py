@@ -18,8 +18,23 @@ _INLINE_RE = re.compile(r'(?<!\$)\$(?!\$)(.+?)(?<!\$)\$(?!\$)')
 # Trivial expressions to skip (pure numbers, very short, prices)
 _PRICE_RE = re.compile(r'^\d[\d,. ]*$')
 
-# Must contain at least one LaTeX command to be considered "complex"
-_LATEX_CMD_RE = re.compile(r'\\[a-zA-Z]')
+# Structural LaTeX commands that indicate real complexity
+_STRUCTURAL_CMDS = (
+    r'\frac', r'\sum', r'\int', r'\prod', r'\lim', r'\binom',
+    r'\begin', r'\sqrt', r'\left', r'\right', r'\over',
+    r'\underbrace', r'\overbrace', r'\partial', r'\nabla',
+    r'\oint', r'\iint', r'\iiint', r'\bigcup', r'\bigcap',
+)
+
+def _complexity_score(expr: str) -> int:
+    """Score formula complexity. Higher = more worth rendering."""
+    score = 0
+    for cmd in _STRUCTURAL_CMDS:
+        score += expr.count(cmd) * 3
+    score += expr.count('_')
+    score += expr.count('^')
+    score += expr.count('{') // 2
+    return score
 
 
 def extract_latex_blocks(text: str, min_length: int = 4) -> list[tuple[str, str]]:
@@ -63,14 +78,15 @@ def extract_latex_blocks(text: str, min_length: int = 4) -> list[tuple[str, str]
     return results
 
 
+_COMPLEXITY_THRESHOLD = 3
+
 def _should_skip(expr: str, min_length: int = 4) -> bool:
     """Return True if the expression is trivial and should not be rendered."""
     if len(expr) < min_length:
         return True
     if _PRICE_RE.match(expr):
         return True
-    # Skip if no LaTeX commands (e.g. plain text like "(sin, cos)" or "$x$")
-    if not _LATEX_CMD_RE.search(expr):
+    if _complexity_score(expr) < _COMPLEXITY_THRESHOLD:
         return True
     return False
 
