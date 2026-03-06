@@ -1,11 +1,17 @@
 """LaTeX math rendering — extract LaTeX blocks from text and render them as PNG.
 
-Uses matplotlib's mathtext engine for rendering (no external LaTeX installation needed).
+Uses KaTeX rendered via pinchtab (headless Chrome) for high-quality output.
+Falls back to matplotlib mathtext if pinchtab is unavailable.
 """
 
+import base64
+import json
 import logging
 import os
 import re
+import subprocess
+import tempfile
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -91,22 +97,147 @@ def _should_skip(expr: str, min_length: int = 4) -> bool:
     return False
 
 
+def _find_pinchtab_port() -> int | None:
+    """Discover the pinchtab HTTP API port from listening sockets."""
+    try:
+        result = subprocess.run(
+            ["ss", "-tlnp"],
+            capture_output=True, text=True, timeout=5,
+        )
+        for line in result.stdout.splitlines():
+            if "pinchtab" in line:
+                # Extract port from  127.0.0.1:NNNNN  or  *:NNNNN
+                for part in line.split():
+                    if ":" in part and not part.startswith("users"):
+                        port_str = part.rsplit(":", 1)[-1]
+                        if port_str.isdigit():
+                            return int(port_str)
+    except Exception:
+        pass
+    return None
+
+
+def _autocrop_png(path: str) -> bool:
+    """Crop whitespace from a PNG, leaving a small padding."""
+    try:
+        from PIL import Image, ImageChops
+
+        img = Image.open(path).convert("RGB")
+        bg = Image.new("RGB", img.size, (255, 255, 255))
+        diff = ImageChops.difference(img, bg)
+        bbox = diff.getbbox()
+        if not bbox:
+            return False
+        # Add padding
+        pad = 20
+        x0 = max(0, bbox[0] - pad)
+        y0 = max(0, bbox[1] - pad)
+        x1 = min(img.width, bbox[2] + pad)
+        y1 = min(img.height, bbox[3] + pad)
+        cropped = img.crop((x0, y0, x1, y1))
+        cropped.save(path)
+        return True
+    except Exception:
+        logger.debug("Autocrop failed for %s", path, exc_info=True)
+        return False
+
+
 def render_latex_png(expression: str, output_path: str, display: bool = True) -> bool:
-    """Render a LaTeX expression to a PNG file using matplotlib mathtext.
+    """Render a LaTeX expression to PNG using KaTeX via pinchtab.
+
+    Falls back to matplotlib mathtext if pinchtab is unavailable.
 
     Args:
         expression: LaTeX math expression (without $ delimiters).
         output_path: Path for the output PNG file.
-        display: If True, use larger font (display math style).
+        display: If True, use display math mode (larger, centered).
 
     Returns:
         True on success, False if the expression could not be rendered.
     """
+    if _render_katex(expression, output_path, display):
+        return True
+    logger.debug("KaTeX unavailable, falling back to matplotlib for: %s", expression)
+    return _render_matplotlib(expression, output_path, display)
+
+
+def _render_katex(expression: str, output_path: str, display: bool = True) -> bool:
+    """Render LaTeX via KaTeX + pinchtab headless Chrome."""
+    port = _find_pinchtab_port()
+    if port is None:
+        return False
+
+    base_url = f"http://localhost:{port}"
+
+    try:
+        display_str = "true" if display else "false"
+        # Escape for JS template literal
+        js_expr = (expression
+                   .replace("\\", "\\\\")
+                   .replace("`", "\\`")
+                   .replace("$", "\\$"))
+
+        html = f"""<!DOCTYPE html>
+<html><head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+* {{ box-sizing: border-box; }}
+html, body {{ margin: 0; padding: 0; background: white; }}
+#math {{ padding: 20px 30px; font-size: 22px; display: inline-block; }}
+</style>
+</head><body>
+<div id="math"></div>
+<script>
+try {{
+  katex.render(`{js_expr}`, document.getElementById('math'),
+    {{displayMode: {display_str}, throwOnError: false}});
+}} catch(e) {{
+  document.getElementById('math').textContent = 'Error: ' + e.message;
+}}
+</script>
+</body></html>"""
+
+        # Use data URI to avoid file:// restrictions in sandboxed Chrome
+        b64 = base64.b64encode(html.encode()).decode()
+        data_url = f"data:text/html;base64,{b64}"
+
+        nav_payload = json.dumps({"url": data_url})
+        subprocess.run(
+            ["curl", "-s", "-X", "POST", f"{base_url}/navigate",
+             "-H", "Content-Type: application/json", "-d", nav_payload],
+            timeout=10, capture_output=True, check=True,
+        )
+        time.sleep(2.5)  # Wait for KaTeX CDN + JS render
+
+        # Take screenshot
+        result = subprocess.run(
+            ["curl", "-s", f"{base_url}/screenshot"],
+            timeout=15, capture_output=True, check=True,
+        )
+        if len(result.stdout) < 1000:
+            logger.debug("KaTeX screenshot too small (%d bytes)", len(result.stdout))
+            return False
+
+        with open(output_path, "wb") as f:
+            f.write(result.stdout)
+
+        # Crop whitespace
+        _autocrop_png(output_path)
+
+        return True
+
+    except Exception:
+        logger.debug("KaTeX render failed: %s", expression, exc_info=True)
+        return False
+
+
+def _render_matplotlib(expression: str, output_path: str, display: bool = True) -> bool:
+    """Render LaTeX via matplotlib mathtext (fallback)."""
     try:
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-        from matplotlib import mathtext
 
         fontsize = 24 if display else 18
         dpi = 150
@@ -114,7 +245,6 @@ def render_latex_png(expression: str, output_path: str, display: bool = True) ->
         fig = plt.figure(figsize=(0.01, 0.01))
         fig.patch.set_facecolor('white')
 
-        # Wrap in $ for mathtext
         fig.text(
             0.5, 0.5,
             f'${expression}$',
@@ -135,9 +265,9 @@ def render_latex_png(expression: str, output_path: str, display: bool = True) ->
         return True
 
     except Exception:
-        logger.debug("Failed to render LaTeX: %s", expression, exc_info=True)
+        logger.debug("Matplotlib render failed: %s", expression, exc_info=True)
         try:
-            plt.close(fig)
+            plt.close(fig)  # noqa: F821
         except Exception:
             pass
         return False
