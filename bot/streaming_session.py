@@ -475,3 +475,22 @@ class StreamingSession:
                 )
             except Exception:
                 logger.warning("Failed to send photo URL: %s", img_url)
+
+        # Send LaTeX rendered images
+        from bot.latex_render import extract_latex_blocks, render_all_latex
+        if response_text:
+            latex_blocks = extract_latex_blocks(response_text)
+            if latex_blocks:
+                import tempfile
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    png_paths = render_all_latex(response_text, tmpdir)
+                    for png_path in png_paths:
+                        try:
+                            with open(png_path, 'rb') as f:
+                                await self.context.bot.send_photo(
+                                    chat_id=self.chat_id,
+                                    photo=f,
+                                    message_thread_id=self.tg_thread_id,
+                                )
+                        except Exception:
+                            logger.warning("Failed to send LaTeX image: %s", png_path)
