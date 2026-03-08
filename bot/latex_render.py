@@ -179,6 +179,7 @@ def _render_katex(expression: str, output_path: str, display: bool = True) -> bo
 
         html = f"""<!DOCTYPE html>
 <html><head>
+<meta charset="UTF-8">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <style>
