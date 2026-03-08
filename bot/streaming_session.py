@@ -480,8 +480,7 @@ class StreamingSession:
         from bot.latex_render import extract_latex_blocks, render_all_latex
         if response_text:
             latex_blocks = extract_latex_blocks(response_text)
-            logger.info("DEBUG latex_blocks: %s", latex_blocks[:5] if latex_blocks else [])
-            if latex_blocks:
+if latex_blocks:
                 import tempfile
                 with tempfile.TemporaryDirectory() as tmpdir:
                     png_paths = render_all_latex(response_text, tmpdir)
