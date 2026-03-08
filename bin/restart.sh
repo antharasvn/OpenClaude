@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BOT_SERVICE="claude-telegram-bot"
+PINCHTAB_SERVICE="pinchtab"
 
 echo "Restarting bot..."
 
@@ -15,6 +16,12 @@ cp "$PROJECT_DIR/.active-streams.json" "$PROJECT_DIR/.restart-state.json" 2>/dev
     "Restarting — back in a moment..." 2>/dev/null || true
 
 if command -v systemctl &>/dev/null && systemctl --user is-active "$BOT_SERVICE" &>/dev/null 2>&1; then
+    # Restart pinchtab if it's managed by systemd
+    if systemctl --user is-active "$PINCHTAB_SERVICE" &>/dev/null 2>&1; then
+        systemctl --user restart "$PINCHTAB_SERVICE"
+        echo "Pinchtab restarted (systemd)"
+        sleep 2
+    fi
     # --no-block: return immediately so that if restart.sh was invoked from
     # inside an SDK subprocess (Claude tool use), it doesn't deadlock —
     # systemctl would otherwise block waiting for the bot to stop, while the

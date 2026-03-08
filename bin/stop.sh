@@ -5,8 +5,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BOT_SERVICE="claude-telegram-bot"
 OURO_SERVICE="ouroboros"
+PINCHTAB_SERVICE="pinchtab"
 PIDFILE="$PROJECT_DIR/.bot.pid"
 OURO_PIDFILE="$PROJECT_DIR/.ouroboros.pid"
+PINCHTAB_PIDFILE="$PROJECT_DIR/.pinchtab.pid"
 
 # ── systemd path ──────────────────────────────────────────────────────
 
@@ -24,6 +26,11 @@ if command -v systemctl &>/dev/null; then
         echo "Bot stopped (systemd)"
         _stopped_systemd=1
     fi
+    if systemctl --user is-active "$PINCHTAB_SERVICE" &>/dev/null 2>&1; then
+        systemctl --user stop "$PINCHTAB_SERVICE"
+        echo "Pinchtab stopped (systemd)"
+        _stopped_systemd=1
+    fi
 fi
 
 if [[ "$_stopped_systemd" -eq 1 ]]; then
@@ -33,8 +40,8 @@ fi
 
 # ── Fallback: kill by PID files ───────────────────────────────────────
 
-# Stop ouroboros first so it doesn't revive the bot
-for label_pf in "Ouroboros:$OURO_PIDFILE" "Bot:$PIDFILE"; do
+# Stop ouroboros first so it doesn't revive the bot, then bot, then pinchtab
+for label_pf in "Ouroboros:$OURO_PIDFILE" "Bot:$PIDFILE" "Pinchtab:$PINCHTAB_PIDFILE"; do
     label="${label_pf%%:*}"
     pf="${label_pf##*:}"
     if [ -f "$pf" ]; then
@@ -59,6 +66,12 @@ fi
 ORPHANS=$(pgrep -f "python3.*telegram-bot.py" 2>/dev/null || true)
 if [ -n "$ORPHANS" ]; then
     echo "Killing orphaned bot: $ORPHANS"
+    kill $ORPHANS 2>/dev/null || true
+fi
+
+ORPHANS=$(pgrep -f "pinchtab" 2>/dev/null || true)
+if [ -n "$ORPHANS" ]; then
+    echo "Killing orphaned pinchtab: $ORPHANS"
     kill $ORPHANS 2>/dev/null || true
 fi
 

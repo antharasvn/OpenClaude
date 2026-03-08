@@ -1,0 +1,21 @@
+[Unit]
+Description=Pinchtab — headless Chrome browser server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/pinchtab
+Restart=always
+RestartSec=5
+Environment=BRIDGE_PORT=3000
+Environment=BRIDGE_PROFILE=/tmp/pinchtab-profile
+Environment=BRIDGE_NO_RESTORE=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pinchtab
+
+[Install]
+WantedBy=default.target
