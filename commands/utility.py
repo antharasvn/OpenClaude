@@ -1,20 +1,27 @@
 """Utility commands: /model, /whoami, /files, /clean, /context, /compact."""
 
+import contextlib
 import html
+import logging
 import shutil
 
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes
 
-from bot.config import ADMIN_USER_ID, is_authorized, get_claude_model, set_claude_model, get_thread_id
-import logging
+from bot.config import (
+    ADMIN_USER_ID,
+    get_claude_model,
+    get_thread_id,
+    is_authorized,
+    set_claude_model,
+)
+from bot.renderer import split_message
+from bot.sessions import get_context_pct, get_session_id, get_usage
+from bot.utils import context_bar, format_size
+from bot.workspaces import ensure_workspace
 
 logger = logging.getLogger(__name__)
-from bot.renderer import split_message
-from bot.sessions import get_session_id, get_usage, get_context_pct
-from bot.utils import format_size, context_bar
-from bot.workspaces import ensure_workspace
 
 COMMANDS = [
     ("model", "Show or switch the Claude model"),
@@ -273,10 +280,8 @@ async def cmd_compact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     await run_with_streaming(update, context, chat_id, thread_id, user.id, "/compact",
                              _is_compact=True)
 
-    try:
+    with contextlib.suppress(Exception):
         await status_msg.edit_text("Compaction complete.")
-    except Exception:
-        pass
 
 
 def register(app: Application) -> None:

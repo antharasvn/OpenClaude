@@ -1,7 +1,9 @@
 """Admin commands: /sessions, /restart, /logs, /usage."""
 
+import contextlib
 import html
 import json
+import logging
 import subprocess
 
 from telegram import Update
@@ -9,18 +11,22 @@ from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 from bot.config import (
-    ADMIN_USER_ID, ALLOWED_USERS, RESTART_MESSAGES_FILE, SCRIPT_DIR,
-    WORKSPACES_DIR, LOGS_DIR,
-    is_authorized, get_claude_model, get_thread_id,
+    ADMIN_USER_ID,
+    ALLOWED_USERS,
+    LOGS_DIR,
+    RESTART_MESSAGES_FILE,
+    SCRIPT_DIR,
+    WORKSPACES_DIR,
+    get_claude_model,
+    get_thread_id,
+    is_authorized,
 )
-import logging
-
 from bot.logging_setup import infra_logger
-
-logger = logging.getLogger(__name__)
+from bot.renderer import split_message
 from bot.sessions import load_sessions
 from bot.streams import load_active_streams
-from bot.renderer import split_message
+
+logger = logging.getLogger(__name__)
 
 COMMANDS = [
     ("sessions", "List all active sessions (admin)"),
@@ -104,10 +110,8 @@ async def cmd_restart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     # Merge with any existing entries (from notify-interrupted.sh)
     existing = []
     if RESTART_MESSAGES_FILE.exists():
-        try:
+        with contextlib.suppress(json.JSONDecodeError, OSError):
             existing = json.loads(RESTART_MESSAGES_FILE.read_text())
-        except (json.JSONDecodeError, OSError):
-            pass
     existing.append(entry)
     RESTART_MESSAGES_FILE.write_text(json.dumps(existing))
 

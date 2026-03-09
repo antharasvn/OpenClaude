@@ -5,12 +5,12 @@ Falls back to matplotlib mathtext if pinchtab is unavailable.
 """
 
 import base64
+import contextlib
 import json
 import logging
 import os
 import re
 import subprocess
-import tempfile
 import time
 
 logger = logging.getLogger(__name__)
@@ -92,9 +92,7 @@ def _should_skip(expr: str, min_length: int = 4) -> bool:
         return True
     if _PRICE_RE.match(expr):
         return True
-    if _complexity_score(expr) < _COMPLEXITY_THRESHOLD:
-        return True
-    return False
+    return _complexity_score(expr) < _COMPLEXITY_THRESHOLD
 
 
 def _find_pinchtab_port() -> int | None:
@@ -276,13 +274,11 @@ try {{
             if tab_id:
                 cdp_port = _find_cdp_port()
                 if cdp_port:
-                    try:
+                    with contextlib.suppress(Exception):
                         subprocess.run(
                             ["curl", "-s", f"http://localhost:{cdp_port}/json/close/{tab_id}"],
                             capture_output=True, timeout=5,
                         )
-                    except Exception:
-                        pass
 
     except Exception:
         logger.debug("KaTeX render failed: %s", expression, exc_info=True)
@@ -323,10 +319,8 @@ def _render_matplotlib(expression: str, output_path: str, display: bool = True) 
 
     except Exception:
         logger.debug("Matplotlib render failed: %s", expression, exc_info=True)
-        try:
+        with contextlib.suppress(Exception):
             plt.close(fig)  # noqa: F821
-        except Exception:
-            pass
         return False
 
 

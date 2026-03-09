@@ -4,7 +4,6 @@ from pathlib import Path
 
 from bot.config import WORKSPACES_DIR
 
-
 # ---------------------------------------------------------------------------
 # Restart context helpers — breadcrumb file for crash recovery
 # ---------------------------------------------------------------------------

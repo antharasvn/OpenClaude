@@ -1,11 +1,11 @@
 """Tests for active stream tracking."""
 
-from pathlib import Path
 from unittest.mock import patch
 
 from bot.streams import (
-    add_active_stream, remove_active_stream,
-    load_active_streams, save_active_streams,
+    add_active_stream,
+    load_active_streams,
+    remove_active_stream,
 )
 
 

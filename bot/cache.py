@@ -3,19 +3,20 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
+import logging
 import os
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Generic, TypeVar, Union
-
-import logging
+from typing import Generic, TypeVar
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
-PathLike = Union[Path, Callable[[], Path]]
+PathLike = Path | Callable[[], Path]
 
 
 class FileBackedCache(Generic[T]):
@@ -160,10 +161,8 @@ class FileBackedCache(Generic[T]):
                 logger.error("Failed to save %s: %s", self._path, exc)
         finally:
             if tmp_path:
-                try:
+                with contextlib.suppress(OSError):
                     os.unlink(tmp_path)
-                except OSError:
-                    pass
 
     # -- public flush API ------------------------------------------------
 
@@ -202,10 +201,8 @@ class FileBackedCache(Generic[T]):
         """Cancel the flusher task and do a final flush."""
         if self._flusher_task is not None and not self._flusher_task.done():
             self._flusher_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._flusher_task
-            except asyncio.CancelledError:
-                pass
         self._flusher_task = None
         if self._dirty:
             self._write_to_disk()

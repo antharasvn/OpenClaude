@@ -1,9 +1,8 @@
 """Tests for security rules and environment building."""
 
-import os
 import pytest
 
-from bot.permissions import build_env, _SAFE_ENV_KEYS
+from bot.permissions import _SAFE_ENV_KEYS, build_env
 
 
 class TestBuildEnv:

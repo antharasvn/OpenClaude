@@ -132,6 +132,7 @@ def test_import_bot_exceptions():
 def test_app_builds():
     """The Telegram Application object should build with dummy env vars."""
     from telegram.ext import Application
+
     from bot.config import TELEGRAM_BOT_TOKEN
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     assert app is not None

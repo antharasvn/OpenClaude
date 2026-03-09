@@ -1,6 +1,5 @@
 """Shared fixtures for OpenClaude tests."""
 
-import os
 import pytest
 
 from bot.sessions import _reset_cache

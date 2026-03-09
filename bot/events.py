@@ -21,8 +21,8 @@ Consumer (handlers.py) accesses:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Literal, Union
+from dataclasses import dataclass
+from typing import Any, Literal
 
 
 @dataclass
@@ -84,7 +84,7 @@ class SilentEvent:
     type: Literal["silent"] = "silent"
 
 
-StreamEvent = Union[
+StreamEvent = (
     PartialEvent,
     TextBlockEvent,
     ToolUseEvent,
@@ -92,5 +92,5 @@ StreamEvent = Union[
     ResultEvent,
     ErrorEvent,
     StoppedEvent,
-    SilentEvent,
-]
+    SilentEvent
+)

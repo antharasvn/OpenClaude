@@ -1,13 +1,13 @@
 """Active stream tracking (file-backed for crash recovery)."""
 
+import logging
 import sys
 
 from bot.cache import FileBackedCache
-from bot.config import ACTIVE_STREAMS_FILE  # noqa: F811
-import logging
+from bot.config import ACTIVE_STREAMS_FILE  # noqa: F401 — kept so patches on the module attr work
+from bot.sessions import session_key
 
 logger = logging.getLogger(__name__)
-from bot.sessions import session_key
 
 # ---------------------------------------------------------------------------
 # In-memory streams cache with periodic flush (backed by FileBackedCache)

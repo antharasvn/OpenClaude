@@ -6,8 +6,9 @@ This is a pure structural refactoring — behavior is identical.
 """
 
 import asyncio
-import re
+import contextlib
 import logging
+import re
 
 from telegram import Update
 from telegram.constants import ParseMode
@@ -15,9 +16,9 @@ from telegram.ext import ContextTypes
 
 from bot.attachments import clean_file_markers
 from bot.config import TELEGRAM_MAX_LENGTH
-from bot.renderer import TelegramRenderer, split_message, find_overflow_split
 from bot.formatting import finished_line
 from bot.logging_setup import infra_logger
+from bot.renderer import TelegramRenderer, find_overflow_split
 
 logger = logging.getLogger(__name__)
 
@@ -128,10 +129,8 @@ class StreamingSession:
                 self._speculative.append(self.live_msg)
             else:
                 # Only 📎 markers, no real text — delete the message
-                try:
+                with contextlib.suppress(Exception):
                     await self.live_msg.delete()
-                except Exception:
-                    pass
         elif block_text:
             # No streaming — send block directly (strip 📎)
             display_text = clean_file_markers(block_text)
@@ -162,10 +161,8 @@ class StreamingSession:
                     pass
                 self.finalized_msgs.append(self.live_msg)
             else:
-                try:
+                with contextlib.suppress(Exception):
                     await self.live_msg.delete()
-                except Exception:
-                    pass
             self.sent_offset = len(self.live_text)
             self.live_msg = None
         self._speculative_sent_len = 0
@@ -176,10 +173,9 @@ class StreamingSession:
 
     async def _on_tool_result(self, event: dict) -> None:
         """Handle tool completion — update status display."""
-        if self.show_tools:
-            if self.current_active:
-                self.finished_lines.append(finished_line(self.current_active))
-                await self._update_status("")
+        if self.show_tools and self.current_active:
+            self.finished_lines.append(finished_line(self.current_active))
+            await self._update_status("")
 
     async def _on_partial(self, event: dict) -> None:
         """Handle streaming text delta."""
@@ -339,41 +335,29 @@ class StreamingSession:
     async def cleanup_on_stop(self) -> None:
         """Delete all messages when generation was stopped/cancelled."""
         if self.status_msg:
-            try:
+            with contextlib.suppress(Exception):
                 await self.status_msg.delete()
-            except Exception:
-                pass
         for fm in self.finalized_msgs:
-            try:
+            with contextlib.suppress(Exception):
                 await fm.delete()
-            except Exception:
-                pass
         if self.live_msg:
-            try:
+            with contextlib.suppress(Exception):
                 await self.live_msg.delete()
-            except Exception:
-                pass
 
     async def cleanup_status(self) -> None:
         """Delete the tool-status message (always runs in finally)."""
         if self.status_msg:
-            try:
+            with contextlib.suppress(Exception):
                 await self.status_msg.delete()
-            except Exception:
-                pass
 
     async def delete_speculative_messages(self) -> None:
         """Delete speculative messages (used on silent/empty result)."""
         for msg in self._speculative:
-            try:
+            with contextlib.suppress(Exception):
                 await msg.delete()
-            except Exception:
-                pass
         if self.live_msg:
-            try:
+            with contextlib.suppress(Exception):
                 await self.live_msg.delete()
-            except Exception:
-                pass
 
     async def finalize_response(self) -> None:
         """Process and send the final response text.
@@ -403,7 +387,10 @@ class StreamingSession:
 
         # effective_offset: how much of response_text was already shown
         effective_offset = max(self.sent_offset, self._speculative_sent_len)
-        remaining = cleaned_response[min(effective_offset, len(cleaned_response)):] if cleaned_response else ""
+        if cleaned_response:
+            remaining = cleaned_response[min(effective_offset, len(cleaned_response)):]
+        else:
+            remaining = ""
 
         if not remaining and not image_urls and not file_segments:
             # Everything already displayed — just finalize live_msg if needed
@@ -420,10 +407,8 @@ class StreamingSession:
                     except Exception:
                         pass
                 else:
-                    try:
+                    with contextlib.suppress(Exception):
                         await self.live_msg.delete()
-                    except Exception:
-                        pass
         else:
             if self.live_msg:
                 display_md = clean_file_markers(self.live_text[self.sent_offset:])
@@ -440,17 +425,13 @@ class StreamingSession:
                             await self.live_msg.delete()
                             await send_rendered(self.update, remaining, self.context)
                     except Exception:
-                        try:
+                        with contextlib.suppress(Exception):
                             await self.live_msg.delete()
-                        except Exception:
-                            pass
                         if remaining:
                             await send_rendered(self.update, remaining, self.context)
                 else:
-                    try:
+                    with contextlib.suppress(Exception):
                         await self.live_msg.delete()
-                    except Exception:
-                        pass
                     if remaining:
                         await send_rendered(self.update, remaining, self.context)
             elif remaining:
@@ -481,7 +462,8 @@ class StreamingSession:
         if response_text:
             latex_blocks = extract_latex_blocks(response_text)
             if latex_blocks:
-                import tempfile, functools
+                import functools
+                import tempfile
                 loop = asyncio.get_event_loop()
                 with tempfile.TemporaryDirectory() as tmpdir:
                     png_paths = await loop.run_in_executor(
@@ -494,7 +476,7 @@ class StreamingSession:
                             media = []
                             open_files = []
                             for png_path in png_paths:
-                                f = open(png_path, 'rb')
+                                f = open(png_path, 'rb')  # noqa: SIM115
                                 open_files.append(f)
                                 media.append(InputMediaPhoto(media=f))
                             await self.context.bot.send_media_group(
@@ -503,7 +485,10 @@ class StreamingSession:
                                 message_thread_id=self.tg_thread_id,
                             )
                         except Exception:
-                            logger.warning("Failed to send LaTeX album, falling back to individual photos")
+                            logger.warning(
+                                "Failed to send LaTeX album,"
+                                " falling back to individual photos",
+                            )
                             for png_path in png_paths:
                                 try:
                                     with open(png_path, 'rb') as f:
@@ -516,10 +501,8 @@ class StreamingSession:
                                     logger.warning("Failed to send LaTeX image: %s", png_path)
                         finally:
                             for f in open_files:
-                                try:
+                                with contextlib.suppress(Exception):
                                     f.close()
-                                except Exception:
-                                    pass
                     elif len(png_paths) == 1:
                         # Single image — send as regular photo
                         try:

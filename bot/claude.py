@@ -9,22 +9,25 @@ transport-specific work to a backend in ``bot.backends``.
 import asyncio
 import logging
 
-from bot.config import ADMIN_USER_ID, WORKING_DIR
-from bot.logging_setup import get_workspace_logger
-
-logger = logging.getLogger(__name__)
-from bot.sessions import get_session_id, set_session_id
-from bot.streams import add_active_stream, remove_active_stream
-from bot.prompts import (
-    _restart_context_path, _append_restart_context,
-    _clear_restart_context, _read_restart_context,
-    _build_preamble,
-)
 from bot.backends import HAS_SDK, stream_sdk, stream_subprocess
+from bot.config import ADMIN_USER_ID, WORKING_DIR
+from bot.formatting import finished_line, format_tool_status  # noqa: F401
+from bot.logging_setup import get_workspace_logger
 
 # Re-export from modules for backward compatibility
 from bot.process import _active_procs, kill_active_proc  # noqa: F401
-from bot.formatting import format_tool_status, finished_line  # noqa: F401
+from bot.prompts import (
+    _append_restart_context,
+    _build_preamble,
+    _clear_restart_context,
+    _read_restart_context,
+    _restart_context_path,
+)
+from bot.sessions import get_session_id, set_session_id
+from bot.streams import add_active_stream, remove_active_stream
+
+logger = logging.getLogger(__name__)
+
 # Re-export prompt helpers so existing ``from bot.claude import …`` still works
 _restart_context_path = _restart_context_path  # noqa: F841
 _append_restart_context = _append_restart_context  # noqa: F841

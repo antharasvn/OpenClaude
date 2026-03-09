@@ -11,6 +11,7 @@ This module is now a thin facade. The actual implementations live in:
 """
 
 import asyncio
+import contextlib
 import html
 import logging
 
@@ -18,43 +19,38 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
+# --- Re-exports from extracted modules (for backward compatibility) ---
+from bot.attachments import (  # noqa: F401
+    extract_image_urls as _extract_image_urls,
+)
 from bot.auth import authorized
+from bot.batching import queue_message  # noqa: F401
+from bot.claude import stream_claude
 from bot.config import (
-    ADMIN_USER_ID, ALL_TOOLS, TELEGRAM_MAX_LENGTH,
-    is_authorized, get_thread_id,
+    ALL_TOOLS,
+    get_thread_id,
+    is_authorized,
 )
 from bot.logging_setup import get_workspace_logger
-from bot.sessions import session_key, get_session_id, load_sessions, clear_session, get_context_pct
-from bot.workspaces import ensure_workspace, get_working_dir
-from bot.claude import stream_claude
+from bot.media_handlers import (  # noqa: F401
+    handle_document,
+    handle_photo,
+    handle_video,
+    handle_voice,
+)
 from bot.process import kill_active_proc
-from bot.sdk_session import sdk_session_manager
 from bot.renderer import TelegramRenderer
-
-# --- Re-exports from extracted modules (for backward compatibility) ---
-from bot.attachments import (                              # noqa: F401
-    extract_image_urls as _extract_image_urls,
-    split_file_segments as _split_file_segments,
-    clean_file_markers as _clean_file_markers,
-)
-from bot.telegram_sender import (                          # noqa: F401
-    send_file_group as _send_file_group,
-    send_single_file as _send_single_file,
-    send_rendered,
-    send_rendered_collect as _send_rendered_collect,
-)
-from bot.routing import (                                  # noqa: F401
+from bot.routing import (  # noqa: F401
+    get_reply_prefix,
     should_respond,
     strip_bot_mention,
-    get_reply_prefix,
 )
-from bot.batching import queue_message                     # noqa: F401
-from bot.media_handlers import (                           # noqa: F401
-    handle_photo,
-    handle_voice,
-    handle_document,
-    handle_video,
+from bot.sdk_session import sdk_session_manager
+from bot.sessions import clear_session, get_context_pct, get_session_id, load_sessions, session_key
+from bot.telegram_sender import (  # noqa: F401
+    send_file_group as _send_file_group,
 )
+from bot.workspaces import get_working_dir
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +61,8 @@ renderer = TelegramRenderer()
 TYPING_INTERVAL = 4  # seconds between typing indicator refreshes
 
 # BOT_USERNAME is set from routing module; kept as alias for app.py compatibility
-import bot.routing as _routing
+import bot.routing as _routing  # noqa: E402
+
 BOT_USERNAME = _routing.BOT_USERNAME
 
 
@@ -179,8 +176,8 @@ async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     user_data = sessions.get(key, {})
 
     status_lines = [
-        f"<b>OpenClaude Status</b>",
-        f"",
+        "<b>OpenClaude Status</b>",
+        "",
         f"<b>User ID:</b> <code>{user.id}</code>",
         f"<b>Username:</b> @{html.escape(user.username) if user.username else 'N/A'}",
         f"<b>Session:</b> <code>{sid or 'None'}</code>",
@@ -191,7 +188,7 @@ async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
     chat_dir = get_working_dir(chat_id)
     status_lines.extend([
-        f"",
+        "",
         f"<b>Working dir:</b> <code>{chat_dir}</code>",
         f"<b>Allowed tools:</b> {ALL_TOOLS}",
     ])
@@ -225,10 +222,8 @@ async def _force_stop_session(skey: str, chat_id: int, thread_id: int, session_u
     task = _streaming_tasks.get(skey)
     if task and not task.done():
         task.cancel()
-        try:
+        with contextlib.suppress(TimeoutError, asyncio.CancelledError, Exception):
             await asyncio.wait_for(task, timeout=5)
-        except (asyncio.TimeoutError, asyncio.CancelledError, Exception):
-            pass
 
     # Force cleanup in case the task didn't finish or clean up properly
     _streaming_tasks.pop(skey, None)
@@ -236,10 +231,8 @@ async def _force_stop_session(skey: str, chat_id: int, thread_id: int, session_u
     remove_active_stream(chat_id, thread_id, session_uid)
     lock = _user_locks.get(skey)
     if lock and lock.locked():
-        try:
+        with contextlib.suppress(RuntimeError):
             lock.release()
-        except RuntimeError:
-            pass
 
 
 async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -311,15 +304,13 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
     try:
         await asyncio.wait_for(_get_user_lock(skey).acquire(), timeout=300)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.error("Lock acquisition timed out for user %d in chat %d", session_user_id, chat_id)
-        try:
+        with contextlib.suppress(Exception):
             await update.message.reply_text(
                 "Still processing a previous request. Use /stop to cancel it.",
                 message_thread_id=tg_thread_id,
             )
-        except Exception:
-            pass
         return
 
     try:
@@ -360,10 +351,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
             typing_task.cancel()
         if not _is_compact:
             _streaming_tasks.pop(skey, None)
-        try:
+        with contextlib.suppress(RuntimeError):
             _get_user_lock(skey).release()
-        except RuntimeError:
-            pass  # already released by /stop
         # Clean up Telegram messages (must run even on CancelledError)
         await session.cleanup_status()
         if session.stopped:

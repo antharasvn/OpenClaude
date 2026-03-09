@@ -2,10 +2,10 @@
 
 from telegram.ext import Application
 
-from .memory import register as register_memory
-from .utility import register as register_utility
 from .admin import register as register_admin
 from .config import register as register_config
+from .memory import register as register_memory
+from .utility import register as register_utility
 
 
 def register_all(app: Application) -> None:
@@ -21,15 +21,15 @@ ALL_COMMANDS: list[tuple[str, str]] = []
 
 
 def _collect() -> None:
-    from .memory import COMMANDS as mem
-    from .utility import COMMANDS as util
-    from .admin import COMMANDS as adm
-    from .config import COMMANDS as cfg
+    from .admin import COMMANDS as COMMANDS_ADM  # noqa: N811
+    from .config import COMMANDS as COMMANDS_CFG  # noqa: N811
+    from .memory import COMMANDS as COMMANDS_MEM  # noqa: N811
+    from .utility import COMMANDS as COMMANDS_UTIL  # noqa: N811
     ALL_COMMANDS.clear()
-    ALL_COMMANDS.extend(mem)
-    ALL_COMMANDS.extend(util)
-    ALL_COMMANDS.extend(adm)
-    ALL_COMMANDS.extend(cfg)
+    ALL_COMMANDS.extend(COMMANDS_MEM)
+    ALL_COMMANDS.extend(COMMANDS_UTIL)
+    ALL_COMMANDS.extend(COMMANDS_ADM)
+    ALL_COMMANDS.extend(COMMANDS_CFG)
 
 
 _collect()

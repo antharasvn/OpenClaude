@@ -9,11 +9,11 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from bot.auth import authorized
+from bot.batching import queue_message
 from bot.config import get_thread_id
 from bot.logging_setup import get_workspace_logger
-from bot.routing import get_reply_prefix
-from bot.batching import queue_message
 from bot.media import normalize_image
+from bot.routing import get_reply_prefix
 from bot.workspaces import ensure_workspace
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,10 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     dest = await asyncio.get_event_loop().run_in_executor(None, normalize_image, dest)
 
     caption = update.message.caption or ""
-    claude_msg = f"[User attached a photo: {dest.relative_to(workspace)} — read it before responding.]"
+    claude_msg = (
+        f"[User attached a photo: {dest.relative_to(workspace)}"
+        " — read it before responding.]"
+    )
     if caption:
         claude_msg += f' User says: "{caption}"'
 
@@ -132,7 +135,10 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await file.download_to_drive(dest)
 
     caption = update.message.caption or ""
-    claude_msg = f"[User attached a file: {dest.relative_to(workspace)} — read it before responding.]"
+    claude_msg = (
+        f"[User attached a file: {dest.relative_to(workspace)}"
+        " — read it before responding.]"
+    )
     if caption:
         claude_msg += f' User says: "{caption}"'
 
@@ -171,7 +177,10 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await file.download_to_drive(dest)
 
     caption = update.message.caption or ""
-    claude_msg = f"[User attached a video: {dest.relative_to(workspace)} — read it before responding.]"
+    claude_msg = (
+        f"[User attached a video: {dest.relative_to(workspace)}"
+        " — read it before responding.]"
+    )
     if caption:
         claude_msg += f' User says: "{caption}"'
 

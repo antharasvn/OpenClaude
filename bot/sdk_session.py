@@ -1,27 +1,28 @@
 """SDKSession class, idle cleanup, shutdown."""
 
 import asyncio
+import contextlib
+import logging
 import os
 import signal
 import time
 
 from bot.config import SDK_IDLE_TIMEOUT
-import logging
 
 logger = logging.getLogger(__name__)
 
 # Claude Code SDK — persistent session support
 try:
     from claude_code_sdk import (
-        ClaudeSDKClient,
-        ClaudeCodeOptions,
         AssistantMessage,
-        ResultMessage,
-        TextBlock,
-        ToolUseBlock,
-        ToolResultBlock,
+        ClaudeCodeOptions,
+        ClaudeSDKClient,
         PermissionResultAllow,
         PermissionResultDeny,
+        ResultMessage,
+        TextBlock,
+        ToolResultBlock,
+        ToolUseBlock,
     )
     from claude_code_sdk.types import StreamEvent
 
@@ -68,8 +69,8 @@ def _apply_sdk_compat_patch() -> None:
         )
         return
 
-    import claude_code_sdk._internal.message_parser as _mp
     import claude_code_sdk._internal.client as _cl
+    import claude_code_sdk._internal.message_parser as _mp
 
     _original_parse = _mp.parse_message
 
@@ -77,12 +78,18 @@ def _apply_sdk_compat_patch() -> None:
         try:
             return _original_parse(data)
         except _mp.MessageParseError:
-            logger.debug("Skipping unknown SDK message: %s", data.get("type") if isinstance(data, dict) else data)
+            logger.debug(
+                "Skipping unknown SDK message: %s",
+                data.get("type") if isinstance(data, dict) else data,
+            )
             return None
 
     _mp.parse_message = _patched_parse
     _cl.parse_message = _patched_parse
-    logger.debug("Applied SDK parse_message compat patch for version %s", claude_code_sdk.__version__)
+    logger.debug(
+        "Applied SDK parse_message compat patch for version %s",
+        claude_code_sdk.__version__,
+    )
 
 
 _apply_sdk_compat_patch()
@@ -129,10 +136,8 @@ def _kill_tree(pid: int) -> None:
 
     # Kill children bottom-up, then the root
     for cpid in reversed(children):
-        try:
+        with contextlib.suppress(ProcessLookupError, OSError):
             os.kill(cpid, signal.SIGKILL)
-        except (ProcessLookupError, OSError):
-            pass
     try:
         os.kill(pid, signal.SIGKILL)
         logger.info("Hard-killed process tree rooted at pid=%d (%d children)", pid, len(children))
@@ -214,8 +219,11 @@ class SDKSession:
         if self.client:
             try:
                 await asyncio.wait_for(self.client.disconnect(), timeout=DISCONNECT_TIMEOUT)
-            except asyncio.TimeoutError:
-                logger.warning("SDKSession disconnect timed out after %ds — hard-killing", DISCONNECT_TIMEOUT)
+            except TimeoutError:
+                logger.warning(
+                    "SDKSession disconnect timed out after %ds — hard-killing",
+                    DISCONNECT_TIMEOUT,
+                )
                 self.hard_kill()
             except Exception as e:
                 logger.warning("SDKSession disconnect error: %s — hard-killing", e)

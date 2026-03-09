@@ -1,12 +1,14 @@
 """Tests for session persistence."""
 
-import json
-from pathlib import Path
 from unittest.mock import patch
 
 from bot.sessions import (
-    session_key, load_sessions, save_sessions,
-    get_session_id, set_session_id, clear_session,
+    clear_session,
+    get_session_id,
+    load_sessions,
+    save_sessions,
+    session_key,
+    set_session_id,
 )
 
 

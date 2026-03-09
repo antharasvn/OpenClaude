@@ -1,6 +1,7 @@
 """Restart recovery — resume interrupted sessions after bot restart."""
 
 import asyncio
+import contextlib
 import json
 import logging
 import re
@@ -123,14 +124,15 @@ class RestartRecoveryService:
                     cid, tid, uid,
                 )
                 # Still notify the user
-                try:
+                with contextlib.suppress(Exception):
                     await self._bot.send_message(
                         chat_id=cid,
-                        text="\u26a0\ufe0f Bot restarted \u2014 no session to resume. Send a new message to continue.",
+                        text=(
+                            "\u26a0\ufe0f Bot restarted \u2014 no session to resume."
+                            " Send a new message to continue."
+                        ),
                         message_thread_id=tg_thread_id,
                     )
-                except Exception:
-                    pass
                 return
 
             resume_msg = self._build_resume_message(cid, entry)
@@ -146,9 +148,7 @@ class RestartRecoveryService:
                 stop_event=stop_event,
                 real_user_id=uid,
             ):
-                if event.get("type") == "result":
-                    result_text = event.get("text", "")
-                elif event.get("type") == "error":
+                if event.get("type") == "result" or event.get("type") == "error":
                     result_text = event.get("text", "")
 
             if result_text:
@@ -159,14 +159,15 @@ class RestartRecoveryService:
             infra_logger.error(
                 "Failed to resume chat=%d thread=%d user=%d: %s", cid, tid, uid, e
             )
-            try:
+            with contextlib.suppress(Exception):
                 await self._bot.send_message(
                     chat_id=cid,
-                    text="\u26a0\ufe0f Bot restarted \u2014 couldn't resume your previous task. Send a new message to continue.",
+                    text=(
+                        "\u26a0\ufe0f Bot restarted \u2014 couldn't resume your"
+                        " previous task. Send a new message to continue."
+                    ),
                     message_thread_id=tg_thread_id,
                 )
-            except Exception:
-                pass
 
     @staticmethod
     def _build_resume_message(cid: int, entry: dict) -> str:
@@ -227,7 +228,7 @@ class RestartRecoveryService:
             await asyncio.wait_for(
                 self._resume_chat(entry), timeout=RESUME_TIMEOUT
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             cid = entry["chat_id"]
             tid = entry["thread_id"]
             uid = entry["user_id"]
@@ -235,11 +236,12 @@ class RestartRecoveryService:
                 "Resume timed out after %ds for chat=%d thread=%d user=%d",
                 RESUME_TIMEOUT, cid, tid, uid,
             )
-            try:
+            with contextlib.suppress(Exception):
                 await self._bot.send_message(
                     chat_id=cid,
-                    text="\u26a0\ufe0f Bot restarted \u2014 resume timed out. Send a new message to continue.",
+                    text=(
+                        "\u26a0\ufe0f Bot restarted \u2014 resume timed out."
+                        " Send a new message to continue."
+                    ),
                     message_thread_id=tid or None,
                 )
-            except Exception:
-                pass

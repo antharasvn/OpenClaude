@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 
 from bot.cache import FileBackedCache
-from bot.config import SESSION_FILE  # noqa: F811 — kept so patches on the module attr work
+from bot.config import SESSION_FILE  # noqa: F401 — kept so patches on the module attr work
 
 # ---------------------------------------------------------------------------
 # In-memory session cache with write-behind (backed by FileBackedCache)

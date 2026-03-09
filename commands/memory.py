@@ -3,13 +3,12 @@
 import html
 import re
 from datetime import datetime
-from pathlib import Path
 
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes
 
-from bot.config import is_authorized, get_thread_id
+from bot.config import get_thread_id, is_authorized
 from bot.renderer import split_message
 from bot.workspaces import ensure_workspace
 

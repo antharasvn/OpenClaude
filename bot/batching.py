@@ -54,9 +54,6 @@ async def _flush_batch(key: str) -> None:
     update, context = update_ctx
     chat_id, thread_id, user_id = meta
 
-    if len(messages) == 1:
-        combined = messages[0]
-    else:
-        combined = "\n\n".join(messages)
+    combined = messages[0] if len(messages) == 1 else "\n\n".join(messages)
 
     await run_with_streaming(update, context, chat_id, thread_id, user_id, combined)

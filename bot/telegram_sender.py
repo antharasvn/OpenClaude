@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 from typing import TYPE_CHECKING
@@ -35,7 +36,7 @@ async def send_file_group(
     documents; audio only with audio.  Falls back to individual sends
     for incompatible mixes or single files.
     """
-    from telegram import InputMediaPhoto, InputMediaVideo, InputMediaAudio, InputMediaDocument
+    from telegram import InputMediaAudio, InputMediaDocument, InputMediaPhoto, InputMediaVideo
 
     if len(files) == 1:
         await send_single_file(bot, chat_id, files[0], thread_id)
@@ -58,7 +59,7 @@ async def send_file_group(
         media = []
         for f in files:
             cls = type_map[f.media_type]
-            media.append(cls(media=open(f.path, "rb"), caption=f.caption or None))
+            media.append(cls(media=open(f.path, "rb"), caption=f.caption or None))  # noqa: SIM115
         try:
             await bot.send_media_group(
                 chat_id=chat_id, media=media, message_thread_id=thread_id,
@@ -75,10 +76,8 @@ async def send_file_group(
                     logger.warning("Failed to send file: %s", f.path)
         finally:
             for m in media:
-                try:
+                with contextlib.suppress(Exception):
                     m.media.close()
-                except Exception:
-                    pass
     else:
         # Mixed types that can't be grouped -- send individually
         for f in files:

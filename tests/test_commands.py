@@ -1,22 +1,19 @@
 """Tests for commands: config, memory, admin, utility."""
 
-import json
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from commands.config import (
     ToggleSetting,
+    _get_setting,
     _load_settings,
     _save_settings,
-    _get_setting,
     _set_setting,
+    get_respond_mode,
     get_streaming,
     get_verbose,
-    get_respond_mode,
 )
-
 
 # ======================================================================
 # Helper factories
@@ -167,10 +164,10 @@ class TestToggleSetting:
         update = _make_callback_query(user_id=111111, data="streaming:on")
         context = _make_context()
 
-        with patch("commands.config.is_authorized", return_value=True):
-            with patch.object(toggle, "set") as mock_set:
-                await toggle.callback_handler(update, context)
-                mock_set.assert_not_called()
+        with patch("commands.config.is_authorized", return_value=True), \
+             patch.object(toggle, "set") as mock_set:
+            await toggle.callback_handler(update, context)
+            mock_set.assert_not_called()
 
 
 # ======================================================================
@@ -181,28 +178,28 @@ class TestToggleSetting:
 class TestSettingsPersistence:
     def test_save_load_roundtrip(self, tmp_path):
         settings_file = tmp_path / "chat-settings.json"
-        with patch("commands.config._settings_file", return_value=settings_file):
-            with patch("commands.config._settings_cache", None):
-                with patch("commands.config._settings_mtime", 0.0):
-                    _save_settings({"123:0": {"streaming": True}})
-                    loaded = _load_settings()
-                    assert loaded == {"123:0": {"streaming": True}}
+        with patch("commands.config._settings_file", return_value=settings_file), \
+             patch("commands.config._settings_cache", None), \
+             patch("commands.config._settings_mtime", 0.0):
+            _save_settings({"123:0": {"streaming": True}})
+            loaded = _load_settings()
+            assert loaded == {"123:0": {"streaming": True}}
 
     def test_get_setting_default(self, tmp_path):
         settings_file = tmp_path / "nonexistent.json"
-        with patch("commands.config._settings_file", return_value=settings_file):
-            with patch("commands.config._settings_cache", None):
-                result = _get_setting(123, 0, "streaming", False)
-                assert result is False
+        with patch("commands.config._settings_file", return_value=settings_file), \
+             patch("commands.config._settings_cache", None):
+            result = _get_setting(123, 0, "streaming", False)
+            assert result is False
 
     def test_set_and_get_setting(self, tmp_path):
         settings_file = tmp_path / "chat-settings.json"
-        with patch("commands.config._settings_file", return_value=settings_file):
-            with patch("commands.config._settings_cache", None):
-                with patch("commands.config._settings_mtime", 0.0):
-                    _set_setting(123, 0, "streaming", True)
-                    result = _get_setting(123, 0, "streaming", False)
-                    assert result is True
+        with patch("commands.config._settings_file", return_value=settings_file), \
+             patch("commands.config._settings_cache", None), \
+             patch("commands.config._settings_mtime", 0.0):
+            _set_setting(123, 0, "streaming", True)
+            result = _get_setting(123, 0, "streaming", False)
+            assert result is True
 
 
 class TestPublicGetters:
@@ -242,10 +239,10 @@ class TestRespondCallback:
         update = _make_callback_query(user_id=111111, data="respond:mention:123:0")
         context = _make_context()
 
-        with patch("commands.config.is_authorized", return_value=True):
-            with patch("commands.config._set_setting") as mock_set:
-                await callback_respond(update, context)
-                mock_set.assert_called_once_with(123, 0, "respond_mode", "mention")
+        with patch("commands.config.is_authorized", return_value=True), \
+             patch("commands.config._set_setting") as mock_set:
+            await callback_respond(update, context)
+            mock_set.assert_called_once_with(123, 0, "respond_mode", "mention")
 
     @pytest.mark.asyncio
     async def test_callback_respond_invalid_mode(self):
@@ -254,10 +251,10 @@ class TestRespondCallback:
         update = _make_callback_query(user_id=111111, data="respond:invalid:123:0")
         context = _make_context()
 
-        with patch("commands.config.is_authorized", return_value=True):
-            with patch("commands.config._set_setting") as mock_set:
-                await callback_respond(update, context)
-                mock_set.assert_not_called()
+        with patch("commands.config.is_authorized", return_value=True), \
+             patch("commands.config._set_setting") as mock_set:
+            await callback_respond(update, context)
+            mock_set.assert_not_called()
 
 
 # ======================================================================
@@ -373,8 +370,8 @@ class TestRouting:
             assert should_respond(update) is False
 
     def test_strip_bot_mention(self):
-        from bot.routing import strip_bot_mention
         import bot.routing
+        from bot.routing import strip_bot_mention
 
         bot.routing.BOT_USERNAME = "TestBot"
         result = strip_bot_mention("@TestBot hello there")
@@ -382,8 +379,8 @@ class TestRouting:
         bot.routing.BOT_USERNAME = ""
 
     def test_strip_bot_mention_empty_username(self):
-        from bot.routing import strip_bot_mention
         import bot.routing
+        from bot.routing import strip_bot_mention
 
         bot.routing.BOT_USERNAME = ""
         result = strip_bot_mention("@TestBot hello")

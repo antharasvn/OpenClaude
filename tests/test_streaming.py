@@ -7,11 +7,9 @@ Covers:
 - Active stream tracking lifecycle
 """
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -217,7 +215,7 @@ class TestStreamClaude:
         backend = _make_fake_backend({"type": "result", "text": "ok", "session_id": None})
 
         with patch("bot.claude.HAS_SDK", False), \
-             patch("bot.claude.stream_subprocess", backend) as mock_sub, \
+             patch("bot.claude.stream_subprocess", backend), \
              patch("bot.claude.get_session_id", return_value=None), \
              patch("bot.claude.get_workspace_logger") as mock_ws_log, \
              patch("bot.claude.add_active_stream"), \

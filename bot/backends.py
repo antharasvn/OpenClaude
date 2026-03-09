@@ -6,32 +6,38 @@ Claude streaming pipeline.  The shared setup/teardown lives in
 """
 
 import asyncio
+import contextlib
 import json
+import logging
 import os
 import shutil
 import time
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from bot.config import (
-    ALL_TOOLS, CLAUDE_MODEL, CLAUDE_TIMEOUT,
+    ALL_TOOLS,
+    CLAUDE_MODEL,
+    CLAUDE_TIMEOUT,
 )
 from bot.formatting import format_tool_status
-import logging
-
-from bot.logging_setup import get_workspace_logger, _summarize_input
-
-logger = logging.getLogger(__name__)
+from bot.logging_setup import _summarize_input
 from bot.permissions import build_env, build_sdk_options
 from bot.process import _active_procs
 from bot.prompts import _append_restart_context, _clear_restart_context
-from bot.sessions import session_key
 from bot.sdk_session import (
-    HAS_SDK, SDKSession, sdk_session_manager,
-    AssistantMessage, ResultMessage,
-    TextBlock, ToolUseBlock, ToolResultBlock,
+    HAS_SDK,
+    AssistantMessage,
+    ResultMessage,
+    SDKSession,
+    TextBlock,
+    ToolResultBlock,
+    ToolUseBlock,
+    sdk_session_manager,
 )
+from bot.sessions import session_key
 from bot.streams import set_stream_session_id
 
+logger = logging.getLogger(__name__)
 
 # Re-export for claude.py to check availability
 __all__ = ["HAS_SDK", "stream_sdk", "stream_subprocess"]
@@ -104,7 +110,10 @@ async def stream_sdk(
                 logger.error("SDK stream timed out after %ds for user %d", CLAUDE_TIMEOUT, user_id)
                 await sdk_session.disconnect()
                 sdk_session_manager.pop(skey)
-                yield {"type": "error", "text": "Claude took too long to respond. Try again or /new to start fresh."}
+                yield {
+                    "type": "error",
+                    "text": "Claude took too long to respond. Try again or /new to start fresh.",
+                }
                 return
             sdk_session.last_activity = time.time()
             sdk_deadline = now + CLAUDE_TIMEOUT
@@ -134,7 +143,10 @@ async def stream_sdk(
                     set_session_id_fn(chat_id, thread_id, user_id, early_session_id)
                     set_stream_session_id(chat_id, thread_id, user_id, early_session_id)
                     sdk_session.session_id = early_session_id
-                    logger.info("Session ID captured early for user %d: %s", user_id, early_session_id)
+                    logger.info(
+                        "Session ID captured early for user %d: %s",
+                        user_id, early_session_id,
+                    )
                 if verbose:
                     delta = msg.event.get("delta", {})
                     if delta.get("type") == "text_delta":
@@ -252,15 +264,24 @@ async def stream_subprocess(
             if remaining <= 0:
                 proc.kill()
                 await proc.communicate()
-                logger.error("Claude CLI timed out after %ds for user %d", CLAUDE_TIMEOUT, user_id)
-                yield {"type": "error", "text": "Claude took too long to respond. Try again or /new to start fresh."}
+                logger.error(
+                    "Claude CLI timed out after %ds for user %d",
+                    CLAUDE_TIMEOUT, user_id,
+                )
+                yield {
+                    "type": "error",
+                    "text": "Claude took too long to respond. Try again or /new to start fresh.",
+                }
                 return
 
             try:
                 line = await asyncio.wait_for(proc.stdout.readline(), timeout=min(remaining, 1.0))
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 if stop_event and stop_event.is_set():
-                    logger.info("Stop event set during readline — killing subprocess for user %d", user_id)
+                    logger.info(
+                        "Stop event set during readline — killing subprocess for user %d",
+                        user_id,
+                    )
                     proc.kill()
                     await proc.communicate()
                     yield {"type": "stopped"}
@@ -268,8 +289,17 @@ async def stream_subprocess(
                 if remaining <= 1.0:
                     proc.kill()
                     await proc.communicate()
-                    logger.error("Claude CLI timed out after %ds for user %d", CLAUDE_TIMEOUT, user_id)
-                    yield {"type": "error", "text": "Claude took too long to respond. Try again or /new to start fresh."}
+                    logger.error(
+                        "Claude CLI timed out after %ds for user %d",
+                        CLAUDE_TIMEOUT, user_id,
+                    )
+                    yield {
+                        "type": "error",
+                        "text": (
+                            "Claude took too long to respond."
+                            " Try again or /new to start fresh."
+                        ),
+                    }
                     return
                 continue
 
@@ -331,10 +361,8 @@ async def stream_subprocess(
     finally:
         _active_procs.pop(skey, None)
         if proc.returncode is None:
-            try:
+            with contextlib.suppress(ProcessLookupError):
                 proc.kill()
-            except ProcessLookupError:
-                pass
             await proc.wait()
 
     if natural_rc != 0:

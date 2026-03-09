@@ -3,16 +3,18 @@
 import logging
 import os
 import re
-from typing import Union
 
-from bot.types import FileAttachment, TextSegment, FileSegment, Segment
+from bot.types import FileAttachment, FileSegment, Segment, TextSegment
 
 logger = logging.getLogger(__name__)
 
 # Image URL detection patterns
 _IMAGE_EXTENSIONS = re.compile(r'\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s)]*)?$', re.IGNORECASE)
 _MD_IMAGE_RE = re.compile(r'!\[([^\]]*)\]\(([^)]+)\)')
-_BARE_URL_RE = re.compile(r'(?<!\()(https?://\S+\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s)]*)?)(?!\))', re.IGNORECASE)
+_BARE_URL_RE = re.compile(
+    r'(?<!\()(https?://\S+\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s)]*)?)(?!\))',
+    re.IGNORECASE,
+)
 
 # Local file attachment marker: 📎 /path/to/file [optional caption]
 # Supports quoted paths for spaces: 📎 "/path/with spaces/file.pdf" caption

@@ -34,12 +34,12 @@ def should_respond(update: Update) -> bool:
                 if mention.lower() == f"@{BOT_USERNAME.lower()}":
                     return True
 
-    if msg.reply_to_message and msg.reply_to_message.from_user:
-        if msg.reply_to_message.from_user.username and \
-           msg.reply_to_message.from_user.username.lower() == BOT_USERNAME.lower():
-            return True
-
-    return False
+    return bool(
+        msg.reply_to_message
+        and msg.reply_to_message.from_user
+        and msg.reply_to_message.from_user.username
+        and msg.reply_to_message.from_user.username.lower() == BOT_USERNAME.lower()
+    )
 
 
 def strip_bot_mention(text: str) -> str:
@@ -58,7 +58,11 @@ def get_reply_prefix(update: Update) -> str:
     # Determine who sent the replied-to message
     from_user = reply.from_user
     if from_user:
-        if BOT_USERNAME and from_user.username and from_user.username.lower() == BOT_USERNAME.lower():
+        if (
+            BOT_USERNAME
+            and from_user.username
+            and from_user.username.lower() == BOT_USERNAME.lower()
+        ):
             sender = "you (the assistant)"
         else:
             sender = from_user.first_name or from_user.username or str(from_user.id)

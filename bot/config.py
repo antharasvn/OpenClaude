@@ -1,11 +1,12 @@
-"""Configuration loading (pydantic-settings based, with backward-compatible module-level attributes)."""
+"""Configuration loading (pydantic-settings based).
+
+Provides backward-compatible module-level attributes.
+"""
 
 from __future__ import annotations
 
-import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
 from pydantic import Field, SecretStr
@@ -64,7 +65,7 @@ class Settings(BaseSettings):
         return result
 
     @property
-    def admin_user_id(self) -> Optional[int]:
+    def admin_user_id(self) -> int | None:
         lst = self.allowed_users_list
         return lst[0] if lst else None
 
@@ -125,7 +126,7 @@ WORKING_DIR: str = _settings.working_dir
 WORKSPACES_DIR: Path = _settings.workspaces_dir
 ALLOWED_USERS: set[int] = _settings.allowed_users_set
 ALLOWED_USERS_LIST: list[int] = _settings.allowed_users_list
-ADMIN_USER_ID: Optional[int] = _settings.admin_user_id
+ADMIN_USER_ID: int | None = _settings.admin_user_id
 
 SESSION_FILE: Path = _settings.session_file
 ALL_TOOLS: str = _settings.ALL_TOOLS

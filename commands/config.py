@@ -5,11 +5,11 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ParseMode
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 
-from bot.config import SCRIPT_DIR, is_authorized, get_thread_id
+from bot.config import SCRIPT_DIR, get_thread_id, is_authorized
 
 logger = logging.getLogger(__name__)
 
@@ -206,7 +206,10 @@ _stream_toggle = ToggleSetting(
     key="streaming",
     label="Streaming",
     default=False,
-    on_desc="Response appears live as Claude types, then gets replaced with the final formatted version.",
+    on_desc=(
+        "Response appears live as Claude types,"
+        " then gets replaced with the final formatted version."
+    ),
     off_desc="Tool progress is shown while working, then the full response appears at once.",
 )
 

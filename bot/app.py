@@ -2,6 +2,8 @@
 
 import asyncio
 import atexit
+import contextlib
+import logging
 import sys
 
 from telegram import Update
@@ -13,23 +15,24 @@ from telegram.ext import (
     filters,
 )
 
+from bot import handlers  # noqa: E402
+from bot.claude import stream_claude  # noqa: E402
 from bot.config import (
-    ALLOWED_USERS, SESSION_FILE, TELEGRAM_BOT_TOKEN, WORKING_DIR,
+    ALLOWED_USERS,
+    SESSION_FILE,
+    TELEGRAM_BOT_TOKEN,
+    WORKING_DIR,
 )
-import logging
-
-from bot.logging_setup import setup_logging, infra_logger
+from bot.logging_setup import infra_logger, setup_logging
+from bot.process import _active_procs  # noqa: E402
+from bot.renderer import TelegramRenderer  # noqa: E402
+from bot.restart_recovery import RestartRecoveryService  # noqa: E402
+from bot.sdk_session import HAS_SDK, cleanup_idle_sessions, shutdown_sdk_sessions  # noqa: E402
+from bot.sessions import flush_sessions  # noqa: E402
+from bot.streams import flush_streams, start_streams_flusher, stop_streams_flusher  # noqa: E402
+from commands import ALL_COMMANDS, register_all  # noqa: E402
 
 logger = logging.getLogger(__name__)
-from bot.sessions import flush_sessions
-from bot.streams import start_streams_flusher, stop_streams_flusher, flush_streams
-from bot.renderer import TelegramRenderer
-from bot.claude import stream_claude
-from bot.process import _active_procs
-from bot.restart_recovery import RestartRecoveryService
-from bot.sdk_session import HAS_SDK, cleanup_idle_sessions, shutdown_sdk_sessions
-from bot import handlers
-from commands import register_all, ALL_COMMANDS
 
 
 def main() -> None:
@@ -63,6 +66,7 @@ def main() -> None:
     async def _monitor_cpu_usage() -> None:
         """Monitor bot CPU usage and log warnings if it spikes."""
         import os
+
         import psutil
         bot_pid = os.getpid()
         process = psutil.Process(bot_pid)
@@ -118,7 +122,10 @@ def main() -> None:
             )
             child_pids = set()
             if children_result.returncode == 0:
-                child_pids = {int(p) for p in children_result.stdout.strip().split("\n") if p.strip().isdigit()}
+                child_pids = {
+                    int(p) for p in children_result.stdout.strip().split("\n")
+                    if p.strip().isdigit()
+                }
 
             # Orphans = all claude pids - children of this bot
             orphans = [p for p in all_pids if p not in child_pids]
@@ -128,18 +135,14 @@ def main() -> None:
 
             # Kill orphans (SIGTERM first, then SIGKILL)
             for pid in orphans:
-                try:
+                with contextlib.suppress(Exception):
                     subprocess.run(["kill", str(pid)], check=False)
-                except Exception:
-                    pass
             # Give them 2 seconds to gracefully exit
             await asyncio.sleep(2)
             # Force kill any survivors
             for pid in orphans:
-                try:
+                with contextlib.suppress(Exception):
                     subprocess.run(["kill", "-9", str(pid)], check=False)
-                except Exception:
-                    pass
 
             infra_logger.info("Cleaned up %d orphan claude process(es)", len(orphans))
             logger.info("Cleaned up %d orphan claude process(es)", len(orphans))
@@ -175,7 +178,7 @@ def main() -> None:
 
         # Start CPU monitoring task
         try:
-            import psutil
+            import psutil  # noqa: F401
             asyncio.create_task(_monitor_cpu_usage())
             logger.info("CPU monitoring task started")
         except ImportError:

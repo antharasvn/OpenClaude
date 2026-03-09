@@ -1,11 +1,11 @@
 """Per-chat workspace creation, symlinks, memory."""
 
+import logging
 import os
 import shutil
 from pathlib import Path
 
-from bot.config import WORKSPACES_DIR, WORKING_DIR
-import logging
+from bot.config import WORKING_DIR, WORKSPACES_DIR
 
 logger = logging.getLogger(__name__)
 

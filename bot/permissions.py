@@ -1,12 +1,12 @@
 """Security rules (blocked patterns, permission handler, env building)."""
 
+import logging
 import os
 import re
 import shlex
 from pathlib import Path
 
 from bot.config import ALL_TOOLS, CLAUDE_MODEL
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -122,18 +122,30 @@ def make_permission_handler(is_admin: bool, workspace: str):
                             resolved = os.path.realpath(token)
                             if resolved.startswith("/") and not resolved.startswith(workspace):
                                 return PermissionResultDeny(
-                                    message="BLOCKED: You can only change permissions on files within your workspace.")
+                                    message=(
+                                        "BLOCKED: You can only change"
+                                        " permissions on files within"
+                                        " your workspace."
+                                    ),
+                                )
                     except ValueError:
                         pass
 
-                if re.search(r"\brm\s+.*-[a-zA-Z]*r[a-zA-Z]*f|\brm\s+.*-[a-zA-Z]*f[a-zA-Z]*r", cmd, re.IGNORECASE):
+                if re.search(
+                    r"\brm\s+.*-[a-zA-Z]*r[a-zA-Z]*f|\brm\s+.*-[a-zA-Z]*f[a-zA-Z]*r",
+                    cmd, re.IGNORECASE,
+                ):
                     try:
                         tokens = shlex.split(cmd)
                         for token in tokens:
                             resolved = os.path.realpath(token)
                             if resolved.startswith("/") and not resolved.startswith(workspace):
                                 return PermissionResultDeny(
-                                    message="BLOCKED: You can only delete files within your workspace.")
+                                    message=(
+                                        "BLOCKED: You can only delete"
+                                        " files within your workspace."
+                                    ),
+                                )
                     except ValueError:
                         pass
 
@@ -148,7 +160,11 @@ def make_permission_handler(is_admin: bool, workspace: str):
 
                 if _BLOCKED_WRITE_PATHS.search(filepath):
                     return PermissionResultDeny(
-                        message=f"BLOCKED: You are not allowed to modify this protected file: {filepath}")
+                        message=(
+                            "BLOCKED: You are not allowed to modify"
+                            f" this protected file: {filepath}"
+                        ),
+                    )
 
         return PermissionResultAllow(updated_input=input_data)
 
@@ -199,8 +215,9 @@ def _make_task_posttool_hook():
 def build_sdk_options(is_admin: bool, cwd: str, thread_id: int,
                       session_id: str | None, streaming: bool):
     """Build ClaudeCodeOptions for an SDK session."""
-    from bot.sdk_session import ClaudeCodeOptions
     from claude_code_sdk.types import HookMatcher
+
+    from bot.sdk_session import ClaudeCodeOptions
     env = build_env(is_admin, cwd, thread_id)
     return ClaudeCodeOptions(
         allowed_tools=ALL_TOOLS.split(","),

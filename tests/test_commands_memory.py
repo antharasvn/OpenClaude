@@ -1,22 +1,19 @@
 """Tests for commands/memory.py — /memory, /daily, /save, /remember, /forget, /history."""
 
-import html
-from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from commands.memory import (
-    cmd_memory,
     cmd_daily,
-    cmd_save,
-    cmd_remember,
     cmd_forget,
     cmd_history,
+    cmd_memory,
+    cmd_remember,
+    cmd_save,
     register,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

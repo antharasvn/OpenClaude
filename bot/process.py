@@ -1,7 +1,6 @@
 """OS-level process management for active Claude subprocesses."""
 
 import asyncio
-
 import logging
 
 logger = logging.getLogger(__name__)
