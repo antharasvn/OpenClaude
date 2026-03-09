@@ -481,9 +481,12 @@ class StreamingSession:
         if response_text:
             latex_blocks = extract_latex_blocks(response_text)
             if latex_blocks:
-                import tempfile
+                import tempfile, functools
+                loop = asyncio.get_event_loop()
                 with tempfile.TemporaryDirectory() as tmpdir:
-                    png_paths = render_all_latex(response_text, tmpdir)
+                    png_paths = await loop.run_in_executor(
+                        None, functools.partial(render_all_latex, response_text, tmpdir)
+                    )
                     if len(png_paths) >= 2:
                         # Send as a media group (album)
                         from telegram import InputMediaPhoto

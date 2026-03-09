@@ -14,7 +14,7 @@ from bot.config import SESSION_FILE  # noqa: F811 — kept so patches on the mod
 # is picked up at runtime (the lambda reads the module attribute each call).
 _cache = FileBackedCache(
     lambda: sys.modules[__name__].SESSION_FILE,  # type: ignore[arg-type]
-    flush_interval=1.0,
+    flush_interval=5.0,
     mode="debounce",
 )
 
