@@ -117,6 +117,25 @@ def _find_pinchtab_port() -> int | None:
     return None
 
 
+def _find_cdp_port() -> int | None:
+    """Discover Chrome's CDP port from listening sockets."""
+    try:
+        result = subprocess.run(
+            ["ss", "-tlnp"],
+            capture_output=True, text=True, timeout=5,
+        )
+        for line in result.stdout.splitlines():
+            if "chrome" in line and "pinchtab" not in line:
+                for part in line.split():
+                    if ":" in part and not part.startswith("users"):
+                        port_str = part.rsplit(":", 1)[-1]
+                        if port_str.isdigit():
+                            return int(port_str)
+    except Exception:
+        pass
+    return None
+
+
 def _autocrop_png(path: str) -> bool:
     """Crop whitespace from a PNG, leaving a small padding."""
     try:
@@ -203,42 +222,67 @@ try {{
         b64 = base64.b64encode(html.encode()).decode()
         data_url = f"data:text/html;base64,{b64}"
 
-        nav_payload = json.dumps({"url": data_url})
-        subprocess.run(
+        nav_payload = json.dumps({"url": data_url, "newTab": True})
+        nav_result = subprocess.run(
             ["curl", "-s", "-X", "POST", f"{base_url}/navigate",
              "-H", "Content-Type: application/json", "-d", nav_payload],
             timeout=10, capture_output=True, check=True,
         )
+
+        # Extract tabId from navigate response
+        tab_id = None
+        try:
+            nav_data = json.loads(nav_result.stdout)
+            tab_id = nav_data.get("tabId")
+        except Exception:
+            pass
+
         time.sleep(2.5)  # Wait for KaTeX CDN + JS render
 
-        # Take screenshot
-        result = subprocess.run(
-            ["curl", "-s", f"{base_url}/screenshot"],
-            timeout=15, capture_output=True, check=True,
-        )
-        if len(result.stdout) < 100:
-            logger.debug("KaTeX screenshot response too small (%d bytes)", len(result.stdout))
-            return False
-
-        # pinchtab returns JSON {"base64": "<png_base64>"} — decode it
         try:
-            data = json.loads(result.stdout)
-            png_bytes = base64.b64decode(data["base64"])
-        except Exception:
-            # Fallback: assume raw PNG bytes
-            png_bytes = result.stdout
+            # Take screenshot (pass tabId if available)
+            screenshot_url = f"{base_url}/screenshot"
+            if tab_id:
+                screenshot_url += f"?tabId={tab_id}"
+            result = subprocess.run(
+                ["curl", "-s", screenshot_url],
+                timeout=15, capture_output=True, check=True,
+            )
+            if len(result.stdout) < 100:
+                logger.debug("KaTeX screenshot response too small (%d bytes)", len(result.stdout))
+                return False
 
-        if len(png_bytes) < 1000:
-            logger.debug("KaTeX PNG too small (%d bytes)", len(png_bytes))
-            return False
+            # pinchtab returns JSON {"base64": "<png_base64>"} — decode it
+            try:
+                data = json.loads(result.stdout)
+                png_bytes = base64.b64decode(data["base64"])
+            except Exception:
+                # Fallback: assume raw PNG bytes
+                png_bytes = result.stdout
 
-        with open(output_path, "wb") as f:
-            f.write(png_bytes)
+            if len(png_bytes) < 1000:
+                logger.debug("KaTeX PNG too small (%d bytes)", len(png_bytes))
+                return False
 
-        # Crop whitespace
-        _autocrop_png(output_path)
+            with open(output_path, "wb") as f:
+                f.write(png_bytes)
 
-        return True
+            # Crop whitespace
+            _autocrop_png(output_path)
+
+            return True
+        finally:
+            # Close the tab to prevent Chrome tab leak
+            if tab_id:
+                cdp_port = _find_cdp_port()
+                if cdp_port:
+                    try:
+                        subprocess.run(
+                            ["curl", "-s", f"http://localhost:{cdp_port}/json/close/{tab_id}"],
+                            capture_output=True, timeout=5,
+                        )
+                    except Exception:
+                        pass
 
     except Exception:
         logger.debug("KaTeX render failed: %s", expression, exc_info=True)
