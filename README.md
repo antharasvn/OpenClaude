@@ -16,64 +16,115 @@ You (Telegram) --> bot/ package --> Claude Code SDK --> Response --> You (Telegr
 4. Tool progress is shown live, then the response is converted from markdown to Telegram HTML
 5. Session IDs are saved so conversations persist across messages
 
+## Architecture
+
+The bot follows a **hexagonal (ports & adapters) architecture** in `bot/core/`:
+
+- **Models** (`core/models.py`) -- domain objects like `UserMessage`, `ChatSession`, `StreamState`
+- **Ports** (`core/ports.py`) -- abstract protocols (`AICompletionPort`, `SessionRepository`) that define boundaries
+- **Use Cases** (`core/use_cases.py`) -- business logic (`SessionService`, `StreamTrackingService`)
+- **Repositories** (`core/repositories.py`) -- concrete implementations: `JsonFile*` for production, `InMemory*` for tests
+
+Key subsystems:
+
+- **Streaming backends** (`backends.py`) -- SDK and subprocess backends for Claude communication
+- **StreamingSession** (`streaming_session.py`) -- state machine for live-updating Telegram messages during Claude responses
+- **LaTeX rendering** (`latex_render.py`) -- KaTeX rendering via pinchtab headless Chrome; falls back to matplotlib
+- **File attachments** (`attachments.py`) -- `📎` marker parsing for sending files back to users
+- **Message batching** (`batching.py`) -- groups rapid-fire messages before sending to Claude
+- **Restart recovery** (`restart_recovery.py`) -- notifies users of interrupted streams after unexpected restarts
+
+## Features
+
+- **Hexagonal architecture** -- clean separation of domain logic, ports, and adapters in `bot/core/`
+- **Streaming live updates** -- Claude's responses stream to Telegram in real time with tool-use indicators
+- **LaTeX rendering** -- mathematical expressions rendered via KaTeX (pinchtab headless Chrome) with matplotlib fallback
+- **File attachments** -- Claude can send files back to users via `📎` markers (photos, documents, audio, video)
+- **Per-user workspace isolation** -- each user gets their own sandboxed workspace at `workspaces/c{chat_id}/`
+- **Session continuity** -- conversations persist across messages using Claude's `--resume` flag
+- **Full tool access** -- Claude can read/write files, search the web, run shell commands, and more
+- **Memory system** -- 3-tier memory: workspace-wide, per-topic, and daily session logs
+- **Voice messages** -- voice notes and audio files are transcribed via Deepgram and routed to Claude
+- **File and photo handling** -- documents and photos are downloaded and made available to Claude
+- **Telegram HTML rendering** -- markdown responses are converted to Telegram-compatible HTML
+- **Message splitting** -- long responses are automatically split at paragraph/sentence boundaries
+- **User authorization** -- only allowed Telegram user IDs can interact with the bot
+- **Telegram sender skill** -- Claude can proactively send messages and files via Telegram
+- **Heartbeat & daily briefs** -- scheduled skills for periodic check-ins and morning briefings
+- **218 tests** with GitHub Actions CI (lint via ruff + pytest)
+
 ## Project Structure
 
 ```
 OpenClaude/
-├── bot/                         # Main bot package (python -m bot)
-│   ├── __main__.py              # Entry point
-│   ├── app.py                   # Application builder, startup, shutdown
-│   ├── config.py                # Configuration, constants, authorization
-│   ├── logging_setup.py         # Logger setup (infra, workspace loggers)
-│   ├── sessions.py              # Session persistence (load/save/clear)
-│   ├── streams.py               # Active stream tracking (crash recovery)
-│   ├── sdk_session.py           # SDK session lifecycle management
-│   ├── workspaces.py            # Per-chat workspace creation, symlinks
-│   ├── permissions.py           # Security rules, env building, permission handler
-│   ├── claude.py                # Claude integration (streaming, SDK/subprocess)
-│   ├── renderer.py              # Markdown to Telegram HTML + message splitting
-│   ├── handlers.py              # Message/media handlers, batching, streaming UI
-│   └── transcribe.py            # Voice transcription bridge
-├── commands/                    # Slash command modules
-│   ├── admin.py                 # /sessions, /restart, /logs, /usage
-│   ├── config.py                # /stream, /verbose, /respond
-│   ├── memory.py                # /memory, /save, /remember, /forget, /history
-│   └── utility.py               # /model, /whoami, /files, /clean
-├── telegram-bot.py              # Backward-compatible entry point
-├── transcribe.py                # Voice transcription (Deepgram)
-├── bin/                         # Operational scripts
-│   ├── start.sh                 # Start the bot (systemd or nohup)
-│   ├── stop.sh                  # Stop the bot
-│   ├── restart.sh               # Restart the bot
-│   ├── setup.sh                 # Interactive setup wizard
-│   └── ouroboros.sh             # Watchdog — auto-restarts dead bot
-├── guard/                       # Security hooks
-│   ├── guard.sh                 # Blocks dangerous Bash commands
-│   └── guard-write.sh           # Blocks writes to protected files
-├── services/                    # Daemon configs
-│   ├── systemd/                 # Linux systemd units
-│   │   ├── claude-telegram-bot.service
-│   │   └── ouroboros.service
-│   └── launchd/                 # macOS launch agents
-│       ├── com.claude.telegram-bot.plist
-│       └── com.claude.daily-brief.plist
-├── skills/                      # Skill scripts
-│   ├── telegram-sender/         # Send messages/files via Telegram API
-│   ├── heartbeat/               # Periodic check-in skill
-│   └── daily-brief/             # Daily briefing skill
-├── memory/                      # Memory system
-│   ├── MEMORY.md                # Long-term memory
-│   └── YYYY-MM-DD.md            # Daily memory files
-├── CLAUDE.md                    # Claude's operating instructions
-├── IDENTITY.md                  # Agent identity and values (filled on first run)
-├── USER.md                      # User info (filled on first run)
-├── TOOLS.md                     # Available tools and environment
-├── BOOTSTRAP.md                 # First-run ritual (self-deletes)
-├── .claude/
-│   └── settings.json            # Claude Code permissions & hooks
-├── .env.example                 # Environment template
-├── .gitignore
-└── requirements.txt
+├── bot/                          # Main bot package (python -m bot)
+│   ├── __main__.py               # Entry point
+│   ├── app.py                    # Application builder, startup, shutdown
+│   ├── attachments.py            # 📎 file marker parsing
+│   ├── auth.py                   # Authorization helpers
+│   ├── backends.py               # Streaming backends (SDK and subprocess)
+│   ├── batching.py               # Message batching logic
+│   ├── cache.py                  # FileBackedCache (write-behind disk cache)
+│   ├── claude.py                 # Claude integration (thin wrapper)
+│   ├── config.py                 # Configuration, constants
+│   ├── core/                     # Hexagonal architecture core
+│   │   ├── models.py             # UserMessage, ChatSession, StreamState
+│   │   ├── ports.py              # AICompletionPort, SessionRepository protocols
+│   │   ├── repositories.py       # JsonFile* (prod) + InMemory* (test) repos
+│   │   └── use_cases.py          # SessionService, StreamTrackingService
+│   ├── events.py                 # Event type definitions
+│   ├── exceptions.py             # Custom exception classes
+│   ├── formatting.py             # Text formatting utilities
+│   ├── handlers.py               # Message handlers, streaming UI
+│   ├── latex_render.py           # KaTeX rendering via pinchtab headless Chrome
+│   ├── logging_setup.py          # Logger setup
+│   ├── media.py                  # Media processing utilities
+│   ├── media_handlers.py         # Photo/video/audio/document handlers
+│   ├── permissions.py            # Security rules, env building
+│   ├── process.py                # Subprocess management
+│   ├── prompts.py                # System prompt construction
+│   ├── renderer.py               # TelegramRenderer + message splitting
+│   ├── restart_recovery.py       # Recovery after unexpected restart
+│   ├── routing.py                # Message routing logic
+│   ├── sdk_session.py            # SDKSession class, idle cleanup
+│   ├── sessions.py               # Session persistence
+│   ├── streaming_session.py      # StreamingSession (streaming UI state machine)
+│   ├── streams.py                # Active stream tracking
+│   ├── telegram_sender.py        # File group sending, rendered message sending
+│   ├── telegram_utils.py         # Telegram API helpers
+│   ├── transcribe.py             # Voice transcription bridge
+│   ├── types.py                  # Shared type definitions
+│   ├── utils.py                  # Miscellaneous utilities
+│   └── workspaces.py             # Per-chat workspace creation, symlinks
+├── commands/                     # Slash command modules
+│   ├── admin.py                  # /sessions, /restart, /logs, /usage
+│   ├── config.py                 # /stream, /verbose, /respond
+│   ├── memory.py                 # /memory, /save, /remember, /forget, /history
+│   └── utility.py                # /model, /whoami, /files, /clean
+├── tests/                        # Test suite (218 tests)
+├── bin/                          # Operational scripts
+│   ├── start.sh                  # Start the bot (systemd or nohup)
+│   ├── stop.sh / restart.sh      # Stop / restart
+│   ├── safe-restart.sh           # Graceful restart (waits for streams)
+│   ├── setup.sh                  # Interactive setup wizard
+│   └── ouroboros.sh              # Watchdog — auto-restarts dead bot
+├── guard/                        # Security hooks
+│   ├── guard.sh                  # Blocks dangerous Bash commands
+│   └── guard-write.sh            # Blocks writes to protected files
+├── services/                     # Daemon configs
+│   ├── systemd/                  # claude-telegram-bot, ouroboros, pinchtab
+│   └── launchd/                  # macOS launch agents
+├── skills/                       # Skill scripts
+│   ├── telegram-sender/          # Send messages/files via Telegram API
+│   ├── heartbeat/                # Periodic check-in skill
+│   ├── daily-brief/              # Daily briefing skill
+│   └── ...                       # More skills (ai-news, moodle, ssh-vps, etc.)
+├── .github/workflows/ci.yml     # GitHub Actions CI (ruff lint + pytest)
+├── pyproject.toml                # Python package config
+├── requirements.txt              # Legacy dependency list
+├── telegram-bot.py               # Backward-compatible entry point
+├── CLAUDE.md                     # Claude's operating instructions
+└── .env.example                  # Environment template
 ```
 
 ## Setup
@@ -107,7 +158,7 @@ This will check prerequisites, configure your `.env`, install Python dependencie
 
 2. **Install Python dependencies:**
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
 
 3. **Create your `.env` file:**
@@ -182,19 +233,6 @@ Configure the check interval via `OUROBOROS_INTERVAL` (default: 30 seconds).
 | `/restart` | Graceful bot restart (admin) |
 | `/logs` | Show recent infrastructure logs (admin) |
 | `/usage` | Show usage statistics (admin) |
-
-## Features
-
-- **Session continuity** -- conversations persist across messages using Claude's `--resume` flag
-- **Full tool access** -- Claude can read/write files, search the web, run shell commands, and more
-- **Memory system** -- long-term memory (`memory/MEMORY.md`) and daily journals (`memory/YYYY-MM-DD.md`)
-- **Voice messages** -- send voice notes or audio files; they are transcribed via Deepgram and routed to Claude
-- **File and photo handling** -- send documents or photos; Claude receives the file path and can read/analyze them
-- **Telegram HTML rendering** -- markdown responses are converted to Telegram-compatible HTML
-- **Message splitting** -- long responses are automatically split at paragraph/sentence boundaries
-- **User authorization** -- only allowed Telegram user IDs can interact with the bot
-- **Telegram sender skill** -- Claude can proactively send messages and files via Telegram
-- **Heartbeat & daily briefs** -- scheduled skills for periodic check-ins and morning briefings
 
 ### Voice Messages
 
