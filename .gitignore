@@ -1,11 +1,14 @@
 # Environment
 .env
+*.env
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
+.venv/
+venv/
 dist/
 build/
 *.egg
@@ -34,17 +37,17 @@ submission.csv
 
 # Temp working files
 temp/
+*/temp/
 
 # Per-chat workspaces
 workspaces/
 
 # Runtime
-.bot.pid
-.ouroboros.pid
+*.pid
+*.log
 .active-streams.json
 .restart-state.json
 .restart-messages.json
-bot.log
 logs/
 .last-log-cleanup
 
@@ -57,6 +60,15 @@ backups/
 # OS
 .DS_Store
 Thumbs.db
+
+# Testing & linting caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Databases
+*.sqlite
+*.db
 
 # IDE
 .vscode/
