@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from telegram import Update
 from telegram.constants import ParseMode
+from telegram.error import TimedOut
 from telegram.ext import ContextTypes
 
 from bot.config import get_thread_id
@@ -62,8 +63,11 @@ async def send_file_group(
             await bot.send_media_group(
                 chat_id=chat_id, media=media, message_thread_id=thread_id,
             )
-        except Exception:
-            logger.warning("Media group send failed, falling back to individual sends")
+        except TimedOut as e:
+            logger.warning("Media group send timed out (likely sent anyway): %s", e)
+            # Don't fall back — the API call likely succeeded
+        except Exception as e:
+            logger.warning("Media group send failed (%s), falling back to individual sends", e)
             for f in files:
                 try:
                     await send_single_file(bot, chat_id, f, thread_id)
