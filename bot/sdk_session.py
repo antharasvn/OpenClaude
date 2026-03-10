@@ -94,7 +94,7 @@ def _apply_sdk_compat_patch() -> None:
 
 _apply_sdk_compat_patch()
 
-DISCONNECT_TIMEOUT = 10  # seconds
+DISCONNECT_TIMEOUT = 3  # seconds
 
 # Cache the bot's own process group so we never kill ourselves
 _BOT_PGID = os.getpgid(os.getpid())
@@ -193,24 +193,15 @@ class SDKSession:
             return None
 
     def hard_kill(self) -> None:
-        """Kill the subprocess and all its descendants.
+        """Kill the subprocess and all its descendants immediately via SIGKILL.
 
-        Sends SIGTERM first so the subprocess can save session state,
-        waits briefly, then escalates to SIGKILL for any survivors.
+        Session state is already saved on disk after ResultMessage, so
+        SIGKILL is safe at this point.  Skipping SIGTERM avoids a blocking
+        2-second sleep that stalls the event loop.
         """
         pid = self._get_subprocess_pid()
         if not pid:
             return
-        # SIGTERM first — give the process a chance to save session state
-        try:
-            pgid = os.getpgid(pid)
-            if pgid != _BOT_PGID:
-                os.killpg(pgid, signal.SIGTERM)
-                logger.info("Sent SIGTERM to process group pgid=%d (from pid=%d)", pgid, pid)
-        except (ProcessLookupError, PermissionError, OSError):
-            pass
-        time.sleep(2)
-        # SIGKILL any survivors
         _killpg_safe(pid)
         _kill_tree(pid)
 

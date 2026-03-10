@@ -172,19 +172,11 @@ async def stream_sdk(
                        "duration_ms": getattr(msg, "duration_ms", None),
                        "duration_api_ms": getattr(msg, "duration_api_ms", None)}
 
-        # Drain any stale messages left in the SDK's internal buffer from this
-        # query.  Without this, leftover trailing messages (after ResultMessage)
-        # would be consumed by the *next* query's receive_response(), making
-        # responses appear "one turn behind."
-        with contextlib.suppress(Exception):
-            query = getattr(getattr(sdk_session, "client", None), "_query", None)
-            buf = getattr(query, "_message_receive", None)
-            if buf is not None:
-                while True:
-                    try:
-                        buf.receive_nowait()
-                    except Exception:
-                        break
+        # Disconnect and remove the session so the next query starts with a
+        # clean connection.  This eliminates the race condition where trailing
+        # messages in the SDK's internal buffer leak into the next query.
+        await sdk_session.disconnect()
+        sdk_session_manager.pop(skey)
 
     except Exception as e:
         if stop_event and stop_event.is_set():
