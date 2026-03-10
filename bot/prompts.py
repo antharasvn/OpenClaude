@@ -1,8 +1,11 @@
 """Prompt engineering helpers — preamble building, restart context."""
 
+import subprocess
 from pathlib import Path
 
 from bot.config import WORKSPACES_DIR
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # ---------------------------------------------------------------------------
 # Restart context helpers — breadcrumb file for crash recovery
@@ -36,6 +39,44 @@ def _read_restart_context(chat_id: int) -> str | None:
         text = path.read_text()
         path.unlink(missing_ok=True)
         return text.strip() or None
+    except OSError:
+        return None
+
+
+def _get_current_commit() -> str:
+    """Return the short hash of the current git HEAD commit."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(PROJECT_ROOT), "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=5,
+        )
+        return result.stdout.strip() if result.returncode == 0 else "unknown"
+    except Exception:
+        return "unknown"
+
+
+def _restart_commit_path(chat_id: int) -> Path:
+    """Return the path to the restart-commit file for a chat."""
+    return WORKSPACES_DIR / f"c{chat_id}" / "temp" / "restart-commit.txt"
+
+
+def _record_restart_commit(chat_id: int) -> None:
+    """Write the current git commit hash to restart-commit.txt (best-effort)."""
+    path = _restart_commit_path(chat_id)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_get_current_commit())
+    except OSError:
+        pass
+
+
+def _read_restart_commit(chat_id: int) -> str | None:
+    """Read and delete the restart-commit file. Returns commit hash or None."""
+    path = _restart_commit_path(chat_id)
+    try:
+        text = path.read_text().strip()
+        path.unlink(missing_ok=True)
+        return text or None
     except OSError:
         return None
 

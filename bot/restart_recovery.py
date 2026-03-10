@@ -9,7 +9,7 @@ from typing import Any
 
 from bot.config import ACTIVE_STREAMS_FILE, RESTART_MESSAGES_FILE, RESTART_STATE_FILE
 from bot.logging_setup import infra_logger
-from bot.prompts import _read_restart_context
+from bot.prompts import _get_current_commit, _read_restart_commit, _read_restart_context
 from bot.renderer import TelegramRenderer, split_message
 from bot.sessions import get_session_id
 from bot.workspaces import get_working_dir
@@ -170,30 +170,51 @@ class RestartRecoveryService:
                 )
 
     @staticmethod
+    def _build_git_state(cid: int) -> str:
+        """Build a git state line for the resume message."""
+        old_commit = _read_restart_commit(cid)
+        current_commit = _get_current_commit()
+        if not old_commit or old_commit == "unknown":
+            return f"Git state: now on {current_commit}."
+        if old_commit == current_commit:
+            return f"Git state: commit {current_commit} (unchanged)."
+        return (
+            f"Git state: was on {old_commit}, now on {current_commit} "
+            "(ROLLBACK OCCURRED — a bad commit was reverted by safe-restart)."
+        )
+
+    @staticmethod
     def _build_resume_message(cid: int, entry: dict) -> str:
         """Build the system message used to prompt Claude to resume."""
+        git_state = RestartRecoveryService._build_git_state(cid)
         restart_ctx = _read_restart_context(cid)
+
         if restart_ctx:
             return (
-                "[System: The bot just restarted. Your previous response "
-                "was interrupted mid-turn. Here is what you were doing:\n\n"
-                f"{restart_ctx}\n\n"
-                "Briefly notify the user that you restarted and are continuing, "
-                "then immediately resume and complete the task without waiting "
-                "for confirmation.]"
+                "[System: The bot restarted mid-generation.\n\n"
+                f"{git_state}\n\n"
+                f"What you were doing:\n{restart_ctx}\n\n"
+                "The restart was likely triggered by the safe-restart hook "
+                "(which rolls back failed commits if needed).\n\n"
+                "Briefly tell the user: the bot restarted, "
+                "whether a rollback happened, and what you were doing. "
+                "Then immediately continue or redo the task. "
+                "Do not wait for confirmation.]"
             )
         user_msg_hint = entry.get("user_message", "")
         if user_msg_hint:
             return (
-                "[System: The bot just restarted. Your previous response "
-                f'was interrupted. The user\'s message was: "{user_msg_hint}". '
+                "[System: The bot restarted mid-generation.\n\n"
+                f"{git_state}\n\n"
+                f'The user\'s message was: "{user_msg_hint}".\n\n'
                 "Briefly notify the user that you restarted and are continuing, "
                 "then immediately resume and complete the task without waiting "
                 "for confirmation.]"
             )
         return (
-            "[System: The bot just restarted. Your previous response was "
-            "interrupted. Briefly notify the user that you restarted and "
+            "[System: The bot restarted mid-generation.\n\n"
+            f"{git_state}\n\n"
+            "Briefly notify the user that you restarted and "
             "are continuing, then resume the task without waiting for "
             "confirmation.]"
         )

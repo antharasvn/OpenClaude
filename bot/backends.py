@@ -23,7 +23,7 @@ from bot.formatting import format_tool_status
 from bot.logging_setup import _summarize_input
 from bot.permissions import build_env, build_sdk_options
 from bot.process import _active_procs
-from bot.prompts import _append_restart_context, _clear_restart_context
+from bot.prompts import _append_restart_context, _clear_restart_context, _record_restart_commit
 from bot.sdk_session import (
     HAS_SDK,
     AssistantMessage,
@@ -86,6 +86,7 @@ async def stream_sdk(
             return
 
     logger.info("Calling Claude (SDK) for user %d (session: %s)", user_id, sid or "new")
+    _record_restart_commit(chat_id)
 
     result_text = None
     new_session_id = None
@@ -126,7 +127,7 @@ async def stream_sdk(
                         tool_active_count += 1
                         ws_log.info("Tool: %s — %s", block.name, _summarize_input(block.input))
                         status = format_tool_status(block.name, block.input)
-                        _append_restart_context(chat_id, f"Tool: {status}")
+                        _append_restart_context(chat_id, f"Tool call [{block.name}]: {status}")
                         yield {"type": "tool_use", "status": status}
                     elif isinstance(block, ToolResultBlock):
                         tool_active_count -= 1
@@ -232,6 +233,7 @@ async def stream_subprocess(
         cmd.extend(["--model", CLAUDE_MODEL])
 
     logger.info("Calling Claude (subprocess) for user %d (session: %s)", user_id, sid or "new")
+    _record_restart_commit(chat_id)
 
     env = build_env(is_admin, cwd, thread_id)
 
@@ -327,7 +329,7 @@ async def stream_subprocess(
                         tool_input = block.get("input", {})
                         ws_log.info("Tool: %s — %s", tool_name, _summarize_input(tool_input))
                         status = format_tool_status(tool_name, tool_input)
-                        _append_restart_context(chat_id, f"Tool: {status}")
+                        _append_restart_context(chat_id, f"Tool call [{tool_name}]: {status}")
                         yield {"type": "tool_use", "status": status}
             elif event_type == "tool_result":
                 _append_restart_context(chat_id, "Tool completed")
