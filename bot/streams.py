@@ -82,6 +82,17 @@ def get_stream_session_id(chat_id: int, thread_id: int, user_id: int) -> str | N
     return None
 
 
+def set_stream_live_message_id(chat_id: int, thread_id: int, user_id: int,
+                               message_id: int) -> None:
+    """Store the live streaming message ID in the active stream entry."""
+    key = session_key(chat_id, thread_id, user_id)
+    entry = _cache.get(key)
+    if isinstance(entry, dict):
+        entry["live_message_id"] = message_id
+        _cache.set(key, entry)
+        _cache.flush_now()
+
+
 def remove_active_stream(chat_id: int, thread_id: int, user_id: int) -> None:
     """Remove a completed stream."""
     key = session_key(chat_id, thread_id, user_id)

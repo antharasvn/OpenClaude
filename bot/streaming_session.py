@@ -336,6 +336,13 @@ class StreamingSession:
         try:
             if self.live_msg is None:
                 self.live_msg = await self._send_new_message(display)
+                # Persist live message ID for restart recovery
+                from bot.streams import set_stream_live_message_id
+                set_stream_live_message_id(
+                    self.chat_id, self.thread_id,
+                    self.tg_thread_id or self.thread_id,
+                    self.live_msg.message_id,
+                )
             else:
                 await self.live_msg.edit_text(display)
             self.last_live_edit = asyncio.get_event_loop().time()

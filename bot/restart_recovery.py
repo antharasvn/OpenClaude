@@ -20,6 +20,7 @@ from bot.workspaces import get_working_dir
 logger = logging.getLogger(__name__)
 
 RESUME_TIMEOUT = 120  # seconds — kill resume if it takes longer
+_RESTART_INDICATOR = "\u267b\ufe0f \u041f\u0435\u0440\u0435\u0437\u0430\u043f\u0443\u0441\u043a..."
 
 
 class RestartRecoveryService:
@@ -124,6 +125,13 @@ class RestartRecoveryService:
         # Group chats use uid=0 for shared sessions (same as handlers.py)
         session_uid = 0 if cid < 0 else uid
         tg_thread_id = tid or None
+        live_message_id: int | None = entry.get("live_message_id")
+
+        # Delete the stuck live message immediately (same as normal flow after generation)
+        if live_message_id:
+            with contextlib.suppress(Exception):
+                await self._bot.delete_message(chat_id=cid, message_id=live_message_id)
+
         try:
             session_id = get_session_id(cid, tid, session_uid)
             if not session_id:
@@ -232,6 +240,13 @@ class RestartRecoveryService:
                             " Send a message to continue."
                         ),
                         message_thread_id=tg_thread_id,
+                    )
+
+            # Delete the old stuck live message now that recovery is complete
+            if live_message_id:
+                with contextlib.suppress(Exception):
+                    await self._bot.delete_message(
+                        chat_id=cid, message_id=live_message_id,
                     )
 
             # Mark this session as having received rollback info via restart recovery
