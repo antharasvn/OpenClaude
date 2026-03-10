@@ -445,6 +445,13 @@ class StreamingSession:
         else:
             remaining = ""
 
+        # Guard: if streaming was active (live_text populated) and we already
+        # finalized messages, the content was shown to the user via live
+        # message editing — don't send a duplicate text message.
+        # Files, images, and LaTeX are still sent normally below.
+        if self.finalized_msgs and self.live_text:
+            remaining = ""
+
         if not remaining and not image_urls and not file_segments:
             # Everything already displayed — just finalize live_msg if needed
             if self.live_msg:
