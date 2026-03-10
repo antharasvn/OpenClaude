@@ -340,7 +340,7 @@ class StreamingSession:
                 from bot.streams import set_stream_live_message_id
                 set_stream_live_message_id(
                     self.chat_id, self.thread_id,
-                    self.tg_thread_id or self.thread_id,
+                    getattr(self, 'session_user_id', 0),
                     self.live_msg.message_id,
                 )
             else:
