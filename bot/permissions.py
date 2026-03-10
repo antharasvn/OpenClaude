@@ -98,7 +98,10 @@ def build_env(is_admin: bool, cwd: str, thread_id: int) -> dict[str, str]:
 
 def make_permission_handler(is_admin: bool, workspace: str):
     """Build a can_use_tool callback that mirrors guard.sh / guard-write.sh logic."""
-    from bot.sdk_session import PermissionResultAllow, PermissionResultDeny
+    try:
+        from claude_code_sdk import PermissionResultAllow, PermissionResultDeny
+    except ImportError:
+        from bot._permission_types import PermissionResultAllow, PermissionResultDeny
 
     async def handler(tool_name, input_data, context):
         if tool_name == "Bash":
