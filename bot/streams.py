@@ -103,6 +103,27 @@ def clear_stream_live_message_id(chat_id: int, thread_id: int, user_id: int) -> 
         _cache.flush_now()
 
 
+def set_stream_status_msg_id(chat_id: int, thread_id: int, user_id: int,
+                              message_id: int) -> None:
+    """Store the tool-status message ID in the active stream entry."""
+    key = session_key(chat_id, thread_id, user_id)
+    entry = _cache.get(key)
+    if isinstance(entry, dict):
+        entry["status_msg_id"] = message_id
+        _cache.set(key, entry)
+        _cache.flush_now()
+
+
+def clear_stream_status_msg_id(chat_id: int, thread_id: int, user_id: int) -> None:
+    """Remove the status message ID (message was deleted successfully)."""
+    key = session_key(chat_id, thread_id, user_id)
+    entry = _cache.get(key)
+    if isinstance(entry, dict) and "status_msg_id" in entry:
+        del entry["status_msg_id"]
+        _cache.set(key, entry)
+        _cache.flush_now()
+
+
 def remove_active_stream(chat_id: int, thread_id: int, user_id: int) -> None:
     """Remove a completed stream."""
     key = session_key(chat_id, thread_id, user_id)

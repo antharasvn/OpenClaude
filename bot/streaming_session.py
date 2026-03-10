@@ -122,6 +122,23 @@ class StreamingSession:
             getattr(self, 'session_user_id', 0),
         )
 
+    def _save_status_msg_id(self, message_id: int) -> None:
+        """Persist the status message ID so restart recovery can delete it."""
+        from bot.streams import set_stream_status_msg_id
+        set_stream_status_msg_id(
+            self.chat_id, self.thread_id,
+            getattr(self, 'session_user_id', 0),
+            message_id,
+        )
+
+    def _clear_status_msg_id_cache(self) -> None:
+        """Clear the persisted status_msg_id after successful deletion."""
+        from bot.streams import clear_stream_status_msg_id
+        clear_stream_status_msg_id(
+            self.chat_id, self.thread_id,
+            getattr(self, 'session_user_id', 0),
+        )
+
     # ------------------------------------------------------------------
     # Event dispatch
     # ------------------------------------------------------------------
@@ -271,6 +288,7 @@ class StreamingSession:
         try:
             if self.status_msg is None:
                 self.status_msg = await self._send_new_message(text)
+                self._save_status_msg_id(self.status_msg.message_id)
             else:
                 await self.status_msg.edit_text(text)
             self.last_edit_time = asyncio.get_event_loop().time()
@@ -379,20 +397,27 @@ class StreamingSession:
     async def cleanup_on_stop(self) -> None:
         """Delete all messages when generation was stopped/cancelled."""
         if self.status_msg:
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(BaseException):
                 await self.status_msg.delete()
+            self.status_msg = None
         for fm in self.finalized_msgs:
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(BaseException):
                 await fm.delete()
         if self.live_msg:
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(BaseException):
                 await self.live_msg.delete()
 
     async def cleanup_status(self) -> None:
-        """Delete the tool-status message (always runs in finally)."""
+        """Delete the tool-status message (always runs in finally).
+
+        Uses BaseException suppression because this runs in finally blocks
+        where CancelledError (a BaseException, not Exception) may be pending.
+        """
         if self.status_msg:
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(BaseException):
                 await self.status_msg.delete()
+            self.status_msg = None
+            self._clear_status_msg_id_cache()
 
     async def delete_speculative_messages(self) -> None:
         """Delete speculative messages (used on silent/empty result)."""

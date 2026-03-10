@@ -126,11 +126,17 @@ class RestartRecoveryService:
         session_uid = 0 if cid < 0 else uid
         tg_thread_id = tid or None
         live_message_id: int | None = entry.get("live_message_id")
+        status_msg_id: int | None = entry.get("status_msg_id")
 
         # Delete the stuck live message immediately (same as normal flow after generation)
         if live_message_id:
             with contextlib.suppress(Exception):
                 await self._bot.delete_message(chat_id=cid, message_id=live_message_id)
+
+        # Delete orphaned tool-status message from previous generation
+        if status_msg_id:
+            with contextlib.suppress(Exception):
+                await self._bot.delete_message(chat_id=cid, message_id=status_msg_id)
 
         try:
             session_id = get_session_id(cid, tid, session_uid)

@@ -82,6 +82,17 @@ _stop_events: dict[str, asyncio.Event] = {}
 _streaming_tasks: dict[str, asyncio.Task] = {}
 
 
+def _get_stale_status_msg_id(chat_id: int, thread_id: int, user_id: int) -> int | None:
+    """Check for a persisted status_msg_id from a previous crashed/interrupted session."""
+    from bot.streams import load_active_streams
+    skey = session_key(chat_id, thread_id, user_id)
+    streams = load_active_streams()
+    entry = streams.get(skey)
+    if isinstance(entry, dict):
+        return entry.get("status_msg_id")
+    return None
+
+
 async def _typing_loop(bot, chat_id: int, thread_id: int | None = None) -> None:
     """Send 'typing' chat action periodically until cancelled."""
     try:
@@ -305,6 +316,14 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         return
 
     try:
+        # Delete any orphaned status message from a previous crashed session
+        from bot.streams import clear_stream_status_msg_id
+        stale_status_id = _get_stale_status_msg_id(chat_id, thread_id, session_user_id)
+        if stale_status_id:
+            with contextlib.suppress(Exception):
+                await context.bot.delete_message(chat_id=chat_id, message_id=stale_status_id)
+            clear_stream_status_msg_id(chat_id, thread_id, session_user_id)
+
         # Only register task/stop_event for primary calls -- auto-compact is nested
         # and must not clobber the outer call's registration.
         if not _is_compact:
