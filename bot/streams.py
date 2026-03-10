@@ -93,6 +93,16 @@ def set_stream_live_message_id(chat_id: int, thread_id: int, user_id: int,
         _cache.flush_now()
 
 
+def clear_stream_live_message_id(chat_id: int, thread_id: int, user_id: int) -> None:
+    """Remove the live streaming message ID (message was finalized, no longer deletable)."""
+    key = session_key(chat_id, thread_id, user_id)
+    entry = _cache.get(key)
+    if isinstance(entry, dict) and "live_message_id" in entry:
+        del entry["live_message_id"]
+        _cache.set(key, entry)
+        _cache.flush_now()
+
+
 def remove_active_stream(chat_id: int, thread_id: int, user_id: int) -> None:
     """Remove a completed stream."""
     key = session_key(chat_id, thread_id, user_id)

@@ -110,6 +110,19 @@ class StreamingSession:
         )
 
     # ------------------------------------------------------------------
+    # Live message ID cache helpers
+    # ------------------------------------------------------------------
+
+    def _clear_live_message_id_cache(self) -> None:
+        """Clear the persisted live_message_id so restart recovery won't
+        delete an already-finalized message."""
+        from bot.streams import clear_stream_live_message_id
+        clear_stream_live_message_id(
+            self.chat_id, self.thread_id,
+            getattr(self, 'session_user_id', 0),
+        )
+
+    # ------------------------------------------------------------------
     # Event dispatch
     # ------------------------------------------------------------------
 
@@ -170,6 +183,7 @@ class StreamingSession:
                 self._speculative_sent_len += len(block_text)
         self.sent_offset = len(self.live_text)
         self.live_msg = None
+        self._clear_live_message_id_cache()
 
     async def _on_tool_use(self, event: dict) -> None:
         """Handle tool invocation start — flush live text, update status."""
@@ -192,6 +206,7 @@ class StreamingSession:
                     await self.live_msg.delete()
             self.sent_offset = len(self.live_text)
             self.live_msg = None
+            self._clear_live_message_id_cache()
         self._speculative_sent_len = 0
         if self.show_tools:
             if self.current_active:
@@ -321,6 +336,7 @@ class StreamingSession:
                 self._speculative.append(self.live_msg)
                 self.sent_offset += split_pos
                 self.live_msg = None
+                self._clear_live_message_id_cache()
                 self.last_live_edit = 0
                 chunk_md = text[self.sent_offset:]
             # If finalization failed, skip — will retry on next partial
