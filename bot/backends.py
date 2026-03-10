@@ -191,25 +191,6 @@ async def stream_sdk(
         if result_text is None:
             yield {"type": "error", "text": f"Claude error: {e}"}
         return
-    finally:
-        # Always disconnect the persistent SDK connection after each query.
-        # The SDK's internal message buffer (anyio memory object stream) can
-        # retain stale messages from the previous query — e.g. stream_events
-        # or other messages that arrive after the ResultMessage.  When the
-        # next query calls receive_response(), these stale messages are
-        # consumed first, causing the "one turn behind" bug where the user
-        # sees the response to message N-1 instead of message N.
-        #
-        # Disconnecting after each query ensures a clean buffer.  The next
-        # query reconnects with --resume <session_id>, which correctly
-        # reloads the conversation context from the saved session.
-        if sdk_session.connected:
-            logger.debug(
-                "Disconnecting SDK session after query for user %d (session: %s)",
-                user_id, new_session_id or early_session_id or sid,
-            )
-            await sdk_session.disconnect()
-            sdk_session_manager.pop(skey)
 
     if result_text is None:
         logger.warning("No result message received from SDK")
