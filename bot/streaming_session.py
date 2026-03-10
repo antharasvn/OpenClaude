@@ -500,6 +500,10 @@ class StreamingSession:
         file_segments = [s for s in segments if isinstance(s, FileSegment)]
         cleaned_response = clean_file_markers(response_text)
 
+        # Extract LaTeX blocks early so the guard below won't skip them
+        from bot.latex_render import extract_latex_blocks
+        latex_blocks = extract_latex_blocks(response_text) if response_text else []
+
         # effective_offset: how much of response_text was already shown
         effective_offset = max(self.sent_offset, self._speculative_sent_len)
         if cleaned_response:
@@ -514,7 +518,7 @@ class StreamingSession:
         if self.finalized_msgs and self.live_text:
             remaining = ""
 
-        if not remaining and not image_urls and not file_segments:
+        if not remaining and not image_urls and not file_segments and not latex_blocks:
             # Everything already displayed — just finalize live_msg if needed
             if self.live_msg:
                 chunk_md = clean_file_markers(self.live_text[self.sent_offset:])
@@ -580,59 +584,57 @@ class StreamingSession:
                 logger.warning("Failed to send photo URL: %s", img_url)
 
         # Send LaTeX rendered images (grouped as album when multiple)
-        from bot.latex_render import extract_latex_blocks, render_all_latex
-        if response_text:
-            latex_blocks = extract_latex_blocks(response_text)
-            if latex_blocks:
-                import functools
-                import tempfile
-                loop = asyncio.get_event_loop()
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    png_paths = await loop.run_in_executor(
-                        None, functools.partial(render_all_latex, response_text, tmpdir)
-                    )
-                    if len(png_paths) >= 2:
-                        # Send as a media group (album)
-                        from telegram import InputMediaPhoto
-                        try:
-                            media = []
-                            open_files = []
-                            for png_path in png_paths:
-                                f = open(png_path, 'rb')  # noqa: SIM115
-                                open_files.append(f)
-                                media.append(InputMediaPhoto(media=f))
-                            await self._bot.send_media_group(
+        from bot.latex_render import render_all_latex
+        if latex_blocks:
+            import functools
+            import tempfile
+            loop = asyncio.get_event_loop()
+            with tempfile.TemporaryDirectory() as tmpdir:
+                png_paths = await loop.run_in_executor(
+                    None, functools.partial(render_all_latex, response_text, tmpdir)
+                )
+                if len(png_paths) >= 2:
+                    # Send as a media group (album)
+                    from telegram import InputMediaPhoto
+                    try:
+                        media = []
+                        open_files = []
+                        for png_path in png_paths:
+                            f = open(png_path, 'rb')  # noqa: SIM115
+                            open_files.append(f)
+                            media.append(InputMediaPhoto(media=f))
+                        await self._bot.send_media_group(
+                            chat_id=self.chat_id,
+                            media=media,
+                            message_thread_id=self.tg_thread_id,
+                        )
+                    except Exception:
+                        logger.warning(
+                            "Failed to send LaTeX album,"
+                            " falling back to individual photos",
+                        )
+                        for png_path in png_paths:
+                            try:
+                                with open(png_path, 'rb') as f:
+                                    await self._bot.send_photo(
+                                        chat_id=self.chat_id,
+                                        photo=f,
+                                        message_thread_id=self.tg_thread_id,
+                                    )
+                            except Exception:
+                                logger.warning("Failed to send LaTeX image: %s", png_path)
+                    finally:
+                        for f in open_files:
+                            with contextlib.suppress(Exception):
+                                f.close()
+                elif len(png_paths) == 1:
+                    # Single image — send as regular photo
+                    try:
+                        with open(png_paths[0], 'rb') as f:
+                            await self._bot.send_photo(
                                 chat_id=self.chat_id,
-                                media=media,
+                                photo=f,
                                 message_thread_id=self.tg_thread_id,
                             )
-                        except Exception:
-                            logger.warning(
-                                "Failed to send LaTeX album,"
-                                " falling back to individual photos",
-                            )
-                            for png_path in png_paths:
-                                try:
-                                    with open(png_path, 'rb') as f:
-                                        await self._bot.send_photo(
-                                            chat_id=self.chat_id,
-                                            photo=f,
-                                            message_thread_id=self.tg_thread_id,
-                                        )
-                                except Exception:
-                                    logger.warning("Failed to send LaTeX image: %s", png_path)
-                        finally:
-                            for f in open_files:
-                                with contextlib.suppress(Exception):
-                                    f.close()
-                    elif len(png_paths) == 1:
-                        # Single image — send as regular photo
-                        try:
-                            with open(png_paths[0], 'rb') as f:
-                                await self._bot.send_photo(
-                                    chat_id=self.chat_id,
-                                    photo=f,
-                                    message_thread_id=self.tg_thread_id,
-                                )
-                        except Exception:
-                            logger.warning("Failed to send LaTeX image: %s", png_paths[0])
+                    except Exception:
+                        logger.warning("Failed to send LaTeX image: %s", png_paths[0])
