@@ -24,7 +24,7 @@ from bot.prompts import (
     _restart_context_path,
 )
 from bot.sessions import get_session_id, set_session_id
-from bot.streams import add_active_stream, remove_active_stream
+from bot.streams import add_active_stream, remove_active_stream, set_stream_session_id
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,8 @@ async def stream_claude(message: str, chat_id: int, thread_id: int, user_id: int
     ws_log.info("Claude invocation (%s) — user=%d, session=%s", backend_name, user_id, sid or "new")
 
     add_active_stream(chat_id, thread_id, user_id, user_message=message[:300])
+    if sid:
+        set_stream_session_id(chat_id, thread_id, user_id, sid)
 
     # Restart context breadcrumbs
     _clear_restart_context(chat_id)
