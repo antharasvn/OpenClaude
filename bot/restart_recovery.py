@@ -42,15 +42,25 @@ class RestartRecoveryService:
         await self._edit_restart_messages()
         interrupted = self._collect_interrupted()
         if not interrupted:
+            infra_logger.info("No interrupted sessions to resume")
             return
 
-        infra_logger.info("Resuming %d interrupted generation(s)", len(interrupted))
+        infra_logger.info(
+            "Resuming %d interrupted generation(s): %s",
+            len(interrupted),
+            list(interrupted.keys()),
+        )
 
         async def _run_resumes() -> None:
-            await asyncio.gather(
-                *[self._resume_with_timeout(e) for e in interrupted.values()]
-            )
-            infra_logger.info("Restart recovery complete")
+            # Small delay to let the event loop and bot fully initialize
+            await asyncio.sleep(2)
+            try:
+                await asyncio.gather(
+                    *[self._resume_with_timeout(e) for e in interrupted.values()]
+                )
+                infra_logger.info("Restart recovery complete")
+            except Exception:
+                infra_logger.exception("Restart recovery task failed")
 
         asyncio.create_task(_run_resumes())
 
@@ -89,12 +99,19 @@ class RestartRecoveryService:
         interrupted: dict[str, dict] = {}
         for state_file in (RESTART_STATE_FILE, ACTIVE_STREAMS_FILE):
             if not state_file.exists():
+                infra_logger.info("State file not found: %s", state_file)
                 continue
             try:
-                data = json.loads(state_file.read_text())
+                raw = state_file.read_text()
+                data = json.loads(raw)
+                infra_logger.info(
+                    "Loaded %d entries from %s", len(data), state_file.name,
+                )
                 interrupted.update(data)
-            except (json.JSONDecodeError, OSError):
-                pass
+            except (json.JSONDecodeError, OSError) as e:
+                infra_logger.warning(
+                    "Failed to read state file %s: %s", state_file, e,
+                )
             finally:
                 state_file.unlink(missing_ok=True)
         return interrupted
@@ -141,7 +158,12 @@ class RestartRecoveryService:
             resume_msg = self._build_resume_message(cid, entry)
             chat_working_dir = get_working_dir(cid)
             result_text = None
+            text_blocks: list[str] = []
             stop_event = asyncio.Event()
+            infra_logger.info(
+                "Starting resume stream for chat=%d thread=%d user=%d session=%s",
+                cid, tid, uid, session_id,
+            )
             async for event in self._stream_fn(
                 resume_msg,
                 cid,
@@ -151,11 +173,39 @@ class RestartRecoveryService:
                 stop_event=stop_event,
                 real_user_id=uid,
             ):
-                if event.get("type") == "result" or event.get("type") == "error":
+                etype = event.get("type")
+                if etype == "result":
                     result_text = event.get("text", "")
+                elif etype == "error":
+                    result_text = event.get("text", "")
+                    infra_logger.warning(
+                        "Resume stream error for chat=%d: %s", cid, result_text,
+                    )
+                elif etype == "text_block":
+                    # Capture intermediate text blocks as fallback
+                    block_text = event.get("text", "")
+                    if block_text:
+                        text_blocks.append(block_text)
 
-            if result_text:
-                await self._send_result(cid, tg_thread_id, result_text)
+            # Use result_text if available; fall back to accumulated text_blocks
+            final_text = result_text if result_text else "".join(text_blocks)
+            if final_text:
+                await self._send_result(cid, tg_thread_id, final_text)
+            else:
+                infra_logger.warning(
+                    "Resume produced no output for chat=%d thread=%d user=%d",
+                    cid, tid, uid,
+                )
+                # Still notify the user that recovery happened
+                with contextlib.suppress(Exception):
+                    await self._bot.send_message(
+                        chat_id=cid,
+                        text=(
+                            "\u2705 Bot restarted successfully."
+                            " Send a message to continue."
+                        ),
+                        message_thread_id=tg_thread_id,
+                    )
 
             # Mark this session as having received rollback info via restart recovery
             skey = session_key(cid, tid, session_uid)
@@ -196,41 +246,53 @@ class RestartRecoveryService:
             return False  # Can't determine, assume not a rollback
 
     @staticmethod
-    def _build_git_state(cid: int) -> str:
-        """Build a git state line for the resume message."""
+    def _build_git_state(cid: int) -> tuple[str, bool]:
+        """Build a git state line for the resume message.
+
+        Returns (state_string, is_rollback).
+        """
         old_commit = _read_restart_commit(cid)
         current_commit = _get_current_commit()
         if not old_commit or old_commit == "unknown":
-            return f"Git state: now on {current_commit}."
+            return f"Git state: now on {current_commit}.", False
         if old_commit == current_commit:
-            return f"Git state: commit {current_commit} (unchanged)."
+            return f"Git state: commit {current_commit} (unchanged).", False
         if RestartRecoveryService._is_rollback(old_commit, current_commit):
             return (
                 f"Git state: was on {old_commit}, now on {current_commit} "
-                "(ROLLBACK OCCURRED — a bad commit was reverted by safe-restart)."
+                "(ROLLBACK OCCURRED — a bad commit was reverted by safe-restart).",
+                True,
             )
         return (
             f"Git state: was on {old_commit}, now on {current_commit} "
-            "(updated — normal forward commit, not a rollback)."
+            f"(updated to {current_commit}).",
+            False,
         )
 
     @staticmethod
     def _build_resume_message(cid: int, entry: dict) -> str:
         """Build the system message used to prompt Claude to resume."""
-        git_state = RestartRecoveryService._build_git_state(cid)
+        git_state, is_rollback = RestartRecoveryService._build_git_state(cid)
         restart_ctx = _read_restart_context(cid)
 
         if restart_ctx:
+            if is_rollback:
+                return (
+                    "[System: The bot restarted mid-generation.\n\n"
+                    f"{git_state}\n\n"
+                    f"What you were doing:\n{restart_ctx}\n\n"
+                    "The restart was triggered by the safe-restart hook "
+                    "which rolled back a bad commit.\n\n"
+                    "Tell the user: bot restarted, a rollback occurred "
+                    "(explain which commit was reverted), "
+                    "and what you were doing. Then continue the task.]"
+                )
             return (
                 "[System: The bot restarted mid-generation.\n\n"
                 f"{git_state}\n\n"
                 f"What you were doing:\n{restart_ctx}\n\n"
-                "The restart was likely triggered by the safe-restart hook "
-                "(which rolls back failed commits if needed).\n\n"
-                "Briefly tell the user: the bot restarted, "
-                "whether a rollback happened, and what you were doing. "
-                "Then immediately continue or redo the task. "
-                "Do not wait for confirmation.]"
+                "Tell the user the bot restarted and briefly what you were "
+                "doing, then continue the task.]"
             )
         user_msg_hint = entry.get("user_message", "")
         if user_msg_hint:
