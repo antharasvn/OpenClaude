@@ -157,40 +157,67 @@ class RestartRecoveryService:
 
             resume_msg = self._build_resume_message(cid, entry)
             chat_working_dir = get_working_dir(cid)
-            result_text = None
-            text_blocks: list[str] = []
             stop_event = asyncio.Event()
             infra_logger.info(
                 "Starting resume stream for chat=%d thread=%d user=%d session=%s",
                 cid, tid, uid, session_id,
             )
-            async for event in self._stream_fn(
-                resume_msg,
-                cid,
-                tid,
-                session_uid,
-                working_dir=chat_working_dir,
-                stop_event=stop_event,
-                real_user_id=uid,
-            ):
-                etype = event.get("type")
-                if etype == "result":
-                    result_text = event.get("text", "")
-                elif etype == "error":
-                    result_text = event.get("text", "")
-                    infra_logger.warning(
-                        "Resume stream error for chat=%d: %s", cid, result_text,
-                    )
-                elif etype == "text_block":
-                    # Capture intermediate text blocks as fallback
-                    block_text = event.get("text", "")
-                    if block_text:
-                        text_blocks.append(block_text)
 
-            # Use result_text if available; fall back to accumulated text_blocks
-            final_text = result_text if result_text else "".join(text_blocks)
-            if final_text:
-                await self._send_result(cid, tg_thread_id, final_text)
+            # Use StreamingSession for full streaming UX (typing, tool status, live text)
+            from bot.streaming_session import StreamingSession
+
+            session = StreamingSession(
+                bot=self._bot,
+                chat_id=cid,
+                thread_id=tid,
+                tg_thread_id=tg_thread_id,
+                streaming=True,
+                show_tools=True,
+            )
+            session.session_user_id = session_uid
+
+            # Send typing indicator
+            typing_task = asyncio.create_task(
+                self._typing_loop(cid, tg_thread_id)
+            )
+
+            try:
+                async for event in self._stream_fn(
+                    resume_msg,
+                    cid,
+                    tid,
+                    session_uid,
+                    working_dir=chat_working_dir,
+                    stop_event=stop_event,
+                    real_user_id=uid,
+                ):
+                    etype = event.get("type")
+
+                    # Stop typing once visible output is streaming
+                    if etype == "partial" and typing_task and not typing_task.done():
+                        typing_task.cancel()
+
+                    if etype == "error":
+                        infra_logger.warning(
+                            "Resume stream error for chat=%d: %s",
+                            cid, event.get("text", ""),
+                        )
+
+                    await session.handle_event(event)
+
+                # Final flush of any buffered live text
+                await session.flush_live()
+            finally:
+                if typing_task and not typing_task.done():
+                    typing_task.cancel()
+                await session.cleanup_status()
+
+            if session.stopped:
+                return
+
+            # Finalize: send final response, files, images
+            if session.response_text or session.live_text:
+                await session.finalize_response()
             else:
                 infra_logger.warning(
                     "Resume produced no output for chat=%d thread=%d user=%d",
@@ -311,6 +338,24 @@ class RestartRecoveryService:
             "are continuing, then resume the task without waiting for "
             "confirmation.]"
         )
+
+    async def _typing_loop(self, chat_id: int, thread_id: int | None) -> None:
+        """Send 'typing' chat action periodically until cancelled."""
+        try:
+            while True:
+                try:
+                    await self._bot.send_chat_action(
+                        chat_id=chat_id,
+                        action="typing",
+                        message_thread_id=thread_id if thread_id else None,
+                    )
+                except Exception:
+                    infra_logger.debug(
+                        "typing indicator send failed for chat %d", chat_id,
+                    )
+                await asyncio.sleep(5)
+        except asyncio.CancelledError:
+            pass
 
     async def _send_result(
         self, chat_id: int, thread_id: int | None, result_text: str

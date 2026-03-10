@@ -38,8 +38,10 @@ class StreamingSession:
 
     def __init__(
         self,
-        update: Update,
-        context: ContextTypes.DEFAULT_TYPE,
+        update: Update | None = None,
+        context: ContextTypes.DEFAULT_TYPE | None = None,
+        *,
+        bot=None,
         chat_id: int,
         thread_id: int,
         tg_thread_id: int | None,
@@ -53,6 +55,16 @@ class StreamingSession:
         self.tg_thread_id = tg_thread_id
         self.streaming = streaming
         self.show_tools = show_tools
+
+        # Unified bot reference
+        if update is not None:
+            self._bot = context.bot
+            self._bot_only = False
+        elif bot is not None:
+            self._bot = bot
+            self._bot_only = True
+        else:
+            raise ValueError("Either (update, context) or bot must be provided")
 
         # Tool-status message state
         self.status_msg = None
@@ -77,6 +89,25 @@ class StreamingSession:
         # Final result
         self.response_text: str | None = None
         self.stopped: bool = False
+
+    # ------------------------------------------------------------------
+    # Sending helpers
+    # ------------------------------------------------------------------
+
+    async def _send_new_message(self, text: str, **kwargs) -> object:
+        """Send a new message via either update.message.reply_text or bot.send_message."""
+        if self._bot_only:
+            return await self._bot.send_message(
+                chat_id=self.chat_id,
+                text=text,
+                message_thread_id=self.tg_thread_id or None,
+                **kwargs,
+            )
+        return await self.update.message.reply_text(
+            text=text,
+            message_thread_id=self.tg_thread_id,
+            **kwargs,
+        )
 
     # ------------------------------------------------------------------
     # Event dispatch
@@ -109,8 +140,6 @@ class StreamingSession:
 
     async def _on_text_block(self, event: dict) -> None:
         """Handle a completed text block (before tool use or at stream end)."""
-        from bot.telegram_sender import send_rendered_collect
-
         block_text = event["text"]
         if self.live_msg:
             chunk_md = self.live_text[self.sent_offset:]
@@ -135,9 +164,7 @@ class StreamingSession:
             # No streaming — send block directly (strip 📎)
             display_text = clean_file_markers(block_text)
             if display_text:
-                sent_msgs = await send_rendered_collect(
-                    self.update, display_text, self.context, self.tg_thread_id,
-                )
+                sent_msgs = await self._send_rendered_collect(display_text)
                 self.finalized_msgs.extend(sent_msgs)
                 self._speculative.extend(sent_msgs)
                 self._speculative_sent_len += len(block_text)
@@ -228,10 +255,7 @@ class StreamingSession:
 
         try:
             if self.status_msg is None:
-                self.status_msg = await self.update.message.reply_text(
-                    text,
-                    message_thread_id=self.tg_thread_id,
-                )
+                self.status_msg = await self._send_new_message(text)
             else:
                 await self.status_msg.edit_text(text)
             self.last_edit_time = asyncio.get_event_loop().time()
@@ -311,10 +335,7 @@ class StreamingSession:
 
         try:
             if self.live_msg is None:
-                self.live_msg = await self.update.message.reply_text(
-                    display,
-                    message_thread_id=self.tg_thread_id,
-                )
+                self.live_msg = await self._send_new_message(display)
             else:
                 await self.live_msg.edit_text(display)
             self.last_live_edit = asyncio.get_event_loop().time()
@@ -359,6 +380,31 @@ class StreamingSession:
             with contextlib.suppress(Exception):
                 await self.live_msg.delete()
 
+    # ------------------------------------------------------------------
+    # Sending helpers (work in both update and bot-only modes)
+    # ------------------------------------------------------------------
+
+    async def _send_rendered(self, text: str) -> None:
+        """Send rendered markdown text, using the appropriate sender mode."""
+        if self.update is not None:
+            from bot.telegram_sender import send_rendered
+            await send_rendered(self.update, text, self.context)
+        else:
+            from bot.telegram_sender import send_rendered_bot
+            await send_rendered_bot(self._bot, self.chat_id, text, self.tg_thread_id)
+
+    async def _send_rendered_collect(self, text: str) -> list:
+        """Send rendered markdown text and return sent messages."""
+        if self.update is not None:
+            from bot.telegram_sender import send_rendered_collect
+            return await send_rendered_collect(
+                self.update, text, self.context, self.tg_thread_id,
+            )
+        from bot.telegram_sender import send_rendered_collect_bot
+        return await send_rendered_collect_bot(
+            self._bot, self.chat_id, text, self.tg_thread_id,
+        )
+
     async def finalize_response(self) -> None:
         """Process and send the final response text.
 
@@ -366,7 +412,7 @@ class StreamingSession:
         editing/sending final text, sending files and images.
         """
         from bot.attachments import extract_image_urls, split_file_segments
-        from bot.telegram_sender import send_file_group, send_rendered
+        from bot.telegram_sender import send_file_group
         from bot.types import FileSegment
         from bot.workspaces import ensure_workspace
 
@@ -423,25 +469,25 @@ class StreamingSession:
                             )
                         else:
                             await self.live_msg.delete()
-                            await send_rendered(self.update, remaining, self.context)
+                            await self._send_rendered(remaining)
                     except Exception:
                         with contextlib.suppress(Exception):
                             await self.live_msg.delete()
                         if remaining:
-                            await send_rendered(self.update, remaining, self.context)
+                            await self._send_rendered(remaining)
                 else:
                     with contextlib.suppress(Exception):
                         await self.live_msg.delete()
                     if remaining:
-                        await send_rendered(self.update, remaining, self.context)
+                        await self._send_rendered(remaining)
             elif remaining:
-                await send_rendered(self.update, remaining, self.context)
+                await self._send_rendered(remaining)
 
         # Send file attachments
         for seg in file_segments:
             try:
                 await send_file_group(
-                    self.context.bot, self.chat_id, seg.files, self.tg_thread_id,
+                    self._bot, self.chat_id, seg.files, self.tg_thread_id,
                 )
             except Exception as e:
                 logger.warning("Failed to send file group: %s", e)
@@ -449,7 +495,7 @@ class StreamingSession:
         # Send image URLs
         for img_url in image_urls:
             try:
-                await self.context.bot.send_photo(
+                await self._bot.send_photo(
                     chat_id=self.chat_id,
                     photo=img_url,
                     message_thread_id=self.tg_thread_id,
@@ -479,7 +525,7 @@ class StreamingSession:
                                 f = open(png_path, 'rb')  # noqa: SIM115
                                 open_files.append(f)
                                 media.append(InputMediaPhoto(media=f))
-                            await self.context.bot.send_media_group(
+                            await self._bot.send_media_group(
                                 chat_id=self.chat_id,
                                 media=media,
                                 message_thread_id=self.tg_thread_id,
@@ -492,7 +538,7 @@ class StreamingSession:
                             for png_path in png_paths:
                                 try:
                                     with open(png_path, 'rb') as f:
-                                        await self.context.bot.send_photo(
+                                        await self._bot.send_photo(
                                             chat_id=self.chat_id,
                                             photo=f,
                                             message_thread_id=self.tg_thread_id,
@@ -507,7 +553,7 @@ class StreamingSession:
                         # Single image — send as regular photo
                         try:
                             with open(png_paths[0], 'rb') as f:
-                                await self.context.bot.send_photo(
+                                await self._bot.send_photo(
                                     chat_id=self.chat_id,
                                     photo=f,
                                     message_thread_id=self.tg_thread_id,

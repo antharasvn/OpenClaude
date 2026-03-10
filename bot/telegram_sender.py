@@ -180,3 +180,76 @@ async def send_rendered_collect(
                     logger.warning("Plain text fallback also failed")
 
     return sent
+
+
+async def send_rendered_bot(
+    bot,
+    chat_id: int,
+    text: str,
+    thread_id: int | None = None,
+) -> None:
+    """Like send_rendered but uses bot.send_message directly (no Update needed)."""
+    md_chunks = split_message(text)
+
+    for md_chunk in md_chunks:
+        chunk = renderer.render(md_chunk)
+        try:
+            await bot.send_message(
+                chat_id=chat_id,
+                text=chunk,
+                parse_mode=ParseMode.HTML,
+                disable_web_page_preview=True,
+                message_thread_id=thread_id or None,
+            )
+        except Exception:
+            logger.warning("HTML send failed for chunk, falling back to plain text")
+            plain = re.sub(r"<[^>]+>", "", chunk)
+            plain_chunks = split_message(plain)
+            for pc in plain_chunks:
+                try:
+                    await bot.send_message(
+                        chat_id=chat_id,
+                        text=pc,
+                        message_thread_id=thread_id or None,
+                    )
+                except Exception:
+                    logger.warning("Plain text fallback also failed")
+
+
+async def send_rendered_collect_bot(
+    bot,
+    chat_id: int,
+    text: str,
+    tg_thread_id: int | None = None,
+) -> list:
+    """Like send_rendered_collect but uses bot.send_message directly (no Update needed)."""
+    md_chunks = split_message(text)
+    sent: list = []
+
+    for md_chunk in md_chunks:
+        chunk = renderer.render(md_chunk)
+        try:
+            msg = await bot.send_message(
+                chat_id=chat_id,
+                text=chunk,
+                parse_mode=ParseMode.HTML,
+                disable_web_page_preview=True,
+                message_thread_id=tg_thread_id,
+            )
+            sent.append(msg)
+        except Exception:
+            logger.warning("HTML send failed for chunk, falling back to plain text")
+            plain = re.sub(r"<[^>]+>", "", chunk)
+            plain_chunks = split_message(plain)
+            for pc in plain_chunks:
+                try:
+                    msg = await bot.send_message(
+                        chat_id=chat_id,
+                        text=pc,
+                        message_thread_id=tg_thread_id,
+                    )
+                    sent.append(msg)
+                except Exception:
+                    logger.warning("Plain text fallback also failed")
+
+    return sent
