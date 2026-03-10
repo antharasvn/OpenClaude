@@ -172,6 +172,20 @@ async def stream_sdk(
                        "duration_ms": getattr(msg, "duration_ms", None),
                        "duration_api_ms": getattr(msg, "duration_api_ms", None)}
 
+        # Drain any stale messages left in the SDK's internal buffer from this
+        # query.  Without this, leftover trailing messages (after ResultMessage)
+        # would be consumed by the *next* query's receive_response(), making
+        # responses appear "one turn behind."
+        with contextlib.suppress(Exception):
+            query = getattr(getattr(sdk_session, "client", None), "_query", None)
+            buf = getattr(query, "_message_receive", None)
+            if buf is not None:
+                while True:
+                    try:
+                        buf.receive_nowait()
+                    except Exception:
+                        break
+
     except Exception as e:
         if stop_event and stop_event.is_set():
             logger.info("SDK stream interrupted by /stop for user %d", user_id)
