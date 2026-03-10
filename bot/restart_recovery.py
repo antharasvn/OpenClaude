@@ -5,6 +5,8 @@ import contextlib
 import json
 import logging
 import re
+import subprocess
+from pathlib import Path
 from typing import Any
 
 from bot.config import ACTIVE_STREAMS_FILE, RESTART_MESSAGES_FILE, RESTART_STATE_FILE
@@ -175,6 +177,25 @@ class RestartRecoveryService:
                 )
 
     @staticmethod
+    def _is_rollback(old_commit: str, current_commit: str) -> bool:
+        """Return True if current_commit is OLDER than old_commit (actual rollback).
+
+        Uses ``git merge-base --is-ancestor`` to check whether the current
+        commit is an ancestor of the old commit, which means we went backward.
+        """
+        project_dir = str(Path(__file__).resolve().parent.parent)
+        try:
+            result = subprocess.run(
+                ["git", "-C", project_dir, "merge-base", "--is-ancestor",
+                 current_commit, old_commit],
+                capture_output=True, timeout=5,
+            )
+            # Exit 0 means current_commit IS an ancestor of old_commit → rollback
+            return result.returncode == 0
+        except Exception:
+            return False  # Can't determine, assume not a rollback
+
+    @staticmethod
     def _build_git_state(cid: int) -> str:
         """Build a git state line for the resume message."""
         old_commit = _read_restart_commit(cid)
@@ -183,9 +204,14 @@ class RestartRecoveryService:
             return f"Git state: now on {current_commit}."
         if old_commit == current_commit:
             return f"Git state: commit {current_commit} (unchanged)."
+        if RestartRecoveryService._is_rollback(old_commit, current_commit):
+            return (
+                f"Git state: was on {old_commit}, now on {current_commit} "
+                "(ROLLBACK OCCURRED — a bad commit was reverted by safe-restart)."
+            )
         return (
             f"Git state: was on {old_commit}, now on {current_commit} "
-            "(ROLLBACK OCCURRED — a bad commit was reverted by safe-restart)."
+            "(updated — normal forward commit, not a rollback)."
         )
 
     @staticmethod
