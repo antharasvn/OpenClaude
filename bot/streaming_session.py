@@ -402,14 +402,14 @@ class StreamingSession:
         """Delete all messages when generation was stopped/cancelled."""
         if self.status_msg:
             with contextlib.suppress(BaseException):
-                await asyncio.shield(self.status_msg.delete())
+                await self.status_msg.delete()
             self.status_msg = None
         for fm in self.finalized_msgs:
             with contextlib.suppress(BaseException):
-                await asyncio.shield(fm.delete())
+                await fm.delete()
         if self.live_msg:
             with contextlib.suppress(BaseException):
-                await asyncio.shield(self.live_msg.delete())
+                await self.live_msg.delete()
 
     async def cleanup_status(self) -> None:
         """Delete the tool-status message (always runs in finally).
