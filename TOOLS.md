@@ -76,18 +76,28 @@ You have access to these tools when invoked via the Telegram bot:
 ## Environment
 
 ### Server
-- **OS:** _Not yet documented_
-- **Working Directory:** _Set via WORKING_DIR in .env or defaults to project root_
+- **OS:** Ubuntu 22.04 LTS (Linux 5.15.0)
+- **Working Directory:** defaults to `/root/OpenClaude`
 
 ### SSH Hosts
 - Configured per-workspace via `.env` files in `workspaces/c{chat_id}/.env`
 - Required variables: `VPS_HOST`, `VPS_PORT`, `VPS_USER`, `VPS_PASSWORD`
 
 ### API Keys & Services
-_None configured yet — document available APIs here as they're added_
+- **Anthropic Claude API** — `ANTHROPIC_API_KEY` in project `.env`
+- **Telegram Bot API** — `TELEGRAM_BOT_TOKEN` in project `.env`
+- **Deepgram** — `DEEPGRAM_API_KEY` in project `.env` (voice transcription)
+- Per-workspace keys: stored in `workspaces/c{chat_id}/.env`
 
 ### Local Services
-_None running yet — document local services (databases, servers, etc.) here_
+
+#### pinchtab (headless browser)
+- **Service:** systemd `pinchtab.service` (auto-starts on boot)
+- **HTTP API:** `localhost:3000`
+- **Chrome CDP:** `localhost:9222`
+- **Usage:** `pinchtab "<url>"` (CLI) or `pinchtab-fetch "<url>"` (returns page text)
+- **API endpoints:** `POST /navigate` (param: `newTab: bool`, returns `tabId`), `GET /text`, `GET /snapshot`, `GET /screenshot?tabId=X` (returns `{"base64": "..."}` JSON), `POST /click`, `POST /type`
+- **Tab cleanup:** `GET localhost:{cdpPort}/json/close/{tabId}` via Chrome CDP
 
 ## Sending Files to the User
 

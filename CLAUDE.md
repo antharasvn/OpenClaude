@@ -226,6 +226,7 @@ Before creating any new skill, **read `skills/create-skill/SKILL.md`** for the t
 ## Project Structure
 
 See `ARCHITECTURE.md` for the full project tree and file descriptions (admin only).
+See `CODING.md` for code conventions, linter configuration, and test guidelines.
 
 ---
 
