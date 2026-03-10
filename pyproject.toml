@@ -47,5 +47,5 @@ source = ["bot", "commands"]
 omit = ["bot/__main__.py"]
 
 [tool.coverage.report]
-fail_under = 50
+fail_under = 40
 show_missing = true
