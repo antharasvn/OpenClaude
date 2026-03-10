@@ -102,15 +102,11 @@ async def stream_sdk(
             now = asyncio.get_event_loop().time()
             if stop_event and stop_event.is_set():
                 logger.info("Stop event set — aborting SDK stream for user %d", user_id)
-                await sdk_session.disconnect()
-                sdk_session_manager.pop(skey)
                 yield {"type": "stopped"}
                 return
             # Skip deadline check while a tool is running
             if tool_active_count == 0 and now > sdk_deadline:
                 logger.error("SDK stream timed out after %ds for user %d", CLAUDE_TIMEOUT, user_id)
-                await sdk_session.disconnect()
-                sdk_session_manager.pop(skey)
                 yield {
                     "type": "error",
                     "text": "Claude took too long to respond. Try again or /new to start fresh.",
@@ -172,12 +168,6 @@ async def stream_sdk(
                        "duration_ms": getattr(msg, "duration_ms", None),
                        "duration_api_ms": getattr(msg, "duration_api_ms", None)}
 
-        # Disconnect and remove the session so the next query starts with a
-        # clean connection.  This eliminates the race condition where trailing
-        # messages in the SDK's internal buffer leak into the next query.
-        await sdk_session.disconnect()
-        sdk_session_manager.pop(skey)
-
     except Exception as e:
         if stop_event and stop_event.is_set():
             logger.info("SDK stream interrupted by /stop for user %d", user_id)
@@ -187,16 +177,18 @@ async def stream_sdk(
         if any(s in err_str for s in ("exit code -15", "exit code: -15",
                                        "exit code -9", "exit code: -9")):
             logger.info("SDK process killed by signal (likely bot restart)")
-            await sdk_session.disconnect()
-            sdk_session_manager.pop(skey)
             yield {"type": "silent"}
             return
         logger.exception("SDK streaming error")
-        await sdk_session.disconnect()
-        sdk_session_manager.pop(skey)
         if result_text is None:
             yield {"type": "error", "text": f"Claude error: {e}"}
         return
+    finally:
+        # Always disconnect and remove the session to prevent zombie
+        # subprocesses.  This runs on normal completion, CancelledError,
+        # timeout, stop-event, and any other exception.
+        await sdk_session.disconnect()
+        sdk_session_manager.pop(skey, None)
 
     if result_text is None:
         logger.warning("No result message received from SDK")
