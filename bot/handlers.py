@@ -25,6 +25,7 @@ from bot.attachments import (  # noqa: F401
 )
 from bot.auth import authorized
 from bot.batching import queue_message  # noqa: F401
+from bot.chat_lock import force_release_chat_lock, get_chat_lock, release_chat_lock_ref
 from bot.claude import stream_claude
 from bot.config import (
     ALL_TOOLS,
@@ -38,7 +39,6 @@ from bot.media_handlers import (  # noqa: F401
     handle_video,
     handle_voice,
 )
-from bot.chat_lock import force_release_chat_lock, get_chat_lock, release_chat_lock_ref
 from bot.process import kill_active_proc
 from bot.renderer import TelegramRenderer
 from bot.rollback import get_rollback_injection

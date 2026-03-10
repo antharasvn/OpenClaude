@@ -428,7 +428,7 @@ class StreamingSession:
                 infra_logger.debug("cleanup_status: deleted status_msg id=%s", msg_id)
             except asyncio.CancelledError:
                 infra_logger.debug(
-                    "cleanup_status: cancelled during delete for id=%s (shielded, delete may still complete)",
+                    "cleanup_status: cancelled for id=%s (shielded)",
                     msg_id,
                 )
             except Exception as e:

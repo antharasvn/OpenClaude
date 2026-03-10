@@ -9,6 +9,7 @@ collected automatically once no coroutine holds a reference.
 """
 
 import asyncio
+import contextlib
 import logging
 import weakref
 
@@ -57,8 +58,6 @@ def force_release_chat_lock(session_key: str) -> None:
     """
     lock = _chat_locks_strong.get(session_key)
     if lock is not None and lock.locked():
-        try:
+        with contextlib.suppress(RuntimeError):
             lock.release()
-        except RuntimeError:
-            pass  # Already released
     _chat_locks_strong.pop(session_key, None)
