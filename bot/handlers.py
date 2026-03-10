@@ -393,6 +393,8 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         # Always cancel typing indicator
         if typing_task and not typing_task.done():
             typing_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await typing_task
         if not _is_compact:
             _streaming_tasks.pop(skey, None)
         with contextlib.suppress(RuntimeError):

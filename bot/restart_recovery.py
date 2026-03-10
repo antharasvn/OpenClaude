@@ -224,6 +224,15 @@ class RestartRecoveryService:
             finally:
                 if typing_task and not typing_task.done():
                     typing_task.cancel()
+                    # Allow the cancellation to propagate cleanly before
+                    # awaiting cleanup_status — prevents CancelledError
+                    # from leaking into the delete() call.
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await typing_task
+                infra_logger.info(
+                    "_resume_chat: calling cleanup_status, status_msg=%s",
+                    session.status_msg.message_id if session.status_msg else None,
+                )
                 await session.cleanup_status()
 
             if session.stopped:

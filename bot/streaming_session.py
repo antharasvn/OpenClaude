@@ -289,6 +289,10 @@ class StreamingSession:
             if self.status_msg is None:
                 self.status_msg = await self._send_new_message(text)
                 self._save_status_msg_id(self.status_msg.message_id)
+                infra_logger.debug(
+                    "_update_status: status_msg created, id=%s",
+                    self.status_msg.message_id,
+                )
             else:
                 await self.status_msg.edit_text(text)
             self.last_edit_time = asyncio.get_event_loop().time()
@@ -410,14 +414,24 @@ class StreamingSession:
     async def cleanup_status(self) -> None:
         """Delete the tool-status message (always runs in finally).
 
-        Uses BaseException suppression because this runs in finally blocks
-        where CancelledError (a BaseException, not Exception) may be pending.
+        Logs failures instead of silently suppressing them, while still
+        ensuring the status_msg reference and persisted ID are always cleared.
         """
         if self.status_msg:
-            with contextlib.suppress(BaseException):
+            msg_id = self.status_msg.message_id
+            try:
                 await self.status_msg.delete()
-            self.status_msg = None
-            self._clear_status_msg_id_cache()
+                infra_logger.debug("cleanup_status: deleted status_msg id=%s", msg_id)
+            except Exception as e:
+                infra_logger.warning("cleanup_status: delete failed for id=%s: %s", msg_id, e)
+            except BaseException as e:
+                infra_logger.warning(
+                    "cleanup_status: delete failed (BaseException) for id=%s: %s",
+                    msg_id, type(e).__name__,
+                )
+            finally:
+                self.status_msg = None
+                self._clear_status_msg_id_cache()
 
     async def delete_speculative_messages(self) -> None:
         """Delete speculative messages (used on silent/empty result)."""
