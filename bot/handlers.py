@@ -38,6 +38,7 @@ from bot.media_handlers import (  # noqa: F401
     handle_video,
     handle_voice,
 )
+from bot.chat_lock import force_release_chat_lock, get_chat_lock, release_chat_lock_ref
 from bot.process import kill_active_proc
 from bot.renderer import TelegramRenderer
 from bot.rollback import get_rollback_injection
@@ -74,20 +75,11 @@ def _set_bot_username(username: str) -> None:
     _routing.BOT_USERNAME = username
 
 
-# Per-user locks to prevent concurrent Claude calls for the same user
-_user_locks: dict[str, asyncio.Lock] = {}
-
 # Per-session stop events for /stop command
 _stop_events: dict[str, asyncio.Event] = {}
 
 # Per-session streaming task references for /stop cancellation
 _streaming_tasks: dict[str, asyncio.Task] = {}
-
-
-def _get_user_lock(skey: str) -> asyncio.Lock:
-    if skey not in _user_locks:
-        _user_locks[skey] = asyncio.Lock()
-    return _user_locks[skey]
 
 
 async def _typing_loop(bot, chat_id: int, thread_id: int | None = None) -> None:
@@ -230,10 +222,7 @@ async def _force_stop_session(skey: str, chat_id: int, thread_id: int, session_u
     _streaming_tasks.pop(skey, None)
     _stop_events.pop(skey, None)
     remove_active_stream(chat_id, thread_id, session_uid)
-    lock = _user_locks.get(skey)
-    if lock and lock.locked():
-        with contextlib.suppress(RuntimeError):
-            lock.release()
+    force_release_chat_lock(skey)
 
 
 async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -302,9 +291,10 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     skey = session_key(chat_id, thread_id, session_user_id)
 
     typing_task = None
+    lock = get_chat_lock(skey)
 
     try:
-        await asyncio.wait_for(_get_user_lock(skey).acquire(), timeout=300)
+        await asyncio.wait_for(lock.acquire(), timeout=300)
     except TimeoutError:
         logger.error("Lock acquisition timed out for user %d in chat %d", session_user_id, chat_id)
         with contextlib.suppress(Exception):
@@ -350,6 +340,33 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         finally:
             if not _is_compact:
                 _stop_events.pop(skey, None)
+
+        # Handle /stop cancellation (cleanup happens in finally below)
+        if session.stopped:
+            return
+
+        # Finalize: delete intermediates, send final response, files, images
+        # This MUST run inside the lock to prevent ordering issues
+        await session.finalize_response()
+
+        # Context usage warnings and auto-compact (also inside lock)
+        if not _is_compact:
+            sid = get_session_id(chat_id, thread_id, session_user_id)
+            ctx = get_context_pct(chat_id, thread_id, session_user_id) if sid else None
+            if ctx:
+                pct, used, window = ctx
+                if pct >= 0.8:
+                    await update.message.reply_text(
+                        f"Context at {pct:.0%} \u2014 auto-compacting\u2026",
+                        message_thread_id=tg_thread_id,
+                    )
+                    await run_with_streaming(update, context, chat_id, thread_id,
+                                             user_id, "/compact", _is_compact=True)
+                elif pct >= 0.6:
+                    await update.message.reply_text(
+                        f"Context at {pct:.0%} \u2014 consider using /compact",
+                        message_thread_id=tg_thread_id,
+                    )
     except asyncio.CancelledError:
         session.stopped = True
         raise
@@ -360,37 +377,12 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         if not _is_compact:
             _streaming_tasks.pop(skey, None)
         with contextlib.suppress(RuntimeError):
-            _get_user_lock(skey).release()
+            lock.release()
+        release_chat_lock_ref(skey)
         # Clean up Telegram messages (must run even on CancelledError)
         await session.cleanup_status()
         if session.stopped:
             await session.cleanup_on_stop()
-
-    # Handle /stop cancellation
-    if session.stopped:
-        return
-
-    # Finalize: delete intermediates, send final response, files, images
-    await session.finalize_response()
-
-    # Context usage warnings and auto-compact
-    if not _is_compact:
-        sid = get_session_id(chat_id, thread_id, session_user_id)
-        ctx = get_context_pct(chat_id, thread_id, session_user_id) if sid else None
-        if ctx:
-            pct, used, window = ctx
-            if pct >= 0.8:
-                await update.message.reply_text(
-                    f"Context at {pct:.0%} \u2014 auto-compacting\u2026",
-                    message_thread_id=tg_thread_id,
-                )
-                await run_with_streaming(update, context, chat_id, thread_id,
-                                         user_id, "/compact", _is_compact=True)
-            elif pct >= 0.6:
-                await update.message.reply_text(
-                    f"Context at {pct:.0%} \u2014 consider using /compact",
-                    message_thread_id=tg_thread_id,
-                )
 
 
 # ---------------------------------------------------------------------------
