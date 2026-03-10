@@ -172,16 +172,18 @@ class TestCleanup:
     @pytest.mark.asyncio
     async def test_cleanup_on_stop_deletes_all_messages(self):
         session = _make_session()
-        session.status_msg = AsyncMock()
-        session.live_msg = AsyncMock()
+        status_mock = AsyncMock()
+        live_mock = AsyncMock()
+        session.status_msg = status_mock
+        session.live_msg = live_mock
         msg1 = AsyncMock()
         msg2 = AsyncMock()
         session.finalized_msgs = [msg1, msg2]
 
         await session.cleanup_on_stop()
 
-        session.status_msg.delete.assert_called_once()
-        session.live_msg.delete.assert_called_once()
+        status_mock.delete.assert_called_once()
+        live_mock.delete.assert_called_once()
         msg1.delete.assert_called_once()
         msg2.delete.assert_called_once()
 
@@ -199,10 +201,11 @@ class TestCleanup:
     @pytest.mark.asyncio
     async def test_cleanup_status_deletes_status_msg(self):
         session = _make_session()
-        session.status_msg = AsyncMock()
+        status_mock = AsyncMock()
+        session.status_msg = status_mock
 
         await session.cleanup_status()
-        session.status_msg.delete.assert_called_once()
+        status_mock.delete.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_cleanup_status_noop_when_no_status(self):
