@@ -11,7 +11,8 @@ from bot.config import ACTIVE_STREAMS_FILE, RESTART_MESSAGES_FILE, RESTART_STATE
 from bot.logging_setup import infra_logger
 from bot.prompts import _get_current_commit, _read_restart_commit, _read_restart_context
 from bot.renderer import TelegramRenderer, split_message
-from bot.sessions import get_session_id
+from bot.rollback import mark_consumed as mark_rollback_consumed
+from bot.sessions import get_session_id, session_key
 from bot.workspaces import get_working_dir
 
 logger = logging.getLogger(__name__)
@@ -153,6 +154,10 @@ class RestartRecoveryService:
 
             if result_text:
                 await self._send_result(cid, tg_thread_id, result_text)
+
+            # Mark this session as having received rollback info via restart recovery
+            skey = session_key(cid, tid, session_uid)
+            mark_rollback_consumed(skey)
 
             infra_logger.info("Resumed chat=%d thread=%d user=%d", cid, tid, uid)
         except Exception as e:

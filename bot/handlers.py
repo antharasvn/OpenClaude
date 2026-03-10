@@ -40,6 +40,7 @@ from bot.media_handlers import (  # noqa: F401
 )
 from bot.process import kill_active_proc
 from bot.renderer import TelegramRenderer
+from bot.rollback import get_rollback_injection
 from bot.routing import (  # noqa: F401
     get_reply_prefix,
     should_respond,
@@ -321,6 +322,13 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         stop_event = asyncio.Event()
         if not _is_compact:
             _stop_events[skey] = stop_event
+
+        # Check for rollback injection
+        _session_exists = get_session_id(chat_id, thread_id, session_user_id) is not None
+        _rollback_text = get_rollback_injection(skey, _session_exists)
+        if _rollback_text:
+            # Prepend rollback info to the user message
+            claude_message = _rollback_text + "\n\n" + claude_message
 
         # Start typing indicator -- runs until cancelled
         typing_task = asyncio.create_task(_typing_loop(context.bot, chat_id, tg_thread_id))

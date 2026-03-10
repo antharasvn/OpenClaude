@@ -137,6 +137,8 @@ run_tests() {
 }
 
 record_good() {
+    # Clean up rollback info if present
+    rm -f "$PROJECT_DIR/.rollback-info.json"
     mkdir -p "$PROJECT_DIR/backups"
     git -C "$PROJECT_DIR" rev-parse HEAD > "$KNOWN_GOOD_FILE"
     log "Recorded known-good commit: $(get_short_hash)"
@@ -160,6 +162,20 @@ rollback() {
 
     log "Rolling back from $(get_short_hash) to ${good_commit:0:7}..."
     git -C "$PROJECT_DIR" reset --hard "$good_commit"
+
+    # Write rollback info for bot injection
+    local created_ts
+    created_ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    local test_output_escaped
+    test_output_escaped=$(echo "$TEST_OUTPUT" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))" 2>/dev/null || echo '""')
+    cat > "$PROJECT_DIR/.rollback-info.json" <<EOF
+{
+  "created": "$created_ts",
+  "bad_commit": "$current_commit",
+  "good_commit": "$good_commit",
+  "test_output": $test_output_escaped
+}
+EOF
 
     # Lock out sync_dev so ouroboros doesn't re-merge the bad commit
     echo "$current_commit" > "$ROLLBACK_LOCK"

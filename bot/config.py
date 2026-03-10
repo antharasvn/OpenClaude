@@ -135,6 +135,7 @@ CLAUDE_TIMEOUT: int = _settings.CLAUDE_TIMEOUT
 ACTIVE_STREAMS_FILE: Path = _settings.active_streams_file
 RESTART_STATE_FILE: Path = _settings.restart_state_file
 RESTART_MESSAGES_FILE: Path = _settings.restart_messages_file
+ROLLBACK_INFO_FILE: Path = SCRIPT_DIR / ".rollback-info.json"
 STATUS_EDIT_INTERVAL: float = _settings.STATUS_EDIT_INTERVAL
 BATCH_WINDOW: float = _settings.BATCH_WINDOW
 SDK_IDLE_TIMEOUT: int = _settings.SDK_IDLE_TIMEOUT
