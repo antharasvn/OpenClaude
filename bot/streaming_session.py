@@ -402,36 +402,43 @@ class StreamingSession:
         """Delete all messages when generation was stopped/cancelled."""
         if self.status_msg:
             with contextlib.suppress(BaseException):
-                await self.status_msg.delete()
+                await asyncio.shield(self.status_msg.delete())
             self.status_msg = None
         for fm in self.finalized_msgs:
             with contextlib.suppress(BaseException):
-                await fm.delete()
+                await asyncio.shield(fm.delete())
         if self.live_msg:
             with contextlib.suppress(BaseException):
-                await self.live_msg.delete()
+                await asyncio.shield(self.live_msg.delete())
 
     async def cleanup_status(self) -> None:
         """Delete the tool-status message (always runs in finally).
 
-        Logs failures instead of silently suppressing them, while still
-        ensuring the status_msg reference and persisted ID are always cleared.
+        Uses asyncio.shield() so the delete call survives CancelledError
+        when the parent task is cancelled (e.g. by asyncio.wait_for timeout).
+        Only clears the persisted status_msg_id cache on confirmed deletion;
+        otherwise restart recovery can clean it up on next startup.
         """
         if self.status_msg:
             msg_id = self.status_msg.message_id
+            deleted = False
             try:
-                await self.status_msg.delete()
+                await asyncio.shield(self.status_msg.delete())
+                deleted = True
                 infra_logger.debug("cleanup_status: deleted status_msg id=%s", msg_id)
+            except asyncio.CancelledError:
+                infra_logger.debug(
+                    "cleanup_status: cancelled during delete for id=%s (shielded, delete may still complete)",
+                    msg_id,
+                )
             except Exception as e:
                 infra_logger.warning("cleanup_status: delete failed for id=%s: %s", msg_id, e)
-            except BaseException as e:
-                infra_logger.warning(
-                    "cleanup_status: delete failed (BaseException) for id=%s: %s",
-                    msg_id, type(e).__name__,
-                )
             finally:
                 self.status_msg = None
-                self._clear_status_msg_id_cache()
+                if deleted:
+                    self._clear_status_msg_id_cache()
+                # If not deleted, leave status_msg_id in persisted cache so restart
+                # recovery can clean it up on next startup.
 
     async def delete_speculative_messages(self) -> None:
         """Delete speculative messages (used on silent/empty result)."""
