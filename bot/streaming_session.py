@@ -73,14 +73,14 @@ class StreamingSession:
         self.last_edit_time: float = 0
 
         # Live streaming message state
-        self.live_msg = None           # current Telegram message being edited with ✍️
-        self.live_text: str = ""       # all accumulated partial text
-        self.sent_offset: int = 0      # chars of live_text already in finalized messages
-        self.finalized_msgs: list = [] # finalized Telegram messages (for /stop cleanup)
+        self.live_msg = None  # current Telegram message being edited with ✍️
+        self.live_text: str = ""  # all accumulated partial text
+        self.sent_offset: int = 0  # chars of live_text already in finalized messages
+        self.finalized_msgs: list = []  # finalized Telegram messages (for /stop cleanup)
         self.last_live_edit: float = 0
 
         # Speculative / intermediate message tracking
-        self._speculative: list = []         # messages since last tool_use
+        self._speculative: list = []  # messages since last tool_use
         self._speculative_sent_len: int = 0  # chars sent via non-streaming text_blocks
 
         # Flood control
@@ -117,26 +117,32 @@ class StreamingSession:
         """Clear the persisted live_message_id so restart recovery won't
         delete an already-finalized message."""
         from bot.streams import clear_stream_live_message_id
+
         clear_stream_live_message_id(
-            self.chat_id, self.thread_id,
-            getattr(self, 'session_user_id', 0),
+            self.chat_id,
+            self.thread_id,
+            getattr(self, "session_user_id", 0),
         )
 
     def _save_status_msg_id(self, message_id: int) -> None:
         """Persist the status message ID so restart recovery can delete it."""
         from bot.streams import set_stream_status_msg_id
+
         set_stream_status_msg_id(
-            self.chat_id, self.thread_id,
-            getattr(self, 'session_user_id', 0),
+            self.chat_id,
+            self.thread_id,
+            getattr(self, "session_user_id", 0),
             message_id,
         )
 
     def _clear_status_msg_id_cache(self) -> None:
         """Clear the persisted status_msg_id after successful deletion."""
         from bot.streams import clear_stream_status_msg_id
+
         clear_stream_status_msg_id(
-            self.chat_id, self.thread_id,
-            getattr(self, 'session_user_id', 0),
+            self.chat_id,
+            self.thread_id,
+            getattr(self, "session_user_id", 0),
         )
 
     # ------------------------------------------------------------------
@@ -171,8 +177,12 @@ class StreamingSession:
     async def _on_text_block(self, event: dict) -> None:
         """Handle a completed text block (before tool use or at stream end)."""
         block_text = event["text"]
+        # When streaming is off, no partials populate live_text.
+        # Accumulate block text so finalize_response can extract 📎 file markers.
+        if block_text and not self.streaming:
+            self.live_text += block_text
         if self.live_msg:
-            chunk_md = self.live_text[self.sent_offset:]
+            chunk_md = self.live_text[self.sent_offset :]
             display_md = clean_file_markers(chunk_md)
             if display_md:
                 try:
@@ -205,7 +215,7 @@ class StreamingSession:
     async def _on_tool_use(self, event: dict) -> None:
         """Handle tool invocation start — flush live text, update status."""
         if self.live_msg:
-            chunk_md = self.live_text[self.sent_offset:]
+            chunk_md = self.live_text[self.sent_offset :]
             display_md = clean_file_markers(chunk_md)
             if display_md:
                 try:
@@ -256,11 +266,12 @@ class StreamingSession:
         }
         if usage_data:
             set_usage(
-                self.chat_id, self.thread_id,
+                self.chat_id,
+                self.thread_id,
                 # session_user_id is needed — caller must set it; we use chat_id's
                 # thread context. But set_usage is called with the same args as the
                 # outer function, so we store session_user_id on the instance.
-                getattr(self, 'session_user_id', 0),
+                getattr(self, "session_user_id", 0),
                 usage_data,
             )
 
@@ -321,7 +332,7 @@ class StreamingSession:
         if now < self.flood_until:
             return
 
-        chunk_md = text[self.sent_offset:]
+        chunk_md = text[self.sent_offset :]
         if not chunk_md:
             return
 
@@ -360,14 +371,14 @@ class StreamingSession:
                 self.live_msg = None
                 self._clear_live_message_id_cache()
                 self.last_live_edit = 0
-                chunk_md = text[self.sent_offset:]
+                chunk_md = text[self.sent_offset :]
             # If finalization failed, skip — will retry on next partial
 
         # Throttle display updates (but not overflow checks above)
         if self.live_msg and (now - self.last_live_edit) < LIVE_EDIT_INTERVAL:
             return
 
-        display = chunk_md[:TELEGRAM_MAX_LENGTH - 20] + " \u270d\ufe0f" if chunk_md else ""
+        display = chunk_md[: TELEGRAM_MAX_LENGTH - 20] + " \u270d\ufe0f" if chunk_md else ""
         if not display:
             return
 
@@ -376,9 +387,11 @@ class StreamingSession:
                 self.live_msg = await self._send_new_message(display)
                 # Persist live message ID for restart recovery
                 from bot.streams import set_stream_live_message_id
+
                 set_stream_live_message_id(
-                    self.chat_id, self.thread_id,
-                    getattr(self, 'session_user_id', 0),
+                    self.chat_id,
+                    self.thread_id,
+                    getattr(self, "session_user_id", 0),
                     self.live_msg.message_id,
                 )
             else:
@@ -457,21 +470,31 @@ class StreamingSession:
         """Send rendered markdown text, using the appropriate sender mode."""
         if self.update is not None:
             from bot.telegram_sender import send_rendered
+
             await send_rendered(self.update, text, self.context)
         else:
             from bot.telegram_sender import send_rendered_bot
+
             await send_rendered_bot(self._bot, self.chat_id, text, self.tg_thread_id)
 
     async def _send_rendered_collect(self, text: str) -> list:
         """Send rendered markdown text and return sent messages."""
         if self.update is not None:
             from bot.telegram_sender import send_rendered_collect
+
             return await send_rendered_collect(
-                self.update, text, self.context, self.tg_thread_id,
+                self.update,
+                text,
+                self.context,
+                self.tg_thread_id,
             )
         from bot.telegram_sender import send_rendered_collect_bot
+
         return await send_rendered_collect_bot(
-            self._bot, self.chat_id, text, self.tg_thread_id,
+            self._bot,
+            self.chat_id,
+            text,
+            self.tg_thread_id,
         )
 
     async def finalize_response(self) -> None:
@@ -485,29 +508,44 @@ class StreamingSession:
         from bot.types import FileSegment
         from bot.workspaces import ensure_workspace
 
+        infra_logger.warning(
+            "[FILE] finalize: resp=%d live=%d clip_r=%s clip_l=%s",
+            len(self.response_text or ""), len(self.live_text or ""),
+            "\U0001f4ce" in (self.response_text or ""),
+            "\U0001f4ce" in (self.live_text or ""),
+        )
+
         # 1. Process result
         if self.response_text is None:
             self.response_text = "Claude processed the request but returned no text output."
 
         if not self.response_text:
-            # Silent exit — clean up speculative and live_msg too
-            await self.delete_speculative_messages()
-            return
+            # If live_text has 📎 markers, use it as response_text so files get sent
+            if self.live_text and "\U0001f4ce" in self.live_text:
+                self.response_text = self.live_text
+            else:
+                await self.delete_speculative_messages()
+                return
 
         response_text, image_urls = extract_image_urls(self.response_text)
         workspace_path = str(ensure_workspace(self.chat_id))
         segments = split_file_segments(response_text, workspace_path)
         file_segments = [s for s in segments if isinstance(s, FileSegment)]
+        # Fallback: if response_text has no 📎 markers but live_text does, parse live_text
+        if not file_segments and self.live_text and "\U0001f4ce" in self.live_text:
+            fallback_segments = split_file_segments(self.live_text, workspace_path)
+            file_segments = [s for s in fallback_segments if isinstance(s, FileSegment)]
         cleaned_response = clean_file_markers(response_text)
 
         # Extract LaTeX blocks early so the guard below won't skip them
         from bot.latex_render import extract_latex_blocks
+
         latex_blocks = extract_latex_blocks(response_text) if response_text else []
 
         # effective_offset: how much of response_text was already shown
         effective_offset = max(self.sent_offset, self._speculative_sent_len)
         if cleaned_response:
-            remaining = cleaned_response[min(effective_offset, len(cleaned_response)):]
+            remaining = cleaned_response[min(effective_offset, len(cleaned_response)) :]
         else:
             remaining = ""
 
@@ -521,7 +559,7 @@ class StreamingSession:
         if not remaining and not image_urls and not file_segments and not latex_blocks:
             # Everything already displayed — just finalize live_msg if needed
             if self.live_msg:
-                chunk_md = clean_file_markers(self.live_text[self.sent_offset:])
+                chunk_md = clean_file_markers(self.live_text[self.sent_offset :])
                 if chunk_md:
                     try:
                         rendered = renderer.render(chunk_md)
@@ -537,7 +575,7 @@ class StreamingSession:
                         await self.live_msg.delete()
         else:
             if self.live_msg:
-                display_md = clean_file_markers(self.live_text[self.sent_offset:])
+                display_md = clean_file_markers(self.live_text[self.sent_offset :])
                 if display_md and remaining:
                     try:
                         rendered = renderer.render(remaining)
@@ -564,13 +602,18 @@ class StreamingSession:
                 await self._send_rendered(remaining)
 
         # Send file attachments
+        if file_segments:
+            infra_logger.warning("[FILE] sending %d segment(s)", len(file_segments))
         for seg in file_segments:
             try:
                 await send_file_group(
-                    self._bot, self.chat_id, seg.files, self.tg_thread_id,
+                    self._bot,
+                    self.chat_id,
+                    seg.files,
+                    self.tg_thread_id,
                 )
-            except Exception as e:
-                logger.warning("Failed to send file group: %s", e)
+            except Exception:
+                logger.exception("Failed to send file group")
 
         # Send image URLs
         for img_url in image_urls:
@@ -585,9 +628,11 @@ class StreamingSession:
 
         # Send LaTeX rendered images (grouped as album when multiple)
         from bot.latex_render import render_all_latex
+
         if latex_blocks:
             import functools
             import tempfile
+
             loop = asyncio.get_event_loop()
             with tempfile.TemporaryDirectory() as tmpdir:
                 png_paths = await loop.run_in_executor(
@@ -596,11 +641,12 @@ class StreamingSession:
                 if len(png_paths) >= 2:
                     # Send as a media group (album)
                     from telegram import InputMediaPhoto
+
                     try:
                         media = []
                         open_files = []
                         for png_path in png_paths:
-                            f = open(png_path, 'rb')  # noqa: SIM115
+                            f = open(png_path, "rb")  # noqa: SIM115
                             open_files.append(f)
                             media.append(InputMediaPhoto(media=f))
                         await self._bot.send_media_group(
@@ -610,12 +656,11 @@ class StreamingSession:
                         )
                     except Exception:
                         logger.warning(
-                            "Failed to send LaTeX album,"
-                            " falling back to individual photos",
+                            "Failed to send LaTeX album, falling back to individual photos",
                         )
                         for png_path in png_paths:
                             try:
-                                with open(png_path, 'rb') as f:
+                                with open(png_path, "rb") as f:
                                     await self._bot.send_photo(
                                         chat_id=self.chat_id,
                                         photo=f,
@@ -630,7 +675,7 @@ class StreamingSession:
                 elif len(png_paths) == 1:
                     # Single image — send as regular photo
                     try:
-                        with open(png_paths[0], 'rb') as f:
+                        with open(png_paths[0], "rb") as f:
                             await self._bot.send_photo(
                                 chat_id=self.chat_id,
                                 photo=f,

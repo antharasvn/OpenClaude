@@ -341,6 +341,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
         # Start typing indicator -- runs until cancelled
         typing_task = asyncio.create_task(_typing_loop(context.bot, chat_id, tg_thread_id))
+        finalized = False
         try:
             async for event in stream_claude(claude_message, chat_id, thread_id, session_user_id,
                                              working_dir=chat_working_dir, verbose=streaming,
@@ -354,8 +355,16 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
                 await session.handle_event(event)
 
-            # Final flush of any buffered live text
-            await session.flush_live()
+                # Finalize immediately on result — the SDK stream may hang
+                # after ResultMessage, so don't wait for the loop to end.
+                if etype == "result" and not finalized:
+                    await session.flush_live()
+                    await session.finalize_response()
+                    finalized = True
+
+            # Final flush if stream ended without result event
+            if not finalized:
+                await session.flush_live()
         finally:
             if not _is_compact:
                 _stop_events.pop(skey, None)
@@ -364,9 +373,9 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
         if session.stopped:
             return
 
-        # Finalize: delete intermediates, send final response, files, images
-        # This MUST run inside the lock to prevent ordering issues
-        await session.finalize_response()
+        # Finalize if not already done inside the loop
+        if not finalized:
+            await session.finalize_response()
 
         # Context usage warnings and auto-compact (also inside lock)
         if not _is_compact:
