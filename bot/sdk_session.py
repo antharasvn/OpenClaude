@@ -94,59 +94,43 @@ def _apply_sdk_compat_patch() -> None:
 
 _apply_sdk_compat_patch()
 
+
+def _apply_sdk_setsid_patch() -> None:
+    """Patch the SDK transport to spawn Claude in its own process group.
+
+    Without this, the SDK subprocess inherits the bot's pgid, making it
+    impossible to kill via ``os.killpg()`` without also killing the bot.
+    The patch injects ``start_new_session=True`` into the
+    ``anyio.open_process()`` call so the subprocess gets its own pgid.
+    """
+    if not HAS_SDK:
+        return
+
+    try:
+        import anyio as _anyio
+
+        _original_open_process = _anyio.open_process
+
+        async def _patched_open_process(*args, **kwargs):
+            kwargs.setdefault("start_new_session", True)
+            return await _original_open_process(*args, **kwargs)
+
+        _anyio.open_process = _patched_open_process
+        logger.debug("Applied SDK setsid patch — subprocesses will get their own pgid")
+    except Exception:
+        logger.warning("Failed to apply SDK setsid patch", exc_info=True)
+
+
+_apply_sdk_setsid_patch()
+
 DISCONNECT_TIMEOUT = 3  # seconds
 
 # Cache the bot's own process group so we never kill ourselves
 _BOT_PGID = os.getpgid(os.getpid())
 
 
-def _killpg_safe(pid: int) -> bool:
-    """Kill the process group of *pid* via SIGKILL, if it differs from the bot's.
-
-    Returns True if killpg was sent successfully, False otherwise.
-    """
-    try:
-        pgid = os.getpgid(pid)
-    except (ProcessLookupError, OSError):
-        return False
-    if pgid == _BOT_PGID:
-        logger.debug("Skipping killpg — pgid %d matches bot's own process group", pgid)
-        return False
-    try:
-        os.killpg(pgid, signal.SIGKILL)
-        logger.info("Killed process group pgid=%d (from pid=%d)", pgid, pid)
-        return True
-    except (ProcessLookupError, PermissionError, OSError) as exc:
-        logger.debug("killpg(pgid=%d) failed: %s", pgid, exc)
-        return False
-
-
-def _kill_tree(pid: int) -> None:
-    """Recursively SIGKILL a process and all its descendants."""
-    # Collect all descendant PIDs first (bottom-up)
-    children = []
-    try:
-        with open(f"/proc/{pid}/task/{pid}/children") as f:
-            child_pids = [int(p) for p in f.read().split()]
-        for cpid in child_pids:
-            children.extend(_get_descendants(cpid))
-            children.append(cpid)
-    except (FileNotFoundError, ValueError, OSError):
-        pass
-
-    # Kill children bottom-up, then the root
-    for cpid in reversed(children):
-        with contextlib.suppress(ProcessLookupError, OSError):
-            os.kill(cpid, signal.SIGKILL)
-    try:
-        os.kill(pid, signal.SIGKILL)
-        logger.info("Hard-killed process tree rooted at pid=%d (%d children)", pid, len(children))
-    except ProcessLookupError:
-        pass
-
-
 def _get_descendants(pid: int) -> list[int]:
-    """Get all descendant PIDs of a process."""
+    """Get all descendant PIDs of a process recursively."""
     result = []
     try:
         with open(f"/proc/{pid}/task/{pid}/children") as f:
@@ -157,6 +141,41 @@ def _get_descendants(pid: int) -> list[int]:
     except (FileNotFoundError, ValueError, OSError):
         pass
     return result
+
+
+def _kill_tree(pid: int) -> None:
+    """Recursively SIGKILL a process and all its descendants.
+
+    This is the primary kill mechanism.  The SDK spawns Claude in the
+    bot's own process group (same pgid), so ``os.killpg()`` cannot be
+    used — it would kill the bot itself.  Instead we walk ``/proc``
+    to find all descendants and kill them individually.
+    """
+    # Try killpg first if the subprocess has its own process group
+    try:
+        pgid = os.getpgid(pid)
+        if pgid != _BOT_PGID:
+            try:
+                os.killpg(pgid, signal.SIGKILL)
+                logger.info("Killed process group pgid=%d (from pid=%d)", pgid, pid)
+                return
+            except (ProcessLookupError, PermissionError, OSError) as exc:
+                logger.debug("killpg(pgid=%d) failed: %s — falling back to tree kill", pgid, exc)
+    except (ProcessLookupError, OSError):
+        return  # process already gone
+
+    # Collect all descendant PIDs (bottom-up)
+    descendants = _get_descendants(pid)
+
+    # Kill descendants bottom-up, then the root
+    for cpid in reversed(descendants):
+        with contextlib.suppress(ProcessLookupError, OSError):
+            os.kill(cpid, signal.SIGKILL)
+    try:
+        os.kill(pid, signal.SIGKILL)
+        logger.info("Hard-killed process tree rooted at pid=%d (%d descendants)", pid, len(descendants))
+    except ProcessLookupError:
+        pass
 
 
 class SDKSession:
@@ -202,7 +221,6 @@ class SDKSession:
         pid = self._get_subprocess_pid()
         if not pid:
             return
-        _killpg_safe(pid)
         _kill_tree(pid)
 
     async def disconnect(self) -> None:
@@ -254,16 +272,44 @@ class SDKSessionManager:
     # ── core API ─────────────────────────────────────────────────────
 
     def get_or_create(self, key: str, session_id: str | None = None) -> SDKSession:
-        """Return an existing session or create a new one for *key*."""
+        """Return an existing session or create a new one for *key*.
+
+        If an existing session is found but is still connected (orphaned
+        from a previous call), hard-kill its subprocess before returning
+        a fresh session.  This prevents duplicate Claude processes.
+        """
         session = self._sessions.get(key)
-        if session is None:
-            session = SDKSession()
-            session.session_id = session_id
-            self._sessions[key] = session
+        if session is not None:
+            if session.connected and session.client:
+                logger.warning(
+                    "get_or_create(%s): existing session still connected — "
+                    "hard-killing orphaned subprocess before creating new one",
+                    key,
+                )
+                session.hard_kill()
+                session.client = None
+                session.connected = False
+            return session
+        session = SDKSession()
+        session.session_id = session_id
+        self._sessions[key] = session
         return session
 
     def put(self, key: str, session: SDKSession) -> None:
-        """Store *session* under *key* (replaces any existing entry)."""
+        """Store *session* under *key*.
+
+        If there is an existing connected session under this key,
+        hard-kill it first to prevent orphaned subprocesses.
+        """
+        old = self._sessions.get(key)
+        if old is not None and old is not session and old.connected:
+            logger.warning(
+                "put(%s): replacing still-connected session — hard-killing old subprocess",
+                key,
+            )
+            old.hard_kill()
+            old.client = None
+            old.connected = False
         self._sessions[key] = session
 
     async def disconnect(self, key: str) -> None:

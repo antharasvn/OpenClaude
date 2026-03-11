@@ -184,11 +184,11 @@ async def stream_sdk(
             yield {"type": "error", "text": f"Claude error: {e}"}
         return
     finally:
-        # Always disconnect and remove the session to prevent zombie
-        # subprocesses.  This runs on normal completion, CancelledError,
-        # timeout, stop-event, and any other exception.
+        # Always disconnect the session to prevent zombie subprocesses.
+        # We keep the session in the manager (don't pop) so that
+        # get_or_create() can see it's disconnected and reuse the slot
+        # rather than spawning a duplicate subprocess.
         await sdk_session.disconnect()
-        sdk_session_manager.pop(skey, None)
 
     if result_text is None:
         logger.warning("No result message received from SDK")
