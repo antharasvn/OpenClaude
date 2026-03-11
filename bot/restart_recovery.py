@@ -417,14 +417,24 @@ class RestartRecoveryService:
             await asyncio.wait_for(
                 self._resume_chat(entry), timeout=RESUME_TIMEOUT
             )
-        except TimeoutError:
+        except (TimeoutError, asyncio.CancelledError):
             cid = entry["chat_id"]
             tid = entry["thread_id"]
             uid = entry["user_id"]
+            session_uid = 0 if cid < 0 else uid
             infra_logger.error(
                 "Resume timed out after %ds for chat=%d thread=%d user=%d",
                 RESUME_TIMEOUT, cid, tid, uid,
             )
+            # Hard-kill the SDK session to prevent orphaned subprocesses
+            # and break anyio's _deliver_cancellation busy-loop.
+            from bot.sdk_session import sdk_session_manager
+            skey = session_key(cid, tid, session_uid)
+            sdk_sess = sdk_session_manager.get(skey)
+            if sdk_sess:
+                sdk_sess.hard_kill()
+                sdk_sess.client = None
+                sdk_sess.connected = False
             with contextlib.suppress(Exception):
                 await self._bot.send_message(
                     chat_id=cid,
