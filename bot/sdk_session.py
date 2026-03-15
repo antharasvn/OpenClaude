@@ -144,38 +144,59 @@ def _get_descendants(pid: int) -> list[int]:
 
 
 def _kill_tree(pid: int) -> None:
-    """Recursively SIGKILL a process and all its descendants.
+    """SIGKILL a process, its process group, and all descendants.
 
-    This is the primary kill mechanism.  The SDK spawns Claude in the
-    bot's own process group (same pgid), so ``os.killpg()`` cannot be
-    used — it would kill the bot itself.  Instead we walk ``/proc``
-    to find all descendants and kill them individually.
+    Claude sub-agents are spawned with ``detached: true`` (own process
+    group), so ``killpg`` alone misses them.  We collect the full
+    descendant tree *before* killing anything — once the parent dies,
+    detached children are re-parented to PID 1 and become invisible
+    to ``/proc/<pid>/children``.
     """
-    # Try killpg first if the subprocess has its own process group
+    # 1. Snapshot all descendants BEFORE killing (critical — after the
+    #    parent dies, detached children vanish from the /proc tree).
+    descendants = _get_descendants(pid)
+
+    # 2. Collect distinct process groups among descendants so we can
+    #    killpg each detached sub-agent group in one shot.
+    descendant_pgids: set[int] = set()
+    for cpid in descendants:
+        with contextlib.suppress(ProcessLookupError, OSError):
+            cpgid = os.getpgid(cpid)
+            if cpgid != _BOT_PGID:
+                descendant_pgids.add(cpgid)
+
+    # 3. killpg the main process (if it has its own group).
     try:
         pgid = os.getpgid(pid)
         if pgid != _BOT_PGID:
-            try:
-                os.killpg(pgid, signal.SIGKILL)
-                logger.info("Killed process group pgid=%d (from pid=%d)", pgid, pid)
-                return
-            except (ProcessLookupError, PermissionError, OSError) as exc:
-                logger.debug("killpg(pgid=%d) failed: %s — falling back to tree kill", pgid, exc)
+            descendant_pgids.add(pgid)
     except (ProcessLookupError, OSError):
-        return  # process already gone
+        pass  # process already gone
 
-    # Collect all descendant PIDs (bottom-up)
-    descendants = _get_descendants(pid)
+    killed_via_pgid = 0
+    for gpid in descendant_pgids:
+        with contextlib.suppress(ProcessLookupError, PermissionError, OSError):
+            os.killpg(gpid, signal.SIGKILL)
+            killed_via_pgid += 1
 
-    # Kill descendants bottom-up, then the root
-    for cpid in reversed(descendants):
-        with contextlib.suppress(ProcessLookupError, OSError):
+    # 4. Kill any stragglers individually (processes that changed pgid,
+    #    or whose group kill raced with re-parenting).
+    stragglers = 0
+    for cpid in descendants:
+        try:
             os.kill(cpid, signal.SIGKILL)
+            stragglers += 1
+        except (ProcessLookupError, OSError):
+            pass
     try:
         os.kill(pid, signal.SIGKILL)
-        logger.info("Hard-killed process tree rooted at pid=%d (%d descendants)", pid, len(descendants))
-    except ProcessLookupError:
+    except (ProcessLookupError, OSError):
         pass
+
+    logger.info(
+        "Killed process tree pid=%d: %d descendant(s), %d group(s), %d straggler(s)",
+        pid, len(descendants), killed_via_pgid, stragglers,
+    )
 
 
 class SDKSession:
