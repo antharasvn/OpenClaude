@@ -27,7 +27,12 @@ from bot.logging_setup import infra_logger, setup_logging
 from bot.process import _active_procs  # noqa: E402
 from bot.renderer import TelegramRenderer  # noqa: E402
 from bot.restart_recovery import RestartRecoveryService  # noqa: E402
-from bot.sdk_session import HAS_SDK, cleanup_idle_sessions, shutdown_sdk_sessions  # noqa: E402
+from bot.sdk_session import (  # noqa: E402
+    HAS_SDK,
+    cleanup_idle_sessions,
+    sdk_session_manager,
+    shutdown_sdk_sessions,
+)
 from bot.sessions import flush_sessions  # noqa: E402
 from bot.streams import flush_streams, start_streams_flusher, stop_streams_flusher  # noqa: E402
 from commands import ALL_COMMANDS, register_all  # noqa: E402
@@ -149,6 +154,88 @@ def main() -> None:
         except Exception as e:
             logger.warning("Failed to cleanup orphan processes: %s", e)
 
+    async def _reap_zombie_sdk_processes() -> None:
+        """Periodically kill leaked claude subprocesses not tracked by the session manager.
+
+        Runs every 2 minutes.  Only kills processes that:
+        1. Are descendants of the current bot process
+        2. Match ``claude.*stream-json`` (SDK subprocess pattern)
+        3. Are NOT in the set of PIDs actively tracked by sdk_session_manager
+        4. Have been running for more than 3 minutes (to avoid killing fresh ones)
+        """
+        import os
+        import re
+        import signal as sig
+
+        bot_pid = os.getpid()
+        min_age_seconds = 180  # 3 minutes
+
+        def _get_all_descendants(pid: int) -> list[int]:
+            """Recursively collect all descendant PIDs via /proc."""
+            result = []
+            try:
+                with open(f"/proc/{pid}/task/{pid}/children") as f:
+                    child_pids = [int(p) for p in f.read().split() if p.strip()]
+                for cpid in child_pids:
+                    result.append(cpid)
+                    result.extend(_get_all_descendants(cpid))
+            except (FileNotFoundError, ValueError, OSError):
+                pass
+            return result
+
+        def _get_process_age_seconds(pid: int) -> float | None:
+            """Return process age in seconds using /proc/pid/stat start time."""
+            try:
+                with open(f"/proc/{pid}/stat") as f:
+                    stat_fields = f.read().split(")")[-1].split()
+                # Field index 19 (0-based after comm) = starttime in clock ticks
+                starttime_ticks = int(stat_fields[19])
+                clock_ticks_per_sec = os.sysconf("SC_CLK_TCK")
+                with open("/proc/uptime") as f:
+                    uptime_seconds = float(f.read().split()[0])
+                process_start_seconds = starttime_ticks / clock_ticks_per_sec
+                return uptime_seconds - process_start_seconds
+            except (FileNotFoundError, ValueError, OSError, IndexError):
+                return None
+
+        def _is_claude_stream_json(pid: int) -> bool:
+            """Check if a process cmdline matches claude.*stream-json."""
+            try:
+                with open(f"/proc/{pid}/cmdline", "rb") as f:
+                    cmdline = f.read().decode("utf-8", errors="replace").replace("\x00", " ")
+                return bool(re.search(r"claude.*stream-json", cmdline))
+            except (FileNotFoundError, OSError):
+                return False
+
+        while True:
+            try:
+                await asyncio.sleep(120)  # Every 2 minutes
+                descendants = _get_all_descendants(bot_pid)
+                active_pids = sdk_session_manager.get_active_pids()
+
+                killed = 0
+                for pid in descendants:
+                    if pid in active_pids:
+                        continue
+                    if not _is_claude_stream_json(pid):
+                        continue
+                    age = _get_process_age_seconds(pid)
+                    if age is None or age < min_age_seconds:
+                        continue
+                    # This is a leaked claude subprocess — kill it
+                    with contextlib.suppress(Exception):
+                        os.kill(pid, sig.SIGKILL)
+                        killed += 1
+                        logger.info(
+                            "Reaped zombie claude subprocess pid=%d (age=%.0fs)",
+                            pid, age,
+                        )
+
+                if killed:
+                    infra_logger.info("Zombie reaper killed %d leaked claude process(es)", killed)
+            except Exception:
+                logger.exception("Error in _reap_zombie_sdk_processes loop")
+
     async def post_init(application: Application) -> None:
         """Fetch bot info at startup and resume interrupted generations."""
         bot = application.bot
@@ -175,6 +262,8 @@ def main() -> None:
         if HAS_SDK:
             asyncio.create_task(cleanup_idle_sessions())
             logger.info("SDK idle session cleanup task started")
+            asyncio.create_task(_reap_zombie_sdk_processes())
+            logger.info("Zombie SDK process reaper task started")
 
         # Start CPU monitoring task
         try:

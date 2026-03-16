@@ -188,10 +188,8 @@ def _kill_tree(pid: int) -> None:
             stragglers += 1
         except (ProcessLookupError, OSError):
             pass
-    try:
+    with contextlib.suppress(ProcessLookupError, OSError):
         os.kill(pid, signal.SIGKILL)
-    except (ProcessLookupError, OSError):
-        pass
 
     logger.info(
         "Killed process tree pid=%d: %d descendant(s), %d group(s), %d straggler(s)",
@@ -245,20 +243,31 @@ class SDKSession:
         _kill_tree(pid)
 
     async def disconnect(self) -> None:
-        """Disconnect the SDK client (with timeout to prevent hangs)."""
+        """Disconnect the SDK client (with timeout to prevent hangs).
+
+        Always hard-kills the subprocess after disconnect completes.
+        Detached sub-agent children (own pgid, ``detached: true``) survive
+        a normal SDK disconnect, so we must explicitly kill the full
+        process tree every time.
+        """
         if self.client:
+            # Capture PID before disconnect — the subprocess reference may
+            # be cleared during the SDK's disconnect().
+            pid = self._get_subprocess_pid()
             try:
                 await asyncio.wait_for(self.client.disconnect(), timeout=DISCONNECT_TIMEOUT)
             except TimeoutError:
                 logger.warning(
-                    "SDKSession disconnect timed out after %ds — hard-killing",
+                    "SDKSession disconnect timed out after %ds",
                     DISCONNECT_TIMEOUT,
                 )
-                self.hard_kill()
             except Exception as e:
-                logger.warning("SDKSession disconnect error: %s — hard-killing", e)
-                self.hard_kill()
+                logger.warning("SDKSession disconnect error: %s", e)
             finally:
+                # Always hard-kill to reap detached sub-agent children,
+                # regardless of whether disconnect succeeded or timed out.
+                if pid:
+                    _kill_tree(pid)
                 self.client = None
                 self.connected = False
 
@@ -360,6 +369,16 @@ class SDKSessionManager:
                         await session.disconnect()
             except Exception:
                 logger.exception("Error in SDKSessionManager.cleanup_idle loop")
+
+    def get_active_pids(self) -> set[int]:
+        """Return the set of subprocess PIDs for all connected sessions."""
+        pids: set[int] = set()
+        for session in self._sessions.values():
+            if session.connected and session.client:
+                pid = session._get_subprocess_pid()
+                if pid:
+                    pids.add(pid)
+        return pids
 
     async def shutdown_all(self) -> None:
         """Disconnect every session (called on bot shutdown)."""
