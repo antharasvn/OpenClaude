@@ -33,6 +33,7 @@ COMMANDS = [
     ("restart", "Graceful bot restart (admin)"),
     ("logs", "Show recent infrastructure logs (admin)"),
     ("usage", "Show usage statistics (admin)"),
+    ("reload", "Reload settings from .env (admin)"),
 ]
 
 
@@ -231,9 +232,47 @@ async def cmd_usage(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
+async def cmd_reload(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Reload settings from .env and chat-settings.json."""
+    user = update.effective_user
+    if not is_authorized(user.id):
+        return
+    if not _require_admin(user.id):
+        await update.message.reply_text("Admin only.")
+        return
+
+    thread_id = get_thread_id(update)
+
+    # Clear the settings singleton cache so next access re-reads .env
+    from bot.config import get_settings
+    get_settings.cache_clear()
+
+    # Re-read and update module-level config vars
+    import bot.config as _cfg
+    new_settings = get_settings()
+    _cfg.CLAUDE_MODEL = new_settings.claude_model
+    _cfg.ALLOWED_USERS = new_settings.allowed_users_set
+    _cfg.ALLOWED_USERS_LIST = new_settings.allowed_users_list
+    _cfg.ADMIN_USER_ID = new_settings.admin_user_id
+
+    # Clear chat-settings cache so it re-reads from disk
+    from commands.config import _load_settings as _reload_chat_settings
+    import commands.config as _ccfg
+    _ccfg._settings_cache = None
+    _ccfg._settings_mtime = 0.0
+
+    infra_logger.info("Settings reloaded by user %d", user.id)
+    await update.message.reply_text(
+        f"Settings reloaded.\nModel: <code>{html.escape(new_settings.claude_model or 'default')}</code>",
+        parse_mode=ParseMode.HTML,
+        message_thread_id=thread_id or None,
+    )
+
+
 def register(app: Application) -> None:
     """Register admin command handlers."""
     app.add_handler(CommandHandler("sessions", cmd_sessions))
     app.add_handler(CommandHandler("restart", cmd_restart))
     app.add_handler(CommandHandler("logs", cmd_logs))
     app.add_handler(CommandHandler("usage", cmd_usage))
+    app.add_handler(CommandHandler("reload", cmd_reload))
