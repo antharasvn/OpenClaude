@@ -135,8 +135,13 @@ def _sweep_cancellation_callbacks() -> None:
 
     This function sweeps both ``loop._ready`` (where ``call_soon`` puts handles)
     and ``loop._scheduled`` (where ``call_later`` puts handles) and cancels any
-    orphaned ``_deliver_cancellation`` callbacks.  These are CPython implementation
-    details, so failures are silently ignored.
+    orphaned ``_deliver_cancellation`` callbacks.
+
+    Because each callback re-schedules itself via ``call_soon`` before we can
+    cancel it, we also patch the CancelScope's ``_deliver_cancellation`` method
+    to a no-op on the bound ``self`` object, preventing re-scheduling.
+
+    These are CPython implementation details, so failures are silently ignored.
     """
     try:
         loop = asyncio.get_running_loop()
@@ -150,11 +155,22 @@ def _sweep_cancellation_callbacks() -> None:
                 if handle.cancelled():
                     continue
                 cb = getattr(handle, '_callback', None)
-                if cb is not None and getattr(cb, '__name__', '') == '_deliver_cancellation':
+                if cb is None:
+                    continue
+                cb_name = getattr(cb, '__name__', '')
+                if cb_name == '_deliver_cancellation':
                     handle.cancel()
                     removed += 1
+                    # Patch the bound method's __self__ so it can never
+                    # re-schedule itself via call_soon().
+                    scope = getattr(cb, '__self__', None)
+                    if scope is not None:
+                        try:
+                            scope._deliver_cancellation = lambda *a, **kw: None
+                        except (AttributeError, TypeError):
+                            pass
         if removed:
-            logger.warning("Swept %d orphaned _deliver_cancellation callbacks", removed)
+            logger.warning("Swept %d orphaned _deliver_cancellation callbacks (patched scopes)", removed)
     except Exception:
         logger.debug("Failed to sweep cancellation callbacks", exc_info=True)
 

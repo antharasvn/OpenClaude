@@ -69,10 +69,12 @@ def main() -> None:
     renderer = TelegramRenderer()
 
     async def _monitor_cpu_usage() -> None:
-        """Monitor bot CPU usage and log warnings if it spikes."""
+        """Monitor bot CPU usage and auto-sweep orphaned callbacks on high CPU."""
         import os
 
         import psutil
+        from bot.sdk_session import _sweep_cancellation_callbacks
+
         bot_pid = os.getpid()
         process = psutil.Process(bot_pid)
 
@@ -89,8 +91,12 @@ def main() -> None:
                     num_threads = process.num_threads()
                     mem_mb = process.memory_info().rss / 1024 / 1024
 
+                    # Auto-sweep orphaned anyio _deliver_cancellation callbacks
+                    # that cause infinite CPU busy loops
+                    _sweep_cancellation_callbacks()
+
                     logger.warning(
-                        "High CPU usage detected: %.1f%% (threads=%d, mem=%.0fMB)",
+                        "High CPU usage detected: %.1f%% (threads=%d, mem=%.0fMB) — swept callbacks",
                         cpu_percent, num_threads, mem_mb
                     )
                     infra_logger.warning(
@@ -258,6 +264,10 @@ def main() -> None:
 
         # Cleanup orphan claude processes from previous run
         await _cleanup_orphan_claude_processes()
+
+        # Sweep any orphaned anyio _deliver_cancellation callbacks that survived the restart
+        from bot.sdk_session import _sweep_cancellation_callbacks
+        _sweep_cancellation_callbacks()
 
         if HAS_SDK:
             asyncio.create_task(cleanup_idle_sessions())
