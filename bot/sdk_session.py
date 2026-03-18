@@ -125,6 +125,39 @@ _apply_sdk_setsid_patch()
 
 DISCONNECT_TIMEOUT = 3  # seconds
 
+
+def _sweep_cancellation_callbacks() -> None:
+    """Remove orphaned anyio _deliver_cancellation callbacks from the event loop.
+
+    When a subprocess is killed (SIGKILL) before anyio can cleanly shut down its
+    CancelScopes, the ``_deliver_cancellation`` callback reschedules itself via
+    ``call_soon()`` in an infinite busy loop, burning 100% CPU.
+
+    This function sweeps both ``loop._ready`` (where ``call_soon`` puts handles)
+    and ``loop._scheduled`` (where ``call_later`` puts handles) and cancels any
+    orphaned ``_deliver_cancellation`` callbacks.  These are CPython implementation
+    details, so failures are silently ignored.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+        removed = 0
+        # call_soon() -> _ready (deque), call_later() -> _scheduled (list)
+        for attr in ('_ready', '_scheduled'):
+            queue = getattr(loop, attr, None)
+            if queue is None:
+                continue
+            for handle in list(queue):
+                if handle.cancelled():
+                    continue
+                cb = getattr(handle, '_callback', None)
+                if cb is not None and getattr(cb, '__name__', '') == '_deliver_cancellation':
+                    handle.cancel()
+                    removed += 1
+        if removed:
+            logger.warning("Swept %d orphaned _deliver_cancellation callbacks", removed)
+    except Exception:
+        logger.debug("Failed to sweep cancellation callbacks", exc_info=True)
+
 # Cache the bot's own process group so we never kill ourselves
 _BOT_PGID = os.getpgid(os.getpid())
 
@@ -236,11 +269,15 @@ class SDKSession:
         Session state is already saved on disk after ResultMessage, so
         SIGKILL is safe at this point.  Skipping SIGTERM avoids a blocking
         2-second sleep that stalls the event loop.
+
+        After killing, sweeps orphaned anyio ``_deliver_cancellation``
+        callbacks from the event loop to prevent infinite busy loops.
         """
         pid = self._get_subprocess_pid()
         if not pid:
             return
         _kill_tree(pid)
+        _sweep_cancellation_callbacks()
 
     async def disconnect(self) -> None:
         """Disconnect the SDK client (with timeout to prevent hangs).
@@ -270,6 +307,9 @@ class SDKSession:
                     _kill_tree(pid)
                 self.client = None
                 self.connected = False
+                # Sweep any orphaned anyio _deliver_cancellation callbacks
+                # that may have been left behind by the hard-kill.
+                _sweep_cancellation_callbacks()
 
 
 class SDKSessionManager:

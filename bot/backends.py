@@ -32,6 +32,7 @@ from bot.sdk_session import (
     TextBlock,
     ToolResultBlock,
     ToolUseBlock,
+    _sweep_cancellation_callbacks,
     sdk_session_manager,
 )
 from bot.sessions import session_key
@@ -189,6 +190,9 @@ async def stream_sdk(
         # get_or_create() can see it's disconnected and reuse the slot
         # rather than spawning a duplicate subprocess.
         await sdk_session.disconnect()
+        # Safety net: sweep any orphaned _deliver_cancellation callbacks
+        # that might have been left behind if the disconnect had to hard-kill.
+        _sweep_cancellation_callbacks()
 
     if result_text is None:
         logger.warning("No result message received from SDK")
