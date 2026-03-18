@@ -28,6 +28,9 @@ renderer = TelegramRenderer()
 # Live-edit throttle interval (seconds)
 LIVE_EDIT_INTERVAL = 3.0
 
+# Maximum accumulated output size (500KB) — drop further text after this
+MAX_OUTPUT_SIZE = 500_000
+
 
 class StreamingSession:
     """Holds all mutable state for a single streaming response cycle.
@@ -85,6 +88,7 @@ class StreamingSession:
 
         # Flood control
         self.flood_until: float = 0
+        self._flood_hit_count: int = 0  # number of flood events this session
 
         # Final result
         self.response_text: str | None = None
@@ -192,8 +196,9 @@ class StreamingSession:
                         parse_mode=ParseMode.HTML,
                         disable_web_page_preview=True,
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    self._check_flood(e)
+                    logger.debug("_on_text_block: edit failed: %s", e)
                 self.finalized_msgs.append(self.live_msg)
                 self._speculative.append(self.live_msg)
             else:
@@ -225,8 +230,9 @@ class StreamingSession:
                         parse_mode=ParseMode.HTML,
                         disable_web_page_preview=True,
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    self._check_flood(e)
+                    logger.debug("_on_tool_use: edit failed: %s", e)
                 self.finalized_msgs.append(self.live_msg)
             else:
                 with contextlib.suppress(Exception):
@@ -248,17 +254,35 @@ class StreamingSession:
 
     async def _on_partial(self, event: dict) -> None:
         """Handle streaming text delta."""
+        if len(self.live_text) >= MAX_OUTPUT_SIZE:
+            if not getattr(self, "_output_limit_warned", False):
+                logger.warning(
+                    "Output size limit reached (%d bytes) for chat=%d — dropping further text",
+                    MAX_OUTPUT_SIZE, self.chat_id,
+                )
+                self._output_limit_warned = True
+            return
         self.live_text += event["text"]
         try:
             await self._update_live(self.live_text)
         except Exception:
             logger.exception("_update_live error")
 
+    @staticmethod
+    def _strip_internal_tags(text: str) -> str:
+        """Strip <internal>...</internal> tags from result text."""
+        return re.sub(r"<internal>.*?</internal>", "", text, flags=re.DOTALL).strip()
+
     def _on_result(self, event: dict) -> None:
         """Handle final result with usage metadata."""
         from bot.sessions import set_usage
 
-        self.response_text = event.get("text", "")
+        raw_text = event.get("text", "")
+        if raw_text and "<internal>" in raw_text:
+            logger.debug("Stripping <internal> tags from result (len=%d)", len(raw_text))
+            self.response_text = self._strip_internal_tags(raw_text)
+        else:
+            self.response_text = raw_text
         usage_data = {
             k: event.get(k)
             for k in ("usage", "cost", "num_turns", "duration_ms", "duration_api_ms")
@@ -307,22 +331,24 @@ class StreamingSession:
             else:
                 await self.status_msg.edit_text(text)
             self.last_edit_time = asyncio.get_event_loop().time()
-        except Exception:
-            pass
+        except Exception as e:
+            self._check_flood(e)
+            logger.debug("_update_status: edit failed: %s", e)
 
     # ------------------------------------------------------------------
     # Live streaming display
     # ------------------------------------------------------------------
 
     def _check_flood(self, exc: Exception) -> None:
-        """If exc is a flood-control error, set backoff deadline."""
+        """If exc is a flood-control error, set backoff deadline and adapt interval."""
         msg = str(exc)
         if "Flood control" not in msg and "Too Many Requests" not in msg:
             return
         m = re.search(r"Retry in (\d+)", msg)
         wait = int(m.group(1)) if m else 30
         self.flood_until = asyncio.get_event_loop().time() + wait
-        infra_logger.warning("[STREAM] flood control — backing off %ds", wait)
+        self._flood_hit_count += 1
+        infra_logger.warning("[STREAM] flood control — backing off %ds (hit #%d)", wait, self._flood_hit_count)
 
     async def _update_live(self, text: str) -> None:
         """Update the live-streaming message with accumulated text."""
@@ -375,7 +401,9 @@ class StreamingSession:
             # If finalization failed, skip — will retry on next partial
 
         # Throttle display updates (but not overflow checks above)
-        if self.live_msg and (now - self.last_live_edit) < LIVE_EDIT_INTERVAL:
+        # After flood events, double the interval for each hit to prevent oscillation
+        effective_interval = LIVE_EDIT_INTERVAL * (2 ** self._flood_hit_count) if self._flood_hit_count else LIVE_EDIT_INTERVAL
+        if self.live_msg and (now - self.last_live_edit) < effective_interval:
             return
 
         display = chunk_md[: TELEGRAM_MAX_LENGTH - 20] + " \u270d\ufe0f" if chunk_md else ""
@@ -515,6 +543,16 @@ class StreamingSession:
             "\U0001f4ce" in (self.live_text or ""),
         )
 
+        # 0. Extract and apply reaction directives
+        from bot.reactions import apply_reactions, extract_reactions
+        if self.response_text and "[react:" in self.response_text:
+            self.response_text, reaction_emojis = extract_reactions(self.response_text)
+            if reaction_emojis and self.update and self.update.message:
+                await apply_reactions(
+                    self._bot, self.chat_id,
+                    self.update.message.message_id, reaction_emojis,
+                )
+
         # 1. Process result
         if self.response_text is None:
             self.response_text = "Claude processed the request but returned no text output."
@@ -568,8 +606,9 @@ class StreamingSession:
                             parse_mode=ParseMode.HTML,
                             disable_web_page_preview=True,
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        self._check_flood(e)
+                        logger.debug("finalize: edit live_msg failed: %s", e)
                 else:
                     with contextlib.suppress(Exception):
                         await self.live_msg.delete()
@@ -588,7 +627,9 @@ class StreamingSession:
                         else:
                             await self.live_msg.delete()
                             await self._send_rendered(remaining)
-                    except Exception:
+                    except Exception as e:
+                        self._check_flood(e)
+                        logger.debug("finalize: edit remaining failed: %s", e)
                         with contextlib.suppress(Exception):
                             await self.live_msg.delete()
                         if remaining:

@@ -119,6 +119,8 @@ class RestartRecoveryService:
 
     async def _resume_chat(self, entry: dict) -> None:
         """Resume a single interrupted chat session."""
+        from bot.chat_lock import get_chat_lock, release_chat_lock_ref
+
         cid = entry["chat_id"]
         tid = entry["thread_id"]
         uid = entry["user_id"]
@@ -127,6 +129,18 @@ class RestartRecoveryService:
         tg_thread_id = tid or None
         live_message_id: int | None = entry.get("live_message_id")
         status_msg_id: int | None = entry.get("status_msg_id")
+
+        # Acquire chat lock to prevent concurrent streaming
+        skey_for_lock = session_key(cid, tid, session_uid)
+        lock = get_chat_lock(skey_for_lock)
+        try:
+            await asyncio.wait_for(lock.acquire(), timeout=10)
+        except TimeoutError:
+            infra_logger.warning(
+                "Resume skipped for chat=%d thread=%d user=%d — lock busy",
+                cid, tid, uid,
+            )
+            return
 
         # Delete the stuck live message immediately (same as normal flow after generation)
         if live_message_id:
@@ -138,7 +152,7 @@ class RestartRecoveryService:
             with contextlib.suppress(Exception):
                 await self._bot.delete_message(chat_id=cid, message_id=status_msg_id)
 
-        try:
+        try:  # noqa: SIM105 — outer try wraps the full resume with lock release in finally
             session_id = get_session_id(cid, tid, session_uid)
             if not session_id:
                 # Fallback: session_id stored directly in the stream entry
@@ -282,6 +296,10 @@ class RestartRecoveryService:
                     ),
                     message_thread_id=tg_thread_id,
                 )
+        finally:
+            with contextlib.suppress(RuntimeError):
+                lock.release()
+            release_chat_lock_ref(skey_for_lock)
 
     @staticmethod
     def _is_rollback(old_commit: str, current_commit: str) -> bool:
@@ -404,11 +422,17 @@ class RestartRecoveryService:
                 )
             except Exception:
                 plain = re.sub(r"<[^>]+>", "", rendered)
-                for pc in split_message(plain):
-                    await self._bot.send_message(
-                        chat_id=chat_id,
-                        text=pc,
-                        message_thread_id=thread_id,
+                try:
+                    for pc in split_message(plain):
+                        await self._bot.send_message(
+                            chat_id=chat_id,
+                            text=pc,
+                            message_thread_id=thread_id,
+                        )
+                except Exception as e2:
+                    infra_logger.warning(
+                        "_send_result: plain text fallback failed for chat=%d: %s",
+                        chat_id, e2,
                     )
 
     async def _resume_with_timeout(self, entry: dict) -> None:

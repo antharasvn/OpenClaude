@@ -16,8 +16,8 @@ from collections.abc import AsyncIterator
 
 from bot.config import (
     ALL_TOOLS,
-    CLAUDE_MODEL,
     CLAUDE_TIMEOUT,
+    get_claude_model,
 )
 from bot.formatting import format_tool_status
 from bot.logging_setup import _summarize_input
@@ -70,21 +70,24 @@ async def stream_sdk(
 
     options = build_sdk_options(is_admin, cwd, thread_id, sid, verbose)
 
-    # Connect (with one retry on failure)
-    try:
-        await sdk_session.ensure_connected(options)
-    except Exception as e:
-        logger.error("SDK connect failed: %s", e)
-        await sdk_session.disconnect()
-        sdk_session = SDKSession()
-        sdk_session.session_id = sid
-        sdk_session_manager.put(skey, sdk_session)
+    # Connect with exponential backoff (3 retries: 1s, 2s, 4s)
+    max_retries = 3
+    for attempt in range(max_retries + 1):
         try:
             await sdk_session.ensure_connected(options)
-        except Exception as e2:
-            logger.exception("SDK connect retry failed: %s", e2)
-            yield {"type": "error", "text": f"Failed to connect to Claude: {e2}"}
-            return
+            break
+        except Exception as e:
+            if attempt == max_retries:
+                logger.exception("SDK connect failed after %d retries: %s", max_retries, e)
+                yield {"type": "error", "text": f"Failed to connect to Claude after {max_retries} retries: {e}"}
+                return
+            delay = 2 ** attempt  # 1s, 2s, 4s
+            logger.warning("SDK connect attempt %d failed: %s — retrying in %ds", attempt + 1, e, delay)
+            await sdk_session.disconnect()
+            sdk_session = SDKSession()
+            sdk_session.session_id = sid
+            sdk_session_manager.put(skey, sdk_session)
+            await asyncio.sleep(delay)
 
     logger.info("Calling Claude (SDK) for user %d (session: %s)", user_id, sid or "new")
     _record_restart_commit(chat_id)
@@ -127,7 +130,7 @@ async def stream_sdk(
                         _append_restart_context(chat_id, f"Tool call [{block.name}]: {status}")
                         yield {"type": "tool_use", "status": status}
                     elif isinstance(block, ToolResultBlock):
-                        tool_active_count -= 1
+                        tool_active_count = max(0, tool_active_count - 1)
                         _append_restart_context(chat_id, "Tool completed")
                         yield {"type": "tool_result"}
                     elif isinstance(block, TextBlock):
@@ -231,8 +234,9 @@ async def stream_subprocess(
         cmd.append("--include-partial-messages")
     if sid:
         cmd.extend(["--resume", sid])
-    if CLAUDE_MODEL:
-        cmd.extend(["--model", CLAUDE_MODEL])
+    model = get_claude_model()
+    if model:
+        cmd.extend(["--model", model])
 
     logger.info("Calling Claude (subprocess) for user %d (session: %s)", user_id, sid or "new")
     _record_restart_commit(chat_id)

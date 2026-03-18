@@ -1,6 +1,7 @@
 """Message batching — accumulate rapid-fire messages before sending to Claude."""
 
 import asyncio
+import contextlib
 import logging
 
 from telegram import Update
@@ -40,8 +41,7 @@ async def queue_message(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
 async def _flush_batch(key: str) -> None:
     """Flush the batch buffer -- combine messages and send to Claude."""
-    # Import here to avoid circular dependency (handlers imports batching)
-    from bot.handlers import run_with_streaming
+    from bot.streaming import run_with_streaming
 
     messages = _batch_buffers.pop(key, [])
     update_ctx = _batch_updates.pop(key, None)
@@ -56,4 +56,26 @@ async def _flush_batch(key: str) -> None:
 
     combined = messages[0] if len(messages) == 1 else "\n\n".join(messages)
 
-    await run_with_streaming(update, context, chat_id, thread_id, user_id, combined)
+    try:
+        await run_with_streaming(update, context, chat_id, thread_id, user_id, combined)
+    except Exception:
+        logger.exception("_flush_batch failed for key=%s", key)
+        with contextlib.suppress(Exception):
+            tg_thread_id = thread_id or None
+            await update.message.reply_text(
+                "Something went wrong processing your message. Please try again.",
+                message_thread_id=tg_thread_id,
+            )
+
+
+async def flush_all_batches() -> None:
+    """Flush all pending batch buffers. Call on shutdown."""
+    keys = list(_batch_buffers.keys())
+    for key in keys:
+        timer = _batch_timers.get(key)
+        if timer:
+            timer.cancel()
+        try:
+            await _flush_batch(key)
+        except Exception:
+            logger.exception("flush_all_batches: failed for key=%s", key)
