@@ -6,7 +6,7 @@ import re
 import shlex
 from pathlib import Path
 
-from bot.config import ALL_TOOLS, CLAUDE_MODEL
+from bot.config import ALL_TOOLS, get_claude_model
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +132,9 @@ def make_permission_handler(is_admin: bool, workspace: str):
                                     ),
                                 )
                     except ValueError:
-                        pass
+                        return PermissionResultDeny(
+                            message="BLOCKED: Malformed command — could not parse safely."
+                        )
 
                 if re.search(
                     r"\brm\s+.*-[a-zA-Z]*r[a-zA-Z]*f|\brm\s+.*-[a-zA-Z]*f[a-zA-Z]*r",
@@ -150,7 +152,9 @@ def make_permission_handler(is_admin: bool, workspace: str):
                                     ),
                                 )
                     except ValueError:
-                        pass
+                        return PermissionResultDeny(
+                            message="BLOCKED: Malformed command — could not parse safely."
+                        )
 
         if tool_name in ("Write", "Edit"):
             filepath = input_data.get("file_path", "")
@@ -227,7 +231,7 @@ def build_sdk_options(is_admin: bool, cwd: str, thread_id: int,
         permission_mode="bypassPermissions",
         cwd=cwd,
         resume=session_id or None,
-        model=CLAUDE_MODEL or None,
+        model=get_claude_model() or None,
         env=env,
         include_partial_messages=streaming,
         can_use_tool=make_permission_handler(is_admin, cwd),
