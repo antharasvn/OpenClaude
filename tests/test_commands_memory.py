@@ -215,7 +215,7 @@ class TestCmdSave:
 
         with patch("commands.memory.is_authorized", return_value=True), \
              patch("commands.memory.get_thread_id", return_value=0), \
-             patch("bot.handlers.run_with_streaming", new_callable=AsyncMock) as mock_rws:
+             patch("bot.streaming.run_with_streaming", new_callable=AsyncMock) as mock_rws:
             await cmd_save(update, context)
 
         mock_rws.assert_called_once()
@@ -228,7 +228,7 @@ class TestCmdSave:
 
         with patch("commands.memory.is_authorized", return_value=True), \
              patch("commands.memory.get_thread_id", return_value=0), \
-             patch("bot.handlers.run_with_streaming", new_callable=AsyncMock) as mock_rws:
+             patch("bot.streaming.run_with_streaming", new_callable=AsyncMock) as mock_rws:
             await cmd_save(update, context)
 
         # Should have stripped .md and used "notes"
@@ -335,7 +335,7 @@ class TestCmdForget:
 
         with patch("commands.memory.is_authorized", return_value=True), \
              patch("commands.memory.get_thread_id", return_value=0), \
-             patch("bot.handlers.run_with_streaming", new_callable=AsyncMock) as mock_rws:
+             patch("bot.streaming.run_with_streaming", new_callable=AsyncMock) as mock_rws:
             await cmd_forget(update, context)
 
         mock_rws.assert_called_once()
@@ -363,7 +363,7 @@ class TestCmdHistory:
 
         with patch("commands.memory.is_authorized", return_value=True), \
              patch("commands.memory.get_thread_id", return_value=0), \
-             patch("bot.handlers.run_with_streaming", new_callable=AsyncMock) as mock_rws:
+             patch("bot.streaming.run_with_streaming", new_callable=AsyncMock) as mock_rws:
             await cmd_history(update, context)
 
         mock_rws.assert_called_once()

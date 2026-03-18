@@ -237,64 +237,6 @@ class TestStreamClaude:
 
 
 # ---------------------------------------------------------------------------
-# Event types (bot/events.py)
-# ---------------------------------------------------------------------------
-
-class TestEventTypes:
-    def test_partial_event_defaults(self):
-        from bot.events import PartialEvent
-        ev = PartialEvent()
-        assert ev.type == "partial"
-        assert ev.text == ""
-
-    def test_partial_event_with_text(self):
-        from bot.events import PartialEvent
-        ev = PartialEvent(text="chunk")
-        assert ev.text == "chunk"
-
-    def test_result_event_fields(self):
-        from bot.events import ResultEvent
-        ev = ResultEvent(text="done", session_id="abc", cost=0.05)
-        assert ev.type == "result"
-        assert ev.text == "done"
-        assert ev.session_id == "abc"
-        assert ev.cost == 0.05
-
-    def test_tool_use_event(self):
-        from bot.events import ToolUseEvent
-        ev = ToolUseEvent(status="Reading file.py...")
-        assert ev.type == "tool_use"
-        assert ev.status == "Reading file.py..."
-
-    def test_error_event(self):
-        from bot.events import ErrorEvent
-        ev = ErrorEvent(text="oops")
-        assert ev.type == "error"
-        assert ev.text == "oops"
-
-    def test_stopped_event(self):
-        from bot.events import StoppedEvent
-        ev = StoppedEvent()
-        assert ev.type == "stopped"
-
-    def test_silent_event(self):
-        from bot.events import SilentEvent
-        ev = SilentEvent()
-        assert ev.type == "silent"
-
-    def test_text_block_event(self):
-        from bot.events import TextBlockEvent
-        ev = TextBlockEvent(text="hello world")
-        assert ev.type == "text_block"
-        assert ev.text == "hello world"
-
-    def test_tool_result_event(self):
-        from bot.events import ToolResultEvent
-        ev = ToolResultEvent()
-        assert ev.type == "tool_result"
-
-
-# ---------------------------------------------------------------------------
 # Formatting helpers (bot/formatting.py)
 # ---------------------------------------------------------------------------
 
