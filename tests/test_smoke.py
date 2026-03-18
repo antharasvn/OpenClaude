@@ -65,8 +65,16 @@ def test_import_commands_utility():
 
 # --- New modules from refactoring (Phases 2-3) ---
 
-def test_import_bot_events():
-    importlib.import_module("bot.events")
+def test_import_bot_commands_core():
+    importlib.import_module("bot.commands_core")
+
+
+def test_import_bot_streaming():
+    importlib.import_module("bot.streaming")
+
+
+def test_import_bot_message_handler():
+    importlib.import_module("bot.message_handler")
 
 
 def test_import_bot_backends():
@@ -123,10 +131,6 @@ def test_import_bot_streaming_session():
 
 def test_import_bot_types():
     importlib.import_module("bot.types")
-
-
-def test_import_bot_exceptions():
-    importlib.import_module("bot.exceptions")
 
 
 def test_app_builds():
