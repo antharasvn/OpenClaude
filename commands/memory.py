@@ -172,7 +172,7 @@ async def cmd_save(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         f"Keep it focused — this is a daily working note, not a transcript."
     )
 
-    from bot.handlers import run_with_streaming
+    from bot.streaming import run_with_streaming
     await run_with_streaming(update, context, chat_id, thread_id, user.id, prompt)
 
 
@@ -237,7 +237,7 @@ async def cmd_forget(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         f"Then confirm what you removed."
     )
 
-    from bot.handlers import run_with_streaming
+    from bot.streaming import run_with_streaming
     await run_with_streaming(update, context, chat_id, thread_id, user.id, prompt)
 
 
@@ -257,7 +257,7 @@ async def cmd_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         "and any pending items. Keep it brief — this is for quick reference."
     )
 
-    from bot.handlers import run_with_streaming
+    from bot.streaming import run_with_streaming
     await run_with_streaming(update, context, chat_id, thread_id, user.id, prompt)
 
 
