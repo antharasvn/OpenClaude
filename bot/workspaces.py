@@ -79,18 +79,34 @@ def ensure_workspace(chat_id: int) -> Path:
 
 
 def _sync_workspace_links(workspace: Path) -> None:
-    """Ensure symlinks in an existing workspace point to current shared files."""
+    """Ensure symlinks in an existing workspace point to current shared files.
+
+    Re-creates symlinks whose targets have changed or been broken.
+    """
     base = Path(WORKING_DIR)
     for fname in _SYMLINKED_FILES:
         src = base / fname
         dst = workspace / fname
-        if src.exists() and not dst.exists():
-            dst.symlink_to(os.path.relpath(src, workspace))
+        if src.exists():
+            expected_target = os.path.relpath(src, workspace)
+            if dst.is_symlink():
+                # Verify symlink target is correct and not broken
+                if not dst.exists() or os.readlink(str(dst)) != expected_target:
+                    dst.unlink()
+                    dst.symlink_to(expected_target)
+            elif not dst.exists():
+                dst.symlink_to(expected_target)
     for dname in _SYMLINKED_DIRS:
         src = base / dname
         dst = workspace / dname
-        if src.exists() and not dst.exists():
-            dst.symlink_to(os.path.relpath(src, workspace))
+        if src.exists():
+            expected_target = os.path.relpath(src, workspace)
+            if dst.is_symlink():
+                if not dst.exists() or os.readlink(str(dst)) != expected_target:
+                    dst.unlink()
+                    dst.symlink_to(expected_target)
+            elif not dst.exists():
+                dst.symlink_to(expected_target)
 
 
 def get_working_dir(chat_id: int) -> str:

@@ -275,8 +275,7 @@ async def cmd_compact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         message_thread_id=tg_thread_id,
     )
 
-    # Lazy import to avoid circular dependency (handlers imports from commands.config)
-    from bot.handlers import run_with_streaming
+    from bot.streaming import run_with_streaming
     await run_with_streaming(update, context, chat_id, thread_id, user.id, "/compact",
                              _is_compact=True)
 
