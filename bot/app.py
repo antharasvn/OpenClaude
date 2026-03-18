@@ -286,6 +286,13 @@ def main() -> None:
 
     async def post_shutdown(application: Application) -> None:
         """Clean up SDK sessions, caches, and active subprocesses on shutdown."""
+        # Flush pending message batches
+        from bot.batching import flush_all_batches
+        try:
+            await flush_all_batches()
+        except Exception:
+            infra_logger.exception("Error flushing batches on shutdown")
+
         # Kill all active subprocesses
         for skey, proc in list(_active_procs.items()):
             if proc.returncode is None:

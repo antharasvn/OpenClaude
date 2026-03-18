@@ -128,4 +128,4 @@ def remove_active_stream(chat_id: int, thread_id: int, user_id: int) -> None:
     """Remove a completed stream."""
     key = session_key(chat_id, thread_id, user_id)
     _cache.delete(key)
-    _cache.maybe_flush()
+    _cache.flush_now()

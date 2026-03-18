@@ -22,6 +22,9 @@ _chat_locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueD
 # We add a reference when the lock is acquired and remove it on release.
 _chat_locks_strong: dict[str, asyncio.Lock] = {}
 
+# Track which asyncio.Task holds each lock
+_lock_holders: dict[str, asyncio.Task] = {}
+
 
 def get_chat_lock(session_key: str) -> asyncio.Lock:
     """Get or create a per-session asyncio.Lock.
@@ -39,6 +42,13 @@ def get_chat_lock(session_key: str) -> asyncio.Lock:
     return lock
 
 
+def set_lock_holder(session_key: str) -> None:
+    """Record the current asyncio.Task as the holder of the lock."""
+    task = asyncio.current_task()
+    if task is not None:
+        _lock_holders[session_key] = task
+
+
 def release_chat_lock_ref(session_key: str) -> None:
     """Remove the strong reference for a session key.
 
@@ -46,6 +56,7 @@ def release_chat_lock_ref(session_key: str) -> None:
     Only removes the strong reference if the lock is not currently locked
     (i.e., no one else is waiting on or holding it).
     """
+    _lock_holders.pop(session_key, None)
     lock = _chat_locks_strong.get(session_key)
     if lock is not None and not lock.locked():
         _chat_locks_strong.pop(session_key, None)
@@ -54,10 +65,22 @@ def release_chat_lock_ref(session_key: str) -> None:
 def force_release_chat_lock(session_key: str) -> None:
     """Force-release a chat lock (for /stop and error recovery).
 
-    Releases the lock if it's currently held, and removes the strong reference.
+    Only releases the lock if the recorded holder is done or matches the
+    current task. This prevents accidentally releasing a lock held by a
+    different coroutine.
     """
+    holder = _lock_holders.get(session_key)
     lock = _chat_locks_strong.get(session_key)
     if lock is not None and lock.locked():
-        with contextlib.suppress(RuntimeError):
-            lock.release()
+        current = asyncio.current_task()
+        # Release if: no holder recorded, holder is done, or we ARE the holder
+        if holder is None or holder.done() or holder is current:
+            with contextlib.suppress(RuntimeError):
+                lock.release()
+            _lock_holders.pop(session_key, None)
+        else:
+            logger.warning(
+                "force_release_chat_lock(%s): lock held by different active task, skipping",
+                session_key,
+            )
     _chat_locks_strong.pop(session_key, None)
