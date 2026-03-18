@@ -133,20 +133,15 @@ def _sweep_cancellation_callbacks() -> None:
     CancelScopes, the ``_deliver_cancellation`` callback reschedules itself via
     ``call_soon()`` in an infinite busy loop, burning 100% CPU.
 
-    This function sweeps both ``loop._ready`` (where ``call_soon`` puts handles)
-    and ``loop._scheduled`` (where ``call_later`` puts handles) and cancels any
-    orphaned ``_deliver_cancellation`` callbacks.
+    The loop continues because ``scope._tasks`` references orphaned tasks that
+    will never complete, so ``should_retry`` is always True.
 
-    Because each callback re-schedules itself via ``call_soon`` before we can
-    cancel it, we also patch the CancelScope's ``_deliver_cancellation`` method
-    to a no-op on the bound ``self`` object, preventing re-scheduling.
-
-    These are CPython implementation details, so failures are silently ignored.
+    Fix: cancel the handle, clear ``scope._tasks`` so retry stops, and set
+    ``scope._cancel_handle = None`` so the scope thinks delivery is done.
     """
     try:
         loop = asyncio.get_running_loop()
         removed = 0
-        # call_soon() -> _ready (deque), call_later() -> _scheduled (list)
         for attr in ('_ready', '_scheduled'):
             queue = getattr(loop, attr, None)
             if queue is None:
@@ -161,16 +156,20 @@ def _sweep_cancellation_callbacks() -> None:
                 if cb_name == '_deliver_cancellation':
                     handle.cancel()
                     removed += 1
-                    # Patch the bound method's __self__ so it can never
-                    # re-schedule itself via call_soon().
+                    # Neutralize the scope so it can never re-schedule:
+                    # clear _tasks (the retry condition) and _cancel_handle.
                     scope = getattr(cb, '__self__', None)
                     if scope is not None:
                         try:
-                            scope._deliver_cancellation = lambda *a, **kw: None
+                            scope._tasks.clear()
+                        except (AttributeError, TypeError):
+                            pass
+                        try:
+                            scope._cancel_handle = None
                         except (AttributeError, TypeError):
                             pass
         if removed:
-            logger.warning("Swept %d orphaned _deliver_cancellation callbacks (patched scopes)", removed)
+            logger.warning("Swept %d orphaned _deliver_cancellation callbacks", removed)
     except Exception:
         logger.debug("Failed to sweep cancellation callbacks", exc_info=True)
 
@@ -349,12 +348,24 @@ class SDKSession:
                             len(detached_pgids),
                         )
                 else:
-                    # Failed disconnect — hard-kill everything + sweep.
+                    # Failed disconnect — hard-kill everything.
                     if pid:
                         _kill_tree(pid)
-                    _sweep_cancellation_callbacks()
+
                 self.client = None
                 self.connected = False
+
+                # Schedule multiple sweeps to catch _deliver_cancellation
+                # callbacks that appear after I/O events are processed.
+                # The subprocess death notification arrives asynchronously,
+                # so a single immediate sweep misses them.
+                _sweep_cancellation_callbacks()
+                try:
+                    _loop = asyncio.get_running_loop()
+                    for delay in (0.05, 0.2, 0.5, 1.0, 3.0):
+                        _loop.call_later(delay, _sweep_cancellation_callbacks)
+                except RuntimeError:
+                    pass
 
 
 class SDKSessionManager:
