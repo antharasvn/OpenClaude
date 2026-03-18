@@ -205,29 +205,56 @@ async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 
 async def _force_stop_session(skey: str, chat_id: int, thread_id: int, session_uid: int) -> None:
-    """Kill subprocess, cancel streaming task, and force-cleanup lock/streams."""
+    """Cancel streaming task and let it clean up gracefully; hard-kill only as last resort.
+
+    The correct shutdown order is:
+    1. Set the stop event (so the streaming loop breaks on the next iteration)
+    2. Cancel the streaming asyncio task (propagates CancelledError)
+    3. Wait for the task to finish — its finally block in stream_sdk() calls
+       sdk_session.disconnect(), which lets anyio clean up CancelScopes before
+       killing the subprocess
+    4. Only if the task doesn't finish in time, hard-kill as a last resort
+    5. Sweep orphaned _deliver_cancellation callbacks as a safety net
+
+    Previously, hard_kill() was called BEFORE the task's finally block could run,
+    leaving anyio CancelScope objects in a broken state where _deliver_cancellation
+    would reschedule itself in an infinite busy loop burning 100% CPU.
+    """
+    from bot.sdk_session import _sweep_cancellation_callbacks
     from bot.streams import remove_active_stream
 
+    # 1. Signal the streaming loop to stop
     stop_event = _stop_events.get(skey)
     if stop_event:
         stop_event.set()
 
-    # Hard-kill the subprocess tree
-    sdk_session = sdk_session_manager.get(skey)
-    if sdk_session:
-        sdk_session.hard_kill()
-        if sdk_session.connected:
-            await sdk_session.disconnect()
-        sdk_session_manager.pop(skey)
-
+    # Kill legacy subprocess backend (not SDK — SDK cleanup is below)
     kill_active_proc(skey)
 
-    # Cancel the streaming asyncio task so finally blocks run
+    # 2. Cancel the streaming task and wait for it to finish gracefully.
+    #    The task's finally block (in stream_sdk) calls sdk_session.disconnect(),
+    #    which lets anyio clean up its CancelScopes before hard-killing the subprocess.
     task = _streaming_tasks.get(skey)
+    task_finished_cleanly = False
     if task and not task.done():
         task.cancel()
         with contextlib.suppress(TimeoutError, asyncio.CancelledError, Exception):
             await asyncio.wait_for(task, timeout=5)
+        task_finished_cleanly = task.done()
+
+    # 3. If the task didn't finish (or there was no task), hard-kill as last resort
+    sdk_session = sdk_session_manager.get(skey)
+    if sdk_session:
+        if not task_finished_cleanly:
+            # Task didn't clean up — we must force-kill and disconnect ourselves
+            sdk_session.hard_kill()
+            if sdk_session.connected:
+                with contextlib.suppress(Exception):
+                    await sdk_session.disconnect()
+        sdk_session_manager.pop(skey)
+
+    # 4. Safety net: sweep any orphaned _deliver_cancellation callbacks
+    _sweep_cancellation_callbacks()
 
     # Force cleanup in case the task didn't finish or clean up properly
     _streaming_tasks.pop(skey, None)
