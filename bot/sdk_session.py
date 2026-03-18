@@ -298,17 +298,37 @@ class SDKSession:
     async def disconnect(self) -> None:
         """Disconnect the SDK client (with timeout to prevent hangs).
 
-        Always hard-kills the subprocess after disconnect completes.
-        Detached sub-agent children (own pgid, ``detached: true``) survive
-        a normal SDK disconnect, so we must explicitly kill the full
-        process tree every time.
+        On clean disconnect: only kill detached sub-agent children (own pgid).
+        On failed disconnect (timeout/error): hard-kill the full process tree.
+
+        Using SIGKILL after a clean disconnect breaks anyio's CancelScope
+        cleanup, causing _deliver_cancellation to busy-loop at 100% CPU.
         """
         if self.client:
-            # Capture PID before disconnect — the subprocess reference may
-            # be cleared during the SDK's disconnect().
+            # Capture PID and descendant info before disconnect — the
+            # subprocess reference may be cleared during SDK disconnect().
             pid = self._get_subprocess_pid()
+            # Snapshot detached sub-agent pgids BEFORE disconnect.
+            # After the main process dies, children are re-parented to PID 1.
+            detached_pgids: set[int] = set()
+            if pid:
+                for cpid in _get_descendants(pid):
+                    with contextlib.suppress(ProcessLookupError, OSError):
+                        cpgid = os.getpgid(cpid)
+                        # Detached sub-agents have their own pgid (different
+                        # from the main process and the bot).
+                        if cpgid != _BOT_PGID:
+                            try:
+                                main_pgid = os.getpgid(pid)
+                            except (ProcessLookupError, OSError):
+                                main_pgid = None
+                            if cpgid != main_pgid:
+                                detached_pgids.add(cpgid)
+
+            clean = False
             try:
                 await asyncio.wait_for(self.client.disconnect(), timeout=DISCONNECT_TIMEOUT)
+                clean = True
             except TimeoutError:
                 logger.warning(
                     "SDKSession disconnect timed out after %ds",
@@ -317,15 +337,24 @@ class SDKSession:
             except Exception as e:
                 logger.warning("SDKSession disconnect error: %s", e)
             finally:
-                # Always hard-kill to reap detached sub-agent children,
-                # regardless of whether disconnect succeeded or timed out.
-                if pid:
-                    _kill_tree(pid)
+                if clean:
+                    # Clean disconnect — only kill detached sub-agent groups.
+                    # Do NOT kill the main process tree (anyio cleaned up).
+                    for gpid in detached_pgids:
+                        with contextlib.suppress(ProcessLookupError, PermissionError, OSError):
+                            os.killpg(gpid, signal.SIGKILL)
+                    if detached_pgids:
+                        logger.info(
+                            "Killed %d detached sub-agent group(s) after clean disconnect",
+                            len(detached_pgids),
+                        )
+                else:
+                    # Failed disconnect — hard-kill everything + sweep.
+                    if pid:
+                        _kill_tree(pid)
+                    _sweep_cancellation_callbacks()
                 self.client = None
                 self.connected = False
-                # Sweep any orphaned anyio _deliver_cancellation callbacks
-                # that may have been left behind by the hard-kill.
-                _sweep_cancellation_callbacks()
 
 
 class SDKSessionManager:
