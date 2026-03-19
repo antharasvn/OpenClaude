@@ -287,6 +287,7 @@ try {{
 
 def _render_matplotlib(expression: str, output_path: str, display: bool = True) -> bool:
     """Render LaTeX via matplotlib mathtext (fallback)."""
+    fig = None
     try:
         import matplotlib
         matplotlib.use('Agg')
@@ -319,8 +320,9 @@ def _render_matplotlib(expression: str, output_path: str, display: bool = True) 
 
     except Exception:
         logger.debug("Matplotlib render failed: %s", expression, exc_info=True)
-        with contextlib.suppress(Exception):
-            plt.close(fig)  # noqa: F821
+        if fig is not None:
+            with contextlib.suppress(Exception):
+                plt.close(fig)
         return False
 
 

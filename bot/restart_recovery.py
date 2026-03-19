@@ -140,6 +140,7 @@ class RestartRecoveryService:
                 "Resume skipped for chat=%d thread=%d user=%d — lock busy",
                 cid, tid, uid,
             )
+            release_chat_lock_ref(skey_for_lock)
             return
         set_lock_holder(skey_for_lock)
 
