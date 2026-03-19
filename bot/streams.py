@@ -65,13 +65,22 @@ def add_active_stream(chat_id: int, thread_id: int, user_id: int,
 
 def set_stream_session_id(chat_id: int, thread_id: int, user_id: int,
                           session_id: str) -> None:
-    """Store session_id directly in the active stream entry for crash recovery."""
+    """Store session_id directly in the active stream entry for crash recovery.
+
+    If the stream entry doesn't exist yet (called before add_active_stream),
+    a minimal entry is created so the session_id is not silently dropped.
+    """
     key = session_key(chat_id, thread_id, user_id)
     entry = _cache.get(key)
-    if entry is not None:
-        entry["session_id"] = session_id
-        _cache.set(key, entry)
-        _cache.flush_now()
+    if entry is None:
+        logger.warning(
+            "set_stream_session_id: no entry for key %s — creating minimal entry",
+            key,
+        )
+        entry = {"chat_id": chat_id, "thread_id": thread_id, "user_id": user_id}
+    entry["session_id"] = session_id
+    _cache.set(key, entry)
+    _cache.flush_now()
 
 
 def get_stream_session_id(chat_id: int, thread_id: int, user_id: int) -> str | None:

@@ -78,9 +78,9 @@ def force_release_chat_lock(session_key: str) -> None:
             with contextlib.suppress(RuntimeError):
                 lock.release()
             _lock_holders.pop(session_key, None)
+            _chat_locks_strong.pop(session_key, None)
         else:
             logger.warning(
                 "force_release_chat_lock(%s): lock held by different active task, skipping",
                 session_key,
             )
-    _chat_locks_strong.pop(session_key, None)

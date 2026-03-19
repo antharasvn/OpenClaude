@@ -57,8 +57,15 @@ def _apply_sdk_compat_patch() -> None:
         return
 
     import claude_code_sdk
+
+    def _safe_version_part(s: str) -> int:
+        try:
+            return int(s.split("-")[0].split("+")[0])
+        except (ValueError, IndexError):
+            return 0
+
     sdk_version = tuple(
-        int(x) for x in claude_code_sdk.__version__.split(".")[:3]
+        _safe_version_part(x) for x in claude_code_sdk.__version__.split(".")[:3]
     )
     # TODO: update the upper bound when a fixed SDK version is released
     if sdk_version > (0, 0, 25):
@@ -260,7 +267,12 @@ class SDKSession:
             return
         self.client = ClaudeSDKClient(options=options)
         try:
-            await self.client.connect()
+            await asyncio.wait_for(self.client.connect(), timeout=30.0)
+        except asyncio.TimeoutError:
+            self.hard_kill()
+            self.client = None
+            self.connected = False
+            raise TimeoutError("SDK connect timed out after 30s")
         except Exception:
             # connect() may have spawned a subprocess before failing —
             # kill it so it doesn't become an orphan

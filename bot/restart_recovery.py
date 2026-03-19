@@ -405,36 +405,6 @@ class RestartRecoveryService:
         except asyncio.CancelledError:
             pass
 
-    async def _send_result(
-        self, chat_id: int, thread_id: int | None, result_text: str
-    ) -> None:
-        """Send the resume result to the user, with HTML fallback."""
-        md_chunks = split_message(result_text)
-        for md_chunk in md_chunks:
-            rendered = self._renderer.render(md_chunk)
-            try:
-                await self._bot.send_message(
-                    chat_id=chat_id,
-                    text=rendered,
-                    parse_mode="HTML",
-                    disable_web_page_preview=True,
-                    message_thread_id=thread_id,
-                )
-            except Exception:
-                plain = re.sub(r"<[^>]+>", "", rendered)
-                try:
-                    for pc in split_message(plain):
-                        await self._bot.send_message(
-                            chat_id=chat_id,
-                            text=pc,
-                            message_thread_id=thread_id,
-                        )
-                except Exception as e2:
-                    infra_logger.warning(
-                        "_send_result: plain text fallback failed for chat=%d: %s",
-                        chat_id, e2,
-                    )
-
     async def _resume_with_timeout(self, entry: dict) -> None:
         """Resume a chat with a timeout guard."""
         try:
