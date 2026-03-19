@@ -53,4 +53,8 @@ async def apply_reactions(bot, chat_id: int, message_id: int, emojis: list[str])
         )
         logger.debug("Applied reaction %s to message %d in chat %d", emojis[0], message_id, chat_id)
     except Exception as e:
-        logger.debug("Failed to apply reaction %s: %s", emojis[0], e)
+        err_str = str(e)
+        if "Retry in" in err_str or "Too Many Requests" in err_str or "Flood control" in err_str:
+            logger.warning("Flood control applying reaction %s: %s", emojis[0], e)
+        else:
+            logger.debug("Failed to apply reaction %s: %s", emojis[0], e)

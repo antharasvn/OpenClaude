@@ -83,7 +83,8 @@ async def stream_sdk(
                 return
             delay = 2 ** attempt  # 1s, 2s, 4s
             logger.warning("SDK connect attempt %d failed: %s — retrying in %ds", attempt + 1, e, delay)
-            await sdk_session.disconnect()
+            with contextlib.suppress(Exception):
+                await sdk_session.disconnect()
             sdk_session = SDKSession()
             sdk_session.session_id = sid
             sdk_session_manager.put(skey, sdk_session)

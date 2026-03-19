@@ -97,6 +97,9 @@ class StreamingSession:
         self.response_text: str | None = None
         self.stopped: bool = False
 
+        # User tracking — caller must set this before event handling begins
+        self.session_user_id: int = 0
+
     # ------------------------------------------------------------------
     # Sending helpers
     # ------------------------------------------------------------------
@@ -128,7 +131,7 @@ class StreamingSession:
         clear_stream_live_message_id(
             self.chat_id,
             self.thread_id,
-            getattr(self, "session_user_id", 0),
+            self.session_user_id,
         )
 
     def _save_status_msg_id(self, message_id: int) -> None:
@@ -138,7 +141,7 @@ class StreamingSession:
         set_stream_status_msg_id(
             self.chat_id,
             self.thread_id,
-            getattr(self, "session_user_id", 0),
+            self.session_user_id,
             message_id,
         )
 
@@ -149,7 +152,7 @@ class StreamingSession:
         clear_stream_status_msg_id(
             self.chat_id,
             self.thread_id,
-            getattr(self, "session_user_id", 0),
+            self.session_user_id,
         )
 
     # ------------------------------------------------------------------
@@ -298,7 +301,7 @@ class StreamingSession:
                 # session_user_id is needed — caller must set it; we use chat_id's
                 # thread context. But set_usage is called with the same args as the
                 # outer function, so we store session_user_id on the instance.
-                getattr(self, "session_user_id", 0),
+                self.session_user_id,
                 usage_data,
             )
 
@@ -425,7 +428,7 @@ class StreamingSession:
                 set_stream_live_message_id(
                     self.chat_id,
                     self.thread_id,
-                    getattr(self, "session_user_id", 0),
+                    self.session_user_id,
                     self.live_msg.message_id,
                 )
             else:
@@ -586,10 +589,14 @@ class StreamingSession:
 
         latex_blocks = extract_latex_blocks(response_text) if response_text else []
 
-        # effective_offset: how much of response_text was already shown
+        # effective_offset: how much of response_text was already shown.
+        # The offset is in terms of response_text (not cleaned_response, which
+        # may be shorter due to removed 📎 markers).  Slice response_text first,
+        # then clean the remaining portion so lengths stay consistent.
         effective_offset = max(self.sent_offset, self._speculative_sent_len)
-        if cleaned_response:
-            remaining = cleaned_response[min(effective_offset, len(cleaned_response)) :]
+        if response_text:
+            remaining_raw = response_text[min(effective_offset, len(response_text)):]
+            remaining = clean_file_markers(remaining_raw)
         else:
             remaining = ""
 
