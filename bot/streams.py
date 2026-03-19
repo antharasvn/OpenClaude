@@ -80,7 +80,7 @@ def set_stream_session_id(chat_id: int, thread_id: int, user_id: int,
         entry = {"chat_id": chat_id, "thread_id": thread_id, "user_id": user_id}
     entry["session_id"] = session_id
     _cache.set(key, entry)
-    _cache.maybe_flush()
+    _cache.flush_now()
 
 
 def get_stream_session_id(chat_id: int, thread_id: int, user_id: int) -> str | None:
@@ -99,7 +99,7 @@ def set_stream_live_message_id(chat_id: int, thread_id: int, user_id: int,
     if isinstance(entry, dict):
         entry["live_message_id"] = message_id
         _cache.set(key, entry)
-        _cache.maybe_flush()
+        _cache.flush_now()
 
 
 def clear_stream_live_message_id(chat_id: int, thread_id: int, user_id: int) -> None:
@@ -120,7 +120,7 @@ def set_stream_status_msg_id(chat_id: int, thread_id: int, user_id: int,
     if isinstance(entry, dict):
         entry["status_msg_id"] = message_id
         _cache.set(key, entry)
-        _cache.maybe_flush()
+        _cache.flush_now()
 
 
 def clear_stream_status_msg_id(chat_id: int, thread_id: int, user_id: int) -> None:

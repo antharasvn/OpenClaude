@@ -35,7 +35,7 @@ async def queue_message(update: Update, context: ContextTypes.DEFAULT_TYPE,
     loop = asyncio.get_event_loop()
     _batch_timers[key] = loop.call_later(
         BATCH_WINDOW,
-        lambda k=key: asyncio.ensure_future(_flush_batch(k)),
+        lambda k=key: asyncio.create_task(_flush_batch(k)),
     )
 
 
