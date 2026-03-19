@@ -28,6 +28,9 @@ renderer = TelegramRenderer()
 # Live-edit throttle interval (seconds)
 LIVE_EDIT_INTERVAL = 3.0
 
+# Maximum effective interval after repeated flood events (seconds)
+MAX_FLOOD_BACKOFF_INTERVAL = 60.0
+
 # Maximum accumulated output size (500KB) — drop further text after this
 MAX_OUTPUT_SIZE = 500_000
 
@@ -402,7 +405,10 @@ class StreamingSession:
 
         # Throttle display updates (but not overflow checks above)
         # After flood events, double the interval for each hit to prevent oscillation
-        effective_interval = LIVE_EDIT_INTERVAL * (2 ** self._flood_hit_count) if self._flood_hit_count else LIVE_EDIT_INTERVAL
+        effective_interval = min(
+            LIVE_EDIT_INTERVAL * (2 ** self._flood_hit_count) if self._flood_hit_count else LIVE_EDIT_INTERVAL,
+            MAX_FLOOD_BACKOFF_INTERVAL,
+        )
         if self.live_msg and (now - self.last_live_edit) < effective_interval:
             return
 
