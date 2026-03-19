@@ -119,7 +119,7 @@ class RestartRecoveryService:
 
     async def _resume_chat(self, entry: dict) -> None:
         """Resume a single interrupted chat session."""
-        from bot.chat_lock import get_chat_lock, release_chat_lock_ref
+        from bot.chat_lock import get_chat_lock, release_chat_lock_ref, set_lock_holder
 
         cid = entry["chat_id"]
         tid = entry["thread_id"]
@@ -141,6 +141,7 @@ class RestartRecoveryService:
                 cid, tid, uid,
             )
             return
+        set_lock_holder(skey_for_lock)
 
         # Delete the stuck live message immediately (same as normal flow after generation)
         if live_message_id:

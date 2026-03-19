@@ -137,8 +137,12 @@ async def _force_stop_session(skey: str, chat_id: int, thread_id: int, session_u
     task_finished_cleanly = False
     if task and not task.done():
         task.cancel()
-        with contextlib.suppress(TimeoutError, asyncio.CancelledError, Exception):
+        try:
             await asyncio.wait_for(task, timeout=5)
+        except (asyncio.TimeoutError, TimeoutError):
+            task.cancel()  # re-cancel in case the first didn't propagate in time
+        except (asyncio.CancelledError, Exception):
+            pass
         task_finished_cleanly = task.done()
 
     # 3. If the task didn't finish (or there was no task), hard-kill as last resort

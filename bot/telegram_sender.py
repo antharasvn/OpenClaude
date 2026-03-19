@@ -56,28 +56,30 @@ async def send_file_group(
             "audio": InputMediaAudio,
             "document": InputMediaDocument,
         }
-        media = []
-        for f in files:
-            cls = type_map[f.media_type]
-            media.append(cls(media=open(f.path, "rb"), caption=f.caption or None))  # noqa: SIM115
+        handles = [open(f.path, "rb") for f in files]  # noqa: SIM115
         try:
-            await bot.send_media_group(
-                chat_id=chat_id, media=media, message_thread_id=thread_id,
-            )
-        except TimedOut as e:
-            logger.warning("Media group send timed out (likely sent anyway): %s", e)
-            # Don't fall back — the API call likely succeeded
-        except Exception as e:
-            logger.warning("Media group send failed (%s), falling back to individual sends", e)
-            for f in files:
-                try:
-                    await send_single_file(bot, chat_id, f, thread_id)
-                except Exception:
-                    logger.warning("Failed to send file: %s", f.path)
+            media = [
+                type_map[f.media_type](media=h, caption=f.caption or None)
+                for f, h in zip(files, handles)
+            ]
+            try:
+                await bot.send_media_group(
+                    chat_id=chat_id, media=media, message_thread_id=thread_id,
+                )
+            except TimedOut as e:
+                logger.warning("Media group send timed out (likely sent anyway): %s", e)
+                # Don't fall back — the API call likely succeeded
+            except Exception as e:
+                logger.warning("Media group send failed (%s), falling back to individual sends", e)
+                for f in files:
+                    try:
+                        await send_single_file(bot, chat_id, f, thread_id)
+                    except Exception:
+                        logger.warning("Failed to send file: %s", f.path)
         finally:
-            for m in media:
+            for h in handles:
                 with contextlib.suppress(Exception):
-                    m.media.close()
+                    h.close()
     else:
         # Mixed types that can't be grouped -- send individually
         for f in files:
