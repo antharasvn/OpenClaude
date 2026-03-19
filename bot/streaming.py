@@ -87,6 +87,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
             await asyncio.wait_for(lock.acquire(), timeout=30)
         except TimeoutError:
             logger.error("Lock acquisition timed out for user %d in chat %d", session_user_id, chat_id)
+            release_chat_lock_ref(skey)
             with contextlib.suppress(Exception):
                 await update.message.reply_text(
                     "Still processing a previous request. Use /stop to cancel it.",

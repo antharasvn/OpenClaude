@@ -36,8 +36,11 @@ def ensure_workspace(chat_id: int) -> Path:
           MEMORY.md
     """
     # Fast path: if we already initialized this workspace this process lifetime, skip
+    # Still re-verify symlinks on every call so broken/changed targets are fixed.
     if chat_id in _initialized_workspaces:
-        return WORKSPACES_DIR / f"c{chat_id}"
+        workspace = WORKSPACES_DIR / f"c{chat_id}"
+        _sync_workspace_links(workspace)
+        return workspace
 
     workspace = WORKSPACES_DIR / f"c{chat_id}"
     is_new = not workspace.exists()
