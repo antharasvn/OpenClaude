@@ -61,7 +61,7 @@ async def _flush_batch(key: str) -> None:
     except Exception:
         logger.exception("_flush_batch failed for key=%s", key)
         with contextlib.suppress(Exception):
-            tg_thread_id = thread_id or None
+            tg_thread_id = thread_id if thread_id else None
             await update.message.reply_text(
                 "Something went wrong processing your message. Please try again.",
                 message_thread_id=tg_thread_id,

@@ -80,7 +80,7 @@ def set_stream_session_id(chat_id: int, thread_id: int, user_id: int,
         entry = {"chat_id": chat_id, "thread_id": thread_id, "user_id": user_id}
     entry["session_id"] = session_id
     _cache.set(key, entry)
-    _cache.flush_now()
+    _cache.maybe_flush()
 
 
 def get_stream_session_id(chat_id: int, thread_id: int, user_id: int) -> str | None:
@@ -99,7 +99,7 @@ def set_stream_live_message_id(chat_id: int, thread_id: int, user_id: int,
     if isinstance(entry, dict):
         entry["live_message_id"] = message_id
         _cache.set(key, entry)
-        _cache.flush_now()
+        _cache.maybe_flush()
 
 
 def clear_stream_live_message_id(chat_id: int, thread_id: int, user_id: int) -> None:
@@ -109,7 +109,7 @@ def clear_stream_live_message_id(chat_id: int, thread_id: int, user_id: int) -> 
     if isinstance(entry, dict) and "live_message_id" in entry:
         del entry["live_message_id"]
         _cache.set(key, entry)
-        _cache.flush_now()
+        _cache.maybe_flush()
 
 
 def set_stream_status_msg_id(chat_id: int, thread_id: int, user_id: int,
@@ -120,7 +120,7 @@ def set_stream_status_msg_id(chat_id: int, thread_id: int, user_id: int,
     if isinstance(entry, dict):
         entry["status_msg_id"] = message_id
         _cache.set(key, entry)
-        _cache.flush_now()
+        _cache.maybe_flush()
 
 
 def clear_stream_status_msg_id(chat_id: int, thread_id: int, user_id: int) -> None:
@@ -130,7 +130,7 @@ def clear_stream_status_msg_id(chat_id: int, thread_id: int, user_id: int) -> No
     if isinstance(entry, dict) and "status_msg_id" in entry:
         del entry["status_msg_id"]
         _cache.set(key, entry)
-        _cache.flush_now()
+        _cache.maybe_flush()
 
 
 def remove_active_stream(chat_id: int, thread_id: int, user_id: int) -> None:
