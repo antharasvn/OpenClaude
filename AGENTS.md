@@ -1,34 +1,50 @@
 # Coding Agents
 
-> **You do not write code.** Any task involving code — investigation, debugging, fixes, new features, refactoring — goes to an Opus sub-agent.
-> You are the coordinator: understand the request, delegate to Opus, and relay results to the user.
+## When to Delegate vs Handle Directly
 
-## When to Delegate
+**Handle directly (no agent needed):**
+- Explaining a concept or answering a question
+- Analyzing code to answer a question (no files will change)
+- Clarifying what the user wants
+- Trivial text edits (typo fix in a non-code file)
 
-**Always delegate to Opus (`Task(model="opus", subagent_type="general-purpose")`):**
-- Bug investigation and fixing
-- Code review and analysis
-- Log/error investigation that requires reading code
-- Any code writing or modification
-- Refactoring, new features, architectural changes
+**Always delegate to Opus:**
+- Any code writing or modification (even small fixes)
+- Bug investigation that leads to a fix
+- Code review with suggested changes
+- New features, refactoring, architectural changes
+- Log/error investigation where files will be changed
 
-**Handle directly (no agent) — only these:**
-- Answering a non-code question or explaining a concept
-- Trivial text edits (typo in a markdown file)
-- Conversation management (clarifying what the user wants before delegating)
+When in doubt: if files will change → delegate.
+
+---
+
+## Invoking Agents
+
+**Model:** `Task(model="opus", subagent_type="general-purpose")`
+
+Before invoking any agent:
+1. Ensure `temp/` directory exists in the workspace
+2. Generate a progress filename using the current timestamp:
+   ```python
+   from datetime import datetime
+   progress_file = f"progress-{datetime.now().strftime('%Y%m%d-%H%M%S')}.md"
+   # e.g. progress-20260320-143025.md
+   ```
+   Pass this exact filename string into the agent prompt template.
+3. After the agent returns: read `temp/{progress_file}`, write daily log to memory
+
+---
 
 ## Planner Agent
 
-Explores the codebase, designs the approach, and writes a structured plan for user approval.
+Explores the codebase, designs the approach, writes a plan for user approval.
 
 **Invoke as:** `Task(model="opus", subagent_type="general-purpose")`
 
 **Prompt template:**
-
 ```
-You are a senior software architect planning a coding task.
-
-**IMPORTANT:** Skip the startup sequence from CLAUDE.md (do NOT read IDENTITY.md, USER.md, TOOLS.md, AGENTS.md). You already have all necessary context from the coordinator.
+[SUBAGENT] You are a senior software architect planning a coding task.
 
 ## Task
 {task}
@@ -36,55 +52,58 @@ You are a senior software architect planning a coding task.
 ## Working Directory
 {working_dir}
 
+## Progress file
+Write your progress summary to: temp/{progress_file}
+Format: what you explored, the plan you designed, any blockers found.
+
 ## Instructions
-1. Explore the codebase to understand the current architecture and relevant files.
+1. Explore the relevant codebase.
 2. Design a clear, step-by-step implementation plan.
-3. Write the plan to `temp/plan.md` in the working directory. The plan must include:
-   - **Context** — what exists now and why changes are needed
-   - **Changes** — each file to create/modify, with specific descriptions of what to change
-   - **Verification** — how to confirm the changes work
-4. You may spawn sub-agents (use model="haiku" for research/exploration tasks).
-5. Return ONLY a concise summary (5-10 lines max) of the plan. Do NOT return the full plan contents — the coordinator will read the file.
+3. Write the plan to `temp/plan.md`.
+   Include: Context, Changes (each file + what changes), Verification steps.
+4. Write your progress summary to temp/{progress_file}.
+5. Return a concise summary (5-10 lines) of the plan. Do NOT return full file contents.
 ```
 
-**After the planner returns:**
+**After planner returns:**
 1. Read `temp/plan.md` and present the plan to the user.
-2. If the user requests changes, re-invoke the planner with the feedback appended to the task.
-3. Once approved, invoke the Coder agent with the plan.
+2. Read `temp/{progress_file}` and write a daily log entry to memory.
+3. If the user requests changes, re-invoke with feedback appended.
+4. Once approved, invoke the Coder agent.
+
+---
 
 ## Coder Agent
 
-Implements code changes — either from an approved plan or a direct task description.
+Implements code changes from an approved plan or direct task description.
 
 **Invoke as:** `Task(model="opus", subagent_type="general-purpose")`
 
 **Prompt template (with plan):**
-
 ```
-You are a senior software engineer implementing an approved plan.
-
-**IMPORTANT:** Skip the startup sequence from CLAUDE.md (do NOT read IDENTITY.md, USER.md, TOOLS.md, AGENTS.md). You already have all necessary context from the coordinator.
+[SUBAGENT] You are a senior software engineer implementing an approved plan.
 
 ## Plan
-Read the approved plan from `temp/plan.md` in the working directory.
+Read the approved plan from `temp/plan.md`.
 
 ## Working Directory
 {working_dir}
 
+## Progress file
+Write your progress summary to: temp/{progress_file}
+Format: files changed, what was done, any problems encountered.
+
 ## Instructions
 1. Read `temp/plan.md` for the full implementation plan.
-2. Implement all changes described in the plan.
-3. Write a change summary to `temp/changes.md` listing each file modified and what was done.
-4. You may spawn sub-agents for independent subtasks.
-5. Return ONLY a concise summary (5-10 lines max) of what was implemented. Do NOT return full file contents.
+2. Implement all changes.
+3. Write a change summary to `temp/changes.md` (files modified + what changed).
+4. Write your progress summary to temp/{progress_file}.
+5. Return a concise summary (5-10 lines). Do NOT return full file contents.
 ```
 
 **Prompt template (direct task, no plan):**
-
 ```
-You are a senior software engineer implementing a coding task.
-
-**IMPORTANT:** Skip the startup sequence from CLAUDE.md (do NOT read IDENTITY.md, USER.md, TOOLS.md, AGENTS.md). You already have all necessary context from the coordinator.
+[SUBAGENT] You are a senior software engineer implementing a coding task.
 
 ## Task
 {task}
@@ -92,22 +111,30 @@ You are a senior software engineer implementing a coding task.
 ## Working Directory
 {working_dir}
 
+## Progress file
+Write your progress summary to: temp/{progress_file}
+Format: files changed, what was done, any problems encountered.
+
 ## Instructions
-1. Explore the relevant code to understand context.
+1. Explore relevant code for context.
 2. Implement the requested changes.
-3. Write a change summary to `temp/changes.md` listing each file modified and what was done.
-4. You may spawn sub-agents for independent subtasks.
-5. Return ONLY a concise summary (5-10 lines max) of what was implemented. Do NOT return full file contents.
+3. Write a change summary to `temp/changes.md`.
+4. Write your progress summary to temp/{progress_file}.
+5. Return a concise summary (5-10 lines). Do NOT return full file contents.
 ```
 
-**After the coder returns:**
-1. Read `temp/changes.md` and relay the summary to the user.
-2. If something looks wrong, discuss with the user before re-invoking.
+**After coder returns:**
+1. Read `temp/changes.md` and relay summary to the user.
+2. Read `temp/{progress_file}` and write a daily log entry to
+   `memory/t{TID}/{date}/coding-{timestamp}.md`.
+3. If something looks wrong, discuss with the user before re-invoking.
+
+---
 
 ## Guidelines
 
-- **Always set a timeout** on `TaskOutput` — agents can hang. Use 120000ms (2 min) for small tasks, 300000ms (5 min) for larger ones.
-- **Keep context lean.** Agents return concise summaries; read their output files for details. Don't paste full file contents into agent prompts.
-- **Create `temp/` if needed.** Before invoking an agent, ensure the `temp/` directory exists in the working directory.
-- **Don't chain blindly.** After the planner finishes, always present the plan to the user before invoking the coder.
-- **One agent at a time** for the same task. Don't run planner and coder in parallel on the same work.
+- **Always set a timeout** on `TaskOutput` — 120s for small tasks, 300s for larger ones.
+- **Keep context lean.** Agents return concise summaries — read their output files for details.
+- **One agent at a time** for the same task. Don't run planner and coder in parallel.
+- **Don't chain blindly.** Always present the plan to the user before invoking the coder.
+- **Progress files are disposable.** Delete them after writing the daily log (or leave for debugging).
