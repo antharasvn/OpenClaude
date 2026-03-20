@@ -72,6 +72,49 @@ def load_workspace_env(workspace_dir: str) -> dict[str, str]:
     return result
 
 
+def _build_append_system_prompt(cwd: str, thread_id: int) -> str | None:
+    """Build append_system_prompt from workspace identity/user/memory files.
+
+    cwd must be an absolute path to the user's workspace directory.
+    Returns None if no workspace files exist (e.g. first session before
+    BOOTSTRAP.md ritual has been completed and IDENTITY.md created).
+    Returning None means append_system_prompt is omitted from ClaudeCodeOptions
+    entirely — the SDK accepts None/omitted cleanly.
+    """
+    workspace = Path(cwd)
+    parts: list[str] = []
+
+    identity = workspace / "IDENTITY.md"
+    if identity.exists():
+        parts.append(identity.read_text().strip())
+
+    user = workspace / "USER.md"
+    if user.exists():
+        parts.append(user.read_text().strip())
+
+    # Hot memory: workspace-wide
+    mem = workspace / "memory" / "MEMORY.md"
+    if mem.exists():
+        content = mem.read_text().strip()
+        if content:
+            parts.append(f"## Workspace Memory\n{content}")
+
+    # Hot memory: topic-specific.
+    # Skip t0: it is a symlink to memory/MEMORY.md (already injected above).
+    # For real topic threads, only inject if it's a real file with content.
+    if thread_id and thread_id != 0:
+        topic_mem = workspace / "memory" / f"t{thread_id}" / "MEMORY.md"
+        if topic_mem.exists() and not topic_mem.is_symlink():
+            content = topic_mem.read_text().strip()
+            if content:
+                parts.append(f"## Topic Memory (t{thread_id})\n{content}")
+
+    if not parts:
+        return None
+
+    return "\n\n---\n\n".join(parts)
+
+
 def build_env(is_admin: bool, cwd: str, thread_id: int) -> dict[str, str]:
     """Build the environment dict for a Claude subprocess."""
     if is_admin:
@@ -236,7 +279,10 @@ def build_sdk_options(is_admin: bool, cwd: str, thread_id: int,
 
     from bot.sdk_session import ClaudeCodeOptions
     env = build_env(is_admin, cwd, thread_id)
-    return ClaudeCodeOptions(
+
+    append_prompt = _build_append_system_prompt(cwd, thread_id)
+
+    options_kwargs: dict = dict(
         allowed_tools=ALL_TOOLS.split(","),
         permission_mode="bypassPermissions",
         cwd=cwd,
@@ -255,3 +301,9 @@ def build_sdk_options(is_admin: bool, cwd: str, thread_id: int,
             ],
         },
     )
+    # Only set append_system_prompt when we actually have content — avoids
+    # passing None to the SDK on first-run sessions (before IDENTITY.md exists).
+    if append_prompt:
+        options_kwargs["append_system_prompt"] = append_prompt
+
+    return ClaudeCodeOptions(**options_kwargs)
