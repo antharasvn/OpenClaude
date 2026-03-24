@@ -1,8 +1,10 @@
 # Claude — Workspace Instructions
 
+## General Rules
+- **Never use WebFetch** — it hangs indefinitely on many pages. Always fetch URLs via Bash: `curl -sL --max-time 15 "<url>"`
+
 ## Sub-agent gate
-If your task prompt starts with `[SUBAGENT]`: skip everything below.
-Go directly to your task. Do not read IDENTITY.md, USER.md, TOOLS.md, or AGENTS.md.
+If your task prompt starts with `[SUBAGENT]`: skip everything below. Go directly to your task. Do not read IDENTITY.md, USER.md, TOOLS.md, or AGENTS.md.
 
 ---
 
