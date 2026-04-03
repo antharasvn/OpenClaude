@@ -14,7 +14,6 @@ the response back to the Telegram thread.
 """
 
 import asyncio
-import json
 import logging
 from typing import TYPE_CHECKING
 
@@ -26,6 +25,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 INJECT_PORT = 5001
+
+# Strong references to fire-and-forget inject tasks.
+# Without this, the GC can collect a running task mid-execution, leaving
+# acquired locks unreleased and subprocesses orphaned.
+_active_inject_tasks: set[asyncio.Task] = set()
 
 
 class InjectServer:
@@ -62,10 +66,14 @@ class InjectServer:
         if not chat_id or not message:
             return web.Response(status=400, text="chat_id and message are required")
 
-        # Fire-and-forget — don't block the HTTP response
-        asyncio.create_task(
+        # Fire-and-forget — keep a strong reference so the GC cannot collect
+        # the task mid-execution (which would leave locks held and subprocesses
+        # orphaned). The task removes itself from the set when it finishes.
+        task = asyncio.create_task(
             self._run_stream(chat_id, thread_id, user_id, message)
         )
+        _active_inject_tasks.add(task)
+        task.add_done_callback(_active_inject_tasks.discard)
         return web.Response(text="ok")
 
     async def _run_stream(
@@ -74,6 +82,7 @@ class InjectServer:
         """Run full bot pipeline for an injected message."""
         from bot.chat_lock import get_chat_lock, release_chat_lock_ref, set_lock_holder
         from bot.claude import stream_claude
+        from bot.commands_core import _stop_events, _streaming_tasks
         from bot.sessions import session_key
         from bot.streaming_session import StreamingSession
         from bot.workspaces import get_working_dir
@@ -104,31 +113,40 @@ class InjectServer:
             logger.error("Inject: lock timeout for skey=%s", skey)
             release_chat_lock_ref(skey)
             return
-        set_lock_holder(skey)
 
+        # Register in _streaming_tasks/_stop_events so /stop works and
+        # concurrent inject requests for the same chat are coordinated.
         stop_event = asyncio.Event()
-        typing_task = asyncio.create_task(self._typing_loop(chat_id, tg_thread_id))
-
         try:
-            async for event in stream_claude(
-                message,
-                chat_id,
-                thread_id,
-                session_user_id,
-                working_dir=chat_working_dir,
-                stop_event=stop_event,
-                real_user_id=user_id,
-            ):
-                etype = event.get("type")
-                if etype == "partial" and not typing_task.done():
-                    typing_task.cancel()
-                await session.handle_event(event)
+            set_lock_holder(skey)
+            _streaming_tasks[skey] = asyncio.current_task()
+            _stop_events[skey] = stop_event
 
-            await session.flush_live()
-        except Exception:
-            logger.exception("Inject stream error for skey=%s", skey)
+            typing_task = asyncio.create_task(self._typing_loop(chat_id, tg_thread_id))
+
+            try:
+                async for event in stream_claude(
+                    message,
+                    chat_id,
+                    thread_id,
+                    session_user_id,
+                    working_dir=chat_working_dir,
+                    stop_event=stop_event,
+                    real_user_id=user_id,
+                ):
+                    etype = event.get("type")
+                    if etype == "partial" and not typing_task.done():
+                        typing_task.cancel()
+                    await session.handle_event(event)
+
+                await session.flush_live()
+            except Exception:
+                logger.exception("Inject stream error for skey=%s", skey)
+            finally:
+                typing_task.cancel()
         finally:
-            typing_task.cancel()
+            _streaming_tasks.pop(skey, None)
+            _stop_events.pop(skey, None)
             lock.release()
             release_chat_lock_ref(skey)
 
