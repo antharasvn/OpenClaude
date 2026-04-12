@@ -132,6 +132,12 @@ _apply_sdk_setsid_patch()
 
 DISCONNECT_TIMEOUT = 3  # seconds
 
+# Track number of pending deferred sweep calls to prevent O(n²) accumulation.
+# Each SDKSession.disconnect() schedules sweeps; without this cap, a steady
+# stream of disconnects fills loop._scheduled, and each sweep then iterates
+# the entire queue → O(n²) CPU.
+_sweeps_pending: int = 0
+
 
 def _sweep_cancellation_callbacks() -> None:
     """Remove orphaned anyio _deliver_cancellation callbacks from the event loop.
@@ -175,6 +181,35 @@ def _sweep_cancellation_callbacks() -> None:
             logger.warning("Swept %d orphaned _deliver_cancellation callbacks", removed)
     except Exception:
         logger.debug("Failed to sweep cancellation callbacks", exc_info=True)
+
+
+def _schedule_deferred_sweeps() -> None:
+    """Schedule at most 2 deferred _sweep_cancellation_callbacks calls.
+
+    Caps pending sweeps globally so that rapid disconnects (e.g. from the
+    inject endpoint) cannot accumulate an unbounded number of entries in
+    loop._scheduled, which would make every sweep O(n) and the total work
+    O(n²) in the number of disconnects.
+    """
+    global _sweeps_pending
+    if _sweeps_pending >= 2:
+        return
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return
+
+    def _do_sweep() -> None:
+        global _sweeps_pending
+        _sweeps_pending = max(0, _sweeps_pending - 1)
+        _sweep_cancellation_callbacks()
+
+    for delay in (0.2, 3.0):
+        if _sweeps_pending >= 2:
+            break
+        _sweeps_pending += 1
+        loop.call_later(delay, _do_sweep)
+
 
 # Cache the bot's own process group so we never kill ourselves
 _BOT_PGID = os.getpgid(os.getpid())
@@ -363,17 +398,13 @@ class SDKSession:
                 self.client = None
                 self.connected = False
 
-                # Schedule multiple sweeps to catch _deliver_cancellation
-                # callbacks that appear after I/O events are processed.
-                # The subprocess death notification arrives asynchronously,
-                # so a single immediate sweep misses them.
+                # Sweep immediately, then schedule two deferred sweeps to catch
+                # _deliver_cancellation callbacks that appear after I/O events.
+                # We cap pending sweeps at 2 to prevent O(n²) accumulation:
+                # without the cap, rapid disconnects fill loop._scheduled and
+                # every sweep iterates the full queue → CPU climbs unbounded.
                 _sweep_cancellation_callbacks()
-                try:
-                    _loop = asyncio.get_running_loop()
-                    for delay in (0.05, 0.2, 0.5, 1.0, 3.0):
-                        _loop.call_later(delay, _sweep_cancellation_callbacks)
-                except RuntimeError:
-                    pass
+                _schedule_deferred_sweeps()
 
 
 class SDKSessionManager:

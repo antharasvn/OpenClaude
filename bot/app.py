@@ -301,6 +301,7 @@ def main() -> None:
             except Exception:
                 logger.exception("Error in _reap_zombie_sdk_processes loop")
 
+
     async def post_init(application: Application) -> None:
         """Fetch bot info at startup and resume interrupted generations."""
         bot = application.bot
@@ -361,6 +362,12 @@ def main() -> None:
         except Exception:
             infra_logger.exception("Failed to start cron scheduler")
 
+        # Start local inject server (allows cron/scripts to inject messages)
+        from bot.inject import InjectServer
+        application.bot_data["inject_server"] = InjectServer(bot)
+        await application.bot_data["inject_server"].start()
+
+
     async def post_shutdown(application: Application) -> None:
         """Clean up SDK sessions, caches, and active subprocesses on shutdown."""
         # Shutdown cron scheduler
@@ -369,12 +376,18 @@ def main() -> None:
         except Exception:
             infra_logger.exception("Error shutting down cron scheduler")
 
+        # Stop inject server
+        inject_server = application.bot_data.get("inject_server") if hasattr(application, "bot_data") else None
+        if inject_server:
+            await inject_server.stop()
+
         # Flush pending message batches
         from bot.batching import flush_all_batches
         try:
             await flush_all_batches()
         except Exception:
             infra_logger.exception("Error flushing batches on shutdown")
+
 
         # Kill all active subprocesses
         for skey, proc in list(_active_procs.items()):

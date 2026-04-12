@@ -10,7 +10,7 @@ from bot.config import WORKING_DIR, WORKSPACES_DIR
 logger = logging.getLogger(__name__)
 
 # Shared files are symlinked into each workspace so updates propagate automatically
-_SYMLINKED_FILES = ["TOOLS.md", "CLAUDE.md", "AGENTS.md"]
+_SYMLINKED_FILES = ["TOOLS.md", "AGENTS.md"]
 _SYMLINKED_DIRS = [".claude"]
 # BOOTSTRAP.md is always freshly copied so new sessions run the first-run ritual
 _BOOTSTRAP_FILE = "BOOTSTRAP.md"
@@ -27,7 +27,6 @@ def ensure_workspace(chat_id: int) -> Path:
     Workspace layout:
       workspaces/c{chat_id}/
         TOOLS.md       -> symlink to ../../TOOLS.md
-        CLAUDE.md      -> symlink to ../../CLAUDE.md
         .claude/       -> symlink to ../../.claude
         IDENTITY.md    <- independent copy (set up via BOOTSTRAP.md)
         USER.md        <- independent copy
@@ -35,6 +34,14 @@ def ensure_workspace(chat_id: int) -> Path:
         memory/        <- isolated per-chat memory
           MEMORY.md
     """
+    # Migration guard: remove legacy CLAUDE.md symlinks. The project-root
+    # CLAUDE.md is found via parent-directory traversal — no symlink needed.
+    # Safe to run on every call: is_symlink() is a cheap stat() check.
+    workspace = WORKSPACES_DIR / f"c{chat_id}"
+    legacy = workspace / "CLAUDE.md"
+    if legacy.is_symlink():
+        legacy.unlink()
+
     # Fast path: if we already initialized this workspace this process lifetime, skip
     # Still re-verify symlinks on every call so broken/changed targets are fixed.
     if chat_id in _initialized_workspaces:

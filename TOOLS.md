@@ -26,11 +26,48 @@ You have access to these tools when invoked via the Telegram bot:
 - **Location:** `skills/create-skill/SKILL.md`
 - **Purpose:** Template and safety guidelines for creating new skills
 - **Usage:** Read `skills/create-skill/SKILL.md` before creating any new skill. Follow all safety rules.
+- **Key rules:**
+  - User-facing skills source **only `$PWD/.env`** (workspace), never project root `.env`
+  - Never hardcode credentials, never exfiltrate user data
+  - Never modify system services, guard scripts, or security hooks
+  - Validate all inputs, prevent path traversal, use timeouts
 
 ### telegram-sender
 - **Location:** `skills/telegram-sender/send.sh`
 - **Purpose:** Send messages and files to Telegram chats directly
 - **Usage:** `send.sh --text "message" --chat CHAT_ID` or `send.sh --file /path/to/file --chat CHAT_ID`
+
+### ssh-vps
+- **Location:** `skills/ssh-vps/run.sh`
+- **Purpose:** Run commands on a remote VPS over SSH via sshpass
+- **Usage:** `./skills/ssh-vps/run.sh "command"`
+- **Examples:**
+  ```bash
+  ./skills/ssh-vps/run.sh "df -h"
+  ./skills/ssh-vps/run.sh "uptime && free -h"
+  ./skills/ssh-vps/run.sh "cat /var/log/syslog | tail -50"
+  ```
+- **Credentials:** Read from the user's workspace `.env` file (`VPS_HOST`, `VPS_PORT`, `VPS_USER`, `VPS_PASSWORD`). Never hardcode credentials.
+
+### moodle
+- **Location:** `skills/moodle/run.sh`
+- **Purpose:** Log into Innopolis University Moodle via SSO and fetch upcoming deadlines
+- **Usage:** `./skills/moodle/run.sh [deadlines|courses]`
+- **Commands:**
+  - `deadlines` (default) — upcoming assignment deadlines (next 90 days)
+  - `courses` — list current semester [S26] courses
+  - `lectures [course_id]` — list resources for a course (default: NLP id=3440)
+  - `download <resource_id> [outdir]` — download a file; prints saved path to stdout
+- **Credentials:** Read from workspace `.env` (`MOODLE_USERNAME`, `MOODLE_PASSWORD`)
+
+### kaggle-compete
+- **Location:** `skills/kaggle-compete/run.sh`
+- **Purpose:** Automatically solve Kaggle competitions by creating a solution notebook
+- **Usage:** `./skills/kaggle-compete/run.sh <competition_url>`
+- **Example:** `./skills/kaggle-compete/run.sh "https://www.kaggle.com/t/ABC123..."`
+- **Required:** `KAGGLE_USERNAME`, `KAGGLE_KEY` in workspace `.env`
+- **Output:** Creates private notebook, outputs URL to stdout and `temp/notebook_url.txt`
+- **Note:** User must accept competition rules via browser first (Kaggle limitation)
 
 ### heartbeat
 - **Location:** `skills/heartbeat/run.sh`

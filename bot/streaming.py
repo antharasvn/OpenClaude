@@ -85,7 +85,7 @@ async def run_with_streaming(update: Update, context: ContextTypes.DEFAULT_TYPE,
     if lock is not None:
         try:
             await asyncio.wait_for(lock.acquire(), timeout=30)
-        except TimeoutError:
+        except (TimeoutError, asyncio.TimeoutError):
             logger.error(
                 "Lock acquisition timed out for user %d in chat %d",
                 session_user_id, chat_id,
