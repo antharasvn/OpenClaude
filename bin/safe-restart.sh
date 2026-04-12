@@ -125,7 +125,7 @@ sync_dev() {
 run_tests() {
     log "Running tests..."
     local output
-    if output=$(cd "$PROJECT_DIR" && python3 -m pytest tests/ --tb=short -q -x 2>&1); then
+    if output=$(cd "$PROJECT_DIR" && "$PROJECT_DIR/.venv/bin/python" -m pytest tests/ --tb=short -q -x 2>&1); then
         log "Tests passed"
         return 0
     else
