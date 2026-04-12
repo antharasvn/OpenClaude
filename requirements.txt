@@ -1,5 +1,6 @@
 python-telegram-bot>=21.0
 python-dotenv
 deepgram-sdk>=3.0.0
+aiohttp
 pytest
 pytest-asyncio
