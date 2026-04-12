@@ -9,6 +9,7 @@ import asyncio
 import contextlib
 import logging
 import re
+import time
 
 from telegram import Update
 from telegram.constants import ParseMode
@@ -322,7 +323,7 @@ class StreamingSession:
 
         text = "\n".join(lines)
 
-        now = asyncio.get_event_loop().time()
+        now = time.monotonic()
         if self.status_msg and (now - self.last_edit_time) < STATUS_EDIT_INTERVAL:
             return
 
@@ -336,7 +337,7 @@ class StreamingSession:
                 )
             else:
                 await self.status_msg.edit_text(text)
-            self.last_edit_time = asyncio.get_event_loop().time()
+            self.last_edit_time = time.monotonic()
         except Exception as e:
             self._check_flood(e)
             logger.debug("_update_status: edit failed: %s", e)
@@ -352,7 +353,7 @@ class StreamingSession:
             return
         m = re.search(r"Retry in (\d+)", msg)
         wait = int(m.group(1)) if m else 30
-        self.flood_until = asyncio.get_event_loop().time() + wait
+        self.flood_until = time.monotonic() + wait
         self._flood_hit_count += 1
         infra_logger.warning(
             "[STREAM] flood control — backing off %ds (hit #%d)",
@@ -361,7 +362,7 @@ class StreamingSession:
 
     async def _update_live(self, text: str) -> None:
         """Update the live-streaming message with accumulated text."""
-        now = asyncio.get_event_loop().time()
+        now = time.monotonic()
 
         # Respect flood control backoff
         if now < self.flood_until:
@@ -437,7 +438,7 @@ class StreamingSession:
                 )
             else:
                 await self.live_msg.edit_text(display)
-            self.last_live_edit = asyncio.get_event_loop().time()
+            self.last_live_edit = time.monotonic()
         except Exception as e:
             self._check_flood(e)
             if now >= self.flood_until:
@@ -690,7 +691,7 @@ class StreamingSession:
             import functools
             import tempfile
 
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             with tempfile.TemporaryDirectory() as tmpdir:
                 png_paths = await loop.run_in_executor(
                     None, functools.partial(render_all_latex, response_text, tmpdir)
