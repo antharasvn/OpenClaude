@@ -1,0 +1,59 @@
+📊 Echo Daily — 2026-04-11 (rolling 24h as of 12:15 ET)
+
+👥 GROWTH
+  New users: 396 (DoD +44% · WoW +50%)
+  Returning: 202
+  
+  📍 New Users by Country (Top 10):
+    Türkiye: 222
+    Mexico: 36
+    Saudi Arabia: 33
+    Brazil: 22
+    United States: 19
+    Germany: 19
+    Russia: 7
+    India: 6
+    United Kingdom: 4
+    Spain: 2
+
+💰 MONETIZATION
+  📊 Funnel:
+    New users: 396 → paywall 349 → paid 5 (1.4%) 🔴
+    Returning: 202 → paywall 51 → paid 5 (9.8%) ⚠️
+
+  Overall: 400 paywall → 10 paid (2.5%) 🟠
+  Credits purchased: 2 users
+  DoD -32% · WoW -38%
+
+  📍 Conversion by Country (Top 10):
+    TOTAL: 373→8 (2.1%) 🟠
+    ─────────────────────
+    Türkiye: 234→7 (3.0%) 🟠
+    Mexico: 34→0 (0.0%) 🔴
+    Saudi Arabia: 31→0 (0.0%) 🔴
+    Brazil: 20→0 (0.0%) 🔴
+    United States: 18→1 (5.6%) ⚠️
+    Germany: 18→0 (0.0%) 🔴
+    Russia: 7→0 (0.0%) 🔴
+    India: 4→0 (0.0%) 🔴
+    United Kingdom: 4→0 (0.0%) 🔴
+    Italy: 3→0 (0.0%) 🔴
+
+🧪 EXPERIMENTS (B=Baseline | users/conv%)
+    No running experiments
+
+🎵 PRODUCT
+  Music created: 138 users (269 tracks)
+  First music: 119 new users
+  
+  🎤 VOICE FEATURES
+  Famous voices tapped: 84 users (156 taps)
+  Famous voice cloning: 14 users
+  Custom voice cloning: 45 users
+  Voice isolator: 71 users
+  TTS: 54 users (89 credits)
+
+🔧 BACKEND (Firebase Functions)
+  Total: 89 | Actionable: 0
+  By function: handler: 89
+  By type: UserNotFound: 89

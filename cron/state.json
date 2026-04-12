@@ -1,0 +1,17 @@
+{
+  "cleanpro-alerts": {
+    "last_run": "2026-04-12T11:00:08.531425+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  },
+  "vidnotes-alerts": {
+    "last_run": "2026-04-12T11:01:07.899800+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  },
+  "echo-backend-alerts": {
+    "last_run": "2026-04-12T11:05:03.188912+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  }
+}

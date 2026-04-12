@@ -1,0 +1,130 @@
+{
+  "jobs": [
+    {
+      "id": "echo-daily",
+      "name": "Echo Daily",
+      "enabled": true,
+      "schedule": {"cron": "0 3 * * *", "timezone": "America/New_York"},
+      "type": "script",
+      "script": "scripts/echo_daily_runner.py",
+      "delivery": {"chat_id": "-5201056067", "on_error": "352342178"}
+    },
+    {
+      "id": "vidnotes-daily",
+      "name": "VidNotes Daily",
+      "enabled": true,
+      "schedule": {"cron": "0 7 * * *", "timezone": "Europe/Warsaw"},
+      "type": "script",
+      "script": "scripts/vidnotes_daily_runner.py",
+      "delivery": {"chat_id": "-5201056067", "on_error": "352342178"}
+    },
+    {
+      "id": "vidnotes-weekly",
+      "name": "VidNotes Weekly",
+      "enabled": true,
+      "schedule": {"cron": "30 7 * * 1", "timezone": "Europe/Warsaw"},
+      "type": "prompt",
+      "skill": "skills/vidnotes-weekly/SKILL.md",
+      "delivery": {"chat_id": "-5201056067", "announce": "352342178", "on_error": "352342178"}
+    },
+    {
+      "id": "vidnotes-alerts",
+      "name": "VidNotes Alerts",
+      "enabled": true,
+      "schedule": {"cron": "0 7-23/2 * * *", "timezone": "Europe/Warsaw"},
+      "type": "prompt",
+      "skill": "skills/vidnotes-alerts/SKILL.md",
+      "delivery": {"chat_id": "-5201056067", "announce": "352342178", "on_error": "352342178"}
+    },
+    {
+      "id": "cleanpro-daily",
+      "name": "CleanPro Daily",
+      "enabled": true,
+      "schedule": {"cron": "0 3 * * *", "timezone": "Asia/Saigon"},
+      "type": "script",
+      "script": "scripts/cleanpro_daily_runner.py",
+      "delivery": {"chat_id": "-5201056067", "on_error": "352342178"}
+    },
+    {
+      "id": "cleanpro-weekly",
+      "name": "CleanPro Weekly",
+      "enabled": true,
+      "schedule": {"cron": "30 3 * * 1", "timezone": "Asia/Saigon"},
+      "type": "prompt",
+      "skill": "skills/cleanpro-weekly/SKILL.md",
+      "delivery": {"chat_id": "-5201056067", "announce": "352342178", "on_error": "352342178"}
+    },
+    {
+      "id": "cleanpro-alerts",
+      "name": "CleanPro Alerts",
+      "enabled": true,
+      "schedule": {"cron": "0 8-22/2 * * *", "timezone": "Asia/Saigon"},
+      "type": "script",
+      "script": "scripts/cleanpro_alerts_runner.py",
+      "delivery": {"chat_id": "-5201056067", "on_error": "352342178"}
+    },
+    {
+      "id": "cleanpro-exp-monitor",
+      "name": "CleanPro Experiment Monitor",
+      "enabled": true,
+      "schedule": {"interval_seconds": 7200},
+      "type": "script",
+      "script": "scripts/cleanpro_experiment_monitor.py",
+      "delivery": {"chat_id": "-5201056067", "on_error": "352342178"}
+    },
+    {
+      "id": "mangii-daily",
+      "name": "Mangii Daily",
+      "enabled": true,
+      "schedule": {"cron": "0 3 * * *", "timezone": "America/New_York"},
+      "type": "script",
+      "script": "scripts/mangii_daily_runner.py",
+      "delivery": {"chat_id": "-5201056067", "on_error": "352342178"}
+    },
+    {
+      "id": "echo-backend-alerts",
+      "name": "Echo Backend Alerts",
+      "enabled": true,
+      "schedule": {"cron": "5 * * * *", "timezone": "America/New_York"},
+      "type": "script",
+      "script": "scripts/echo_alerts_runner.py",
+      "delivery": {"chat_id": "-5201056067", "on_error": "352342178"}
+    },
+    {
+      "id": "weekly-conjecture",
+      "name": "Weekly Conjecture Cycle",
+      "enabled": true,
+      "schedule": {"cron": "0 8 * * 0", "timezone": "America/New_York"},
+      "type": "prompt",
+      "skill": "skills/weekly-conjecture-cycle/SKILL.md",
+      "delivery": {"chat_id": "-5201056067", "announce": "352342178", "on_error": "352342178"}
+    },
+    {
+      "id": "auto-commit",
+      "name": "Auto-Commit Safety Net",
+      "enabled": true,
+      "schedule": {"interval_seconds": 7200},
+      "type": "script",
+      "script": "scripts/auto_commit.py",
+      "delivery": {"on_error": "352342178"}
+    },
+    {
+      "id": "pdfai-daily",
+      "name": "PDFAI Daily",
+      "enabled": false,
+      "schedule": {"cron": "0 3 * * *", "timezone": "America/New_York"},
+      "type": "prompt",
+      "skill": "skills/pdfai-daily/SKILL.md",
+      "delivery": {"chat_id": "-5201056067", "announce": "352342178", "on_error": "352342178"}
+    },
+    {
+      "id": "aividly-daily",
+      "name": "AIVidly Daily",
+      "enabled": false,
+      "schedule": {"cron": "0 3 * * *", "timezone": "America/New_York"},
+      "type": "prompt",
+      "skill": "skills/aividly-daily/SKILL.md",
+      "delivery": {"chat_id": "-5201056067", "announce": "352342178", "on_error": "352342178"}
+    }
+  ]
+}

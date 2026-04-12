@@ -27,6 +27,7 @@ from bot.logging_setup import infra_logger, setup_logging
 from bot.process import _active_procs  # noqa: E402
 from bot.renderer import TelegramRenderer  # noqa: E402
 from bot.restart_recovery import RestartRecoveryService  # noqa: E402
+from bot.scheduler import JobScheduler  # noqa: E402
 from bot.sdk_session import (  # noqa: E402
     HAS_SDK,
     cleanup_idle_sessions,
@@ -67,6 +68,7 @@ def main() -> None:
     atexit.register(flush_streams)
 
     renderer = TelegramRenderer()
+    job_scheduler = JobScheduler()
 
     async def _monitor_cpu_usage() -> None:
         """Monitor bot CPU usage and auto-sweep orphaned callbacks on high CPU."""
@@ -169,50 +171,106 @@ def main() -> None:
         2. Match ``claude.*stream-json`` (SDK subprocess pattern)
         3. Are NOT in the set of PIDs actively tracked by sdk_session_manager
         4. Have been running for more than 3 minutes (to avoid killing fresh ones)
+
+        Works on both Linux (/proc) and macOS (psutil/pgrep fallback).
         """
         import os
         import re
         import signal as sig
+        import subprocess as sp
+        import time
 
         bot_pid = os.getpid()
         min_age_seconds = 180  # 3 minutes
+        is_linux = sys.platform == "linux"
 
         def _get_all_descendants(pid: int) -> list[int]:
-            """Recursively collect all descendant PIDs via /proc."""
+            """Collect all descendant PIDs (cross-platform)."""
             result = []
-            try:
-                with open(f"/proc/{pid}/task/{pid}/children") as f:
-                    child_pids = [int(p) for p in f.read().split() if p.strip()]
-                for cpid in child_pids:
-                    result.append(cpid)
-                    result.extend(_get_all_descendants(cpid))
-            except (FileNotFoundError, ValueError, OSError):
-                pass
+            if is_linux:
+                try:
+                    with open(f"/proc/{pid}/task/{pid}/children") as f:
+                        child_pids = [int(p) for p in f.read().split() if p.strip()]
+                    for cpid in child_pids:
+                        result.append(cpid)
+                        result.extend(_get_all_descendants(cpid))
+                except (FileNotFoundError, ValueError, OSError):
+                    pass
+            else:
+                # macOS: use pgrep -P to find children
+                try:
+                    out = sp.run(
+                        ["pgrep", "-P", str(pid)],
+                        capture_output=True, text=True,
+                    )
+                    if out.returncode == 0:
+                        for line in out.stdout.strip().split("\n"):
+                            if line.strip().isdigit():
+                                cpid = int(line.strip())
+                                result.append(cpid)
+                                result.extend(_get_all_descendants(cpid))
+                except Exception:
+                    pass
             return result
 
         def _get_process_age_seconds(pid: int) -> float | None:
-            """Return process age in seconds using /proc/pid/stat start time."""
-            try:
-                with open(f"/proc/{pid}/stat") as f:
-                    stat_fields = f.read().split(")")[-1].split()
-                # Field index 19 (0-based after comm) = starttime in clock ticks
-                starttime_ticks = int(stat_fields[19])
-                clock_ticks_per_sec = os.sysconf("SC_CLK_TCK")
-                with open("/proc/uptime") as f:
-                    uptime_seconds = float(f.read().split()[0])
-                process_start_seconds = starttime_ticks / clock_ticks_per_sec
-                return uptime_seconds - process_start_seconds
-            except (FileNotFoundError, ValueError, OSError, IndexError):
-                return None
+            """Return process age in seconds (cross-platform)."""
+            if is_linux:
+                try:
+                    with open(f"/proc/{pid}/stat") as f:
+                        stat_fields = f.read().split(")")[-1].split()
+                    starttime_ticks = int(stat_fields[19])
+                    clock_ticks_per_sec = os.sysconf("SC_CLK_TCK")
+                    with open("/proc/uptime") as f:
+                        uptime_seconds = float(f.read().split()[0])
+                    process_start_seconds = starttime_ticks / clock_ticks_per_sec
+                    return uptime_seconds - process_start_seconds
+                except (FileNotFoundError, ValueError, OSError, IndexError):
+                    return None
+            else:
+                # macOS: use ps to get elapsed time
+                try:
+                    out = sp.run(
+                        ["ps", "-o", "etime=", "-p", str(pid)],
+                        capture_output=True, text=True,
+                    )
+                    if out.returncode != 0:
+                        return None
+                    etime = out.stdout.strip()
+                    # Parse etime format: [[DD-]HH:]MM:SS
+                    parts = etime.replace("-", ":").split(":")
+                    parts = [int(p) for p in parts]
+                    if len(parts) == 2:
+                        return parts[0] * 60 + parts[1]
+                    elif len(parts) == 3:
+                        return parts[0] * 3600 + parts[1] * 60 + parts[2]
+                    elif len(parts) == 4:
+                        return parts[0] * 86400 + parts[1] * 3600 + parts[2] * 60 + parts[3]
+                    return None
+                except Exception:
+                    return None
 
         def _is_claude_stream_json(pid: int) -> bool:
             """Check if a process cmdline matches claude.*stream-json."""
-            try:
-                with open(f"/proc/{pid}/cmdline", "rb") as f:
-                    cmdline = f.read().decode("utf-8", errors="replace").replace("\x00", " ")
-                return bool(re.search(r"claude.*stream-json", cmdline))
-            except (FileNotFoundError, OSError):
-                return False
+            if is_linux:
+                try:
+                    with open(f"/proc/{pid}/cmdline", "rb") as f:
+                        cmdline = f.read().decode("utf-8", errors="replace").replace("\x00", " ")
+                    return bool(re.search(r"claude.*stream-json", cmdline))
+                except (FileNotFoundError, OSError):
+                    return False
+            else:
+                # macOS: use ps to get command line
+                try:
+                    out = sp.run(
+                        ["ps", "-o", "command=", "-p", str(pid)],
+                        capture_output=True, text=True,
+                    )
+                    if out.returncode == 0:
+                        return bool(re.search(r"claude.*stream-json", out.stdout))
+                    return False
+                except Exception:
+                    return False
 
         while True:
             try:
@@ -295,8 +353,22 @@ def main() -> None:
         )
         await recovery.recover_interrupted_sessions()
 
+        # Start cron job scheduler
+        job_scheduler.bot = application.bot
+        try:
+            await job_scheduler.start()
+            infra_logger.info("Cron scheduler started")
+        except Exception:
+            infra_logger.exception("Failed to start cron scheduler")
+
     async def post_shutdown(application: Application) -> None:
         """Clean up SDK sessions, caches, and active subprocesses on shutdown."""
+        # Shutdown cron scheduler
+        try:
+            await job_scheduler.shutdown()
+        except Exception:
+            infra_logger.exception("Error shutting down cron scheduler")
+
         # Flush pending message batches
         from bot.batching import flush_all_batches
         try:

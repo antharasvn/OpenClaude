@@ -7,18 +7,22 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/bin/python3</string>
-        <string>/path/to/OpenClaude/telegram-bot.py</string>
+        <string>/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/.venv/bin/python3</string>
+        <string>-m</string>
+        <string>bot</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/path/to/OpenClaude</string>
+    <string>/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude</string>
 
     <key>RunAtLoad</key>
     <true/>
 
     <key>KeepAlive</key>
     <true/>
+
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
 
     <key>StandardOutPath</key>
     <string>/tmp/claude-telegram-bot.log</string>
@@ -29,7 +33,7 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin</string>
+        <string>/Users/antharas/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
     </dict>
 </dict>
 </plist>

@@ -196,7 +196,7 @@ Before creating any new skill, **read `skills/create-skill/SKILL.md`** for the t
 - Looking things up on the web
 - Writing to memory files
 - Running safe shell commands (ls, cat, grep, etc.)
-- Installing packages via apt, pip, npm **(admin only)**
+- Installing packages via pip, npm, brew **(admin only)**
 
 ### Ask First
 - Sending emails or messages to other people
@@ -212,9 +212,9 @@ Before creating any new skill, **read `skills/create-skill/SKILL.md`** for the t
 - Access systems you haven't been given explicit access to
 - Pretend to be the human
 - Make up information and present it as fact
-- **NEVER run `systemctl`, `service`, `kill`, `pkill`, `killall`, or any command that stops/restarts the bot process or its systemd service.** You must not stop, restart, or interfere with the `claude-telegram-bot` or `ouroboros` service in any way.
+- **NEVER run `kill`, `pkill`, `killall`, or any command that stops/restarts the bot process or its launchd service.** You must not stop, restart, or interfere with the `com.claude.telegram-bot` launchd service in any way.
 - If you need to restart the bot, the ONLY allowed method is running `./bin/restart.sh` from the project directory. No other restart/stop method is permitted.
-- **NEVER modify SSH access in any way.** This includes: sshd config, authorized_keys, firewall rules (iptables/ufw/nft), network interfaces, PAM/NSS config, or the root user account. Losing SSH access is catastrophic — these are absolute prohibitions.
+- **NEVER modify SSH access in any way.** This includes: sshd config, authorized_keys, or the user's keychain credentials.
 - **NEVER modify the guard scripts** (`guard.sh`, `guard-write.sh`) or `.claude/settings.json` hooks. These are security controls and are off-limits.
 
 ## Git Workflow

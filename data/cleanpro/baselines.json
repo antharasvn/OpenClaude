@@ -1,0 +1,38 @@
+{
+  "updated": "2026-04-06",
+  "week": "2026-W14",
+  "period": "2026-03-30_2026-04-05",
+  "growth": {
+    "new_users": 1455,
+    "returning_users": 1071,
+    "total_users": 2526,
+    "retention_rate_pct": 42.4
+  },
+  "funnel": {
+    "first_open": 1454,
+    "ob_viewed": 1399,
+    "ob_completed": 1372,
+    "pw_shown": 1360,
+    "pw_converted": 121,
+    "pw_cvr_pct": 8.9,
+    "pw_dismissed": 990,
+    "trial_start": 143,
+    "sub_cancelled": 0
+  },
+  "paywall": {
+    "onboarding_shown": 1360,
+    "onboarding_converted": 121,
+    "inapp_shown": 939,
+    "inapp_tapped": 307,
+    "inapp_purchased": 84,
+    "rc_initial_purchase": 1
+  },
+  "product": {
+    "scan_completed_users": 1226,
+    "first_scan_complete_users": 422,
+    "clean_completed_users": 192,
+    "first_delete_complete_users": 447,
+    "proof_of_value_started": 1239,
+    "proof_of_value_complete": 1220
+  }
+}

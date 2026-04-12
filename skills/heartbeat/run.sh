@@ -4,6 +4,8 @@
 
 set -euo pipefail
 
+export PATH="/Users/antharas/.local/bin:$PATH"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
@@ -38,8 +40,8 @@ echo "[heartbeat] Starting heartbeat at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 # Run Claude with heartbeat prompt
 cd "$PROJECT_DIR"
 
-claude -p "Run heartbeat: review pending tasks, check memory for reminders or things you wanted to follow up on. Last heartbeat ran at: $LAST_RUN. If anything notable, send a brief update via the telegram-sender skill. If nothing to report, just say 'Heartbeat: nothing to report' and do not send a Telegram message." \
-    --allowedTools "Read,Write,Edit,Bash,Glob,Grep,WebFetch,WebSearch,Skill"
+/opt/homebrew/bin/gtimeout 120 claude -p "Run heartbeat: read HEARTBEAT.md for the checklist, then work through each item. Review pending tasks, check memory for reminders or things you wanted to follow up on. Last heartbeat ran at: $LAST_RUN. If anything notable, send a brief update via the telegram-sender skill. If nothing to report, just say 'Heartbeat: nothing to report' and do not send a Telegram message." \
+    --allowedTools "Read,Write,Edit,Bash,Glob,Grep,WebFetch,WebSearch,Skill" || echo "[heartbeat] Timed out or failed (exit $?)"
 
 # Update state file with new timestamp
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)

@@ -3,33 +3,24 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.claude.daily-brief</string>
+    <string>com.claude.heartbeat</string>
 
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/antharas/.local/bin/claude</string>
-        <string>-p</string>
-        <string>Generate and send a daily brief using the daily-brief skill</string>
-        <string>--allowedTools</string>
-        <string>Read,Write,Bash,Glob,Grep,Skill</string>
+        <string>/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/skills/heartbeat/run.sh</string>
     </array>
 
     <key>WorkingDirectory</key>
     <string>/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude</string>
 
-    <key>StartCalendarInterval</key>
-    <dict>
-        <key>Hour</key>
-        <integer>9</integer>
-        <key>Minute</key>
-        <integer>0</integer>
-    </dict>
+    <key>StartInterval</key>
+    <integer>900</integer>
 
     <key>StandardOutPath</key>
-    <string>/tmp/claude-daily-brief.log</string>
+    <string>/tmp/claude-heartbeat.log</string>
 
     <key>StandardErrorPath</key>
-    <string>/tmp/claude-daily-brief.err</string>
+    <string>/tmp/claude-heartbeat.err</string>
 
     <key>EnvironmentVariables</key>
     <dict>

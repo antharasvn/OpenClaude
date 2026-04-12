@@ -1,0 +1,50 @@
+📊 Mangii Daily — 2026-04-11 (rolling 24h as of 12:15 ET)
+
+👥 GROWTH
+  New users: 639 (DoD +29% · WoW +40%)
+  Returning: 2527
+
+  📍 New Users by Country (Top 10):
+    Brazil: 272
+    United States: 66
+    Russia: 28
+    India: 19
+    Mexico: 16
+    France: 13
+    Cameroon: 10
+    Venezuela: 10
+    Malaysia: 9
+    Philippines: 9
+
+💰 MONETIZATION
+  📊 Funnel:
+    New users: 639 → paywall 428 → paid 3 (0.7%)
+    Returning: 2527 → paywall 126 → paid 5 (4.0%)
+
+  Overall: 554 paywall → 8 paid (1.4%)
+  CTA tapped: 70 · Plan selected: 33 · Purchase cancelled: 58 · Failed: 3
+  DoD -13% · WoW +100%
+
+  📍 Conversion by Country (Top 10):
+    TOTAL: 375→6 (1.6%) 🔴
+    ─────────────────────
+    Brazil: 203→1 (0.5%) 🔴
+    United States: 64→4 (6.3%) ⚠️
+    Russia: 23→0 (0.0%) 🔴
+    India: 17→0 (0.0%) 🔴
+    Mexico: 13→0 (0.0%) 🔴
+    Argentina: 12→0 (0.0%) 🔴
+    Cameroon: 12→0 (0.0%) 🔴
+    Philippines: 11→1 (9.1%) ⚠️
+    Morocco: 10→0 (0.0%) 🔴
+    Venezuela: 10→0 (0.0%) 🔴
+
+🧪 EXPERIMENTS (B=Baseline | users/conv%)
+    No running experiments
+
+🎨 PRODUCT
+  Panels generated: 548 users (1005 panels)
+  Generate tapped: 587 users
+  Blocked (no credits): 268 users
+  Credits depleted: 96 users
+  Regenerated: 34 users

@@ -14,39 +14,27 @@ FILEPATH=$(echo "$CLAUDE_TOOL_INPUT" | jq -r '.file_path // empty' 2>/dev/null)
 
 # ── Blocked patterns (everyone) ──────────────────────────────────────
 
-# 1. Service management (bot, ouroboros, or any service stop/restart)
-if echo "$CMD" | grep -qiE "systemctl|service\s+(stop|restart|start)|kill\s|pkill\s|killall\s|claude-telegram-bot|ouroboros"; then
-    echo "BLOCKED: You are not allowed to manage system services. Use ./bin/restart.sh for the bot." >&2
+# 1. Service management — don't kill the bot or unload launchd services
+if echo "$CMD" | grep -qiE "kill\s|pkill\s|killall\s|claude-telegram-bot"; then
+    echo "BLOCKED: You are not allowed to kill processes. Use ./bin/restart.sh for the bot." >&2
     exit 2
 fi
 
-# 2. SSH access — do not touch sshd, its config, keys, or firewall rules for port 22
-if echo "$CMD" | grep -qiE "sshd|ssh_config|authorized_keys|/etc/ssh"; then
+# 2. launchd service management — don't unload/remove bot services
+if echo "$CMD" | grep -qiE "launchctl\s+(unload|remove|bootout).*com\.claude"; then
+    echo "BLOCKED: You are not allowed to disable bot launchd services." >&2
+    exit 2
+fi
+
+# 3. SSH access — do not touch SSH config or keys
+if echo "$CMD" | grep -qiE "sshd|ssh_config|authorized_keys"; then
     echo "BLOCKED: You are not allowed to modify SSH configuration or keys." >&2
     exit 2
 fi
 
-# 3. Firewall — block iptables/nftables/ufw changes that could lock out SSH
-if echo "$CMD" | grep -qiE "\b(iptables|ip6tables|nftables|nft|ufw)\b"; then
-    echo "BLOCKED: You are not allowed to modify firewall rules." >&2
-    exit 2
-fi
-
-# 4. Network interfaces — don't bring down networking
-if echo "$CMD" | grep -qiE "\b(ifconfig|ip\s+(link|addr|route))\b.*\b(down|del|flush)\b|nmcli.*down|networkctl.*down"; then
-    echo "BLOCKED: You are not allowed to disable network interfaces." >&2
-    exit 2
-fi
-
-# 5. PAM / NSS — don't mess with authentication modules
-if echo "$CMD" | grep -qiE "/etc/pam\.|/etc/nsswitch"; then
-    echo "BLOCKED: You are not allowed to modify PAM or NSS configuration." >&2
-    exit 2
-fi
-
-# 6. User/password management that could lock out the admin
-if echo "$CMD" | grep -qiE "\b(passwd|usermod|userdel|chage)\b.*\broot\b|deluser\s+root"; then
-    echo "BLOCKED: You are not allowed to modify the root account." >&2
+# 4. Destructive system commands
+if echo "$CMD" | grep -qiE "sudo\s+rm\s+-rf\s+/[^w]|diskutil\s+erase|shutdown|reboot"; then
+    echo "BLOCKED: Destructive system commands are not allowed." >&2
     exit 2
 fi
 
