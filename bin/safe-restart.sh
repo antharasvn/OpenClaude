@@ -7,7 +7,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-SERVICE="claude-telegram-bot"
+SERVICE_LABEL="com.claude.telegram-bot"
 KNOWN_GOOD_FILE="$PROJECT_DIR/backups/known-good-commit"
 ROLLBACK_LOCK="$PROJECT_DIR/backups/rollback-lock"
 MAX_RETRIES=3
@@ -183,42 +183,64 @@ EOF
     return 0
 }
 
-start_service() {
-    log "Starting $SERVICE..."
-    # Stop first to reset systemd's restart counter, then start fresh
-    systemctl --user stop "$SERVICE" 2>/dev/null || true
-    sleep 2
-    systemctl --user start "$SERVICE"
+get_service_pid() {
+    launchctl list "$SERVICE_LABEL" 2>/dev/null | awk -F'= ' '/"PID"/{gsub(/[;"]/,"",$2); print $2}'
+}
 
-    # Record the initial PID
-    local pid_start
-    pid_start=$(systemctl --user show "$SERVICE" -p MainPID --value 2>/dev/null || echo "0")
-    if [[ "$pid_start" == "0" ]]; then
-        log "$SERVICE failed to start (no PID)"
+is_service_alive() {
+    local pid
+    pid=$(get_service_pid)
+    [[ -n "$pid" && "$pid" != "-" ]] && kill -0 "$pid" 2>/dev/null
+}
+
+start_service() {
+    log "Starting $SERVICE_LABEL..."
+    # kickstart -k stops the running instance (if any) and starts a fresh one.
+    # Do NOT use `bootout` — that unloads the plist entirely.
+    if ! launchctl kickstart -k "gui/$(id -u)/$SERVICE_LABEL" 2>/dev/null; then
+        log "launchctl kickstart failed for $SERVICE_LABEL"
+        return 1
+    fi
+
+    # Poll for a valid PID (up to 5s)
+    local pid_start=""
+    for _ in 1 2 3 4 5; do
+        pid_start=$(get_service_pid)
+        if [[ -n "$pid_start" && "$pid_start" != "-" && "$pid_start" != "0" ]]; then
+            break
+        fi
+        sleep 1
+    done
+
+    if [[ -z "$pid_start" || "$pid_start" == "-" || "$pid_start" == "0" ]]; then
+        log "$SERVICE_LABEL failed to start (no PID after 5s)"
         return 1
     fi
 
     # Check that the SAME process stays alive for the full wait period.
-    # A crash-looping bot may briefly appear active between systemd restarts,
-    # so we verify PID stability, not just is-active.
+    # A crash-looping bot may briefly appear active between launchd restarts,
+    # so we verify PID stability, not just liveness.
     local checks=3
     local interval=$(( STARTUP_WAIT / checks ))
     for i in $(seq 1 "$checks"); do
         sleep "$interval"
         local pid_now
-        pid_now=$(systemctl --user show "$SERVICE" -p MainPID --value 2>/dev/null || echo "0")
-        if [[ "$pid_now" != "$pid_start" ]]; then
-            log "$SERVICE PID changed ($pid_start -> $pid_now) during check $i/$checks — crash-looping"
-            systemctl --user stop "$SERVICE" 2>/dev/null || true
+        pid_now=$(get_service_pid)
+        if [[ -z "$pid_now" || "$pid_now" == "-" || "$pid_now" == "0" ]]; then
+            log "$SERVICE_LABEL died during startup check $i/$checks (no PID)"
             return 1
         fi
-        if ! systemctl --user is-active "$SERVICE" &>/dev/null; then
-            log "$SERVICE died during startup check $i/$checks"
+        if [[ "$pid_now" != "$pid_start" ]]; then
+            log "$SERVICE_LABEL PID changed ($pid_start -> $pid_now) during check $i/$checks — crash-looping"
+            return 1
+        fi
+        if ! kill -0 "$pid_now" 2>/dev/null; then
+            log "$SERVICE_LABEL process $pid_now is gone during check $i/$checks"
             return 1
         fi
     done
 
-    log "$SERVICE started successfully (PID $pid_start, stable for ${STARTUP_WAIT}s)"
+    log "$SERVICE_LABEL started successfully (PID $pid_start, stable for ${STARTUP_WAIT}s)"
     return 0
 }
 
@@ -245,7 +267,7 @@ for attempt in $(seq 1 "$MAX_RETRIES"); do
             exit 0
         else
             # Startup failed despite tests passing
-            notify "[safe-restart] Tests passed but $SERVICE failed to start (attempt $attempt/$MAX_RETRIES). Commit: $(get_short_hash).
+            notify "[safe-restart] Tests passed but $SERVICE_LABEL failed to start (attempt $attempt/$MAX_RETRIES). Commit: $(get_short_hash).
 Last output:
 $TEST_OUTPUT"
         fi
