@@ -1,50 +1,50 @@
-📊 Mangii Daily — 2026-04-20 (rolling 24h as of 14:00 ET)
+📊 Mangii Daily — 2026-04-21 (rolling 24h as of 14:00 ET)
 
 👥 GROWTH
-  New users: 467 (DoD -15% · WoW -21%)
-  Returning: 3302
+  New users: 421 (DoD -11% · WoW -19%)
+  Returning: 3051
 
   📍 New Users by Country (Top 10):
-    Brazil: 229
-    United States: 53
-    India: 12
-    Russia: 11
-    France: 11
-    Algeria: 8
-    Congo - Kinshasa: 6
-    Mexico: 6
-    Colombia: 6
-    Togo: 5
+    Brazil: 208
+    United States: 52
+    India: 16
+    Mexico: 13
+    Russia: 9
+    Bahrain: 6
+    Venezuela: 5
+    Algeria: 5
+    Nigeria: 5
+    Congo - Brazzaville: 5
 
 💰 MONETIZATION
   📊 Funnel:
-    New users: 467 → paywall 314 → paid 1 (0.3%)
-    Returning: 3302 → paywall 158 → paid 1 (0.6%)
+    New users: 421 → paywall 268 → paid 2 (0.7%)
+    Returning: 3052 → paywall 129 → paid 2 (1.6%)
 
-  Overall: 472 paywall → 2 paid (0.4%)
-  CTA tapped: 52 · Plan selected: 30 · Purchase cancelled: 50 · Failed: 0
-  DoD +100% · WoW +0%
+  Overall: 397 paywall → 4 paid (1.0%)
+  CTA tapped: 36 · Plan selected: 22 · Purchase cancelled: 30 · Failed: 0
+  DoD +150% · WoW +150%
 
   📍 Conversion by Country (Top 10):
-    TOTAL: 345→2 (0.6%) 🔴
+    TOTAL: 305→3 (1.0%) 🔴
     ─────────────────────
-    Brazil: 215→1 (0.5%) 🔴
-    United States: 45→1 (2.2%) 🟠
+    Brazil: 173→2 (1.2%) 🔴
+    United States: 47→1 (2.1%) 🟠
     Russia: 18→0 (0.0%) 🔴
-    India: 16→0 (0.0%) 🔴
-    France: 15→0 (0.0%) 🔴
-    Congo - Kinshasa: 11→0 (0.0%) 🔴
-    Mexico: 7→0 (0.0%) 🔴
+    India: 15→0 (0.0%) 🔴
+    Mexico: 13→0 (0.0%) 🔴
+    France: 11→0 (0.0%) 🔴
+    Venezuela: 8→0 (0.0%) 🔴
     Algeria: 7→0 (0.0%) 🔴
-    Peru: 6→0 (0.0%) 🔴
-    Colombia: 5→0 (0.0%) 🔴
+    Germany: 7→0 (0.0%) 🔴
+    Congo - Brazzaville: 6→0 (0.0%) 🔴
 
 🧪 EXPERIMENTS (B=Baseline | users/conv%)
     No running experiments
 
 🎨 PRODUCT
-  Panels generated: 458 users (987 panels)
-  Generate tapped: 502 users
-  Blocked (no credits): 232 users
-  Credits depleted: 108 users
-  Regenerated: 37 users
+  Panels generated: 407 users (782 panels)
+  Generate tapped: 456 users
+  Blocked (no credits): 166 users
+  Credits depleted: 76 users
+  Regenerated: 28 users
