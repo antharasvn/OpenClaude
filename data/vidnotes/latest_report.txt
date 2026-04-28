@@ -1,53 +1,53 @@
-📊 VidNotes Daily — 2026-04-28 (rolling 24h as of 01:00 ET)
+📊 VidNotes Daily — 2026-04-28 (rolling 24h as of 18:54 ET)
 
 👥 GROWTH
-  New users: 108 (DoD +17% · WoW +14%)
-  Returning: 163
+  New users: 91 (DoD -12% · WoW -12%)
+  Returning: 183
 
-  📱 Platform: iPhone 68 · iPad 3 · Android 142 · Web 58
+  📱 Platform: iPhone 65 · iPad 7 · Android 145 · Web 57
 
   📍 New Users by Country (Top 10):
-    United States: 16
-    India: 9
-    Philippines: 9
-    Italy: 6
-    Brazil: 5
-    Iraq: 5
+    United States: 12
+    India: 6
+    Italy: 5
+    Philippines: 5
+    Germany: 4
+    Romania: 4
     Argentina: 4
-    Türkiye: 4
-    Pakistan: 3
-    Nigeria: 3
+    Algeria: 3
+    United Kingdom: 3
+    Brazil: 3
 
 💰 MONETIZATION
   📊 Funnel:
-    New users: 108 → paywall 49 → trial 7 → paid 8 (7.4%) ⚠️
-    Returning: 163 → paywall 14 → trial 1 → paid 1 (0.6%) 🔴
+    New users: 91 → paywall 42 → trial 3 → paid 3 (3.3%) 🟠
+    Returning: 183 → paywall 19 → trial 2 → paid 2 (1.1%) 🔴
 
-  Overall: 63 paywall → 8 trial → 9 paid
-  Paywall→Trial: 12.7% · Trial→Paid (7d): 46/46 (100.0%)
-  Skipped: 24 · Failed: 1 · Cancelled: 25
-  DoD +80% · WoW +50%
+  Overall: 61 paywall → 5 trial → 5 paid
+  Paywall→Trial: 8.2% · Trial→Paid (7d): 39/39 (100.0%)
+  Skipped: 22 · Failed: 0 · Cancelled: 26
+  DoD -44% · WoW -64%
 
   📱 Conversion by Platform:
-    iPhone: 35→5 (14.3%) ✅
-    Android: 14→3 (21.4%) 🟢
-    Web: 12→0 (0.0%) 🔴
-    iPad: 2→1 (50.0%) 🔵
+    iPhone: 30→3 (10.0%) ⚠️
+    Android: 16→1 (6.3%) ⚠️
+    Web: 11→0 (0.0%) 🔴
+    iPad: 4→1 (25.0%) 🟢
 
   📍 Conversion by Country (Top 10):
-    TOTAL: 44→4 (9.1%) ⚠️
+    TOTAL: 36→3 (8.3%) ⚠️
     ─────────────────────
-    United States: 12→1 (8.3%) ⚠️
-    India: 6→0 (0.0%) 🔴
-    Italy: 6→0 (0.0%) 🔴
-    Iraq: 4→0 (0.0%) 🔴
-    Spain: 4→0 (0.0%) 🔴
-    United Kingdom: 3→0 (0.0%) 🔴
-    Philippines: 3→1 (33.3%) 🔵
+    United States: 10→2 (20.0%) ✅
+    Italy: 5→0 (0.0%) 🔴
+    India: 4→0 (0.0%) 🔴
+    Argentina: 3→0 (0.0%) 🔴
+    Romania: 3→0 (0.0%) 🔴
+    Philippines: 3→0 (0.0%) 🔴
+    Pakistan: 2→0 (0.0%) 🔴
+    Czechia: 2→0 (0.0%) 🔴
     Australia: 2→1 (50.0%) 🔵
-    France: 2→0 (0.0%) 🔴
-    Hong Kong: 2→1 (50.0%) 🔵
+    Egypt: 2→0 (0.0%) 🔴
 
 🎙 PRODUCT
-  Transcription success: 82.4% ✅
-  AI summaries: 20 users · Exports: 18 · Flashcards: 1
+  Transcription success: 80.3% 🔴
+  AI summaries: 20 users · Exports: 16 · Flashcards: 0
