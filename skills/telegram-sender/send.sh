@@ -102,7 +102,7 @@ if [[ -n "$TEXT" ]]; then
 
     RESPONSE=$(curl -s -w "\n%{http_code}" "${API_BASE}/sendMessage" "${PAYLOAD[@]}")
     HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-    BODY=$(echo "$RESPONSE" | head -n -1)
+    BODY=$(echo "$RESPONSE" | sed '$d')
 
     if [[ "$HTTP_CODE" -ne 200 ]]; then
         echo "Error: Telegram API returned HTTP $HTTP_CODE" >&2
@@ -134,7 +134,7 @@ if [[ -n "$PHOTO" ]]; then
 
     RESPONSE=$(curl -s -w "\n%{http_code}" "${API_BASE}/sendPhoto" "${PAYLOAD[@]}")
     HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-    BODY=$(echo "$RESPONSE" | head -n -1)
+    BODY=$(echo "$RESPONSE" | sed '$d')
 
     if [[ "$HTTP_CODE" -ne 200 ]]; then
         echo "Error: Telegram API returned HTTP $HTTP_CODE" >&2
@@ -161,7 +161,7 @@ if [[ -n "$PHOTO_URL" ]]; then
 
     RESPONSE=$(curl -s -w "\n%{http_code}" "${API_BASE}/sendPhoto" "${PAYLOAD[@]}")
     HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-    BODY=$(echo "$RESPONSE" | head -n -1)
+    BODY=$(echo "$RESPONSE" | sed '$d')
 
     if [[ "$HTTP_CODE" -ne 200 ]]; then
         echo "Error: Telegram API returned HTTP $HTTP_CODE" >&2
@@ -193,7 +193,7 @@ if [[ -n "$FILE" ]]; then
 
     RESPONSE=$(curl -s -w "\n%{http_code}" "${API_BASE}/sendDocument" "${PAYLOAD[@]}")
     HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-    BODY=$(echo "$RESPONSE" | head -n -1)
+    BODY=$(echo "$RESPONSE" | sed '$d')
 
     if [[ "$HTTP_CODE" -ne 200 ]]; then
         echo "Error: Telegram API returned HTTP $HTTP_CODE" >&2

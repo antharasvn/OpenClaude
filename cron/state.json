@@ -1,26 +1,26 @@
 {
   "cleanpro-alerts": {
-    "last_run": "2026-04-29T13:00:19.904877+00:00",
-    "last_status": "ERROR: Script cleanpro-alerts exited with code 1: ule>\n    main()\n    ~~~~^^\n  File \"/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/scripts/cleanpro_alerts_runner.py\", line 55, in main\n    rows = bq_query(sql)\n  File \"/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/scripts/cleanpro_alerts_runner.py\", line 20, in bq_query\n    raise RuntimeError(cp.stderr or cp.stdout)\nRuntimeError: BigQuery error in query operation: Could not connect with BigQuery server due\nto: ServerNotFoundError('Unable to find the server at bigquery.googleapis.com')\n\n",
-    "consecutive_errors": 1
+    "last_run": "2026-04-29T15:00:15.920442+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
   },
   "vidnotes-alerts": {
-    "last_run": "2026-04-29T13:00:57.882893+00:00",
+    "last_run": "2026-04-29T15:02:18.345060+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-04-29T13:05:15.725946+00:00",
+    "last_run": "2026-04-29T15:05:03.460029+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "auto-commit": {
-    "last_run": "2026-04-29T11:57:52.996501+00:00",
+    "last_run": "2026-04-29T13:57:52.224512+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "cleanpro-exp-monitor": {
-    "last_run": "2026-04-29T11:58:11.899048+00:00",
+    "last_run": "2026-04-29T13:58:11.354168+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
