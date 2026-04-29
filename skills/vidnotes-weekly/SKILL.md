@@ -140,6 +140,8 @@ Extract:
 
 ### Q2 — FULL ONBOARDING FUNNEL
 
+**Note: native paywall events.** As of v1.x the app uses a native StoreKit/RevenueCat paywall (Superwall is deprecated). Paywall views fire `paywall_viewed` (in-app gates) and `onboarding_paywall_viewed` (onboarding flow). Conversions fire the canonical Firebase `purchase` event (also `onboarding_purchase_completed` inside onboarding — these are a subset of `purchase` for distinct-user counts). Do NOT use `superwall_conversion` — it never fires.
+
 ```sql
 WITH user_seg AS (
   SELECT user_pseudo_id, MAX(IF(event_name="first_open",1,0)) AS is_new
@@ -158,10 +160,12 @@ SELECT
   COUNT(DISTINCT us.user_pseudo_id) AS users,
   COUNT(DISTINCT IF(e.event_name="onboarding_start", e.user_pseudo_id, NULL)) AS ob_started,
   COUNT(DISTINCT IF(e.event_name="onboarding_complete", e.user_pseudo_id, NULL)) AS ob_completed,
-  COUNT(DISTINCT IF(e.event_name="paywall_viewed", e.user_pseudo_id, NULL)) AS pw_shown,
-  COUNT(DISTINCT IF(e.event_name="superwall_conversion", e.user_pseudo_id, NULL)) AS pw_converted,
+  COUNT(DISTINCT IF(e.event_name IN ("paywall_viewed","onboarding_paywall_viewed"), e.user_pseudo_id, NULL)) AS pw_shown,
+  COUNT(DISTINCT IF(e.event_name IN ("purchase","onboarding_purchase_completed"), e.user_pseudo_id, NULL)) AS pw_converted,
   COUNT(DISTINCT IF(e.event_name="trial_start", e.user_pseudo_id, NULL)) AS trial_start,
-  COUNT(DISTINCT IF(e.event_name="subscription_cancelled", e.user_pseudo_id, NULL)) AS sub_cancelled
+  COUNT(DISTINCT IF(e.event_name="subscription_cancelled", e.user_pseudo_id, NULL)) AS sub_cancelled,
+  COUNT(DISTINCT IF(e.event_name="purchase_cancelled", e.user_pseudo_id, NULL)) AS purchase_cancelled,
+  COUNT(DISTINCT IF(e.event_name="purchase_failed", e.user_pseudo_id, NULL)) AS purchase_failed
 FROM user_seg us
 JOIN all_events e ON us.user_pseudo_id = e.user_pseudo_id
 ```
@@ -170,8 +174,8 @@ Extract and compute funnel rates:
 - `first_open_to_ob_start` = `ob_started / users * 100`, rounded to 1 decimal
 - `ob_start_to_complete` = `ob_completed / ob_started * 100`, rounded to 1 decimal
 - `ob_to_pw_shown` = `pw_shown / ob_completed * 100`, rounded to 1 decimal
-- `pw_shown_to_converted` = `pw_converted / pw_shown * 100` — **this is the MAIN METRIC**
-- `trial_start` and `sub_cancelled` for display
+- `pw_shown_to_converted` = `pw_converted / pw_shown * 100` — **this is the MAIN METRIC** (native paywall purchases over all paywall views; `purchase` covers both direct subs and trial-with-payment, `onboarding_purchase_completed` is a subset)
+- `trial_start`, `sub_cancelled`, `purchase_cancelled`, `purchase_failed` for display
 
 ### Q4 — FAILURE BREAKDOWN
 
