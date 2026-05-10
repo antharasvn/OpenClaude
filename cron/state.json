@@ -5,29 +5,29 @@
     "consecutive_errors": 1
   },
   "vidnotes-alerts": {
-    "last_run": "2026-05-10T17:01:55.861407+00:00",
+    "last_run": "2026-05-10T19:01:45.957982+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-05-10T18:05:05.723794+00:00",
+    "last_run": "2026-05-10T20:05:03.169970+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "auto-commit": {
-    "last_run": "2026-05-10T16:11:36.742413+00:00",
+    "last_run": "2026-05-10T18:11:36.096071+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "cleanpro-exp-monitor": {
-    "last_run": "2026-05-10T16:11:53.476927+00:00",
+    "last_run": "2026-05-10T18:11:50.649954+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "cleanpro-daily": {
-    "last_run": "2026-05-09T20:02:08.246379+00:00",
-    "last_status": "OK",
-    "consecutive_errors": 0
+    "last_run": "2026-05-10T20:02:10.180049+00:00",
+    "last_status": "ERROR: Script cleanpro-daily exited with code 1: new_users(h24, now_us, suffix_start, suffix_end)\n  File \"/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/scripts/cleanpro_daily_runner.py\", line 144, in q_countries_new_users\n    return bq_query(sql)\n  File \"/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/scripts/cleanpro_daily_runner.py\", line 21, in bq_query\n    raise RuntimeError(cp.stderr or cp.stdout)\nRuntimeError: BigQuery error in query operation: Already Exists: Job cleaner-\napp-e98f0:US.bqjob_r22fa277eff3892de_0000019e137a2001_1\n\n",
+    "consecutive_errors": 1
   },
   "vidnotes-daily": {
     "last_run": "2026-05-10T05:01:28.045860+00:00",
