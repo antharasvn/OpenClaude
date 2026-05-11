@@ -1,26 +1,26 @@
 {
   "cleanpro-alerts": {
-    "last_run": "2026-05-11T05:00:02.067132+00:00",
-    "last_status": "ERROR: Script cleanpro-alerts exited with code 1: ctionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x107e30910>: Failed to resolve 'oauth2.googleapis.com' ([Errno 8] nodename nor servname provided, or not known)\"))\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.\n\n",
-    "consecutive_errors": 1
+    "last_run": "2026-05-11T07:00:01.717337+00:00",
+    "last_status": "ERROR: Script cleanpro-alerts exited with code 1: ctionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x1081b0910>: Failed to resolve 'oauth2.googleapis.com' ([Errno 8] nodename nor servname provided, or not known)\"))\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.\n\n",
+    "consecutive_errors": 2
   },
   "vidnotes-alerts": {
-    "last_run": "2026-05-11T05:03:02.123271+00:00",
+    "last_run": "2026-05-11T07:03:05.624727+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-05-11T05:05:03.038202+00:00",
+    "last_run": "2026-05-11T10:05:04.883061+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "auto-commit": {
-    "last_run": "2026-05-11T00:11:36.998008+00:00",
+    "last_run": "2026-05-11T06:11:37.487058+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "cleanpro-exp-monitor": {
-    "last_run": "2026-05-11T00:11:51.850975+00:00",
+    "last_run": "2026-05-11T06:11:39.068487+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
@@ -50,13 +50,13 @@
     "consecutive_errors": 3
   },
   "mangii-daily": {
-    "last_run": "2026-05-10T07:02:49.833307+00:00",
-    "last_status": "OK",
-    "consecutive_errors": 0
+    "last_run": "2026-05-11T07:00:01.719231+00:00",
+    "last_status": "ERROR: Script mangii-daily exited with code 1: ctionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x10b7e8910>: Failed to resolve 'oauth2.googleapis.com' ([Errno 8] nodename nor servname provided, or not known)\"))\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.\n\n",
+    "consecutive_errors": 1
   },
   "echo-daily": {
-    "last_run": "2026-05-10T07:01:14.837005+00:00",
-    "last_status": "OK",
-    "consecutive_errors": 0
+    "last_run": "2026-05-11T07:00:01.718694+00:00",
+    "last_status": "ERROR: Script echo-daily exited with code 1: ctionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x10b6b0910>: Failed to resolve 'oauth2.googleapis.com' ([Errno 8] nodename nor servname provided, or not known)\"))\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.\n\n",
+    "consecutive_errors": 1
   }
 }
