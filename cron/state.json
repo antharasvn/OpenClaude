@@ -1,33 +1,33 @@
 {
   "cleanpro-alerts": {
-    "last_run": "2026-05-11T07:00:01.717337+00:00",
-    "last_status": "ERROR: Script cleanpro-alerts exited with code 1: ctionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x1081b0910>: Failed to resolve 'oauth2.googleapis.com' ([Errno 8] nodename nor servname provided, or not known)\"))\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.\n\n",
-    "consecutive_errors": 2
+    "last_run": "2026-05-11T15:00:01.506021+00:00",
+    "last_status": "ERROR: Script cleanpro-alerts exited with code 1: ctionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x10a1f0910>: Failed to resolve 'oauth2.googleapis.com' ([Errno 8] nodename nor servname provided, or not known)\"))\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.\n\n",
+    "consecutive_errors": 4
   },
   "vidnotes-alerts": {
-    "last_run": "2026-05-11T07:03:05.624727+00:00",
+    "last_run": "2026-05-11T19:03:08.090189+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-05-11T12:05:05.263245+00:00",
+    "last_run": "2026-05-11T20:05:01.057437+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "auto-commit": {
-    "last_run": "2026-05-11T10:11:36.375714+00:00",
+    "last_run": "2026-05-11T12:11:37.874516+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "cleanpro-exp-monitor": {
-    "last_run": "2026-05-11T10:11:39.143217+00:00",
+    "last_run": "2026-05-11T12:11:38.713108+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "cleanpro-daily": {
-    "last_run": "2026-05-10T20:02:10.180049+00:00",
-    "last_status": "ERROR: Script cleanpro-daily exited with code 1: new_users(h24, now_us, suffix_start, suffix_end)\n  File \"/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/scripts/cleanpro_daily_runner.py\", line 144, in q_countries_new_users\n    return bq_query(sql)\n  File \"/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/scripts/cleanpro_daily_runner.py\", line 21, in bq_query\n    raise RuntimeError(cp.stderr or cp.stdout)\nRuntimeError: BigQuery error in query operation: Already Exists: Job cleaner-\napp-e98f0:US.bqjob_r22fa277eff3892de_0000019e137a2001_1\n\n",
-    "consecutive_errors": 1
+    "last_run": "2026-05-11T20:00:03.826245+00:00",
+    "last_status": "ERROR: Script cleanpro-daily exited with code 1: ctionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x10798c910>: Failed to resolve 'oauth2.googleapis.com' ([Errno 8] nodename nor servname provided, or not known)\"))\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.\n\n",
+    "consecutive_errors": 2
   },
   "vidnotes-daily": {
     "last_run": "2026-05-11T05:00:02.070359+00:00",
