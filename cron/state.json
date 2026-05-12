@@ -1,26 +1,26 @@
 {
   "cleanpro-alerts": {
-    "last_run": "2026-05-12T05:01:13.560303+00:00",
+    "last_run": "2026-05-12T07:03:44.476155+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "vidnotes-alerts": {
-    "last_run": "2026-05-12T05:03:13.687316+00:00",
+    "last_run": "2026-05-12T07:05:10.275554+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-05-12T06:05:09.841137+00:00",
+    "last_run": "2026-05-12T08:05:04.370526+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "auto-commit": {
-    "last_run": "2026-05-12T04:13:48.537946+00:00",
+    "last_run": "2026-05-12T06:11:37.546283+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "cleanpro-exp-monitor": {
-    "last_run": "2026-05-12T04:14:08.617503+00:00",
+    "last_run": "2026-05-12T06:12:00.253617+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
@@ -50,13 +50,13 @@
     "consecutive_errors": 4
   },
   "mangii-daily": {
-    "last_run": "2026-05-11T07:00:01.719231+00:00",
-    "last_status": "ERROR: Script mangii-daily exited with code 1: ctionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x10b7e8910>: Failed to resolve 'oauth2.googleapis.com' ([Errno 8] nodename nor servname provided, or not known)\"))\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.\n\n",
-    "consecutive_errors": 1
+    "last_run": "2026-05-12T07:05:57.550840+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
   },
   "echo-daily": {
-    "last_run": "2026-05-11T07:00:01.718694+00:00",
-    "last_status": "ERROR: Script echo-daily exited with code 1: ctionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x10b6b0910>: Failed to resolve 'oauth2.googleapis.com' ([Errno 8] nodename nor servname provided, or not known)\"))\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.\n\n",
-    "consecutive_errors": 1
+    "last_run": "2026-05-12T07:04:42.108778+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
   }
 }
