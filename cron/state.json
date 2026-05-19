@@ -1,26 +1,26 @@
 {
   "cleanpro-alerts": {
-    "last_run": "2026-05-19T03:00:18.452637+00:00",
+    "last_run": "2026-05-19T05:00:55.666514+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "vidnotes-alerts": {
-    "last_run": "2026-05-18T21:00:55.907106+00:00",
+    "last_run": "2026-05-19T05:02:40.891756+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-05-19T04:05:09.528399+00:00",
+    "last_run": "2026-05-19T06:05:08.614194+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "auto-commit": {
-    "last_run": "2026-05-19T02:29:08.192916+00:00",
+    "last_run": "2026-05-19T04:29:08.278164+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "cleanpro-exp-monitor": {
-    "last_run": "2026-05-19T02:29:33.671602+00:00",
+    "last_run": "2026-05-19T04:29:56.663270+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
@@ -30,7 +30,7 @@
     "consecutive_errors": 0
   },
   "vidnotes-daily": {
-    "last_run": "2026-05-18T05:02:00.420842+00:00",
+    "last_run": "2026-05-19T05:03:17.673648+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
@@ -45,9 +45,9 @@
     "consecutive_errors": 0
   },
   "vidnotes-weekly": {
-    "last_run": "2026-05-12T05:40:00.087948+00:00",
+    "last_run": "2026-05-19T05:40:00.073439+00:00",
     "last_status": "ERROR: Prompt job vidnotes-weekly timed out after 10 min",
-    "consecutive_errors": 4
+    "consecutive_errors": 5
   },
   "mangii-daily": {
     "last_run": "2026-05-18T07:02:16.059189+00:00",
