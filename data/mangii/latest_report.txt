@@ -1,53 +1,51 @@
-📊 Mangii Daily — 2026-05-18 (rolling 24h as of 14:00 ET)
+📊 Mangii Daily — 2026-05-19 (rolling 24h as of 14:00 ET)
 
 👥 GROWTH
-  New users: 784 (DoD +2% · WoW -30%)
-  Returning: 4727
+  New users: 616 (DoD -22% · WoW -39%)
+  Returning: 4940
 
   📍 New Users by Country (Top 10):
-    Brazil: 379
-    United States: 89
-    Russia: 25
-    India: 17
-    Colombia: 17
-    Mexico: 14
-    Algeria: 13
-    Iraq: 12
-    Egypt: 12
-    United Kingdom: 10
+    Brazil: 282
+    United States: 75
+    India: 32
+    Russia: 22
+    Egypt: 16
+    United Kingdom: 11
+    France: 11
+    Mexico: 10
+    Iraq: 9
+    Congo - Kinshasa: 9
 
 💰 MONETIZATION
   📊 Funnel:
-    New users: 784 → paywall 328 → paid 2 (0.6%)
-    Returning: 4730 → paywall 356 → paid 5 (1.4%)
+    New users: 616 → paywall 259 → paid 2 (0.8%)
+    Returning: 4940 → paywall 313 → paid 3 (1.0%)
 
-  Overall: 684 paywall → 7 paid (1.0%)
-  CTA tapped: 50 · Plan selected: 46 · Purchase cancelled: 39 · Failed: 5
-  DoD +25% · WoW +67%
+  Overall: 572 paywall → 5 paid (0.9%)
+  CTA tapped: 34 · Plan selected: 39 · Purchase cancelled: 30 · Failed: 4
+  DoD -10% · WoW -36%
 
   📍 Conversion by Country (Top 10):
-    TOTAL: 494→6 (1.2%) 🔴
+    TOTAL: 437→5 (1.1%) 🔴
     ─────────────────────
-    Brazil: 304→4 (1.3%) 🔴
-    United States: 78→2 (2.6%) 🟠
-    Russia: 27→0 (0.0%) 🔴
-    Algeria: 16→0 (0.0%) 🔴
-    Colombia: 14→0 (0.0%) 🔴
-    India: 12→0 (0.0%) 🔴
-    Türkiye: 11→0 (0.0%) 🔴
-    France: 11→0 (0.0%) 🔴
-    Mexico: 11→0 (0.0%) 🔴
-    Argentina: 10→0 (0.0%) 🔴
+    Brazil: 234→5 (2.1%) 🟠
+    United States: 60→0 (0.0%) 🔴
+    Türkiye: 48→0 (0.0%) 🔴
+    Russia: 22→0 (0.0%) 🔴
+    India: 19→0 (0.0%) 🔴
+    Argentina: 13→0 (0.0%) 🔴
+    Egypt: 13→0 (0.0%) 🔴
+    France: 10→0 (0.0%) 🔴
+    Germany: 9→0 (0.0%) 🔴
+    Congo - Brazzaville: 9→0 (0.0%) 🔴
 
 🧪 EXPERIMENTS (B=Baseline | users/conv%)
-    16: B:11u/0%🔴 | V1:10u/0%🔴 | V2:16u/0%🔴
-    19: B:188u/0%🔴 | V1:204u/0%🔴 | V2:214u/1%🔴
-    21: B:237u/0%🔴 | V1:158u/0%🔴
-    22: B:93u/1%🔴 | V1:96u/0%🔴
+    22: B:115u/2%🔴 | V1:122u/0%🔴
+    23: B:206u/2%🔴 | V1:204u/1%🔴
 
 🎨 PRODUCT
-  Panels generated: 680 users (1974 panels)
-  Generate tapped: 746 users
-  Blocked (no credits): 367 users
-  Credits depleted: 170 users
-  Regenerated: 81 users
+  Panels generated: 600 users (1538 panels)
+  Generate tapped: 664 users
+  Blocked (no credits): 240 users
+  Credits depleted: 117 users
+  Regenerated: 83 users
