@@ -1,51 +1,51 @@
-📊 Mangii Daily — 2026-05-19 (rolling 24h as of 14:00 ET)
+📊 Mangii Daily — 2026-05-20 (rolling 24h as of 14:00 ET)
 
 👥 GROWTH
-  New users: 616 (DoD -22% · WoW -39%)
-  Returning: 4940
+  New users: 730 (DoD +16% · WoW -26%)
+  Returning: 4299
 
   📍 New Users by Country (Top 10):
-    Brazil: 282
-    United States: 75
-    India: 32
-    Russia: 22
-    Egypt: 16
-    United Kingdom: 11
-    France: 11
-    Mexico: 10
-    Iraq: 9
-    Congo - Kinshasa: 9
+    Brazil: 291
+    United States: 115
+    Russia: 46
+    India: 31
+    Egypt: 11
+    Indonesia: 10
+    United Kingdom: 9
+    : 9
+    Algeria: 8
+    France: 8
 
 💰 MONETIZATION
   📊 Funnel:
-    New users: 616 → paywall 259 → paid 2 (0.8%)
-    Returning: 4940 → paywall 313 → paid 3 (1.0%)
+    New users: 730 → paywall 299 → paid 2 (0.7%)
+    Returning: 4300 → paywall 276 → paid 4 (1.4%)
 
-  Overall: 572 paywall → 5 paid (0.9%)
-  CTA tapped: 34 · Plan selected: 39 · Purchase cancelled: 30 · Failed: 4
-  DoD -10% · WoW -36%
+  Overall: 575 paywall → 6 paid (1.0%)
+  CTA tapped: 41 · Plan selected: 39 · Purchase cancelled: 33 · Failed: 5
+  DoD +0% · WoW -23%
 
   📍 Conversion by Country (Top 10):
-    TOTAL: 437→5 (1.1%) 🔴
+    TOTAL: 429→6 (1.4%) 🔴
     ─────────────────────
-    Brazil: 234→5 (2.1%) 🟠
-    United States: 60→0 (0.0%) 🔴
-    Türkiye: 48→0 (0.0%) 🔴
-    Russia: 22→0 (0.0%) 🔴
-    India: 19→0 (0.0%) 🔴
-    Argentina: 13→0 (0.0%) 🔴
-    Egypt: 13→0 (0.0%) 🔴
-    France: 10→0 (0.0%) 🔴
-    Germany: 9→0 (0.0%) 🔴
-    Congo - Brazzaville: 9→0 (0.0%) 🔴
+    Brazil: 254→1 (0.4%) 🔴
+    United States: 62→4 (6.5%) ⚠️
+    Russia: 30→0 (0.0%) 🔴
+    India: 18→0 (0.0%) 🔴
+    Türkiye: 16→0 (0.0%) 🔴
+    France: 13→0 (0.0%) 🔴
+    Egypt: 10→0 (0.0%) 🔴
+    Mexico: 10→1 (10.0%) ⚠️
+    United Kingdom: 8→0 (0.0%) 🔴
+    Argentina: 8→0 (0.0%) 🔴
 
 🧪 EXPERIMENTS (B=Baseline | users/conv%)
-    22: B:115u/2%🔴 | V1:122u/0%🔴
-    23: B:206u/2%🔴 | V1:204u/1%🔴
+    22: B:125u/0%🔴 | V1:126u/1%🔴
+    23: B:200u/0%🔴 | V1:190u/1%🔴
 
 🎨 PRODUCT
-  Panels generated: 600 users (1538 panels)
-  Generate tapped: 664 users
-  Blocked (no credits): 240 users
-  Credits depleted: 117 users
-  Regenerated: 83 users
+  Panels generated: 558 users (1600 panels)
+  Generate tapped: 624 users
+  Blocked (no credits): 274 users
+  Credits depleted: 116 users
+  Regenerated: 60 users
