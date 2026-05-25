@@ -1,26 +1,26 @@
 {
   "cleanpro-alerts": {
-    "last_run": "2026-05-25T09:00:11.831922+00:00",
+    "last_run": "2026-05-25T13:00:12.837248+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "vidnotes-alerts": {
-    "last_run": "2026-05-25T09:02:35.688256+00:00",
+    "last_run": "2026-05-25T13:02:05.561342+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-05-25T10:05:04.257719+00:00",
+    "last_run": "2026-05-25T14:05:07.604669+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "auto-commit": {
-    "last_run": "2026-05-25T09:51:50.303009+00:00",
+    "last_run": "2026-05-25T11:51:50.984136+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "cleanpro-exp-monitor": {
-    "last_run": "2026-05-25T09:52:11.799000+00:00",
+    "last_run": "2026-05-25T11:52:03.197585+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
@@ -35,9 +35,9 @@
     "consecutive_errors": 0
   },
   "weekly-conjecture": {
-    "last_run": "2026-05-11T12:03:07.760160+00:00",
-    "last_status": "OK",
-    "consecutive_errors": 0
+    "last_run": "2026-05-25T12:10:00.177233+00:00",
+    "last_status": "ERROR: Prompt job weekly-conjecture timed out after 10 min",
+    "consecutive_errors": 1
   },
   "cleanpro-weekly": {
     "last_run": "2026-05-18T20:33:02.192808+00:00",
