@@ -1,42 +1,49 @@
 {
-  "updated": "2026-05-19",
-  "week": "2026-W21",
-  "period": "2026-05-12_2026-05-18",
+  "updated": "2026-05-26",
+  "week": "2026-W22",
+  "period": "2026-05-19_2026-05-25",
   "growth": {
-    "new_users": 919,
-    "returning_users": 1041,
-    "total_users": 1960,
-    "retention_rate_pct": 53.1
+    "new_users": 620,
+    "returning_users": 1024,
+    "total_users": 1644,
+    "retention_rate_pct": 62.3
   },
   "funnel": {
-    "first_open": 919,
-    "ob_viewed": 832,
-    "ob_completed": 817,
-    "pw_shown": 799,
-    "pw_converted": 63,
-    "pw_cvr_pct": 7.9,
-    "pw_dismissed": 570,
-    "trial_start": 81,
+    "first_open": 620,
+    "ob_viewed": 617,
+    "ob_completed": 606,
+    "pw_shown": 597,
+    "pw_converted": 68,
+    "pw_cvr_pct": 11.39,
+    "pw_dismissed": 403,
+    "trial_start": 76,
     "sub_cancelled": 0
   },
   "paywall": {
-    "onboarding_shown": 799,
-    "onboarding_converted": 63,
-    "inapp_shown": 673,
-    "inapp_tapped": 204,
-    "inapp_purchased": 17,
-    "purchase_event": 87
+    "onboarding_shown": 597,
+    "onboarding_converted": 68,
+    "inapp_shown": 589,
+    "inapp_tapped": 186,
+    "inapp_purchased": 21,
+    "purchase_event": 92
   },
   "product": {
-    "scan_completed_users": 823,
-    "first_scan_complete_users": 210,
-    "clean_completed_users": 119,
-    "first_delete_complete_users": 254,
-    "proof_of_value_started": 724,
-    "proof_of_value_complete": 714
+    "scan_completed_users": 639,
+    "first_scan_complete_users": 175,
+    "clean_completed_users": 89,
+    "first_delete_complete_users": 207,
+    "proof_of_value_started": 546,
+    "proof_of_value_complete": 544
+  },
+  "countries_top5_cvr": {
+    "Costa Rica": 9.33,
+    "Spain": 7.17,
+    "Romania": 5.42,
+    "Italy": 5.05,
+    "Saudi Arabia": 2.44
   },
   "engineering": {
-    "app_exception_events": 8,
+    "app_exception_events": 12,
     "app_exception_users": 5
   }
 }

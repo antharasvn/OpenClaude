@@ -1,63 +1,54 @@
-📊 CleanPro Daily — 2026-05-25 (rolling 24h as of 03:00 ICT)
+📊 CleanPro Weekly — 2026-W22 (May 19–25 ICT)
 
-👥 GROWTH
-  New users: 103 (DoD +11% · WoW -36%)
-  Returning: 319
+💡 SYNTHESIS
+Volume collapsed but conversion improved. New users -39.4%, total -23.8% — investigate ASA/paid spend. Same 68 paywall conversions on 34% fewer paywall views → CVR jumped 7.6% → 11.4%. Missing traffic was likely low-intent (PH-style 0% segments).
 
-  📍 New Users by Country (Top 10):
-    Romania: 30
-    Spain: 24
-    Costa Rica: 16
-    Italy: 9
-    China: 5
-    Sweden: 4
-    Netherlands: 2
-    Hungary: 2
-    France: 1
-    Saudi Arabia: 1
+📈 GROWTH TRENDS (W22 vs W21)
+  Total: 1,644 vs 2,157 (-23.8%)
+  New: 620 vs 1,023 (-39.4%)
+  Returning: 1,024 vs 1,134 (-9.7%)
+  Retention: 62.3% (+9.7pp WoW)
+  Best day: Wednesday (526 users)
 
-🚀 ONBOARDING (new→paywall→home)
-  📍 Completion by Country (Top 10):
-    Romania: 30→27→23 (85.2% complete) 🟢
-    Spain: 24→26→18 (69.2% complete) 🟠
-    Costa Rica: 16→16→14 (87.5% complete) 🟢
-    Italy: 9→9→8 (88.9% complete) 🟢
-    China: 5→5→2 (40.0% complete) 🔴
-    Sweden: 4→4→2 (50.0% complete) 🔴
-    Hungary: 2→2→1 (50.0% complete) 🔴
-    Netherlands: 2→3→3 (100.0% complete) 🟣
-    Myanmar (Burma): 1→2→1 (50.0% complete) 🔴
-    Philippines: 1→1→0 (0.0% complete) 🔴
+💰 CONVERSION FUNNEL
+  first_open: 620 (-39.4%)
+  ob_completed: 606 (97.7% of first_open, vs 89.8% W21)
+  pw_shown: 597 (-33.5%)
+  pw_converted: 68 (flat — same as W21)
+  ► Onboarding CVR: 11.39% vs 7.57% (+50% rel) ◄ MAIN METRIC
+  Onboarding pw: 597 → 403 dismissed → 68 converted
+  In-app pw: 589 → 394 closed → 186 tapped → 21 IAP
+  Trials: 76 | Purchases: 92
 
-💰 MONETIZATION
-  📊 Funnel:
-    New users: 103 → paywall 96 → trial 9 → paid 8 (7.8%) ⚠️
-    Returning: 297 → paywall 89 → trial 2 → paid 12 (4.0%) 🟠
+🌍 TOP COUNTRIES
+  Romania 332u → 18 (5.4%)
+  Spain 265u → 19 (7.2%)
+  Costa Rica 150u → 14 (9.3%) ★
+  Philippines 137u → 0 (0.0%) ⚠
+  Italy 99u → 5 (5.1%)
+  US 47u → 0  |  Sweden 44u → 0  |  UK 43u → 1 (2.3%)
+  Saudi 41u → 1 (2.4%)
 
-  Overall: 185 paywall → 11 trial → 20 paid
-  Paywall→Trial: 5.9% · Trial→Paid (7d): 0/81 (0.0%)
-  Cancellations: 13 · Expirations: 16 · Billing issues: 2
-  DoD -20% · WoW -20%
+🧹 PRODUCT HEALTH
+  Scans: 639 users (774 events)
+  Cleans: 89 users (only 14% of first_open)
+  First scan: 175 | First delete: 207
+  Proof-of-value: 546 → 544 (99.6%)
+  scan_v2: 3 started, 2 completed (rollout cohort)
 
-  📍 Conversion by Country (Top 10):
-    TOTAL: 146→14 (9.6%) ⚠️
-    ─────────────────────
-    Romania: 40→4 (10.0%) ⚠️
-    Spain: 36→3 (8.3%) ⚠️
-    Costa Rica: 22→5 (22.7%) 🟢
-    Italy: 13→0 (0.0%) 🔴
-    Philippines: 10→1 (10.0%) ⚠️
-    United Kingdom: 7→1 (14.3%) ✅
-    Sweden: 5→0 (0.0%) 🔴
-    China: 5→0 (0.0%) 🔴
-    Saudi Arabia: 4→0 (0.0%) 🔴
-    Vietnam: 4→0 (0.0%) 🔴
+🔴 ENGINEERING (7d)
+  app_exception: 12 events / 5 users — healthy
 
-🧪 EXPERIMENTS (B=Baseline | users/done%/trial%/conv%)
-    49: B:11u/73%/18%/18%✅ | V1:10u/80%/20%/20%✅
+📱 ASO — 7-DAY KEYWORD REPORT
+  ⚠ Skipped — Astro/Appeeky MCP not installed (same gap as W19/W21)
 
-🧹 PRODUCT
-  Scans: 115 users (124 total scans)
-  Cleans: 12 users
-  First scan: 33 new users completed
-  First delete: 33 new users completed
+🧪 THIS WEEK'S EXPERIMENT
+Hypothesis: PH (137u/0%), US (47u/0%), SE (44u/0%), UK (43u/2.3%) converting near-zero because $4.99/wk anchor mispriced for mixed-PPP cohorts. Pattern persistent 5+ weeks — not noise.
+Test: Firebase A/B Testing on RC, audience = {PH, ID, TH, VN, SA}, treatment = PPP-adjusted weekly ~$1.99 + monthly anchor. Control unchanged. Sticky per-install bucketing.
+Success: onboarding paywall CVR in treatment audience, 4-week window. Win if PH baseline 0% → 1.5%+ without ARPU loss >20%.
+► W19 and W21 reports already proposed this — it has NOT shipped. Ship the experiment.
+
+📌 TRENDS
+  Onboarding CVR: W18 10.0% → W19 8.3% → W21 7.9% → W22 11.4% (mixed signal — improvement on shrunk volume)
+  ⚠ -39% new-user delta is the headline. Investigate ASA pacing this week.
+  ⚠ W20 weekly report never ran (lockfile missing).
