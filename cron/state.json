@@ -1,28 +1,28 @@
 {
   "cleanpro-alerts": {
-    "last_run": "2026-05-28T13:00:07.526029+00:00",
-    "last_status": "ERROR: Script cleanpro-alerts exited with code 1: 14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/decoder.py\", line 345, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/decoder.py\", line 363, in raw_decode\n    raise JSONDecodeError(\"Expecting value\", s, err.value) from None\njson.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\n",
-    "consecutive_errors": 1
+    "last_run": "2026-05-28T15:00:09.086545+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
   },
   "vidnotes-alerts": {
-    "last_run": "2026-05-28T13:00:27.032028+00:00",
-    "last_status": "ERROR: [Errno 28] No space left on device: '/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/cron/state.json'",
-    "consecutive_errors": 1
+    "last_run": "2026-05-28T15:00:50.949338+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-05-28T14:05:07.398409+00:00",
+    "last_run": "2026-05-28T16:05:08.794147+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "auto-commit": {
-    "last_run": "2026-05-28T12:56:16.578764+00:00",
-    "last_status": "ERROR: [Errno 28] No space left on device: '/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/cron/state.json'",
-    "consecutive_errors": 1
+    "last_run": "2026-05-28T14:56:17.389203+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
   },
   "cleanpro-exp-monitor": {
-    "last_run": "2026-05-28T12:56:39.267512+00:00",
-    "last_status": "ERROR: [Errno 28] No space left on device: '/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/cron/state.json'",
-    "consecutive_errors": 1
+    "last_run": "2026-05-28T14:56:36.226143+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
   },
   "cleanpro-daily": {
     "last_run": "2026-05-26T20:01:55.635126+00:00",
