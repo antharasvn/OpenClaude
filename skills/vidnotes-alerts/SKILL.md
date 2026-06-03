@@ -85,26 +85,31 @@ Run this BigQuery SQL:
 
 ```sql
 SELECT
-  COUNT(DISTINCT user_pseudo_id) AS paywall_shown,
-  COUNT(DISTINCT IF(event_name = "superwall_conversion", user_pseudo_id, NULL)) AS converted,
+  COUNT(DISTINCT IF(event_name = "paywall_viewed", user_pseudo_id, NULL)) AS paywall_shown,
+  COUNT(DISTINCT IF(event_name = "purchase", user_pseudo_id, NULL)) AS converted,
   ROUND(SAFE_DIVIDE(
-    COUNT(DISTINCT IF(event_name = "superwall_conversion", user_pseudo_id, NULL)),
-    COUNT(DISTINCT user_pseudo_id)
+    COUNT(DISTINCT IF(event_name = "purchase", user_pseudo_id, NULL)),
+    COUNT(DISTINCT IF(event_name = "paywall_viewed", user_pseudo_id, NULL))
   ) * 100, 1) AS conv_pct
 FROM `vidnotes-7864d.analytics_508326759.events_intraday_*`
 WHERE _TABLE_SUFFIX >= "{TODAY}"
   AND event_timestamp >= UNIX_MICROS(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 4 HOUR))
-  AND event_name IN ("paywall_viewed", "superwall_conversion")
+  AND event_name IN ("paywall_viewed", "purchase")
 ```
+
+> **NOTE (fixed 2026-06-03):** the numerator was `superwall_conversion`, an event that
+> **never fires in VidNotes GA4** — `purchase` is the real conversion event (and it already
+> subsumes `trial_start` / `onboarding_purchase_completed`). The dead event made this check
+> report 0.0% and "breach" on every run. See the sample-size caveat in rule 2 below.
 
 Replace `{TODAY}` with the value from Step 1.
 
 **Evaluation rules:**
 
 1. If BigQuery fails or is unavailable, log `"BigQuery unavailable — skipping conversion check"` and skip this step entirely. Do NOT mark a breach.
-2. If `paywall_shown < 10`, skip — denominator too small to evaluate.
+2. If `paywall_shown < 50`, skip — denominator too small to evaluate. (At VidNotes' ~57 paywall views/day and a ~6% base rate, a 4h window expects <1 purchase; only at ≥50 views does 0 conversions become statistically distinguishable from noise. Raised from 10 on 2026-06-03 — the old floor turned routine 0/10–0/15 windows into bogus 100%-drop "breaches.")
 3. Compute the breach threshold: `threshold = conversion_rate_7d * 0.70` (i.e., a >30% drop from baseline).
-4. If `paywall_shown >= 10` AND `conv_pct < threshold` → set `CONVERSION_BREACH = true`. Store `paywall_shown`, `converted`, `conv_pct`, and compute `drop_pct = ROUND((1 - conv_pct / conversion_rate_7d) * 100, 1)` for the alert message.
+4. If `paywall_shown >= 50` AND `conv_pct < threshold` → set `CONVERSION_BREACH = true`. Store `paywall_shown`, `converted`, `conv_pct`, and compute `drop_pct = ROUND((1 - conv_pct / conversion_rate_7d) * 100, 1)` for the alert message.
 
 ---
 
