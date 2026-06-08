@@ -1,63 +1,53 @@
-📊 CleanPro Daily — 2026-06-08 (rolling 24h as of 03:00 ICT)
+📊 CleanPro Weekly — 2026-W24
+   (2026-06-02 → 2026-06-08)
 
-👥 GROWTH
-  New users: 99 (DoD -7% · WoW +9%)
-  Returning: 287
+💡 SYNTHESIS
+  New users rebounded +14.3% (583) off W22's collapse, but returning fell -11.1% and total slipped -2.8% to 1,521 — retention down to 61.7%. Onboarding CVR eased to 10.4%: the same 55 conversions on +10% more views, so marginal traffic converted at zero. Costa Rica (9.2%) leads again; PH/US/UK/SE/SA (~298 users) near-zero for a 6th straight week. PPP geo-pricing experiment still unshipped. Crashes negligible.
 
-  📍 New Users by Country (Top 10):
-    Romania: 29
-    Spain: 23
-    Costa Rica: 15
-    Italy: 6
-    Netherlands: 6
-    Hungary: 5
-    China: 3
-    United Kingdom: 1
-    Philippines: 1
-    Indonesia: 1
+📈 GROWTH TRENDS (7d vs prior 7d)
+  New users: 583 (+14.3%)
+  Returning: 938 (-11.1%) · Total: 1,521 (-2.8%)
+  Retention (returning/total): 61.7% (-5.7pp)
+  Best day: Tuesday with 493 users
 
-🚀 ONBOARDING (new→paywall→home)
-  📍 Completion by Country (Top 10):
-    Romania: 29→27→22 (81.5% complete) ✅
-    Spain: 23→21→13 (61.9% complete) 🟠
-    Costa Rica: 15→15→12 (80.0% complete) ✅
-    Italy: 6→6→4 (66.7% complete) 🟠
-    Netherlands: 6→6→6 (100.0% complete) 🟣
-    Hungary: 5→4→2 (50.0% complete) 🔴
-    China: 3→3→2 (66.7% complete) 🟠
-    United States: 1→1→0 (0.0% complete) 🔴
-    Indonesia: 1→1→1 (100.0% complete) 🟣
-    Colombia: 1→1→1 (100.0% complete) 🟣
+💰 CONVERSION FUNNEL
+  First open → Onboarding complete: 93.0%
+  Onboarding → Paywall shown: 98.0%
+  Paywall shown → Converted: 10.4% ← MAIN METRIC (W23 11.4%)
+  Onboarding paywall: 531 → 55
+  In-app paywall: 524 → 140 tapped → 12 purchased
+  Trials: 62 | Purchases: 83
 
-💰 MONETIZATION
-  📊 Funnel:
-    New users: 99 → paywall 92 → trial 6 → paid 7 (7.1%) ⚠️
-    Returning: 275 → paywall 82 → trial 0 → paid 12 (4.4%) 🟠
+🌍 COUNTRY PERFORMANCE (top 10)
+  Romania:       332 → 17 (5.1%)
+  Spain:         205 → 12 (5.9%)
+  Costa Rica:    153 → 14 (9.2%)
+  Philippines:   112 →  1 (0.9%)
+  Italy:          92 →  2 (2.2%)
+  (not set):      73 →  0 (0.0%)
+  United States:  55 →  1 (1.8%)
+  United Kingdom: 53 →  0 (0.0%)
+  Sweden:         40 →  0 (0.0%)
+  Saudi Arabia:   38 →  0 (0.0%)
 
-  Overall: 174 paywall → 6 trial → 19 paid
-  Paywall→Trial: 3.4% · Trial→Paid (7d): 0/63 (0.0%)
-  Cancellations: 6 · Expirations: 10 · Billing issues: 1
-  DoD -14% · WoW +6%
+🧹 PRODUCT HEALTH
+  Scans: 530 users (639 total)
+  Cleans: 82 users (163 total)
+  First scan completion: 132 users
+  First delete completion: 178 users
+  Proof of value: 469 started → 463 completed (98.7%)
 
-  📍 Conversion by Country (Top 10):
-    TOTAL: 133→15 (11.3%) ✅
-    ─────────────────────
-    Romania: 39→6 (15.4%) ✅
-    Spain: 27→4 (14.8%) ✅
-    Costa Rica: 18→2 (11.1%) ✅
-    Philippines: 11→1 (9.1%) ⚠️
-    Italy: 11→0 (0.0%) 🔴
-    United States: 7→1 (14.3%) ✅
-    Hungary: 6→1 (16.7%) ✅
-    Netherlands: 6→0 (0.0%) 🔴
-    Saudi Arabia: 5→0 (0.0%) 🔴
-    Sweden: 3→0 (0.0%) 🔴
+🔴 ENGINEERING (7-day, GA4 app_exception proxy)
+  Total exceptions: 3 events / 3 users — healthy
+  (No native Crashlytics MCP / BQ export on project)
 
-🧪 EXPERIMENTS (B=Baseline | users/done%/trial%/conv%)
-    49: B:13u/100%/15%/15%✅ | V1:8u/75%/12%/12%✅
+📱 ASO — 7-DAY KEYWORD REPORT
+  ⚠️ Skipped — Astro/Appeeky MCP not installed (4th consecutive skip).
 
-🧹 PRODUCT
-  Scans: 101 users (107 total scans)
-  Cleans: 18 users
-  First scan: 20 new users completed
-  First delete: 34 new users completed
+🧪 THIS WEEK'S EXPERIMENT
+  Hypothesis: PH/US/UK/SE/SA (~298 users, ~0.7% combined CVR) are anchored to a tier-1-PPP weekly price they won't pay — structural over 6+ weeks.
+  Test: Firebase A/B on Remote Config (no client bucketing). Treatment = PPP weekly ~$1.99 + monthly anchor, audience {PH,ID,TH,VN,SA}.
+  Success: treatment onboarding CVR ≥ 4× PH baseline (0.9% → 3.5%+), 4-week window, ARPU hit < 20%.
+  ⚠️ Same experiment W19/W21/W22 proposed — STILL not shipped. Ship it.
+
+📌 Retention watch: returning -11.1% WoW — new-user recovery is masking a returning-user leak. Investigate re-engagement/notifications.

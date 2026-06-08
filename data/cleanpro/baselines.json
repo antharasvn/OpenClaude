@@ -1,49 +1,49 @@
 {
-  "updated": "2026-05-26",
-  "week": "2026-W22",
-  "period": "2026-05-19_2026-05-25",
+  "updated": "2026-06-09",
+  "week": "2026-W24",
+  "period": "2026-06-02_2026-06-08",
   "growth": {
-    "new_users": 620,
-    "returning_users": 1024,
-    "total_users": 1644,
-    "retention_rate_pct": 62.3
+    "new_users": 583,
+    "returning_users": 938,
+    "total_users": 1521,
+    "retention_rate_pct": 61.7
   },
   "funnel": {
-    "first_open": 620,
-    "ob_viewed": 617,
-    "ob_completed": 606,
-    "pw_shown": 597,
-    "pw_converted": 68,
-    "pw_cvr_pct": 11.39,
-    "pw_dismissed": 403,
-    "trial_start": 76,
+    "first_open": 583,
+    "ob_viewed": 556,
+    "ob_completed": 542,
+    "pw_shown": 531,
+    "pw_converted": 55,
+    "pw_cvr_pct": 10.36,
+    "pw_dismissed": 373,
+    "trial_start": 62,
     "sub_cancelled": 0
   },
   "paywall": {
-    "onboarding_shown": 597,
-    "onboarding_converted": 68,
-    "inapp_shown": 589,
-    "inapp_tapped": 186,
-    "inapp_purchased": 21,
-    "purchase_event": 92
+    "onboarding_shown": 531,
+    "onboarding_converted": 55,
+    "inapp_shown": 524,
+    "inapp_tapped": 140,
+    "inapp_purchased": 12,
+    "purchase_event": 83
   },
   "product": {
-    "scan_completed_users": 639,
-    "first_scan_complete_users": 175,
-    "clean_completed_users": 89,
-    "first_delete_complete_users": 207,
-    "proof_of_value_started": 546,
-    "proof_of_value_complete": 544
+    "scan_completed_users": 530,
+    "first_scan_complete_users": 132,
+    "clean_completed_users": 82,
+    "first_delete_complete_users": 178,
+    "proof_of_value_started": 469,
+    "proof_of_value_complete": 463
   },
   "countries_top5_cvr": {
-    "Costa Rica": 9.33,
-    "Spain": 7.17,
-    "Romania": 5.42,
-    "Italy": 5.05,
-    "Saudi Arabia": 2.44
+    "Costa Rica": 9.2,
+    "Spain": 5.9,
+    "Romania": 5.1,
+    "Italy": 2.2,
+    "United States": 1.8
   },
   "engineering": {
-    "app_exception_events": 12,
-    "app_exception_users": 5
+    "app_exception_events": 3,
+    "app_exception_users": 3
   }
 }
