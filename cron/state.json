@@ -1,26 +1,26 @@
 {
   "cleanpro-alerts": {
-    "last_run": "2026-06-12T05:00:08.976946+00:00",
+    "last_run": "2026-06-12T07:00:10.061085+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "vidnotes-alerts": {
-    "last_run": "2026-06-12T05:01:03.155247+00:00",
+    "last_run": "2026-06-12T07:01:01.323241+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-06-12T04:05:06.853031+00:00",
+    "last_run": "2026-06-12T06:05:05.574754+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "auto-commit": {
-    "last_run": "2026-06-12T03:03:40.197564+00:00",
+    "last_run": "2026-06-12T05:03:40.784514+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "cleanpro-exp-monitor": {
-    "last_run": "2026-06-12T03:03:51.111577+00:00",
+    "last_run": "2026-06-12T05:03:54.713328+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
@@ -50,12 +50,12 @@
     "consecutive_errors": 0
   },
   "mangii-daily": {
-    "last_run": "2026-06-11T07:02:01.881157+00:00",
-    "last_status": "ERROR: Script mangii-daily exited with code 1: lib/request.py\", line 1369, in https_open\n    return self.do_open(http.client.HTTPSConnection, req,\n           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                        context=self._context)\n                        ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/urllib/request.py\", line 1324, in do_open\n    raise URLError(err)\nurllib.error.URLError: <urlopen error [Errno 54] Connection reset by peer>\n",
-    "consecutive_errors": 1
+    "last_run": "2026-06-12T07:02:33.406965+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
   },
   "echo-daily": {
-    "last_run": "2026-06-11T07:01:28.670815+00:00",
+    "last_run": "2026-06-12T07:01:09.013501+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   }
