@@ -1,57 +1,57 @@
-📊 Echo Daily — 2026-06-14 (rolling 24h as of 14:00 ET)
+📊 Echo Daily — 2026-06-15 (rolling 24h as of 14:00 ET)
 
 👥 GROWTH
-  New users: 183 (DoD -4% · WoW +41%)
-  Returning: 203
+  New users: 167 (DoD -9% · WoW +45%)
+  Returning: 192
   
   📍 New Users by Country (Top 10):
-    Türkiye: 136
-    Vietnam: 8
-    India: 5
-    United States: 4
-    Israel: 2
-    Brazil: 2
-    Russia: 2
-    Iraq: 2
+    Türkiye: 97
+    Australia: 24
+    United States: 8
+    Vietnam: 6
+    France: 4
+    India: 3
+    Haiti: 2
     Germany: 2
-    Mexico: 1
+    United Kingdom: 2
+    Qatar: 1
 
 💰 MONETIZATION
   📊 Funnel:
-    New users: 183 → paywall 131 → paid 2 (1.5%) 🔴
-    Returning: 203 → paywall 38 → paid 3 (7.9%) ⚠️
+    New users: 167 → paywall 122 → paid 1 (0.8%) 🔴
+    Returning: 192 → paywall 32 → paid 4 (12.5%) ✅
 
-  Overall: 169 paywall → 5 paid (3.0%) 🟠
+  Overall: 154 paywall → 5 paid (3.2%) 🟠
   Credits purchased: 2 users
-  DoD +173% · WoW +25%
+  DoD +10% · WoW -43%
 
   📍 Conversion by Country (Top 10):
-    TOTAL: 157→4 (2.5%) 🟠
+    TOTAL: 139→5 (3.6%) 🟠
     ─────────────────────
-    Türkiye: 127→3 (2.4%) 🟠
-    Vietnam: 9→1 (11.1%) ✅
-    United States: 4→0 (0.0%) 🔴
-    Italy: 3→0 (0.0%) 🔴
-    Germany: 3→0 (0.0%) 🔴
-    India: 3→0 (0.0%) 🔴
-    Iraq: 2→0 (0.0%) 🔴
-    Israel: 2→0 (0.0%) 🔴
-    Croatia: 2→0 (0.0%) 🔴
-    Russia: 2→0 (0.0%) 🔴
+    Türkiye: 105→5 (4.8%) 🟠
+    Australia: 10→0 (0.0%) 🔴
+    United States: 6→0 (0.0%) 🔴
+    Vietnam: 4→0 (0.0%) 🔴
+    Germany: 4→0 (0.0%) 🔴
+    France: 4→0 (0.0%) 🔴
+    Netherlands: 2→0 (0.0%) 🔴
+    United Kingdom: 2→0 (0.0%) 🔴
+    Nigeria: 1→0 (0.0%) 🔴
+    Egypt: 1→0 (0.0%) 🔴
 
 🧪 EXPERIMENTS (B=Baseline | users/conv%)
     No running experiments
 
 🎵 PRODUCT
-  Music created: 67 users (121 tracks)
-  First music: 50 new users
+  Music created: 59 users (165 tracks)
+  First music: 40 new users
   
   🎤 VOICE FEATURES
-  Famous voices tapped: 26 users (36 taps)
+  Famous voices tapped: 26 users (96 taps)
   Famous voice cloning: 1 users
-  Custom voice cloning: 19 users
-  Voice isolator: 21 users
-  TTS: 13 users (13 credits)
+  Custom voice cloning: 13 users
+  Voice isolator: 24 users
+  TTS: 13 users (27 credits)
 
 🔧 BACKEND (Firebase Functions)
   ✅ No errors in last 24h
