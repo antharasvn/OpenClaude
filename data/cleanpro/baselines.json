@@ -1,49 +1,49 @@
 {
-  "updated": "2026-06-09",
-  "week": "2026-W24",
-  "period": "2026-06-02_2026-06-08",
+  "updated": "2026-06-16",
+  "week": "2026-W25",
+  "period": "2026-06-09_2026-06-15",
   "growth": {
-    "new_users": 583,
-    "returning_users": 938,
-    "total_users": 1521,
-    "retention_rate_pct": 61.7
+    "new_users": 349,
+    "returning_users": 916,
+    "total_users": 1265,
+    "retention_rate_pct": 72.4
   },
   "funnel": {
-    "first_open": 583,
-    "ob_viewed": 556,
-    "ob_completed": 542,
-    "pw_shown": 531,
-    "pw_converted": 55,
-    "pw_cvr_pct": 10.36,
-    "pw_dismissed": 373,
-    "trial_start": 62,
+    "first_open": 349,
+    "ob_viewed": 342,
+    "ob_completed": 334,
+    "pw_shown": 328,
+    "pw_converted": 43,
+    "pw_cvr_pct": 13.1,
+    "pw_dismissed": 229,
+    "trial_start": 47,
     "sub_cancelled": 0
   },
   "paywall": {
-    "onboarding_shown": 531,
-    "onboarding_converted": 55,
-    "inapp_shown": 524,
-    "inapp_tapped": 140,
-    "inapp_purchased": 12,
+    "onboarding_shown": 328,
+    "onboarding_converted": 43,
+    "inapp_shown": 455,
+    "inapp_tapped": 115,
+    "inapp_purchased": 9,
     "purchase_event": 83
   },
   "product": {
-    "scan_completed_users": 530,
-    "first_scan_complete_users": 132,
-    "clean_completed_users": 82,
-    "first_delete_complete_users": 178,
-    "proof_of_value_started": 469,
-    "proof_of_value_complete": 463
+    "scan_completed_users": 398,
+    "first_scan_complete_users": 91,
+    "clean_completed_users": 59,
+    "first_delete_complete_users": 113,
+    "proof_of_value_started": 306,
+    "proof_of_value_complete": 299
   },
   "countries_top5_cvr": {
-    "Costa Rica": 9.2,
-    "Spain": 5.9,
-    "Romania": 5.1,
-    "Italy": 2.2,
-    "United States": 1.8
+    "Romania": 6.6,
+    "Spain": 4.8,
+    "Philippines": 0.0,
+    "Costa Rica": 3.9,
+    "(not set)": 0.0
   },
   "engineering": {
-    "app_exception_events": 3,
-    "app_exception_users": 3
+    "app_exception_events": 1,
+    "app_exception_users": 1
   }
 }

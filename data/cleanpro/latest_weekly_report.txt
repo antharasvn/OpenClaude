@@ -1,0 +1,52 @@
+📊 CleanPro Weekly — 2026-W25
+  (2026-06-09 → 2026-06-15 ICT)
+
+💡 SYNTHESIS
+  CleanPro's W25 traffic cooled — total users fell 25% WoW (1,265 vs 1,692) and new installs dropped 47% to 349, an acquisition pullback. Yet quality improved: onboarding paywall conversion rose to 13.1% (from 10.4%) and returning-user retention climbed to 72%. The real leak is the in-app paywall — 455 views, 115 taps, only 9 completed purchases. Crashes were negligible.
+
+📈 GROWTH TRENDS (7d vs prior 7d)
+  New users: 349 (-314 (-47.4%))
+  Total users: 1265 (-427 (-25.2%))
+  Returning: 916 (-113 (-11.0%))
+  Retention (returning/total): 72.4% (prior 60.8%)
+  Best day: Friday with 404 users
+
+💰 CONVERSION FUNNEL
+  First open → Onboarding complete: 95.7% (349→334)
+  Onboarding → Paywall shown: 98.2% (334→328)
+  Paywall shown → Converted: 13.1% ← MAIN METRIC (prior 10.4%)
+  Onboarding paywall: 328 shown → 43 converted
+  In-app paywall: 455 shown → 115 tapped → 9 purchased
+  Trials: 47 | Purchase events: 83
+
+🌍 COUNTRY PERFORMANCE (top 10)
+  Romania: 272u → 18 (6.6%) ✅
+  Spain: 168u → 8 (4.8%) ✅
+  Philippines: 114u → 0 (0.0%) 🔴
+  Costa Rica: 102u → 4 (3.9%) ⚠️
+  (not set): 73u → 0 (0.0%) 🔴
+  United States: 49u → 0 (0.0%) 🔴
+  Italy: 47u → 1 (2.1%) ⚠️
+  Saudi Arabia: 43u → 0 (0.0%) 🔴
+  United Kingdom: 32u → 0 (0.0%) 🔴
+  Vietnam: 31u → 0 (0.0%) 🔴
+
+🧹 PRODUCT HEALTH
+  Scans: 398 users (490 total)
+  Cleans: 59 users (160 total)
+  First scan completion: 91
+  First delete completion: 113
+  Proof of value: started 306 → completed 299
+
+🔴 ENGINEERING (7-day)
+  Total crashes: 1 (1 user)
+  No recurring crash signatures.
+
+📱 ASO — 7-DAY KEYWORD REPORT
+  ⚠️ Section skipped — Astro/Appeeky MCP not installed (5th consecutive skip: W19/W21/W22/W24/W25). Install the MCP or remove this section from the weekly skill.
+
+🧪 THIS WEEK'S EXPERIMENT
+  Hypothesis: The in-app CleanPro paywall loses ~92% of tappers before purchase (115 tapped → 9 bought, 7.8%) — friction/price-shock at the final step.
+  Test: Firebase A/B on in-app paywall (1 RC bool, control=false/treatment=true). Treatment = pre-selected annual plan, free-trial toggle ON by default, single-tap buy (drop the intermediate plan-picker).
+  Success metric: cleanpro_paywall_purchase_tapped → in_app_purchase rate, target ≥15% (from 7.8%).
+  Expected: +50–90% lift in completed in-app purchases; watch refund/cancel rate as guardrail.
