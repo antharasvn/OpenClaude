@@ -1,28 +1,28 @@
 {
   "cleanpro-alerts": {
-    "last_run": "2026-06-16T09:00:32.199370+00:00",
-    "last_status": "ERROR: Script cleanpro-alerts exited with code 1: ~~~~~~~~~~~~~~~~~~~~^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/ssl.py\", line 1304, in recv_into\n    return self.read(nbytes, buffer)\n           ~~~~~~~~~^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/ssl.py\", line 1138, in read\n    return self._sslobj.read(len, buffer)\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^\nTimeoutError: The read operation timed out\n",
-    "consecutive_errors": 1
+    "last_run": "2026-06-16T13:00:26.142505+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
   },
   "vidnotes-alerts": {
-    "last_run": "2026-06-16T09:01:31.691452+00:00",
+    "last_run": "2026-06-16T13:02:27.505542+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-06-16T10:05:09.797022+00:00",
+    "last_run": "2026-06-16T11:07:29.343224+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "auto-commit": {
-    "last_run": "2026-06-16T09:03:40.206065+00:00",
+    "last_run": "2026-06-16T11:07:25.763708+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "cleanpro-exp-monitor": {
-    "last_run": "2026-06-16T09:04:19.749905+00:00",
-    "last_status": "ERROR: Script cleanpro-exp-monitor exited with code 1: ~~~~~~~~~~~~~~~~~~~~^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/ssl.py\", line 1304, in recv_into\n    return self.read(nbytes, buffer)\n           ~~~~~~~~~^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/ssl.py\", line 1138, in read\n    return self._sslobj.read(len, buffer)\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^\nTimeoutError: The read operation timed out\n",
-    "consecutive_errors": 1
+    "last_run": "2026-06-16T11:07:55.066273+00:00",
+    "last_status": "ERROR: Script cleanpro-exp-monitor exited with code 1: ns/3.14/lib/python3.14/urllib/request.py\", line 1369, in https_open\n    return self.do_open(http.client.HTTPSConnection, req,\n           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                        context=self._context)\n                        ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/urllib/request.py\", line 1324, in do_open\n    raise URLError(err)\nurllib.error.URLError: <urlopen error timed out>\n",
+    "consecutive_errors": 2
   },
   "cleanpro-daily": {
     "last_run": "2026-06-15T20:01:50.325855+00:00",
