@@ -50,9 +50,9 @@ def get_conversion_emoji(rate):
 def q_growth(start_us, end_us, suffix_start, suffix_end):
     sql = f'''
 WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
   UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
 ), user_seg AS (
   SELECT user_pseudo_id, MAX(IF(event_name="first_open",1,0)) AS is_new
   FROM all_events WHERE event_timestamp BETWEEN {start_us} AND {end_us}
@@ -67,9 +67,9 @@ FROM user_seg GROUP BY 1
 def q_countries_new_users(start_us, end_us, suffix_start, suffix_end):
     sql = f'''
 WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
   UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
 )
 SELECT geo.country, COUNT(DISTINCT user_pseudo_id) AS new_users
 FROM all_events
@@ -83,9 +83,9 @@ GROUP BY 1 ORDER BY new_users DESC LIMIT 10
 def q_monetization_funnel(start_us, end_us, suffix_start, suffix_end):
     sql = f'''
 WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
   UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
 ), user_seg AS (
   SELECT user_pseudo_id, MAX(IF(event_name="first_open",1,0)) AS is_new
   FROM all_events WHERE event_timestamp BETWEEN {start_us} AND {end_us}
@@ -117,9 +117,9 @@ GROUP BY 1
 def q_conversion_by_country(start_us, end_us, suffix_start, suffix_end):
     sql = f'''
 WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
   UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
 ), country_events AS (
   SELECT geo.country, user_pseudo_id, event_name
   FROM all_events WHERE event_timestamp BETWEEN {start_us} AND {end_us}
@@ -142,9 +142,9 @@ ORDER BY paywall_shown DESC LIMIT 10
 def q_product(start_us, end_us, suffix_start, suffix_end):
     sql = f'''
 WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
   UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
 )
 SELECT event_name, COUNT(DISTINCT user_pseudo_id) AS users, COUNT(*) AS events
 FROM all_events
@@ -163,9 +163,9 @@ def q_daily_trends(start_us, end_us, suffix_start, suffix_end):
     """Day-by-day new users + paid conversions over the window."""
     sql = f'''
 WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
   UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
 )
 SELECT
   DATE(TIMESTAMP_MICROS(event_timestamp), 'America/New_York') AS d,
@@ -211,9 +211,9 @@ def q_experiment_metrics(start_us, end_us, suffix_start, suffix_end):
         exp_id = exp['id']
         sql = f'''
 WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
   UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+  SELECT user_pseudo_id, event_name, event_timestamp, geo, user_properties FROM `{PROJECT_ID}.{DATASET_ID}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
 ),
 exp_users AS (
   SELECT user_pseudo_id,
