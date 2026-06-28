@@ -74,8 +74,8 @@ Replace `{TODAY}` with the value from Step 1.
 **Evaluation rules:**
 
 1. If BigQuery fails or is unavailable, log `"BigQuery unavailable — skipping transcription check"` and skip this step entirely. Do NOT mark a breach.
-2. If `started < 5`, skip — sample too small to evaluate.
-3. If `started >= 5` AND `success_pct < 75.0` → set `TRANSCRIPTION_BREACH = true`. Store `started`, `completed`, and `success_pct` for the alert message.
+2. If `started < 20`, skip — sample too small to evaluate. (Raised from 5 on 2026-06-28. At VidNotes' transcription volume a 4h window often holds only 5–15 attempts, and an 81.8% baseline means 2–3 routine non-completions on a 7–13 sample produce a 60–70% reading that trips the <75% threshold as noise. Single-digit/low-double-digit windows fired bogus "breaches" on 06-26 (5/7=71.4%) and 06-27 (5/8=62.5%, user-confirmed bogus). This mirrors the conversion floor's 10→50 hardening on 2026-06-03 — same small-sample failure mode, previously unaddressed for transcription.)
+3. If `started >= 20` AND `success_pct < 75.0` → set `TRANSCRIPTION_BREACH = true`. Store `started`, `completed`, and `success_pct` for the alert message.
 
 ---
 
