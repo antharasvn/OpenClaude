@@ -1,28 +1,28 @@
 {
   "cleanpro-alerts": {
-    "last_run": "2026-07-04T03:00:00.140654+00:00",
-    "last_status": "ERROR: [Errno 2] No such file or directory: '/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/.venv/bin/python3'",
-    "consecutive_errors": 1
+    "last_run": "2026-07-04T07:00:07.198240+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
   },
   "vidnotes-alerts": {
-    "last_run": "2026-07-03T19:02:27.357027+00:00",
+    "last_run": "2026-07-04T07:02:10.587619+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-07-04T06:05:13.750606+00:00",
+    "last_run": "2026-07-04T07:05:04.701611+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "auto-commit": {
-    "last_run": "2026-07-04T02:59:40.228906+00:00",
-    "last_status": "ERROR: [Errno 2] No such file or directory: '/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/.venv/bin/python3'",
-    "consecutive_errors": 1
+    "last_run": "2026-07-04T06:59:49.147038+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
   },
   "cleanpro-exp-monitor": {
-    "last_run": "2026-07-04T02:59:38.973185+00:00",
-    "last_status": "ERROR: [Errno 2] No such file or directory: '/Users/antharas/Projects/AAAI.Studio/OS/OpenClaude/.venv/bin/python3'",
-    "consecutive_errors": 1
+    "last_run": "2026-07-04T06:59:51.232984+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
   },
   "cleanpro-daily": {
     "last_run": "2026-07-03T20:01:54.064163+00:00",
@@ -50,12 +50,12 @@
     "consecutive_errors": 1
   },
   "mangii-daily": {
-    "last_run": "2026-07-03T07:01:08.476657+00:00",
+    "last_run": "2026-07-04T07:01:45.435557+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-daily": {
-    "last_run": "2026-07-03T07:01:16.335288+00:00",
+    "last_run": "2026-07-04T07:01:02.110741+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   }
