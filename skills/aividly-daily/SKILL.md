@@ -1,5 +1,7 @@
 # AIVidly Daily Report — Agent Skill
 
+> **Canonical runner (2026-07-12):** cron uses deterministic `scripts/aividly_daily_runner.py` (not this prompt). Keep this skill as the metric/spec reference. Only use this skill if the Python runner is unavailable.
+
 You are an automated reporting agent. A cron fires you every day at 3 AM ET. Follow every step below exactly. Do not skip steps. Do not improvise queries. Each section is independent — if one fails, mark it with a warning and continue.
 
 **CRITICAL EXECUTION RULES:**

@@ -1,694 +1,468 @@
 #!/usr/bin/env python3
-import json, subprocess, pathlib, urllib.request
+"""
+CleanPro Daily Report Runner
+============================
+Onboarding completion (cohort-safe), paywall→trial→paid, RC health, product scans.
+Rolling 24h. No events_*/intraday double-count.
+"""
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
 from pathlib import Path
-from datetime import datetime, timezone
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from daily_report_common import (  # noqa: E402
+    PROJECT_ROOT,
+    DEFAULT_BOT_TOKEN,
+    DEFAULT_CHAT_ID,
+    bq_query,
+    events_cte,
+    exp_user_property_keys,
+    format_country_conversion,
+    format_country_lines,
+    format_experiments,
+    format_source_split,
+    get_conversion_emoji,
+    get_onboarding_emoji,
+    get_running_experiments,
+    pct,
+    rolling_windows,
+    safe_rate,
+    save_report,
+    send_telegram,
+    traffic_bucket_sql,
+)
 
-BOT_TOKEN = '8628864855:AAFWSgQCzUIGNtBK1dQk28rCJ7rqBo3v0zU'
-CHAT_ID = '-5201056067'
-BASE = PROJECT_ROOT / 'data' / 'cleanpro'
-REPORT_PATH = PROJECT_ROOT / 'reports' / 'cleanpro' / 'daily'
+PROJECT_ID = "cleaner-app-e98f0"
+DATASET_ID = "analytics_269202926"
+BASE = PROJECT_ROOT / "data" / "cleanpro"
+REPORT_PATH = PROJECT_ROOT / "reports" / "cleanpro" / "daily"
+TZ = "Asia/Saigon"
 
-
-def run(cmd, input_text=None):
-    return subprocess.run(cmd, input=input_text, text=True, capture_output=True, check=False)
-
-
-def bq_query(sql: str):
-    cp = run(['bq','query','--use_legacy_sql=false','--project_id=cleaner-app-e98f0','--format=json'], input_text=sql)
-    if cp.returncode != 0:
-        raise RuntimeError(cp.stderr or cp.stdout)
-    return json.loads(cp.stdout or '[]')
-
-
-def send_telegram(text: str):
-    payload = json.dumps({"chat_id": CHAT_ID, "text": text, "parse_mode": ""}).encode('utf-8')
-    req = urllib.request.Request(
-        f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
-        data=payload,
-        headers={'Content-Type': 'application/json'},
-    )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        return json.loads(resp.read())
-
-
-def send_telegram_photo(photo_path: str, caption: str = ""):
-    """Send a photo to Telegram."""
-    import mimetypes
-    boundary = '----WebKitFormBoundary7MA4YWxkTrZu0gW'
-    
-    with open(photo_path, 'rb') as f:
-        photo_data = f.read()
-    
-    body = []
-    body.append(f'--{boundary}'.encode())
-    body.append(b'Content-Disposition: form-data; name="chat_id"')
-    body.append(b'')
-    body.append(CHAT_ID.encode())
-    
-    body.append(f'--{boundary}'.encode())
-    body.append(f'Content-Disposition: form-data; name="photo"; filename="{pathlib.Path(photo_path).name}"'.encode())
-    body.append(b'Content-Type: image/png')
-    body.append(b'')
-    body.append(photo_data)
-    
-    if caption:
-        body.append(f'--{boundary}'.encode())
-        body.append(b'Content-Disposition: form-data; name="caption"')
-        body.append(b'')
-        body.append(caption.encode())
-    
-    body.append(f'--{boundary}--'.encode())
-    body.append(b'')
-    
-    body_bytes = b'\r\n'.join(body)
-    
-    req = urllib.request.Request(
-        f'https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto',
-        data=body_bytes,
-        headers={'Content-Type': f'multipart/form-data; boundary={boundary}'},
-    )
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read())
+PAYWALL_SHOWN = "('onboarding_paywall_shown','cleanpro_paywall_shown')"
+TRIAL_EV = "('onboarding_paywall_converted','cleanpro_paywall_converted','native_paywall_converted')"
+PAID_EV = "('purchase','app_initial_purchase')"
 
 
-def generate_experiment_heatmap():
-    """Generate experiment heatmap image using experiment_heatmap_pro.py."""
-    heatmap_script = PROJECT_ROOT / 'scripts' / 'experiment_heatmap_pro.py'
-    if not heatmap_script.exists():
-        return None
-
-    result = subprocess.run(['python3', str(heatmap_script)], capture_output=True, text=True)
-    if result.returncode != 0:
-        print(f"Heatmap generation failed: {result.stderr}")
-        return None
-
-    heatmap_path = PROJECT_ROOT / 'reports' / 'experiments_heatmap_pro.png'
-    if heatmap_path.exists():
-        return str(heatmap_path)
-    return None
+def q(sql: str):
+    return bq_query(PROJECT_ID, sql)
 
 
-def pct(cur, base):
-    if not base:
-        return 'N/A'
-    return f'{((cur-base)/base)*100:+.0f}%'
+def cte(ss, se):
+    return events_cte(PROJECT_ID, DATASET_ID, ss, se)
 
 
-def q_growth(start_us, end_us, suffix_start, suffix_end):
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-), user_seg AS (
-  SELECT user_pseudo_id, MAX(IF(event_name="first_open",1,0)) AS is_new
+def q_growth(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)}, user_seg AS (
+  SELECT user_pseudo_id, MAX(IF(event_name='first_open',1,0)) AS is_new
   FROM all_events WHERE event_timestamp BETWEEN {start_us} AND {end_us}
   GROUP BY 1
 )
-SELECT IF(is_new=1,"new","returning") AS segment, COUNT(*) AS users
+SELECT IF(is_new=1,'new','returning') AS segment, COUNT(*) AS users
 FROM user_seg GROUP BY 1
-'''
-    return bq_query(sql)
+"""
+    return q(sql)
 
 
-def q_countries(start_us, end_us, suffix_start, suffix_end):
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-)
-SELECT geo.country, COUNT(DISTINCT user_pseudo_id) AS users
-FROM all_events WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-GROUP BY 1 ORDER BY users DESC LIMIT 10
-'''
-    return bq_query(sql)
+def q_source_new_users(start_us, end_us, ss, se):
+    bucket = traffic_bucket_sql("e")
+    sql = f"""
+WITH {cte(ss, se)}
+SELECT {bucket} AS source, COUNT(DISTINCT e.user_pseudo_id) AS new_users
+FROM all_events e
+WHERE e.event_timestamp BETWEEN {start_us} AND {end_us} AND e.event_name='first_open'
+GROUP BY 1
+"""
+    return q(sql)
 
 
-def q_countries_new_users(start_us, end_us, suffix_start, suffix_end):
-    """Get new user counts by top 10 countries."""
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-)
+def q_countries_new_users(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)}
 SELECT geo.country, COUNT(DISTINCT user_pseudo_id) AS new_users
-FROM all_events 
-WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-  AND event_name = 'first_open'
+FROM all_events
+WHERE event_timestamp BETWEEN {start_us} AND {end_us} AND event_name='first_open'
 GROUP BY 1 ORDER BY new_users DESC LIMIT 10
-'''
-    return bq_query(sql)
+"""
+    return q(sql)
 
 
-def q_conversion_by_country(start_us, end_us, suffix_start, suffix_end):
-    """Get conversion metrics by top 10 countries.
-    Uses client-side events only (no rc_* S2S events which have different user_pseudo_id)."""
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-), country_events AS (
-  SELECT
-    geo.country,
-    user_pseudo_id,
-    event_name
+def q_onboarding_completion_by_country(start_us, end_us, ss, se):
+    """Cohort-safe: only new users (first_open in window). Finished only among those who saw paywall."""
+    sql = f"""
+WITH {cte(ss, se)},
+new_users AS (
+  SELECT user_pseudo_id, ANY_VALUE(geo.country) AS country
   FROM all_events
-  WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-    AND event_name IN ('onboarding_paywall_shown', 'cleanpro_paywall_shown',
-                       'onboarding_paywall_converted', 'cleanpro_paywall_converted', 'purchase')
-), country_metrics AS (
+  WHERE event_timestamp BETWEEN {start_us} AND {end_us} AND event_name='first_open'
+  GROUP BY 1
+),
+flags AS (
   SELECT
-    country,
-    COUNT(DISTINCT CASE WHEN event_name IN ('onboarding_paywall_shown', 'cleanpro_paywall_shown') THEN user_pseudo_id END) AS paywall_shown,
-    COUNT(DISTINCT CASE WHEN event_name IN ('onboarding_paywall_converted', 'cleanpro_paywall_converted', 'purchase') THEN user_pseudo_id END) AS converted
-  FROM country_events
-  GROUP BY country
+    nu.user_pseudo_id,
+    nu.country,
+    MAX(IF(e.event_name IN ('onboarding_paywall_shown'), 1, 0)) AS saw_paywall,
+    MAX(IF(e.event_name IN ('onboarding_paywall_dismissed','onboarding_paywall_converted'), 1, 0)) AS finished
+  FROM new_users nu
+  LEFT JOIN all_events e
+    ON e.user_pseudo_id = nu.user_pseudo_id
+   AND e.event_timestamp BETWEEN {start_us} AND {end_us}
+   AND e.event_name IN (
+     'onboarding_paywall_shown','onboarding_paywall_dismissed','onboarding_paywall_converted'
+   )
+  GROUP BY 1, 2
 )
 SELECT
   country,
-  paywall_shown,
-  converted,
-  ROUND(SAFE_DIVIDE(converted, paywall_shown) * 100, 1) AS conversion_rate
-FROM country_metrics
-WHERE paywall_shown > 0
-ORDER BY paywall_shown DESC
-LIMIT 10
-'''
-    return bq_query(sql)
-
-
-def q_onboarding_completion_by_country(start_us, end_us, suffix_start, suffix_end):
-    """Get onboarding completion rate by country.
-    
-    Flow: first_open → onboarding_paywall_shown → onboarding_paywall_dismissed (= reached home)
-    Completion = users who dismissed paywall / users who saw paywall
-    """
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-), country_events AS (
-  SELECT 
-    geo.country,
-    user_pseudo_id,
-    event_name
-  FROM all_events
-  WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-    AND event_name IN ('first_open', 'onboarding_paywall_shown', 'onboarding_paywall_dismissed', 'onboarding_paywall_converted')
-), country_metrics AS (
-  SELECT 
-    country,
-    COUNT(DISTINCT CASE WHEN event_name = 'first_open' THEN user_pseudo_id END) AS new_users,
-    COUNT(DISTINCT CASE WHEN event_name = 'onboarding_paywall_shown' THEN user_pseudo_id END) AS saw_paywall,
-    COUNT(DISTINCT CASE WHEN event_name IN ('onboarding_paywall_dismissed', 'onboarding_paywall_converted') THEN user_pseudo_id END) AS finished_onboarding
-  FROM country_events
-  GROUP BY country
-)
-SELECT 
-  country,
-  new_users,
-  saw_paywall,
-  finished_onboarding,
-  ROUND(SAFE_DIVIDE(saw_paywall, new_users) * 100, 1) AS reach_paywall_rate,
-  ROUND(SAFE_DIVIDE(finished_onboarding, saw_paywall) * 100, 1) AS completion_rate
-FROM country_metrics
-WHERE new_users > 0
+  COUNT(*) AS new_users,
+  SUM(saw_paywall) AS saw_paywall,
+  -- finished only counts users who also saw paywall (avoids >100%)
+  SUM(IF(saw_paywall=1 AND finished=1, 1, 0)) AS finished_onboarding,
+  ROUND(SAFE_DIVIDE(SUM(saw_paywall), COUNT(*)) * 100, 1) AS reach_paywall_rate,
+  ROUND(SAFE_DIVIDE(SUM(IF(saw_paywall=1 AND finished=1, 1, 0)), SUM(saw_paywall)) * 100, 1) AS completion_rate
+FROM flags
+GROUP BY country
+HAVING new_users > 0
 ORDER BY new_users DESC
 LIMIT 10
-'''
-    return bq_query(sql)
+"""
+    return q(sql)
 
 
-def q_monetization_funnel(start_us, end_us, suffix_start, suffix_end):
-    """Monetization funnel: new vs returning users who hit paywall/purchase events.
-    Note: rc_* events are S2S from RevenueCat and use a different user_pseudo_id,
-    so they are queried separately via q_rc_events."""
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-), user_seg AS (
-  SELECT user_pseudo_id, MAX(IF(event_name="first_open",1,0)) AS is_new
+def q_monetization_funnel(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)},
+user_seg AS (
+  SELECT user_pseudo_id, MAX(IF(event_name='first_open',1,0)) AS is_new
   FROM all_events WHERE event_timestamp BETWEEN {start_us} AND {end_us}
   GROUP BY 1
 ), funnel AS (
-  SELECT
-    us.is_new,
-    e.user_pseudo_id,
-    MAX(IF(e.event_name IN ('onboarding_paywall_shown', 'cleanpro_paywall_shown'), 1, 0)) AS saw_paywall,
-    MAX(IF(e.event_name IN ('onboarding_paywall_converted', 'cleanpro_paywall_converted', 'native_paywall_converted'), 1, 0)) AS started_trial,
-    MAX(IF(e.event_name IN ('purchase', 'app_initial_purchase'), 1, 0)) AS purchased
+  SELECT us.is_new, e.user_pseudo_id,
+    MAX(IF(e.event_name IN {PAYWALL_SHOWN}, 1, 0)) AS saw_paywall,
+    MAX(IF(e.event_name IN {TRIAL_EV}, 1, 0)) AS started_trial,
+    MAX(IF(e.event_name IN {PAID_EV}, 1, 0)) AS purchased
   FROM all_events e
   JOIN user_seg us ON e.user_pseudo_id = us.user_pseudo_id
   WHERE e.event_timestamp BETWEEN {start_us} AND {end_us}
     AND NOT STARTS_WITH(e.event_name, 'rc_')
   GROUP BY 1, 2
 )
-SELECT
-  IF(is_new=1,"new","returning") AS segment,
+SELECT IF(is_new=1,'new','returning') AS segment,
   COUNT(*) AS total_users,
   SUM(saw_paywall) AS paywall_users,
   SUM(started_trial) AS trial_users,
   SUM(purchased) AS paid_users
-FROM funnel
-GROUP BY 1
-'''
-    return bq_query(sql)
+FROM funnel GROUP BY 1
+"""
+    return q(sql)
 
 
-def q_rc_events(start_us, end_us, suffix_start, suffix_end):
-    """Query RevenueCat S2S events separately (different user_pseudo_id namespace)."""
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-)
-SELECT
-  event_name,
-  COUNT(DISTINCT user_pseudo_id) AS users
+def q_rc_events(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)}
+SELECT event_name, COUNT(DISTINCT user_pseudo_id) AS users
 FROM all_events
 WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-  AND event_name IN ('rc_trial_start', 'rc_initial_purchase', 'rc_cancellation', 'rc_expiration', 'rc_billing_issue')
+  AND event_name IN ('rc_trial_start','rc_initial_purchase','rc_cancellation','rc_expiration','rc_billing_issue')
 GROUP BY 1
-'''
-    return bq_query(sql)
+"""
+    return q(sql)
 
 
-def q_trial_to_paid_7d(now_us, suffix_start_7d, suffix_end):
-    """Rolling 7-day trial-to-paid: rc_trial_start users who also had rc_initial_purchase."""
+def q_trial_to_paid_7d_client(now_us, ss, se):
+    """Client-side trial→paid over rolling 7d (same ID namespace as funnel)."""
     start_7d = now_us - 604800 * 1_000_000
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start_7d}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start_7d}' AND '{suffix_end}'
-), trial_users AS (
+    sql = f"""
+WITH {cte(ss, se)},
+trial_users AS (
   SELECT DISTINCT user_pseudo_id
   FROM all_events
   WHERE event_timestamp BETWEEN {start_7d} AND {now_us}
-    AND event_name = 'rc_trial_start'
-), paid_users AS (
+    AND event_name IN {TRIAL_EV}
+),
+paid_users AS (
   SELECT DISTINCT user_pseudo_id
   FROM all_events
   WHERE event_timestamp BETWEEN {start_7d} AND {now_us}
-    AND event_name = 'rc_initial_purchase'
+    AND event_name IN {PAID_EV}
 )
 SELECT
   (SELECT COUNT(*) FROM trial_users) AS trial_count,
-  (SELECT COUNT(*) FROM trial_users t JOIN paid_users p ON t.user_pseudo_id = p.user_pseudo_id) AS trial_to_paid_count
-'''
-    return bq_query(sql)
+  (SELECT COUNT(*) FROM trial_users t JOIN paid_users p USING (user_pseudo_id)) AS trial_to_paid_count
+"""
+    return q(sql)
 
 
-def q_product(start_us, end_us, suffix_start, suffix_end):
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+def q_trial_to_paid_7d_rc(now_us, ss, se):
+    """RC S2S-only trial→paid (separate user_pseudo_id namespace — do not mix with client)."""
+    start_7d = now_us - 604800 * 1_000_000
+    sql = f"""
+WITH {cte(ss, se)},
+trial_users AS (
+  SELECT DISTINCT user_pseudo_id FROM all_events
+  WHERE event_timestamp BETWEEN {start_7d} AND {now_us} AND event_name='rc_trial_start'
+),
+paid_users AS (
+  SELECT DISTINCT user_pseudo_id FROM all_events
+  WHERE event_timestamp BETWEEN {start_7d} AND {now_us} AND event_name='rc_initial_purchase'
 )
+SELECT
+  (SELECT COUNT(*) FROM trial_users) AS trial_count,
+  (SELECT COUNT(*) FROM trial_users t JOIN paid_users p USING (user_pseudo_id)) AS trial_to_paid_count
+"""
+    return q(sql)
+
+
+def q_conversion_by_country(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)},
+m AS (
+  SELECT geo.country AS country,
+    COUNT(DISTINCT IF(event_name IN {PAYWALL_SHOWN}, user_pseudo_id, NULL)) AS paywall_shown,
+    COUNT(DISTINCT IF(event_name IN {TRIAL_EV} OR event_name IN {PAID_EV}, user_pseudo_id, NULL)) AS converted
+  FROM all_events
+  WHERE event_timestamp BETWEEN {start_us} AND {end_us}
+    AND NOT STARTS_WITH(event_name, 'rc_')
+  GROUP BY 1
+)
+SELECT country, paywall_shown, converted,
+  ROUND(SAFE_DIVIDE(converted, paywall_shown)*100,1) AS conversion_rate
+FROM m WHERE paywall_shown > 0
+ORDER BY paywall_shown DESC LIMIT 10
+"""
+    return q(sql)
+
+
+def q_conversion_global(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)}
+SELECT
+  COUNT(DISTINCT IF(event_name IN {PAYWALL_SHOWN}, user_pseudo_id, NULL)) AS paywall_shown,
+  COUNT(DISTINCT IF(event_name IN {TRIAL_EV} OR event_name IN {PAID_EV}, user_pseudo_id, NULL)) AS converted
+FROM all_events
+WHERE event_timestamp BETWEEN {start_us} AND {end_us}
+  AND NOT STARTS_WITH(event_name, 'rc_')
+"""
+    return q(sql)
+
+
+def q_product(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)}
 SELECT event_name, COUNT(DISTINCT user_pseudo_id) AS users, COUNT(*) AS events
 FROM all_events
 WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-  AND event_name IN ("scan_completed","first_scan_complete","clean_completed","first_delete_complete","scan_v2_start","scan_v2_complete")
+  AND event_name IN (
+    'scan_completed','first_scan_complete','clean_completed','first_delete_complete',
+    'scan_v2_start','scan_v2_complete'
+  )
 GROUP BY 1 ORDER BY users DESC
-'''
-    return bq_query(sql)
+"""
+    return q(sql)
 
 
-def parse_funnel(data):
-    """Parse monetization funnel query results into a dict."""
-    result = {'new_users': 0, 'new_paywall': 0, 'new_trial': 0, 'new_paid': 0,
-              'ret_users': 0, 'ret_paywall': 0, 'ret_trial': 0, 'ret_paid': 0}
-    for r in data:
-        seg = r.get('segment', '')
-        if seg == 'new':
-            result['new_users'] = int(r.get('total_users', 0) or 0)
-            result['new_paywall'] = int(r.get('paywall_users', 0) or 0)
-            result['new_trial'] = int(r.get('trial_users', 0) or 0)
-            result['new_paid'] = int(r.get('paid_users', 0) or 0)
-        elif seg == 'returning':
-            result['ret_users'] = int(r.get('total_users', 0) or 0)
-            result['ret_paywall'] = int(r.get('paywall_users', 0) or 0)
-            result['ret_trial'] = int(r.get('trial_users', 0) or 0)
-            result['ret_paid'] = int(r.get('paid_users', 0) or 0)
-    return result
-
-
-def parse_rc_events(data):
-    """Parse RevenueCat S2S event counts."""
-    d = {r.get('event_name'): int(r.get('users', 0) or 0) for r in data}
-    return {
-        'rc_trial_start': d.get('rc_trial_start', 0),
-        'rc_initial_purchase': d.get('rc_initial_purchase', 0),
-        'rc_cancellation': d.get('rc_cancellation', 0),
-        'rc_expiration': d.get('rc_expiration', 0),
-        'rc_billing_issue': d.get('rc_billing_issue', 0),
-    }
-
-
-def format_country_growth(countries_new):
-    """Format top 10 countries with new user counts."""
-    lines = []
-    for r in countries_new[:10]:
-        country = r.get('country', '?')
-        users = int(r.get('new_users', 0))
-        lines.append(f"    {country}: {users}")
-    return '\n'.join(lines)
-
-
-def get_conversion_emoji(rate):
-    """Get emoji based on conversion rate."""
-    if rate > 50:
-        return '🟣'  # Exceptional
-    elif rate > 30:
-        return '🔵'  # Excellent
-    elif rate > 20:
-        return '🟢'  # Great
-    elif rate > 10:
-        return '✅'  # Good
-    elif rate > 5:
-        return '⚠️'  # OK
-    elif rate > 2:
-        return '🟠'  # Below average
-    else:
-        return '🔴'  # Poor
-
-
-def format_country_conversion(conv_by_country):
-    """Format top 10 countries with conversion rates.
-    
-    Emoji scale:
-    🟣 >50% - Exceptional
-    🔵 >30% - Excellent  
-    🟢 >20% - Great
-    ✅ >10% - Good
-    ⚠️ >5%  - OK
-    🟠 >2%  - Below average
-    🔴 ≤2%  - Poor
-    """
-    # Calculate summary row
-    total_shown = sum(int(r.get('paywall_shown', 0) or 0) for r in conv_by_country)
-    total_converted = sum(int(r.get('converted', 0) or 0) for r in conv_by_country)
-    overall_rate = round((total_converted / total_shown * 100), 1) if total_shown else 0.0
-    overall_emoji = get_conversion_emoji(overall_rate)
-    
-    lines = [f"    TOTAL: {total_shown}→{total_converted} ({overall_rate}%) {overall_emoji}"]
-    lines.append("    ─────────────────────")
-    
-    for r in conv_by_country[:10]:
-        country = r.get('country', '?')
-        shown = int(r.get('paywall_shown', 0))
-        converted = int(r.get('converted', 0))
-        rate = float(r.get('conversion_rate', 0) or 0)
-        emoji = get_conversion_emoji(rate)
-        lines.append(f"    {country}: {shown}→{converted} ({rate}%) {emoji}")
-    
-    return '\n'.join(lines)
-
-
-def get_onboarding_emoji(rate):
-    """Emoji for onboarding completion rate (higher thresholds than conversion)."""
-    if rate >= 95: return '🟣'
-    elif rate >= 90: return '🔵'
-    elif rate >= 85: return '🟢'
-    elif rate >= 80: return '✅'
-    elif rate >= 70: return '⚠️'
-    elif rate >= 60: return '🟠'
-    else: return '🔴'
-
-
-def format_onboarding_completion(onboarding_data):
-    """Format onboarding completion rate by country.
-    Shows: new users → reached paywall → finished onboarding (dismissed or converted)
-    """
-    lines = []
-    for r in onboarding_data[:10]:
-        country = r.get('country', '?')
-        new_users = int(r.get('new_users', 0) or 0)
-        saw_paywall = int(r.get('saw_paywall', 0) or 0)
-        finished = int(r.get('finished_onboarding', 0) or 0)
-        reach_rate = float(r.get('reach_paywall_rate', 0) or 0)
-        completion_rate = float(r.get('completion_rate', 0) or 0)
-        
-        emoji = get_onboarding_emoji(completion_rate)
-        lines.append(f"    {country}: {new_users}→{saw_paywall}→{finished} ({completion_rate}% complete) {emoji}")
-    return '\n'.join(lines)
-
-
-def get_running_experiments():
-    """Get list of running experiments from Firebase CLI."""
-    import subprocess as sp
-    result = sp.run(
-        ['firebase', 'remoteconfig:experiments:list', '--project', 'cleaner-app-e98f0', '--pageSize', '0'],
-        capture_output=True, text=True
-    )
-    
-    experiments = []
-    lines = result.stdout.split('\n')
-    for line in lines:
-        if '│ RUNNING │' in line:
-            parts = [p.strip() for p in line.split('│') if p.strip()]
-            if len(parts) >= 6:
-                experiments.append({
-                    'id': parts[0],
-                    'name': parts[1][:35],
-                    'start_time': parts[4][:10] if len(parts[4]) > 10 else parts[4]
-                })
-    return experiments
-
-
-def q_experiment_metrics(start_us, end_us, suffix_start, suffix_end):
-    """Get metrics for all running experiments."""
-    # Get running experiment IDs first
-    experiments = get_running_experiments()
+def q_experiment_metrics(start_us, end_us, ss, se):
+    experiments = get_running_experiments(PROJECT_ID)
     if not experiments:
         return []
-    
-    exp_ids = [e['id'] for e in experiments]
-    
     results = []
-    for exp_id in exp_ids[:8]:  # Limit to 8 experiments
-        sql = f'''
-WITH all_events AS (
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `cleaner-app-e98f0.analytics_269202926.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-),
+    for exp in experiments[:8]:
+        exp_id = exp["id"]
+        keys = ", ".join(f"'{k}'" for k in exp_user_property_keys(exp_id))
+        sql = f"""
+WITH {cte(ss, se)},
 exp_users AS (
-  SELECT 
-    user_pseudo_id,
-    (SELECT value.string_value FROM UNNEST(user_properties) WHERE key = 'firebase_exp_{exp_id}') as variant
+  SELECT user_pseudo_id,
+    (SELECT value.string_value FROM UNNEST(user_properties) WHERE key IN ({keys}) LIMIT 1) AS variant
   FROM all_events
   WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-    AND (SELECT value.string_value FROM UNNEST(user_properties) WHERE key = 'firebase_exp_{exp_id}') IS NOT NULL
-  GROUP BY 1, 2
+  GROUP BY 1, 2 HAVING variant IS NOT NULL
 ),
 user_events AS (
-  SELECT 
-    ue.variant,
-    e.user_pseudo_id,
-    MAX(IF(e.event_name = 'onboarding_paywall_shown', 1, 0)) as saw_paywall,
-    MAX(IF(e.event_name IN ('onboarding_paywall_dismissed', 'onboarding_paywall_converted'), 1, 0)) as finished,
-    MAX(IF(e.event_name = 'rc_trial_start', 1, 0)) as trial,
-    MAX(IF(e.event_name IN ('onboarding_paywall_converted', 'rc_initial_purchase'), 1, 0)) as converted
-  FROM all_events e
-  JOIN exp_users ue ON e.user_pseudo_id = ue.user_pseudo_id
+  SELECT ue.variant, e.user_pseudo_id,
+    MAX(IF(e.event_name IN {PAYWALL_SHOWN},1,0)) AS saw_paywall,
+    MAX(IF(e.event_name IN ('onboarding_paywall_dismissed','onboarding_paywall_converted','cleanpro_paywall_converted'),1,0)) AS finished,
+    MAX(IF(e.event_name IN {TRIAL_EV},1,0)) AS trial,
+    MAX(IF(e.event_name IN {PAID_EV},1,0)) AS converted
+  FROM all_events e JOIN exp_users ue USING (user_pseudo_id)
   WHERE e.event_timestamp BETWEEN {start_us} AND {end_us}
   GROUP BY 1, 2
 )
-SELECT 
-  '{exp_id}' as exp_id,
-  variant,
-  SUM(saw_paywall) as paywall,
-  ROUND(SAFE_DIVIDE(SUM(finished), SUM(saw_paywall)) * 100, 1) as completion,
-  ROUND(SAFE_DIVIDE(SUM(trial), SUM(saw_paywall)) * 100, 1) as trial_rate,
-  ROUND(SAFE_DIVIDE(SUM(converted), SUM(saw_paywall)) * 100, 1) as conv_rate
-FROM user_events
-WHERE saw_paywall = 1
-GROUP BY variant
-ORDER BY variant
-'''
+SELECT variant, SUM(saw_paywall) AS paywall,
+  ROUND(SAFE_DIVIDE(SUM(finished), SUM(saw_paywall))*100,1) AS completion,
+  ROUND(SAFE_DIVIDE(SUM(trial), SUM(saw_paywall))*100,1) AS trial_rate,
+  ROUND(SAFE_DIVIDE(SUM(converted), SUM(saw_paywall))*100,1) AS conv_rate
+FROM user_events WHERE saw_paywall=1 GROUP BY variant ORDER BY variant
+"""
         try:
-            rows = bq_query(sql)
+            rows = q(sql)
             for row in rows:
-                row['exp_name'] = next((e['name'] for e in experiments if e['id'] == exp_id), exp_id)
+                row["exp_id"] = exp_id
+                row["exp_name"] = exp.get("name", exp_id)
             results.extend(rows)
-        except:
-            pass
-    
+        except Exception as exc:
+            results.append({
+                "exp_id": exp_id, "exp_name": exp.get("name", exp_id),
+                "variant": "?", "paywall": 0, "completion": 0, "trial_rate": 0, "conv_rate": 0,
+                "error": str(exc)[:80],
+            })
     return results
 
 
-def format_experiments(exp_metrics):
-    """Format running experiments with key metrics."""
-    if not exp_metrics:
-        return "    No running experiments"
-    
-    # Group by experiment
-    exp_data = {}
-    for row in exp_metrics:
-        exp_id = row.get('exp_id', '?')
-        if exp_id not in exp_data:
-            exp_data[exp_id] = {'name': row.get('exp_name', exp_id), 'variants': []}
-        exp_data[exp_id]['variants'].append(row)
-    
+def parse_funnel(data):
+    result = {
+        "new_users": 0, "new_paywall": 0, "new_trial": 0, "new_paid": 0,
+        "ret_users": 0, "ret_paywall": 0, "ret_trial": 0, "ret_paid": 0,
+    }
+    for r in data:
+        p = "new_" if r.get("segment") == "new" else ("ret_" if r.get("segment") == "returning" else None)
+        if not p:
+            continue
+        result[f"{p}users"] = int(r.get("total_users", 0) or 0)
+        result[f"{p}paywall"] = int(r.get("paywall_users", 0) or 0)
+        result[f"{p}trial"] = int(r.get("trial_users", 0) or 0)
+        result[f"{p}paid"] = int(r.get("paid_users", 0) or 0)
+    return result
+
+
+def format_onboarding(rows):
     lines = []
-    for exp_id, data in exp_data.items():
-        variants = data['variants']
-        name = data['name'][:25]
-        
-        # Format: Exp ID: Name | V0: X% done, Y% trial, Z% conv | V1: ...
-        var_strs = []
-        for v in sorted(variants, key=lambda x: x.get('variant', '0')):
-            variant = v.get('variant', '?')
-            paywall = int(v.get('paywall', 0) or 0)
-            completion = float(v.get('completion', 0) or 0)
-            trial = float(v.get('trial_rate', 0) or 0)
-            conv = float(v.get('conv_rate', 0) or 0)
-            
-            vname = 'B' if variant == '0' else f'V{variant}'
-            # Use same color scale as conversion by country
-            emoji = get_conversion_emoji(conv)
-            var_strs.append(f"{vname}:{paywall}u/{completion:.0f}%/{trial:.0f}%/{conv:.0f}%{emoji}")
-        
-        lines.append(f"    {exp_id}: {' | '.join(var_strs)}")
-    
-    return '\n'.join(lines)
+    for r in rows[:10]:
+        country = r.get("country") or "?"
+        nu = int(r.get("new_users", 0) or 0)
+        saw = int(r.get("saw_paywall", 0) or 0)
+        fin = int(r.get("finished_onboarding", 0) or 0)
+        rate = float(r.get("completion_rate", 0) or 0)
+        lines.append(f"    {country}: {nu}→{saw}→{fin} ({rate}% complete) {get_onboarding_emoji(rate)}")
+    return "\n".join(lines) if lines else "    (no data)"
 
 
 def main():
-    now_epoch = int(subprocess.run(['bash','-lc','TZ="Asia/Saigon" date +%s'], capture_output=True, text=True).stdout.strip())
-    now_us = now_epoch * 1_000_000
-    h24 = (now_epoch - 86400) * 1_000_000
-    h48 = (now_epoch - 172800) * 1_000_000
-    h168 = (now_epoch - 604800) * 1_000_000
-    h192 = (now_epoch - 691200) * 1_000_000
-    display_date = subprocess.run(['bash','-lc','TZ="Asia/Saigon" date +%Y-%m-%d'], capture_output=True, text=True).stdout.strip()
-    display_time = subprocess.run(['bash','-lc','TZ="Asia/Saigon" date +%H:%M'], capture_output=True, text=True).stdout.strip()
-    suffix_start = subprocess.run(['bash','-lc','TZ="Asia/Saigon" date -v-2d +%Y%m%d 2>/dev/null || TZ="Asia/Saigon" date -d "2 days ago" +%Y%m%d'], capture_output=True, text=True).stdout.strip()
-    suffix_end = subprocess.run(['bash','-lc','TZ="Asia/Saigon" date +%Y%m%d'], capture_output=True, text=True).stdout.strip()
-    suffix_week_start = subprocess.run(['bash','-lc','TZ="Asia/Saigon" date -v-9d +%Y%m%d 2>/dev/null || TZ="Asia/Saigon" date -d "9 days ago" +%Y%m%d'], capture_output=True, text=True).stdout.strip()
-    suffix_week_end = subprocess.run(['bash','-lc','TZ="Asia/Saigon" date -v-6d +%Y%m%d 2>/dev/null || TZ="Asia/Saigon" date -d "6 days ago" +%Y%m%d'], capture_output=True, text=True).stdout.strip()
+    w = rolling_windows(TZ)
+    now_us, h24, h48 = w["now_us"], w["h24_us"], w["h48_us"]
+    h168, h192 = w["h168_us"], w["h192_us"]
+    ss, se = w["suffix_start"], w["suffix_end"]
+    sws, swe = w["suffix_week_start"], w["suffix_week_end"]
+    s7 = w["suffix_7d_start"]
+    display_date, display_time, tz_label = w["display_date"], w["display_time"], w["tz_label"]
+    print(f"=== CleanPro Daily Report — {display_date} ===\n")
 
-    g = q_growth(h24, now_us, suffix_start, suffix_end)
-    gd = q_growth(h48, h24, suffix_start, suffix_end)
-    gw = q_growth(h192, h168, suffix_week_start, suffix_week_end)
-    countries = q_countries(h24, now_us, suffix_start, suffix_end)
-    countries_new = q_countries_new_users(h24, now_us, suffix_start, suffix_end)
-    conv_by_country = q_conversion_by_country(h24, now_us, suffix_start, suffix_end)
-    onboarding_by_country = q_onboarding_completion_by_country(h24, now_us, suffix_start, suffix_end)
-    # Monetization funnel — today, DoD, WoW
-    f = parse_funnel(q_monetization_funnel(h24, now_us, suffix_start, suffix_end))
-    fd = parse_funnel(q_monetization_funnel(h48, h24, suffix_start, suffix_end))
-    fw = parse_funnel(q_monetization_funnel(h192, h168, suffix_week_start, suffix_week_end))
-    rc = parse_rc_events(q_rc_events(h24, now_us, suffix_start, suffix_end))
+    g = q_growth(h24, now_us, ss, se)
+    gd = q_growth(h48, h24, ss, se)
+    gw = q_growth(h192, h168, sws, swe)
+    seg = {r["segment"]: int(r["users"]) for r in g}
+    segd = {r["segment"]: int(r["users"]) for r in gd}
+    segw = {r["segment"]: int(r["users"]) for r in gw}
+    new_users, returning = seg.get("new", 0), seg.get("returning", 0)
 
-    # 7-day trial-to-paid
-    t2p_raw = q_trial_to_paid_7d(now_us, suffix_week_start, suffix_end)
-    t2p = t2p_raw[0] if t2p_raw else {}
-    trial_7d = int(t2p.get('trial_count', 0) or 0)
-    trial_to_paid_7d = int(t2p.get('trial_to_paid_count', 0) or 0)
-    t2p_rate = round(trial_to_paid_7d / max(1, trial_7d) * 100, 1)
+    sources = q_source_new_users(h24, now_us, ss, se)
+    countries_new = q_countries_new_users(h24, now_us, ss, se)
+    onboarding = q_onboarding_completion_by_country(h24, now_us, ss, se)
 
-    p = q_product(h24, now_us, suffix_start, suffix_end)
+    f = parse_funnel(q_monetization_funnel(h24, now_us, ss, se))
+    fd = parse_funnel(q_monetization_funnel(h48, h24, ss, se))
+    fw = parse_funnel(q_monetization_funnel(h192, h168, sws, swe))
+    new_rate = safe_rate(f["new_paid"], f["new_paywall"])
+    ret_rate = safe_rate(f["ret_paid"], f["ret_paywall"])
+    total_pw = f["new_paywall"] + f["ret_paywall"]
+    total_trial = f["new_trial"] + f["ret_trial"]
+    total_paid = f["new_paid"] + f["ret_paid"]
+    pw_to_trial = safe_rate(total_trial, total_pw)
+    paid_d = fd["new_paid"] + fd["ret_paid"]
+    paid_w = fw["new_paid"] + fw["ret_paid"]
 
-    seg = {r['segment']: int(r['users']) for r in g}
-    segd = {r['segment']: int(r['users']) for r in gd}
-    segw = {r['segment']: int(r['users']) for r in gw}
-    pu = {r['event_name']: int(r['users']) for r in p}
-    pe = {r['event_name']: int(r['events']) for r in p}
+    rc_rows = q_rc_events(h24, now_us, ss, se)
+    rc = {r.get("event_name"): int(r.get("users", 0) or 0) for r in rc_rows}
 
-    new_users = seg.get('new', 0)
-    returning = seg.get('returning', 0)
-    
-    country_growth_breakdown = format_country_growth(countries_new)
-    country_conv_breakdown = format_country_conversion(conv_by_country)
-    onboarding_breakdown = format_onboarding_completion(onboarding_by_country)
-    
-    # Get experiment metrics
-    try:
-        exp_metrics = q_experiment_metrics(h24, now_us, suffix_start, suffix_end)
-        exp_breakdown = format_experiments(exp_metrics)
-    except Exception as e:
-        exp_breakdown = f"    Error: {str(e)[:50]}"
-    
-    new_paid_rate = round(f['new_paid'] / max(1, f['new_users']) * 100, 1)
-    ret_paid_rate = round(f['ret_paid'] / max(1, f['ret_users']) * 100, 1)
-    total_pw = f['new_paywall'] + f['ret_paywall']
-    total_trial = f['new_trial'] + f['ret_trial']
-    total_paid = f['new_paid'] + f['ret_paid']
-    pw_to_trial_rate = round(total_trial / max(1, total_pw) * 100, 1)
+    t2p_c = (q_trial_to_paid_7d_client(now_us, s7, se) or [{}])[0]
+    t2p_r = (q_trial_to_paid_7d_rc(now_us, s7, se) or [{}])[0]
+    c_trial = int(t2p_c.get("trial_count", 0) or 0)
+    c_paid = int(t2p_c.get("trial_to_paid_count", 0) or 0)
+    r_trial = int(t2p_r.get("trial_count", 0) or 0)
+    r_paid = int(t2p_r.get("trial_to_paid_count", 0) or 0)
 
-    # DoD / WoW for total paid
-    total_paid_d = fd['new_paid'] + fd['ret_paid']
-    total_paid_w = fw['new_paid'] + fw['ret_paid']
+    conv_country = q_conversion_by_country(h24, now_us, ss, se)
+    glob = (q_conversion_global(h24, now_us, ss, se) or [{}])[0]
 
-    report = f'''📊 CleanPro Daily — {display_date} (rolling 24h as of {display_time} ICT)
+    p = q_product(h24, now_us, ss, se)
+    pu = {r["event_name"]: int(r["users"]) for r in p}
+    pe = {r["event_name"]: int(r["events"]) for r in p}
+    scans_u = pu.get("scan_completed", 0) + pu.get("scan_v2_complete", 0)
+    scans_e = pe.get("scan_completed", 0) + pe.get("scan_v2_complete", 0)
+
+    exp_metrics = q_experiment_metrics(h24, now_us, ss, se)
+    exp_ok = [r for r in exp_metrics if "error" not in r]
+    exp_breakdown = format_experiments(exp_ok if exp_ok else exp_metrics, style="full")
+
+    report = f'''📊 CleanPro Daily — {display_date} (rolling 24h as of {display_time} {tz_label})
 
 👥 GROWTH
   New users: {new_users} (DoD {pct(new_users, segd.get('new', 0))} · WoW {pct(new_users, segw.get('new', 0))})
   Returning: {returning}
+  Source: {format_source_split(sources)}
 
   📍 New Users by Country (Top 10):
-{country_growth_breakdown}
+{format_country_lines(countries_new)}
 
-🚀 ONBOARDING (new→paywall→home)
+🚀 ONBOARDING (new→paywall→home; cohort-safe)
   📍 Completion by Country (Top 10):
-{onboarding_breakdown}
+{format_onboarding(onboarding)}
 
 💰 MONETIZATION
-  📊 Funnel:
-    New users: {f['new_users']} → paywall {f['new_paywall']} → trial {f['new_trial']} → paid {f['new_paid']} ({new_paid_rate}%) {get_conversion_emoji(new_paid_rate)}
-    Returning: {f['ret_users']} → paywall {f['ret_paywall']} → trial {f['ret_trial']} → paid {f['ret_paid']} ({ret_paid_rate}%) {get_conversion_emoji(ret_paid_rate)}
+  📊 Funnel (client events):
+    New users: {f['new_users']} → paywall {f['new_paywall']} → trial {f['new_trial']} → paid {f['new_paid']} ({new_rate}%) {get_conversion_emoji(new_rate)}
+    Returning: {f['ret_users']} → paywall {f['ret_paywall']} → trial {f['ret_trial']} → paid {f['ret_paid']} ({ret_rate}%) {get_conversion_emoji(ret_rate)}
 
   Overall: {total_pw} paywall → {total_trial} trial → {total_paid} paid
-  Paywall→Trial: {pw_to_trial_rate}% · Trial→Paid (7d): {trial_to_paid_7d}/{trial_7d} ({t2p_rate}%)
-  Cancellations: {rc['rc_cancellation']} · Expirations: {rc['rc_expiration']} · Billing issues: {rc['rc_billing_issue']}
-  DoD {pct(total_paid, total_paid_d)} · WoW {pct(total_paid, total_paid_w)}
+  Paywall→Trial: {pw_to_trial}%
+  Trial→Paid 7d (client): {c_paid}/{c_trial} ({safe_rate(c_paid, c_trial)}%)
+  Trial→Paid 7d (RC S2S): {r_paid}/{r_trial} ({safe_rate(r_paid, r_trial)}%)
+  RC 24h: trials {rc.get('rc_trial_start',0)} · initial {rc.get('rc_initial_purchase',0)} · cancel {rc.get('rc_cancellation',0)} · expire {rc.get('rc_expiration',0)} · billing {rc.get('rc_billing_issue',0)}
+  Paid DoD {pct(total_paid, paid_d)} · WoW {pct(total_paid, paid_w)}
 
-  📍 Conversion by Country (Top 10):
-{country_conv_breakdown}
+  📍 Conversion by Country (Top 10; TOTAL=global; trial+paid):
+{format_country_conversion(conv_country, int(glob.get('paywall_shown',0) or 0), int(glob.get('converted',0) or 0))}
 
 🧪 EXPERIMENTS (B=Baseline | users/done%/trial%/conv%)
 {exp_breakdown}
 
 🧹 PRODUCT
-  Scans: {pu.get('scan_completed',0)+pu.get('scan_v2_complete',0)} users ({pe.get('scan_completed',0)+pe.get('scan_v2_complete',0)} total scans)
-  Cleans: {pu.get('clean_completed',0)} users
-  First scan: {pu.get('first_scan_complete',0)} new users completed
-  First delete: {pu.get('first_delete_complete',0)} new users completed'''
+  Scans: {scans_u} users ({scans_e} total scans)
+  Cleans: {pu.get('clean_completed', 0)} users
+  First scan: {pu.get('first_scan_complete', 0)} new users completed
+  First delete: {pu.get('first_delete_complete', 0)} new users completed'''
 
-    BASE.mkdir(parents=True, exist_ok=True)
-    (BASE / 'latest_report.txt').write_text(report + '\n')
-    REPORT_PATH.mkdir(parents=True, exist_ok=True)
-    (REPORT_PATH / f'{display_date}.md').write_text(report + '\n')
-    
-    # Send text report
+    save_report(BASE, report, REPORT_PATH, display_date)
     tg = send_telegram(report)
     print(report)
-    print('TELEGRAM_SENT_OK')
+    print("TELEGRAM_SENT_OK")
     print(json.dumps(tg))
-    
-    # Generate and send experiment heatmap
-    print('\n📊 Generating experiment heatmap...')
-    heatmap_path = generate_experiment_heatmap()
-    if heatmap_path:
-        print(f'Heatmap generated: {heatmap_path}')
-        tg_photo = send_telegram_photo(heatmap_path, f"🧪 CleanPro Experiments Heatmap — {display_date}")
-        print('HEATMAP_SENT_OK')
-        print(json.dumps(tg_photo))
-    else:
-        print('⚠️ Heatmap generation skipped or failed')
+
+    heatmap_script = PROJECT_ROOT / "scripts" / "experiment_heatmap_pro.py"
+    if heatmap_script.exists():
+        print("\n📊 Generating experiment heatmap...")
+        result = subprocess.run(["python3", str(heatmap_script)], capture_output=True, text=True)
+        heatmap_path = PROJECT_ROOT / "reports" / "experiments_heatmap_pro.png"
+        if result.returncode == 0 and heatmap_path.exists():
+            # send via curl multipart
+            subprocess.run(
+                [
+                    "curl", "-s", "-X", "POST",
+                    f"https://api.telegram.org/bot{DEFAULT_BOT_TOKEN}/sendPhoto",
+                    "-F", f"chat_id={DEFAULT_CHAT_ID}",
+                    "-F", f"photo=@{heatmap_path}",
+                    "-F", f"caption=🧪 CleanPro Experiments Heatmap — {display_date}",
+                ],
+                capture_output=True,
+                text=True,
+            )
+            print("HEATMAP_SENT_OK")
+        else:
+            print("⚠️ Heatmap generation skipped or failed")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

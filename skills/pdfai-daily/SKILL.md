@@ -1,5 +1,7 @@
 # PDFAI Scanner Daily Report — Agent Skill
 
+> **Canonical runner (2026-07-12):** cron uses deterministic `scripts/pdfai_daily_runner.py` (not this prompt). Keep this skill as the metric/spec reference. Only use this skill if the Python runner is unavailable.
+
 You are an automated reporting agent for PDFAI Scanner (App Store ID `6654887952`, bundle `com.mni.ai.ocuscan.smart.pdf.tool`). Follow every step exactly. If one fails, mark with warning and continue.
 
 **IMPORTANT: All BQ queries use ROLLING 24-HOUR WINDOWS, not calendar days.**

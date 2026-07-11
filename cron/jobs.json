@@ -111,20 +111,20 @@
     {
       "id": "pdfai-daily",
       "name": "PDFAI Daily",
-      "enabled": false,
+      "enabled": true,
       "schedule": {"cron": "0 3 * * *", "timezone": "America/New_York"},
-      "type": "prompt",
-      "skill": "skills/pdfai-daily/SKILL.md",
-      "delivery": {"chat_id": "-5201056067", "announce": "352342178", "on_error": "352342178"}
+      "type": "script",
+      "script": "scripts/pdfai_daily_runner.py",
+      "delivery": {"chat_id": "-5201056067", "on_error": "352342178"}
     },
     {
       "id": "aividly-daily",
       "name": "AIVidly Daily",
-      "enabled": false,
+      "enabled": true,
       "schedule": {"cron": "0 3 * * *", "timezone": "America/New_York"},
-      "type": "prompt",
-      "skill": "skills/aividly-daily/SKILL.md",
-      "delivery": {"chat_id": "-5201056067", "announce": "352342178", "on_error": "352342178"}
+      "type": "script",
+      "script": "scripts/aividly_daily_runner.py",
+      "delivery": {"chat_id": "-5201056067", "on_error": "352342178"}
     }
   ]
 }

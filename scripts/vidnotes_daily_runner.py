@@ -1,401 +1,169 @@
 #!/usr/bin/env python3
-"""VidNotes Daily Report Runner - Direct Telegram delivery."""
-import json, subprocess, pathlib, urllib.request
+"""
+VidNotes Daily Report Runner
+============================
+Multiplatform growth, new-user funnel by platform, trial→paid, transcription quality, alerts.
+Rolling 24h. No events_*/intraday double-count. Dual Telegram delivery.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sys
 from pathlib import Path
-from datetime import datetime, timezone
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from daily_report_common import (  # noqa: E402
+    PROJECT_ROOT,
+    DEFAULT_BOT_TOKEN,
+    DEFAULT_CHAT_ID,
+    bq_query,
+    events_cte,
+    format_country_conversion,
+    format_country_lines,
+    format_source_split,
+    get_conversion_emoji,
+    pct,
+    platform_sql,
+    rolling_windows,
+    safe_rate,
+    save_report,
+    send_telegram,
+    traffic_bucket_sql,
+)
 
-# AAA OS bot (same as CleanPro)
-AAA_BOT_TOKEN = '8628864855:AAFWSgQCzUIGNtBK1dQk28rCJ7rqBo3v0zU'
-AAA_CHAT_ID = '-5201056067'
+PROJECT_ID = "vidnotes-7864d"
+DATASET = "analytics_508326759"
+BASE = PROJECT_ROOT / "data" / "vidnotes"
+REPORT_PATH = PROJECT_ROOT / "reports" / "vidnotes" / "daily"
+TZ = "America/New_York"
 
-# Silpho OS bot
-SILPHO_BOT_TOKEN = '8733346629:AAGixlBDK2fg6Xyjx5iLQDjsBGOhKz3xF4Q'
-SILPHO_CHAT_ID = '-5088617466'
+AAA_BOT_TOKEN = os.environ.get("AAA_BOT_TOKEN", DEFAULT_BOT_TOKEN)
+AAA_CHAT_ID = os.environ.get("AAA_CHAT_ID", DEFAULT_CHAT_ID)
+SILPHO_BOT_TOKEN = os.environ.get(
+    "SILPHO_BOT_TOKEN", "8733346629:AAGixlBDK2fg6Xyjx5iLQDjsBGOhKz3xF4Q"
+)
+SILPHO_CHAT_ID = os.environ.get("SILPHO_CHAT_ID", "-5088617466")
 
-BASE = PROJECT_ROOT / 'data' / 'vidnotes'
-REPORT_PATH = PROJECT_ROOT / 'reports' / 'vidnotes' / 'daily'
-PROJECT_ID = 'vidnotes-7864d'
-DATASET = 'analytics_508326759'
-
-
-def run(cmd, input_text=None):
-    return subprocess.run(cmd, input=input_text, text=True, capture_output=True, check=False)
-
-
-def bq_query(sql: str):
-    cp = run(['bq', 'query', '--use_legacy_sql=false', f'--project_id={PROJECT_ID}', '--format=json'], input_text=sql)
-    if cp.returncode != 0:
-        raise RuntimeError(cp.stderr or cp.stdout)
-    return json.loads(cp.stdout or '[]')
-
-
-def send_telegram(text: str, bot_token: str, chat_id: str):
-    payload = json.dumps({"chat_id": chat_id, "text": text, "parse_mode": ""}).encode('utf-8')
-    req = urllib.request.Request(
-        f'https://api.telegram.org/bot{bot_token}/sendMessage',
-        data=payload,
-        headers={'Content-Type': 'application/json'},
-    )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        return json.loads(resp.read())
+PAYWALL = "('onboarding_paywall_viewed','paywall_viewed')"
+PAID = "('onboarding_purchase_completed','purchase')"
 
 
-def pct(cur, base):
-    if not base:
-        return 'N/A'
-    return f'{((cur - base) / base) * 100:+.0f}%'
+def q(sql: str):
+    return bq_query(PROJECT_ID, sql)
 
 
-def get_conversion_emoji(rate):
-    if rate > 50: return '🟣'
-    elif rate > 30: return '🔵'
-    elif rate > 20: return '🟢'
-    elif rate > 10: return '✅'
-    elif rate > 5: return '⚠️'
-    elif rate > 2: return '🟠'
-    else: return '🔴'
+def cte(ss, se):
+    return events_cte(PROJECT_ID, DATASET, ss, se)
 
 
-def q_growth(start_us, end_us, suffix_start, suffix_end):
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-), user_seg AS (
-  SELECT user_pseudo_id, MAX(IF(event_name="first_open",1,0)) AS is_new
+def q_growth(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)}, user_seg AS (
+  SELECT user_pseudo_id, MAX(IF(event_name='first_open',1,0)) AS is_new
   FROM all_events WHERE event_timestamp BETWEEN {start_us} AND {end_us}
   GROUP BY 1
 )
-SELECT IF(is_new=1,"new","returning") AS segment, COUNT(*) AS users
+SELECT IF(is_new=1,'new','returning') AS segment, COUNT(*) AS users
 FROM user_seg GROUP BY 1
-'''
-    return bq_query(sql)
+"""
+    return q(sql)
 
 
-def q_countries(start_us, end_us, suffix_start, suffix_end):
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-)
-SELECT geo.country, COUNT(DISTINCT user_pseudo_id) AS users
-FROM all_events WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-GROUP BY 1 ORDER BY users DESC LIMIT 5
-'''
-    return bq_query(sql)
-
-
-def q_platform_breakdown(start_us, end_us, suffix_start, suffix_end):
-    """Get user breakdown by platform (iPhone, iPad, Android, Web)."""
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-)
-SELECT 
-  CASE 
-    WHEN device.category = 'tablet' AND device.operating_system = 'iOS' THEN 'iPad'
-    WHEN device.category = 'mobile' AND device.operating_system = 'iOS' THEN 'iPhone'
-    WHEN device.operating_system = 'Android' THEN 'Android'
-    WHEN device.category = 'desktop' OR device.operating_system IN ('Windows', 'Macintosh', 'Linux') THEN 'Web'
-    ELSE 'Other'
-  END AS platform,
-  COUNT(DISTINCT user_pseudo_id) AS users
-FROM all_events 
-WHERE event_timestamp BETWEEN {start_us} AND {end_us}
+def q_source_new_users(start_us, end_us, ss, se):
+    bucket = traffic_bucket_sql("e")
+    sql = f"""
+WITH {cte(ss, se)}
+SELECT {bucket} AS source, COUNT(DISTINCT e.user_pseudo_id) AS new_users
+FROM all_events e
+WHERE e.event_timestamp BETWEEN {start_us} AND {end_us} AND e.event_name='first_open'
 GROUP BY 1
-ORDER BY users DESC
-'''
-    return bq_query(sql)
+"""
+    return q(sql)
 
 
-def q_countries_new_users(start_us, end_us, suffix_start, suffix_end):
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-)
+def q_countries_new_users(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)}
 SELECT geo.country, COUNT(DISTINCT user_pseudo_id) AS new_users
-FROM all_events 
-WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-  AND event_name = 'first_open'
+FROM all_events
+WHERE event_timestamp BETWEEN {start_us} AND {end_us} AND event_name='first_open'
 GROUP BY 1 ORDER BY new_users DESC LIMIT 10
-'''
-    return bq_query(sql)
+"""
+    return q(sql)
 
 
-def q_conversion_by_country(start_us, end_us, suffix_start, suffix_end):
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-), country_events AS (
-  SELECT
-    geo.country,
-    user_pseudo_id,
-    event_name
-  FROM all_events
-  WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-    AND event_name IN ('onboarding_paywall_viewed', 'paywall_viewed', 'onboarding_purchase_completed', 'purchase', 'trial_start')
-), country_metrics AS (
-  SELECT
-    country,
-    COUNT(DISTINCT CASE WHEN event_name IN ('onboarding_paywall_viewed', 'paywall_viewed') THEN user_pseudo_id END) AS paywall_shown,
-    COUNT(DISTINCT CASE WHEN event_name IN ('onboarding_purchase_completed', 'purchase', 'trial_start') THEN user_pseudo_id END) AS converted
-  FROM country_events
-  GROUP BY country
-)
-SELECT
-  country,
-  paywall_shown,
-  converted,
-  ROUND(SAFE_DIVIDE(converted, paywall_shown) * 100, 1) AS conversion_rate
-FROM country_metrics
-WHERE paywall_shown > 0
-ORDER BY paywall_shown DESC
-LIMIT 10
-'''
-    return bq_query(sql)
-
-
-def q_conversion_by_platform(start_us, end_us, suffix_start, suffix_end):
-    """Get paywall shown and conversion by platform (iPhone, iPad, Android, Web)."""
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-), platform_events AS (
-  SELECT
-    CASE
-      WHEN device.category = 'tablet' AND device.operating_system = 'iOS' THEN 'iPad'
-      WHEN device.category = 'mobile' AND device.operating_system = 'iOS' THEN 'iPhone'
-      WHEN device.operating_system = 'Android' THEN 'Android'
-      WHEN device.category = 'desktop' OR device.operating_system IN ('Windows', 'Macintosh', 'Linux') THEN 'Web'
-      ELSE 'Other'
-    END AS platform,
-    user_pseudo_id,
-    event_name
-  FROM all_events
-  WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-    AND event_name IN ('onboarding_paywall_viewed', 'paywall_viewed', 'onboarding_purchase_completed', 'purchase', 'trial_start')
-), platform_metrics AS (
-  SELECT
-    platform,
-    COUNT(DISTINCT CASE WHEN event_name IN ('onboarding_paywall_viewed', 'paywall_viewed') THEN user_pseudo_id END) AS paywall_shown,
-    COUNT(DISTINCT CASE WHEN event_name IN ('onboarding_purchase_completed', 'purchase', 'trial_start') THEN user_pseudo_id END) AS converted
-  FROM platform_events
-  GROUP BY platform
-)
-SELECT
-  platform,
-  paywall_shown,
-  converted,
-  ROUND(SAFE_DIVIDE(converted, paywall_shown) * 100, 1) AS conversion_rate
-FROM platform_metrics
-WHERE paywall_shown > 0
-ORDER BY paywall_shown DESC
-'''
-    return bq_query(sql)
-
-
-def q_new_user_funnel_by_platform(start_us, end_us, suffix_start, suffix_end, now_us, suffix_end_7d):
-    """Per-platform funnel for NEW users only (cohort-restricted to first_open in window).
-
-    New users = first_open in [start_us, end_us]. Same-window paywall_viewed/trial_start.
-    Converted (7d) = those new users who purchased within 7d of first_open (window goes
-    forward to now_us; uses suffixes that span the lookback window).
-    """
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end_7d}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end_7d}'
-), new_users AS (
-  SELECT
-    user_pseudo_id,
-    CASE
-      WHEN device.category = 'tablet' AND device.operating_system = 'iOS' THEN 'iPad'
-      WHEN device.category = 'mobile' AND device.operating_system = 'iOS' THEN 'iPhone'
-      WHEN device.operating_system = 'Android' THEN 'Android'
-      WHEN device.category = 'desktop' OR device.operating_system IN ('Windows', 'Macintosh', 'Linux') THEN 'Web'
-      ELSE 'Other'
-    END AS platform,
-    MIN(event_timestamp) AS first_open_us
-  FROM all_events
-  WHERE event_name = 'first_open'
-    AND event_timestamp BETWEEN {start_us} AND {end_us}
-  GROUP BY 1, 2
-), new_user_events AS (
-  SELECT
-    nu.platform,
-    nu.user_pseudo_id,
-    e.event_name,
-    e.event_timestamp,
-    nu.first_open_us
+def q_platform_by_segment(start_us, end_us, ss, se):
+    plat = platform_sql("e")
+    sql = f"""
+WITH {cte(ss, se)},
+user_plat AS (
+  SELECT e.user_pseudo_id, {plat} AS platform,
+    MAX(IF(e.event_name='first_open',1,0)) AS is_new
   FROM all_events e
-  JOIN new_users nu USING (user_pseudo_id)
-  WHERE e.event_timestamp BETWEEN nu.first_open_us AND nu.first_open_us + 7 * 24 * 60 * 60 * 1000000
-), funnel AS (
-  SELECT
-    platform,
-    user_pseudo_id,
-    MAX(IF(event_name IN ('onboarding_paywall_viewed','paywall_viewed')
-           AND event_timestamp BETWEEN {start_us} AND {end_us}, 1, 0)) AS saw_paywall,
-    MAX(IF(event_name = 'trial_start'
-           AND event_timestamp BETWEEN {start_us} AND {end_us}, 1, 0)) AS started_trial,
-    MAX(IF(event_name IN ('onboarding_purchase_completed','purchase'), 1, 0)) AS converted_7d
-  FROM new_user_events
-  GROUP BY 1, 2
-)
-SELECT
-  platform,
-  COUNT(*) AS new_users,
-  SUM(saw_paywall) AS saw_paywall,
-  SUM(started_trial) AS started_trial,
-  SUM(converted_7d) AS converted_7d
-FROM funnel
-GROUP BY 1
-'''
-    return bq_query(sql)
-
-
-def q_transcription_by_platform(start_us, end_us, suffix_start, suffix_end):
-    """Per-platform transcription start/complete counts."""
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-), platform_evt AS (
-  SELECT
-    CASE
-      WHEN device.category = 'tablet' AND device.operating_system = 'iOS' THEN 'iPad'
-      WHEN device.category = 'mobile' AND device.operating_system = 'iOS' THEN 'iPhone'
-      WHEN device.operating_system = 'Android' THEN 'Android'
-      WHEN device.category = 'desktop' OR device.operating_system IN ('Windows', 'Macintosh', 'Linux') THEN 'Web'
-      ELSE 'Other'
-    END AS platform,
-    user_pseudo_id,
-    event_name
-  FROM all_events
-  WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-    AND event_name IN ('transcription_start', 'transcription_complete')
-)
-SELECT
-  platform,
-  COUNT(DISTINCT IF(event_name='transcription_start', user_pseudo_id, NULL)) AS started,
-  COUNT(DISTINCT IF(event_name='transcription_complete', user_pseudo_id, NULL)) AS completed
-FROM platform_evt
-GROUP BY platform
-'''
-    return bq_query(sql)
-
-
-def q_web_conversions_3d(now_us, suffix_start_3d, suffix_end):
-    """Web platform conversions per day for the last 3 calendar UTC days.
-
-    Counts distinct users on platform=Web who fired a purchase event in each
-    of the last 3 days (relative to now_us). Used by the alerts engine to
-    detect 3+ consecutive zero days.
-    """
-    day_us = 24 * 60 * 60 * 1_000_000
-    d0_start = now_us - day_us
-    d1_start = now_us - 2 * day_us
-    d2_start = now_us - 3 * day_us
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start_3d}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start_3d}' AND '{suffix_end}'
-), web_purchase AS (
-  SELECT user_pseudo_id, event_timestamp
-  FROM all_events
-  WHERE event_name IN ('onboarding_purchase_completed', 'purchase', 'trial_start')
-    AND ((device.category = 'desktop') OR device.operating_system IN ('Windows', 'Macintosh', 'Linux'))
-)
-SELECT
-  COUNT(DISTINCT IF(event_timestamp BETWEEN {d0_start} AND {now_us}, user_pseudo_id, NULL)) AS d0,
-  COUNT(DISTINCT IF(event_timestamp BETWEEN {d1_start} AND {d0_start}, user_pseudo_id, NULL)) AS d1,
-  COUNT(DISTINCT IF(event_timestamp BETWEEN {d2_start} AND {d1_start}, user_pseudo_id, NULL)) AS d2
-FROM web_purchase
-'''
-    return bq_query(sql)
-
-
-def q_platform_breakdown_by_segment(start_us, end_us, suffix_start, suffix_end):
-    """Platform breakdown split by NEW vs RETURNING cohort (mutually exclusive)."""
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-), in_window AS (
-  SELECT
-    user_pseudo_id,
-    event_name,
-    CASE
-      WHEN device.category = 'tablet' AND device.operating_system = 'iOS' THEN 'iPad'
-      WHEN device.category = 'mobile' AND device.operating_system = 'iOS' THEN 'iPhone'
-      WHEN device.operating_system = 'Android' THEN 'Android'
-      WHEN device.category = 'desktop' OR device.operating_system IN ('Windows', 'Macintosh', 'Linux') THEN 'Web'
-      ELSE 'Other'
-    END AS platform
-  FROM all_events
-  WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-), user_seg AS (
-  SELECT
-    user_pseudo_id,
-    ANY_VALUE(platform) AS platform,
-    MAX(IF(event_name='first_open', 1, 0)) AS is_new
-  FROM in_window
-  GROUP BY 1
-)
-SELECT
-  IF(is_new=1,'new','returning') AS segment,
-  platform,
-  COUNT(*) AS users
-FROM user_seg
-GROUP BY 1, 2
-'''
-    return bq_query(sql)
-
-
-def q_monetization_funnel(start_us, end_us, suffix_start, suffix_end):
-    """Monetization funnel: new vs returning users who hit paywall/trial/purchase events."""
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-), user_seg AS (
-  SELECT user_pseudo_id, MAX(IF(event_name="first_open",1,0)) AS is_new
-  FROM all_events WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-  GROUP BY 1
-), funnel AS (
-  SELECT
-    us.is_new,
-    e.user_pseudo_id,
-    MAX(IF(e.event_name IN ('onboarding_paywall_viewed', 'paywall_viewed'), 1, 0)) AS saw_paywall,
-    MAX(IF(e.event_name = 'trial_start', 1, 0)) AS started_trial,
-    MAX(IF(e.event_name IN ('onboarding_purchase_completed', 'purchase'), 1, 0)) AS purchased,
-    MAX(IF(e.event_name = 'purchase_cancelled', 1, 0)) AS cancelled,
-    MAX(IF(e.event_name = 'onboarding_purchase_failed', 1, 0)) AS failed,
-    MAX(IF(e.event_name = 'onboarding_paywall_skipped', 1, 0)) AS skipped
-  FROM all_events e
-  JOIN user_seg us ON e.user_pseudo_id = us.user_pseudo_id
   WHERE e.event_timestamp BETWEEN {start_us} AND {end_us}
   GROUP BY 1, 2
 )
-SELECT
-  IF(is_new=1,"new","returning") AS segment,
+SELECT IF(is_new=1,'new','returning') AS segment, platform, COUNT(*) AS users
+FROM user_plat GROUP BY 1, 2
+"""
+    return q(sql)
+
+
+def q_new_user_funnel_by_platform(start_us, end_us, ss, se, now_us, se7):
+    plat = platform_sql("e")
+    # Need wider suffix for 7d look-forward: use se7 for CTE
+    sql = f"""
+WITH {cte(ss, se7)},
+new_users AS (
+  SELECT e.user_pseudo_id, {plat} AS platform, MIN(e.event_timestamp) AS first_open_us
+  FROM all_events e
+  WHERE e.event_name='first_open'
+    AND e.event_timestamp BETWEEN {start_us} AND {end_us}
+  GROUP BY 1, 2
+),
+funnel AS (
+  SELECT nu.platform, nu.user_pseudo_id,
+    MAX(IF(e.event_name IN {PAYWALL}
+           AND e.event_timestamp BETWEEN {start_us} AND {end_us}, 1, 0)) AS saw_paywall,
+    MAX(IF(e.event_name='trial_start'
+           AND e.event_timestamp BETWEEN {start_us} AND {end_us}, 1, 0)) AS started_trial,
+    MAX(IF(e.event_name IN {PAID}
+           AND e.event_timestamp BETWEEN nu.first_open_us
+               AND nu.first_open_us + 7*24*60*60*1000000, 1, 0)) AS converted_7d
+  FROM new_users nu
+  LEFT JOIN all_events e ON e.user_pseudo_id = nu.user_pseudo_id
+  GROUP BY 1, 2
+)
+SELECT platform, COUNT(*) AS new_users,
+  SUM(saw_paywall) AS saw_paywall,
+  SUM(started_trial) AS started_trial,
+  SUM(converted_7d) AS converted_7d
+FROM funnel GROUP BY 1
+"""
+    return q(sql)
+
+
+def q_monetization_funnel(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)},
+user_seg AS (
+  SELECT user_pseudo_id, MAX(IF(event_name='first_open',1,0)) AS is_new
+  FROM all_events WHERE event_timestamp BETWEEN {start_us} AND {end_us}
+  GROUP BY 1
+), funnel AS (
+  SELECT us.is_new, e.user_pseudo_id,
+    MAX(IF(e.event_name IN {PAYWALL},1,0)) AS saw_paywall,
+    MAX(IF(e.event_name='trial_start',1,0)) AS started_trial,
+    MAX(IF(e.event_name IN {PAID},1,0)) AS purchased,
+    MAX(IF(e.event_name='purchase_cancelled',1,0)) AS cancelled,
+    MAX(IF(e.event_name='onboarding_purchase_failed',1,0)) AS failed,
+    MAX(IF(e.event_name='onboarding_paywall_skipped',1,0)) AS skipped
+  FROM all_events e JOIN user_seg us USING (user_pseudo_id)
+  WHERE e.event_timestamp BETWEEN {start_us} AND {end_us}
+  GROUP BY 1, 2
+)
+SELECT IF(is_new=1,'new','returning') AS segment,
   COUNT(*) AS total_users,
   SUM(saw_paywall) AS paywall_users,
   SUM(started_trial) AS trial_users,
@@ -403,376 +171,289 @@ SELECT
   SUM(cancelled) AS cancelled_users,
   SUM(failed) AS failed_users,
   SUM(skipped) AS skipped_users
-FROM funnel
-GROUP BY 1
-'''
-    return bq_query(sql)
+FROM funnel GROUP BY 1
+"""
+    return q(sql)
 
 
-def q_trial_to_paid_7d(now_us, suffix_start_7d, suffix_end):
-    """Rolling 7-day trial-to-paid: users who started trial AND purchased within the window."""
+def q_trial_to_paid_7d(now_us, ss, se):
     start_7d = now_us - 604800 * 1_000_000
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start_7d}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start_7d}' AND '{suffix_end}'
-), trial_users AS (
-  SELECT DISTINCT user_pseudo_id
-  FROM all_events
-  WHERE event_timestamp BETWEEN {start_7d} AND {now_us}
-    AND event_name = 'trial_start'
-), paid_users AS (
-  SELECT DISTINCT user_pseudo_id
-  FROM all_events
-  WHERE event_timestamp BETWEEN {start_7d} AND {now_us}
-    AND event_name IN ('onboarding_purchase_completed', 'purchase')
+    sql = f"""
+WITH {cte(ss, se)},
+trial_users AS (
+  SELECT DISTINCT user_pseudo_id FROM all_events
+  WHERE event_timestamp BETWEEN {start_7d} AND {now_us} AND event_name='trial_start'
+),
+paid_users AS (
+  SELECT DISTINCT user_pseudo_id FROM all_events
+  WHERE event_timestamp BETWEEN {start_7d} AND {now_us} AND event_name IN {PAID}
 )
 SELECT
   (SELECT COUNT(*) FROM trial_users) AS trial_count,
-  (SELECT COUNT(*) FROM trial_users t JOIN paid_users p ON t.user_pseudo_id = p.user_pseudo_id) AS trial_to_paid_count
-'''
-    return bq_query(sql)
+  (SELECT COUNT(*) FROM trial_users t JOIN paid_users p USING (user_pseudo_id)) AS trial_to_paid_count
+"""
+    return q(sql)
 
 
-def q_transcription(start_us, end_us, suffix_start, suffix_end):
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
+def q_conversion_by_country(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)},
+m AS (
+  SELECT geo.country AS country,
+    COUNT(DISTINCT IF(event_name IN {PAYWALL}, user_pseudo_id, NULL)) AS paywall_shown,
+    COUNT(DISTINCT IF(event_name IN {PAID} OR event_name='trial_start', user_pseudo_id, NULL)) AS converted
+  FROM all_events
+  WHERE event_timestamp BETWEEN {start_us} AND {end_us}
+  GROUP BY 1
 )
+SELECT country, paywall_shown, converted,
+  ROUND(SAFE_DIVIDE(converted, paywall_shown)*100,1) AS conversion_rate
+FROM m WHERE paywall_shown > 0
+ORDER BY paywall_shown DESC LIMIT 10
+"""
+    return q(sql)
+
+
+def q_conversion_global(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)}
 SELECT
-  COUNT(DISTINCT IF(event_name="transcription_start", user_pseudo_id, NULL)) AS started,
-  COUNT(DISTINCT IF(event_name="transcription_complete", user_pseudo_id, NULL)) AS completed
+  COUNT(DISTINCT IF(event_name IN {PAYWALL}, user_pseudo_id, NULL)) AS paywall_shown,
+  COUNT(DISTINCT IF(event_name IN {PAID} OR event_name='trial_start', user_pseudo_id, NULL)) AS converted
 FROM all_events
 WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-  AND event_name IN ("transcription_start", "transcription_complete")
-'''
-    return bq_query(sql)
+"""
+    return q(sql)
 
 
-def q_ai_features(start_us, end_us, suffix_start, suffix_end):
-    sql = f'''
-WITH all_events AS (
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-  UNION ALL
-  SELECT * FROM `{PROJECT_ID}.{DATASET}.events_intraday_*` WHERE _TABLE_SUFFIX BETWEEN '{suffix_start}' AND '{suffix_end}'
-)
+def q_transcription_by_platform(start_us, end_us, ss, se):
+    plat = platform_sql("e")
+    sql = f"""
+WITH {cte(ss, se)}
+SELECT {plat} AS platform,
+  COUNT(DISTINCT IF(e.event_name='transcription_start', e.user_pseudo_id, NULL)) AS started,
+  COUNT(DISTINCT IF(e.event_name='transcription_complete', e.user_pseudo_id, NULL)) AS completed
+FROM all_events e
+WHERE e.event_timestamp BETWEEN {start_us} AND {end_us}
+  AND e.event_name IN ('transcription_start','transcription_complete')
+GROUP BY 1
+"""
+    return q(sql)
+
+
+def q_ai_features(start_us, end_us, ss, se):
+    sql = f"""
+WITH {cte(ss, se)}
 SELECT event_name, COUNT(DISTINCT user_pseudo_id) AS users, COUNT(*) AS events
 FROM all_events
 WHERE event_timestamp BETWEEN {start_us} AND {end_us}
-  AND event_name IN ("ai_summary_generated","flashcard_created","content_export","export_initiated")
-GROUP BY 1 ORDER BY users DESC
-'''
-    return bq_query(sql)
+  AND event_name IN ('ai_summary_generated','flashcard_created','content_export','export_initiated')
+GROUP BY 1
+"""
+    return q(sql)
+
+
+def q_web_conversions_3d(now_us, ss, se):
+    """Distinct web paid/trial users in each of last 3 rolling 24h buckets."""
+    rows = []
+    for day_offset in range(3):
+        end = now_us - day_offset * 86400 * 1_000_000
+        start = end - 86400 * 1_000_000
+        plat = platform_sql("e")
+        sql = f"""
+WITH {cte(ss, se)}
+SELECT COUNT(DISTINCT e.user_pseudo_id) AS users
+FROM all_events e
+WHERE e.event_timestamp BETWEEN {start} AND {end}
+  AND e.event_name IN ('onboarding_purchase_completed','purchase','trial_start')
+  AND ({plat}) = 'Web'
+"""
+        try:
+            r = q(sql)
+            rows.append(int((r[0] if r else {}).get("users", 0) or 0))
+        except Exception:
+            rows.append(-1)
+    return rows  # [d0, d1, d2]
 
 
 def parse_funnel(data):
-    """Parse monetization funnel query results into a dict."""
-    result = {'new_users': 0, 'new_paywall': 0, 'new_trial': 0, 'new_paid': 0,
-              'new_cancelled': 0, 'new_failed': 0, 'new_skipped': 0,
-              'ret_users': 0, 'ret_paywall': 0, 'ret_trial': 0, 'ret_paid': 0,
-              'ret_cancelled': 0, 'ret_failed': 0, 'ret_skipped': 0}
+    result = {
+        "new_users": 0, "new_paywall": 0, "new_trial": 0, "new_paid": 0,
+        "new_cancelled": 0, "new_failed": 0, "new_skipped": 0,
+        "ret_users": 0, "ret_paywall": 0, "ret_trial": 0, "ret_paid": 0,
+        "ret_cancelled": 0, "ret_failed": 0, "ret_skipped": 0,
+    }
     for r in data:
-        seg = r.get('segment', '')
-        if seg == 'new':
-            result['new_users'] = int(r.get('total_users', 0) or 0)
-            result['new_paywall'] = int(r.get('paywall_users', 0) or 0)
-            result['new_trial'] = int(r.get('trial_users', 0) or 0)
-            result['new_paid'] = int(r.get('paid_users', 0) or 0)
-            result['new_cancelled'] = int(r.get('cancelled_users', 0) or 0)
-            result['new_failed'] = int(r.get('failed_users', 0) or 0)
-            result['new_skipped'] = int(r.get('skipped_users', 0) or 0)
-        elif seg == 'returning':
-            result['ret_users'] = int(r.get('total_users', 0) or 0)
-            result['ret_paywall'] = int(r.get('paywall_users', 0) or 0)
-            result['ret_trial'] = int(r.get('trial_users', 0) or 0)
-            result['ret_paid'] = int(r.get('paid_users', 0) or 0)
-            result['ret_cancelled'] = int(r.get('cancelled_users', 0) or 0)
-            result['ret_failed'] = int(r.get('failed_users', 0) or 0)
-            result['ret_skipped'] = int(r.get('skipped_users', 0) or 0)
+        p = "new_" if r.get("segment") == "new" else ("ret_" if r.get("segment") == "returning" else None)
+        if not p:
+            continue
+        result[f"{p}users"] = int(r.get("total_users", 0) or 0)
+        result[f"{p}paywall"] = int(r.get("paywall_users", 0) or 0)
+        result[f"{p}trial"] = int(r.get("trial_users", 0) or 0)
+        result[f"{p}paid"] = int(r.get("paid_users", 0) or 0)
+        result[f"{p}cancelled"] = int(r.get("cancelled_users", 0) or 0)
+        result[f"{p}failed"] = int(r.get("failed_users", 0) or 0)
+        result[f"{p}skipped"] = int(r.get("skipped_users", 0) or 0)
     return result
 
 
-def format_country_growth(countries_new):
-    lines = []
-    for r in countries_new[:10]:
-        country = r.get('country', '?')
-        users = int(r.get('new_users', 0))
-        lines.append(f"    {country}: {users}")
-    return '\n'.join(lines) if lines else "    (no data)"
-
-
-def format_country_conversion(conv_by_country):
-    if not conv_by_country:
-        return "    (no data)"
-    
-    total_shown = sum(int(r.get('paywall_shown', 0) or 0) for r in conv_by_country)
-    total_converted = sum(int(r.get('converted', 0) or 0) for r in conv_by_country)
-    overall_rate = round((total_converted / total_shown * 100), 1) if total_shown else 0.0
-    overall_emoji = get_conversion_emoji(overall_rate)
-    
-    lines = [f"    TOTAL: {total_shown}→{total_converted} ({overall_rate}%) {overall_emoji}"]
-    lines.append("    ─────────────────────")
-    
-    for r in conv_by_country[:10]:
-        country = r.get('country', '?')
-        shown = int(r.get('paywall_shown', 0))
-        converted = int(r.get('converted', 0))
-        rate = float(r.get('conversion_rate', 0) or 0)
-        emoji = get_conversion_emoji(rate)
-        lines.append(f"    {country}: {shown}→{converted} ({rate}%) {emoji}")
-    
-    return '\n'.join(lines)
-
-
 def main():
-    # Time windows (ET timezone for VidNotes)
-    now_epoch = int(subprocess.run(['bash', '-lc', 'TZ="America/New_York" date +%s'], capture_output=True, text=True).stdout.strip())
-    now_us = now_epoch * 1_000_000
-    h24 = (now_epoch - 86400) * 1_000_000
-    h48 = (now_epoch - 172800) * 1_000_000
-    h168 = (now_epoch - 604800) * 1_000_000
-    h192 = (now_epoch - 691200) * 1_000_000
-    
-    display_date = subprocess.run(['bash', '-lc', 'TZ="America/New_York" date +%Y-%m-%d'], capture_output=True, text=True).stdout.strip()
-    display_time = subprocess.run(['bash', '-lc', 'TZ="America/New_York" date +%H:%M'], capture_output=True, text=True).stdout.strip()
-    
-    suffix_start = subprocess.run(['bash', '-lc', 'TZ="America/New_York" date -v-2d +%Y%m%d 2>/dev/null || TZ="America/New_York" date -d "2 days ago" +%Y%m%d'], capture_output=True, text=True).stdout.strip()
-    suffix_end = subprocess.run(['bash', '-lc', 'TZ="America/New_York" date +%Y%m%d'], capture_output=True, text=True).stdout.strip()
-    suffix_week_start = subprocess.run(['bash', '-lc', 'TZ="America/New_York" date -v-9d +%Y%m%d 2>/dev/null || TZ="America/New_York" date -d "9 days ago" +%Y%m%d'], capture_output=True, text=True).stdout.strip()
-    suffix_week_end = subprocess.run(['bash', '-lc', 'TZ="America/New_York" date -v-6d +%Y%m%d 2>/dev/null || TZ="America/New_York" date -d "6 days ago" +%Y%m%d'], capture_output=True, text=True).stdout.strip()
-    # For 7d-forward windows (e.g. trial-to-paid for new users acquired today),
-    # extend the suffix window 7 days into the future so events_* tables match.
-    suffix_end_7d = subprocess.run(['bash', '-lc', 'TZ="America/New_York" date -v+7d +%Y%m%d 2>/dev/null || TZ="America/New_York" date -d "7 days" +%Y%m%d'], capture_output=True, text=True).stdout.strip()
-    suffix_3d_start = subprocess.run(['bash', '-lc', 'TZ="America/New_York" date -v-4d +%Y%m%d 2>/dev/null || TZ="America/New_York" date -d "4 days ago" +%Y%m%d'], capture_output=True, text=True).stdout.strip()
+    w = rolling_windows(TZ)
+    now_us, h24, h48 = w["now_us"], w["h24_us"], w["h48_us"]
+    h168, h192 = w["h168_us"], w["h192_us"]
+    ss, se = w["suffix_start"], w["suffix_end"]
+    sws, swe = w["suffix_week_start"], w["suffix_week_end"]
+    se7 = w["suffix_end_7d"]
+    s7 = w["suffix_7d_start"]
+    s3 = w["suffix_3d_start"]
+    display_date, display_time, tz_label = w["display_date"], w["display_time"], w["tz_label"]
+    print(f"=== VidNotes Daily Report — {display_date} ===\n")
 
-    # Today's data
-    g = q_growth(h24, now_us, suffix_start, suffix_end)
-    gd = q_growth(h48, h24, suffix_start, suffix_end)
-    gw = q_growth(h192, h168, suffix_week_start, suffix_week_end)
-    countries = q_countries(h24, now_us, suffix_start, suffix_end)
-    countries_new = q_countries_new_users(h24, now_us, suffix_start, suffix_end)
-    conv_by_country = q_conversion_by_country(h24, now_us, suffix_start, suffix_end)
-    conv_by_platform = q_conversion_by_platform(h24, now_us, suffix_start, suffix_end)
-    platforms = q_platform_breakdown(h24, now_us, suffix_start, suffix_end)
-    platforms_by_seg = q_platform_breakdown_by_segment(h24, now_us, suffix_start, suffix_end)
-    new_funnel_by_platform = q_new_user_funnel_by_platform(
-        h24, now_us, suffix_start, suffix_end, now_us, suffix_end_7d
-    )
-    trans_by_platform = q_transcription_by_platform(h24, now_us, suffix_start, suffix_end)
-    web_3d = q_web_conversions_3d(now_us, suffix_3d_start, suffix_end)
-    
-    # Monetization funnel: today, yesterday, last week
-    f = parse_funnel(q_monetization_funnel(h24, now_us, suffix_start, suffix_end))
-    f_d = parse_funnel(q_monetization_funnel(h48, h24, suffix_start, suffix_end))
-    f_w = parse_funnel(q_monetization_funnel(h192, h168, suffix_week_start, suffix_week_end))
+    g = q_growth(h24, now_us, ss, se)
+    gd = q_growth(h48, h24, ss, se)
+    gw = q_growth(h192, h168, sws, swe)
+    seg = {r["segment"]: int(r["users"]) for r in g}
+    segd = {r["segment"]: int(r["users"]) for r in gd}
+    segw = {r["segment"]: int(r["users"]) for r in gw}
+    new_users, returning = seg.get("new", 0), seg.get("returning", 0)
 
-    # 7-day trial-to-paid
-    t2p_raw = q_trial_to_paid_7d(now_us, suffix_week_start, suffix_end)
-    t2p = t2p_raw[0] if t2p_raw else {}
-    trial_7d = int(t2p.get('trial_count', 0) or 0)
-    trial_to_paid_7d = int(t2p.get('trial_to_paid_count', 0) or 0)
-    t2p_rate = round(trial_to_paid_7d / max(1, trial_7d) * 100, 1)
-    
-    trans = q_transcription(h24, now_us, suffix_start, suffix_end)
-    ai = q_ai_features(h24, now_us, suffix_start, suffix_end)
+    sources = q_source_new_users(h24, now_us, ss, se)
+    countries_new = q_countries_new_users(h24, now_us, ss, se)
+    platforms_by_seg = q_platform_by_segment(h24, now_us, ss, se)
 
-    # Parse growth
-    seg = {r['segment']: int(r['users']) for r in g}
-    segd = {r['segment']: int(r['users']) for r in gd}
-    segw = {r['segment']: int(r['users']) for r in gw}
-    
-    new_users = seg.get('new', 0)
-    returning = seg.get('returning', 0)
-    
-    # Parse platform breakdown by segment (NEW vs RETURNING — mutually exclusive)
-    plat_order = ['iPhone', 'iPad', 'Android', 'Web']
+    plat_order = ["iPhone", "iPad", "Android", "Web"]
     new_plat = {p: 0 for p in plat_order}
     ret_plat = {p: 0 for p in plat_order}
     for r in platforms_by_seg:
-        seg = r.get('segment', '')
-        plat = r.get('platform', 'Other')
-        if plat not in new_plat:
+        p = r.get("platform", "Other")
+        if p not in new_plat:
             continue
-        n = int(r.get('users', 0) or 0)
-        if seg == 'new':
-            new_plat[plat] += n
-        elif seg == 'returning':
-            ret_plat[plat] += n
-    new_platform_line = f"iPhone {new_plat['iPhone']} · iPad {new_plat['iPad']} · Android {new_plat['Android']} · Web {new_plat['Web']}"
-    ret_platform_line = f"iPhone {ret_plat['iPhone']} · iPad {ret_plat['iPad']} · Android {ret_plat['Android']} · Web {ret_plat['Web']}"
+        n = int(r.get("users", 0) or 0)
+        if r.get("segment") == "new":
+            new_plat[p] += n
+        elif r.get("segment") == "returning":
+            ret_plat[p] += n
+    new_platform_line = " · ".join(f"{p} {new_plat[p]}" for p in plat_order)
+    ret_platform_line = " · ".join(f"{p} {ret_plat[p]}" for p in plat_order)
 
-    # Parse new-user funnel by platform
-    nf = {p: {'new_users': 0, 'saw_paywall': 0, 'started_trial': 0, 'converted_7d': 0} for p in plat_order}
-    for r in new_funnel_by_platform:
-        p = r.get('platform', 'Other')
+    new_funnel = q_new_user_funnel_by_platform(h24, now_us, ss, se, now_us, se7)
+    nf = {p: {"new_users": 0, "saw_paywall": 0, "started_trial": 0, "converted_7d": 0} for p in plat_order}
+    for r in new_funnel:
+        p = r.get("platform", "Other")
         if p not in nf:
             continue
-        nf[p]['new_users'] = int(r.get('new_users', 0) or 0)
-        nf[p]['saw_paywall'] = int(r.get('saw_paywall', 0) or 0)
-        nf[p]['started_trial'] = int(r.get('started_trial', 0) or 0)
-        nf[p]['converted_7d'] = int(r.get('converted_7d', 0) or 0)
+        nf[p]["new_users"] = int(r.get("new_users", 0) or 0)
+        nf[p]["saw_paywall"] = int(r.get("saw_paywall", 0) or 0)
+        nf[p]["started_trial"] = int(r.get("started_trial", 0) or 0)
+        nf[p]["converted_7d"] = int(r.get("converted_7d", 0) or 0)
 
-    # Parse transcription (overall)
-    trans_data = trans[0] if trans else {}
-    trans_started = int(trans_data.get('started', 0) or 0)
-    trans_completed = int(trans_data.get('completed', 0) or 0)
-    trans_success = round((trans_completed / trans_started * 100), 1) if trans_started else 0.0
-
-    # Parse transcription per platform
-    trans_plat = {p: {'started': 0, 'completed': 0} for p in plat_order}
-    for r in trans_by_platform:
-        p = r.get('platform', 'Other')
-        if p not in trans_plat:
-            continue
-        trans_plat[p]['started'] = int(r.get('started', 0) or 0)
-        trans_plat[p]['completed'] = int(r.get('completed', 0) or 0)
-    trans_plat_rate = {}
-    for p in plat_order:
-        s = trans_plat[p]['started']
-        c = trans_plat[p]['completed']
-        trans_plat_rate[p] = round((c / s * 100), 1) if s else None  # None = no data, omit
-
-    # Web conversions for last 3 days
-    web_row = web_3d[0] if web_3d else {}
-    web_d0 = int(web_row.get('d0', 0) or 0)
-    web_d1 = int(web_row.get('d1', 0) or 0)
-    web_d2 = int(web_row.get('d2', 0) or 0)
-    
-    # Parse AI features
-    ai_dict = {r.get('event_name'): int(r.get('users', 0) or 0) for r in ai}
-    ai_summaries = ai_dict.get('ai_summary_generated', 0)
-    exports = ai_dict.get('content_export', 0) + ai_dict.get('export_initiated', 0)
-    flashcards = ai_dict.get('flashcard_created', 0)
-    
-    # Format country breakdowns
-    country_growth_breakdown = format_country_growth(countries_new)
-    country_conv_breakdown = format_country_conversion(conv_by_country)
-    
-    # Format platform conversion breakdown
-    platform_conv_lines = []
-    for r in conv_by_platform:
-        plat = r.get('platform', '?')
-        shown = int(r.get('paywall_shown', 0) or 0)
-        converted = int(r.get('converted', 0) or 0)
-        rate = float(r.get('conversion_rate', 0) or 0)
-        emoji = get_conversion_emoji(rate)
-        platform_conv_lines.append(f"    {plat}: {shown}→{converted} ({rate}%) {emoji}")
-    platform_conv_breakdown = '\n'.join(platform_conv_lines) if platform_conv_lines else "    (no data)"
-    
-    # Funnel derived metrics — today
-    total_pw = f['new_paywall'] + f['ret_paywall']
-    total_trial = f['new_trial'] + f['ret_trial']
-    total_paid = f['new_paid'] + f['ret_paid']
-    total_cancelled = f['new_cancelled'] + f['ret_cancelled']
-    total_failed = f['new_failed'] + f['ret_failed']
-    total_skipped = f['new_skipped'] + f['ret_skipped']
-
-    new_rate = round(f['new_paid'] / max(1, f['new_users']) * 100, 1)
-    ret_rate = round(f['ret_paid'] / max(1, f['ret_users']) * 100, 1)
-    trial_rate = round(total_trial / max(1, total_pw) * 100, 1)
-    pw_to_paid_rate = round(total_paid / max(1, total_pw) * 100, 1)
-
-    # Funnel DoD/WoW — compare total paid users
-    total_paid_d = f_d['new_paid'] + f_d['ret_paid']
-    total_paid_w = f_w['new_paid'] + f_w['ret_paid']
-    dod_paid = pct(total_paid, total_paid_d)
-    wow_paid = pct(total_paid, total_paid_w)
-
-    trans_emoji = '✅' if trans_success >= 82.0 else '🔴'
-
-    # ---- Per-platform NEW user funnel table (fixed-width columns) ----
-    def col(v):
-        return f"{v:>7}"
+    # funnel table
+    def col(vals, width=8):
+        return "".join(str(v).rjust(width) for v in vals)
 
     funnel_table = (
-        f"                    iPhone    iPad   Android    Web\n"
-        f"  New users     :  {col(nf['iPhone']['new_users'])} {col(nf['iPad']['new_users'])} {col(nf['Android']['new_users'])} {col(nf['Web']['new_users'])}\n"
-        f"  Saw paywall   :  {col(nf['iPhone']['saw_paywall'])} {col(nf['iPad']['saw_paywall'])} {col(nf['Android']['saw_paywall'])} {col(nf['Web']['saw_paywall'])}\n"
-        f"  Started trial :  {col(nf['iPhone']['started_trial'])} {col(nf['iPad']['started_trial'])} {col(nf['Android']['started_trial'])} {col(nf['Web']['started_trial'])}\n"
-        f"  Converted (7d):  {col(nf['iPhone']['converted_7d'])} {col(nf['iPad']['converted_7d'])} {col(nf['Android']['converted_7d'])} {col(nf['Web']['converted_7d'])}"
+        "                    iPhone    iPad   Android    Web\n"
+        f"  New users     :{col([nf[p]['new_users'] for p in plat_order])}\n"
+        f"  Saw paywall   :{col([nf[p]['saw_paywall'] for p in plat_order])}\n"
+        f"  Started trial :{col([nf[p]['started_trial'] for p in plat_order])}\n"
+        f"  Converted (7d):{col([nf[p]['converted_7d'] for p in plat_order])}"
     )
-
-    # Per-platform funnel rates (skip platforms with no signal)
-    def rate_str(num, den):
-        if den <= 0:
-            return None
-        return round(num / den * 100, 0)
-
-    pv_rates = {p: rate_str(nf[p]['saw_paywall'], nf[p]['new_users']) for p in plat_order}
-    pt_rates = {p: rate_str(nf[p]['started_trial'], nf[p]['saw_paywall']) for p in plat_order}
-    tp_rates = {p: rate_str(nf[p]['converted_7d'], nf[p]['started_trial']) for p in plat_order}
-
-    def fmt_rates(rates_dict):
-        parts = []
-        for p in plat_order:
-            v = rates_dict[p]
-            if v is None:
-                continue
-            parts.append(f"{p} {int(v)}%")
-        return ' · '.join(parts) if parts else '(no data)'
-
-    pv_line = fmt_rates(pv_rates)
-    pt_line = fmt_rates(pt_rates)
-    tp_line = fmt_rates(tp_rates)
-
-    # ---- Per-platform transcription line ----
-    trans_parts = []
+    pv_parts, pt_parts, tp_parts = [], [], []
     for p in plat_order:
-        r = trans_plat_rate[p]
-        if r is None:
+        nu, sp, st, c7 = nf[p]["new_users"], nf[p]["saw_paywall"], nf[p]["started_trial"], nf[p]["converted_7d"]
+        if nu > 0:
+            pv_parts.append(f"{p} {safe_rate(sp, nu):.0f}%")
+        if sp > 0:
+            pt_parts.append(f"{p} {safe_rate(st, sp):.0f}%")
+        if st > 0:
+            tp_parts.append(f"{p} {safe_rate(c7, st):.0f}%")
+    pv_line = " · ".join(pv_parts) or "n/a"
+    pt_line = " · ".join(pt_parts) or "n/a"
+    tp_line = " · ".join(tp_parts) or "n/a"
+
+    f = parse_funnel(q_monetization_funnel(h24, now_us, ss, se))
+    f_d = parse_funnel(q_monetization_funnel(h48, h24, ss, se))
+    f_w = parse_funnel(q_monetization_funnel(h192, h168, sws, swe))
+    new_rate = safe_rate(f["new_paid"], f["new_paywall"])
+    ret_rate = safe_rate(f["ret_paid"], f["ret_paywall"])
+    total_pw = f["new_paywall"] + f["ret_paywall"]
+    total_trial = f["new_trial"] + f["ret_trial"]
+    total_paid = f["new_paid"] + f["ret_paid"]
+    total_skipped = f["new_skipped"] + f["ret_skipped"]
+    total_failed = f["new_failed"] + f["ret_failed"]
+    total_cancelled = f["new_cancelled"] + f["ret_cancelled"]
+    trial_rate = safe_rate(total_trial, total_pw)
+    paid_d = f_d["new_paid"] + f_d["ret_paid"]
+    paid_w = f_w["new_paid"] + f_w["ret_paid"]
+
+    t2p = (q_trial_to_paid_7d(now_us, s7, se) or [{}])[0]
+    trial_7d = int(t2p.get("trial_count", 0) or 0)
+    trial_to_paid_7d = int(t2p.get("trial_to_paid_count", 0) or 0)
+    t2p_rate = safe_rate(trial_to_paid_7d, trial_7d)
+
+    conv_country = q_conversion_by_country(h24, now_us, ss, se)
+    glob = (q_conversion_global(h24, now_us, ss, se) or [{}])[0]
+
+    trans_by = q_transcription_by_platform(h24, now_us, ss, se)
+    trans_plat = {p: {"started": 0, "completed": 0} for p in plat_order}
+    for r in trans_by:
+        p = r.get("platform", "Other")
+        if p not in trans_plat:
             continue
-        # Per-platform color: <70 red, <82 amber, else default
-        if r < 70:
-            badge = ' 🔴'
-        elif r < 82:
-            badge = ' ⚠️'
-        else:
-            badge = ''
-        trans_parts.append(f"{p}: {int(round(r))}%{badge}")
-    trans_per_plat_line = ' · '.join(trans_parts) if trans_parts else '(no data)'
-
-    # ---- Alerts engine ----
-    alerts = []
-    # 1) Paywall view rate <30% on a platform when others >50%
-    pv_high = [p for p in plat_order if pv_rates[p] is not None and pv_rates[p] > 50]
-    pv_low = [p for p in plat_order if pv_rates[p] is not None and pv_rates[p] < 30]
-    if pv_low and pv_high:
-        for p in pv_low:
-            alerts.append(f"{p} paywall view rate {int(pv_rates[p])}% (others >50%) — paywall trigger may be broken")
-    # 2) Trial→Paid <10% on a platform when others >25%
-    tp_high = [p for p in plat_order if tp_rates[p] is not None and tp_rates[p] > 25]
-    tp_low = [p for p in plat_order if tp_rates[p] is not None and tp_rates[p] < 10]
-    if tp_low and tp_high:
-        for p in tp_low:
-            alerts.append(f"{p} trial→paid {int(tp_rates[p])}% (others >25%) — conversion is broken")
-    # 3) Transcription success on any platform <70%
+        trans_plat[p]["started"] = int(r.get("started", 0) or 0)
+        trans_plat[p]["completed"] = int(r.get("completed", 0) or 0)
+    total_started = sum(v["started"] for v in trans_plat.values())
+    total_completed = sum(v["completed"] for v in trans_plat.values())
+    trans_success = safe_rate(total_completed, total_started)
+    trans_emoji = "🔴" if (total_started and trans_success < 80) else ("⚠️" if trans_success < 90 else "✅")
+    trans_per_plat = []
+    trans_plat_rate = {}
     for p in plat_order:
-        r = trans_plat_rate[p]
+        s, c = trans_plat[p]["started"], trans_plat[p]["completed"]
+        if s > 0:
+            r = safe_rate(c, s)
+            trans_plat_rate[p] = r
+            flag = " 🔴" if r < 70 else ""
+            trans_per_plat.append(f"{p}: {r:.0f}%{flag}")
+        else:
+            trans_plat_rate[p] = None
+    trans_per_plat_line = " · ".join(trans_per_plat) or "n/a"
+
+    ai = q_ai_features(h24, now_us, ss, se)
+    ai_map = {r["event_name"]: int(r.get("events", 0) or 0) for r in ai}
+    ai_summaries = ai_map.get("ai_summary_generated", 0)
+    exports = ai_map.get("content_export", 0) + ai_map.get("export_initiated", 0)
+    flashcards = ai_map.get("flashcard_created", 0)
+
+    web_d0, web_d1, web_d2 = q_web_conversions_3d(now_us, s3, se)
+
+    alerts = []
+    # Android trial→paid lag vs iPhone
+    if nf["iPhone"]["started_trial"] >= 3 and nf["Android"]["started_trial"] >= 3:
+        ip_r = safe_rate(nf["iPhone"]["converted_7d"], nf["iPhone"]["started_trial"])
+        an_r = safe_rate(nf["Android"]["converted_7d"], nf["Android"]["started_trial"])
+        if ip_r > 25 and an_r < 10:
+            alerts.append(f"Android trial→paid {an_r:.0f}% vs iPhone {ip_r:.0f}% — conversion gap")
+    for p in plat_order:
+        r = trans_plat_rate.get(p)
         if r is not None and r < 70:
             alerts.append(f"{p} transcription {int(round(r))}% — degraded (overall {trans_success}%)")
-    # 4) Web 0 conversions for 3+ consecutive days
     if web_d0 == 0 and web_d1 == 0 and web_d2 == 0:
         alerts.append("Web 0 conversions for 3 consecutive days — Web monetization stalled")
+    alerts_block = ("\n🚨 ALERTS\n" + "\n".join(f"  - {a}" for a in alerts)) if alerts else ""
 
-    if alerts:
-        alerts_block = '\n🚨 ALERTS\n' + '\n'.join(f"  - {a}" for a in alerts)
-    else:
-        alerts_block = ''
-
-    report = f'''📊 VidNotes Daily — {display_date} (rolling 24h as of {display_time} ET)
+    report = f'''📊 VidNotes Daily — {display_date} (rolling 24h as of {display_time} {tz_label})
 
 👥 GROWTH
   New users: {new_users} (DoD {pct(new_users, segd.get('new', 0))} · WoW {pct(new_users, segw.get('new', 0))})
   Returning: {returning}
+  Source: {format_source_split(sources)}
 
   📱 Platform (NEW): {new_platform_line}
   📱 Platform (RET): {ret_platform_line}
 
   📍 New Users by Country (Top 10):
-{country_growth_breakdown}
+{format_country_lines(countries_new)}
 
 📊 NEW USER FUNNEL BY PLATFORM
 {funnel_table}
@@ -789,10 +470,10 @@ def main():
   Overall: {total_pw} paywall → {total_trial} trial → {total_paid} paid
   Paywall→Trial: {trial_rate}% · Trial→Paid (7d): {trial_to_paid_7d}/{trial_7d} ({t2p_rate}%)
   Skipped: {total_skipped} · Failed: {total_failed} · Cancelled: {total_cancelled}
-  DoD {dod_paid} · WoW {wow_paid}
+  Paid DoD {pct(total_paid, paid_d)} · WoW {pct(total_paid, paid_w)}
 
-  📍 Conversion by Country (Top 10):
-{country_conv_breakdown}
+  📍 Conversion by Country (Top 10; TOTAL=global):
+{format_country_conversion(conv_country, int(glob.get('paywall_shown',0) or 0), int(glob.get('converted',0) or 0))}
 
 🎙 PRODUCT
   Transcription success:
@@ -800,31 +481,19 @@ def main():
   Overall: {trans_success}% {trans_emoji}
   AI summaries: {ai_summaries} · Exports: {exports} · Flashcards: {flashcards}{alerts_block}'''
 
-    # Save report locally
-    BASE.mkdir(parents=True, exist_ok=True)
-    (BASE / 'latest_report.txt').write_text(report + '\n')
-    
-    # Archive to repo
-    REPORT_PATH.mkdir(parents=True, exist_ok=True)
-    (REPORT_PATH / f'{display_date}.md').write_text(report + '\n')
-    
-    # Send to both Telegram groups
+    save_report(BASE, report, REPORT_PATH, display_date)
     print(report)
-    
-    # Silpho OS (VidNotes partnership group)
     try:
-        tg1 = send_telegram(report, SILPHO_BOT_TOKEN, SILPHO_CHAT_ID)
-        print('SILPHO_TELEGRAM_SENT_OK')
+        send_telegram(report, SILPHO_BOT_TOKEN, SILPHO_CHAT_ID)
+        print("SILPHO_TELEGRAM_SENT_OK")
     except Exception as e:
-        print(f'SILPHO_TELEGRAM_ERROR: {e}')
-    
-    # AAA OS (main group)
+        print(f"SILPHO_TELEGRAM_ERROR: {e}")
     try:
-        tg2 = send_telegram(report, AAA_BOT_TOKEN, AAA_CHAT_ID)
-        print('AAA_TELEGRAM_SENT_OK')
+        send_telegram(report, AAA_BOT_TOKEN, AAA_CHAT_ID)
+        print("AAA_TELEGRAM_SENT_OK")
     except Exception as e:
-        print(f'AAA_TELEGRAM_ERROR: {e}')
+        print(f"AAA_TELEGRAM_ERROR: {e}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
