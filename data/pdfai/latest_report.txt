@@ -1,0 +1,48 @@
+📄 PDFAI Scanner — Daily Report
+📅 2026-07-15 (as of 03:00 ET)
+
+📊 OVERVIEW
+• DAU: 36 (DoD -16% · WoW -10%)
+• New Users: 9 (DoD -44% · WoW +12%)
+• Sessions: 50
+• Source: organic 9 (100%) · paid 0 (0%) · unattributed 0 (0%)
+
+📍 New Users by Country (Top 10):
+    Vietnam: 8
+    Sweden: 1
+
+📷 SCAN FUNNEL
+• Started: 28 → Completed: 19 (67.9%)
+• Exports: 22 (95.7% success) · Failures: 1
+• Value Realized: 19 (211.1% of new users)
+• First export complete: 0
+
+💰 MONETIZATION
+• Paywall Views: 9 → Dismissed: 7
+• Purchase Attempts: 0 → Purchases: 0 (0.0%) 🔴
+• Purchase Failures: 0
+• Paid DoD N/A · WoW N/A
+
+🎓 ONBOARDING
+• Progress: 8 → Completed: 5 (62.5%)
+• Start Creating Tapped: 5
+
+🔧 FEATURES
+• Features Used: 27
+• Audio Exports: 0 · TTS: 0
+• Quiz/Flashcard: 0/0
+• Reading Positions Saved: 69
+
+☁️ CLOUD & AUTH
+• Auth Success: 55 · Cloud Events: 9
+
+⚠️ ERRORS
+• AI Naming Failures: 0
+• Export Failures: 1 · Purchase Failures: 0
+
+⭐ REVIEWS
+• Modal Shown: 7 → Completed: 0
+• Write Review Page: 0
+
+🔗 VIRAL
+• Share Extension: 0 · Deep Links: 0
