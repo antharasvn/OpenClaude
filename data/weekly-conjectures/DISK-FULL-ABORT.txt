@@ -1,0 +1,38 @@
+# Weekly Conjecture Cycle — ABORTED (infra failure)
+
+Fire time: cron weekly (Sunday 08:00 ET), session date 2026-07-20
+Status: DID NOT RUN. No conjecture file produced. No memo delivered.
+
+## Root cause
+Every Bash invocation fails immediately with:
+  ENOSPC: no space left on device, mkdir '/private/tmp/claude-501/...'
+The harness cannot create the per-session temp dir under /private/tmp, so NO
+shell command runs — not `df`, not `bq`, not `curl`.
+
+## Key diagnostic
+- Write tool to /Users/.../OpenClaude SUCCEEDS → the Data volume (APFS) has space.
+- Bash mkdir under /private/tmp FAILS with ENOSPC → /private/tmp is full or has
+  exhausted inodes (likely a runaway accumulation of files, e.g. claude/temp
+  scratch, or a filled tmp).
+=> The problem is scoped to /private/tmp, not the whole disk. Needs a human (or a
+   restored shell) to clear /private/tmp.
+
+## What was and was NOT done
+- Step 1 (date range): NOT computed (needs Bash).
+- Step 2 (lockfile): NOT written. GOOD — the week is not falsely marked "ran";
+  the cycle can re-fire cleanly once the shell is restored.
+- Steps 3-6 (BigQuery for VidNotes/CleanPro/Echo/Mangii, conjectures): NOT run.
+- Step 7 (conjecture-*.md): NOT written.
+- Steps 8-9 (memo compose + Telegram delivery): NOT done. Bash/curl unavailable;
+  no alternative egress (no Telegram MCP; workspace CLAUDE.md forbids WebFetch).
+
+## Impact / urgency
+A full /private/tmp will also break the telegram-bot (getUpdates temp writes),
+auto-commit cron, and every other Bash-driven cron job on this host. This is
+higher priority than the conjecture memo itself. Fix: free /private/tmp.
+
+## Recovery
+1. Human clears /private/tmp (e.g. `sudo rm -rf /private/tmp/claude-501/*` or a
+   broader tmp cleanup after checking what filled it).
+2. Re-run the weekly conjecture cron for this week — no lockfile exists, so it
+   will proceed normally.
