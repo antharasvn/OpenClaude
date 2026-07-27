@@ -1,52 +1,95 @@
-📊 CleanPro Weekly — 2026-W25
-  (2026-06-09 → 2026-06-15 ICT)
+📊 CleanPro Weekly — 2026-W30 (Jul 20–26)
 
 💡 SYNTHESIS
-  CleanPro's W25 traffic cooled — total users fell 25% WoW (1,265 vs 1,692) and new installs dropped 47% to 349, an acquisition pullback. Yet quality improved: onboarding paywall conversion rose to 13.1% (from 10.4%) and returning-user retention climbed to 72%. The real leak is the in-app paywall — 455 views, 115 taps, only 9 completed purchases. Crashes were negligible.
+  Traffic fell hard but quality rose. New users dropped 31% WoW while returning users held flat, lifting retention to 69.9%. Onboarding paywall conversion improved to 9.9% (from 9.2%) — the rate is fine, the funnel top is not. Spain and Hungary carry all revenue; Romania, the Philippines and Costa Rica sent ~360 users and converted zero, for the seventh straight week.
 
 📈 GROWTH TRENDS (7d vs prior 7d)
-  New users: 349 (-314 (-47.4%))
-  Total users: 1265 (-427 (-25.2%))
-  Returning: 916 (-113 (-11.0%))
-  Retention (returning/total): 72.4% (prior 60.8%)
-  Best day: Friday with 404 users
+  New users: 391 (−30.7% vs 564)
+  Returning: 910 (−3.1% vs 939)
+  Total: 1,301 (−13.4% vs 1,503)
+  Retention (returning/total): 69.9% (+7.4pp)
+  Best day: Thursday — 397 users
 
 💰 CONVERSION FUNNEL
-  First open → Onboarding complete: 95.7% (349→334)
-  Onboarding → Paywall shown: 98.2% (334→328)
-  Paywall shown → Converted: 13.1% ← MAIN METRIC (prior 10.4%)
-  Onboarding paywall: 328 shown → 43 converted
-  In-app paywall: 455 shown → 115 tapped → 9 purchased
-  Trials: 47 | Purchase events: 83
+  First open → Onboarding complete: 97.4% (381/391)
+  Onboarding → Paywall shown: 98.4% (375/381)
+  Paywall shown → Converted: 9.9% (37/375) ← MAIN METRIC
+    prior week 9.2% (48/522) → +0.7pp, but −11 conversions
+  Onboarding paywall: 375 shown → 37 converted (272 dismissed)
+  In-app paywall: 493 shown → 129 purchase-tapped (26.2%), 329 closed
+  Trials: 47 (−29.9%) | Purchases: 84 (−2.3%) | IAP: 14
+  Cancellations logged: 0
 
 🌍 COUNTRY PERFORMANCE (top 10)
-  Romania: 272u → 18 (6.6%) ✅
-  Spain: 168u → 8 (4.8%) ✅
-  Philippines: 114u → 0 (0.0%) 🔴
-  Costa Rica: 102u → 4 (3.9%) ⚠️
-  (not set): 73u → 0 (0.0%) 🔴
-  United States: 49u → 0 (0.0%) 🔴
-  Italy: 47u → 1 (2.1%) ⚠️
-  Saudi Arabia: 43u → 0 (0.0%) 🔴
-  United Kingdom: 32u → 0 (0.0%) 🔴
-  Vietnam: 31u → 0 (0.0%) 🔴
+  Spain          370u   21 conv   5.7%
+  Romania        177u    0 conv   0.0%
+  Philippines    113u    0 conv   0.0%
+  Costa Rica      74u    0 conv   0.0%
+  (not set)       67u    0 conv   0.0%
+  Hungary         42u    6 conv  14.3%
+  United States   40u    0 conv   0.0%
+  Saudi Arabia    33u    0 conv   0.0%
+  United Kingdom  26u    0 conv   0.0%
+  Germany         23u    0 conv   0.0%
+  → 10 of 37 conversions came from outside the top 10.
 
 🧹 PRODUCT HEALTH
-  Scans: 398 users (490 total)
-  Cleans: 59 users (160 total)
-  First scan completion: 91
-  First delete completion: 113
-  Proof of value: started 306 → completed 299
+  Scans: 443 users (593 events)
+  Cleans: 74 users (234 events)
+  First scan complete: 111 | First delete complete: 142
+  Proof of value: 338 started → 334 complete (98.8%)
+  scan_v2: 2 users — still effectively dark
 
 🔴 ENGINEERING (7-day)
-  Total crashes: 1 (1 user)
-  No recurring crash signatures.
+  app_exception: 2 events / 2 users. No native Crashlytics export — GA4 proxy only. Healthy.
 
 📱 ASO — 7-DAY KEYWORD REPORT
-  ⚠️ Section skipped — Astro/Appeeky MCP not installed (5th consecutive skip: W19/W21/W22/W24/W25). Install the MCP or remove this section from the weekly skill.
+  ⚠️ Unavailable. Astro MCP (127.0.0.1:8089) not running and no Appeeky key on disk. Skipped for the 8th consecutive week — this needs installing or the section should be cut.
 
 🧪 THIS WEEK'S EXPERIMENT
-  Hypothesis: The in-app CleanPro paywall loses ~92% of tappers before purchase (115 tapped → 9 bought, 7.8%) — friction/price-shock at the final step.
-  Test: Firebase A/B on in-app paywall (1 RC bool, control=false/treatment=true). Treatment = pre-selected annual plan, free-trial toggle ON by default, single-tap buy (drop the intermediate plan-picker).
-  Success metric: cleanpro_paywall_purchase_tapped → in_app_purchase rate, target ≥15% (from 7.8%).
-  Expected: +50–90% lift in completed in-app purchases; watch refund/cancel rate as guardrail.
+  Hypothesis: Conversion in RO/PH/CR is zero because USD-anchored pricing is unaffordable, not because the paywall is bad — those users complete onboarding at the same rate as Spain, then bounce at price.
+  Test: Regional price tiers (PPP-indexed, ~40–60% of US price) for RO/PH/CR/SA via App Store price points. Control = current pricing.
+  Success metric: paywall_shown → converted > 2% in treatment regions.
+  Expected: +8–12 conversions/week from otherwise dead traffic; near-zero cannibalisation (baseline is literally 0).
+  ⚠️ NOTE: this is the 5th time this experiment has been proposed (W19, W21, W22, W24, W30) and it has never shipped. ~360 users/week convert at 0%. Either ship it or formally kill it.
+
+⚙️ RUN NOTES
+  • Ran Tue 2026-07-28, not Mon — Monday's cron misfired (Mac sleep, misfire_grace_time=300s).
+  • Window shifted to the true last Mon–Sun (Jul 20–26); GA4 daily table for Jul 27 had not exported yet.
+  • W28 and W29 weekly reports were never produced (no locks) — those weeks are unreported.
+
+---
+
+🚨 CleanPro W30 — CORRECTION + ROOT CAUSE
+
+My synthesis above was wrong on Romania and Costa Rica. They are NOT chronic zero-converters and this is NOT a pricing problem. Ignore the PPP experiment as written for those two markets.
+
+WHAT ACTUALLY HAPPENED
+  Paid acquisition to Romania and Costa Rica stopped dead on 2026-07-18 and has not resumed.
+
+  first_open where medium='search' (paid):
+    Romania      Jul 6–17: 271  →  Jul 18–26: 0
+    Costa Rica   Jul 6–17: 134  →  Jul 18–26: 1
+  Organic ('(none)') continued at its normal trickle, so this is campaign-side, not tracking.
+
+  Daily new users, Romania: 25, 21, 29, 19, 11 → 0 on Jul 18, and 0–3/day since.
+  Costa Rica: 11, 13, 16, 12, 12 → 0 on Jul 18, and 0 every day since.
+
+PRIOR CONVERSION (both were healthy)
+  Romania    19, 25, 13, 25, 22, 12 conversions/wk for 6 weeks → 0 in W30
+  Costa Rica  5,  8, 20, 10, 10,  7 conversions/wk for 6 weeks → 0 in W30
+  Their W30 zero is arithmetic, not behaviour: CleanPro converts at onboarding, onboarding needs new installs, and there were ~5 between them all week.
+
+THIS EXPLAINS THE WHOLE REPORT
+  • New users −31%: RO (−116) + CR (−86) ≈ the entire drop.
+  • Conversions 48 → 37: the −11 is RO+CR's missing volume.
+  • Paywall CVR 9.2% → 9.9% "improvement": survivorship. Losing two mid-CVR markets raised the average. Nothing improved.
+  • Retention 62.5% → 69.9% "improvement": same artefact — the new-user denominator vanished.
+
+ACTION (today, not next week)
+  1. Check Apple Search Ads: are the RO and CR campaigns paused, budget-exhausted, or is there a billing/payment failure on the account? A simultaneous two-country stop on one date points at account-level, not campaign-level.
+  2. If it was a deliberate pause, say so and I will re-baseline — but nothing in the logs suggests it.
+  3. Nine days of paid RO/CR traffic are already gone. At prior rates that is roughly 25–35 lost conversions.
+
+STILL VALID FROM THE ORIGINAL REPORT
+  The 0% markets worth a pricing test are Philippines, US, UK and Saudi Arabia — those have genuinely never converted. Romania and Costa Rica should be removed from that experiment.
