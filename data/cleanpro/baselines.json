@@ -1,54 +1,54 @@
 {
-  "updated": "2026-07-28",
-  "week": "2026-W30",
-  "period": "2026-07-20_2026-07-26",
+  "updated": "2026-08-04",
+  "week": "2026-W31",
+  "period": "2026-07-27_2026-08-02",
   "growth": {
-    "new_users": 391,
-    "returning_users": 910,
-    "total_users": 1301,
-    "retention_rate_pct": 69.9
+    "new_users": 679,
+    "returning_users": 827,
+    "total_users": 1506,
+    "retention_rate_pct": 54.9
   },
   "funnel": {
-    "first_open": 391,
-    "ob_viewed": 388,
-    "ob_completed": 381,
-    "pw_shown": 375,
-    "pw_converted": 37,
-    "pw_cvr_pct": 9.9,
-    "pw_dismissed": 272,
-    "trial_start": 47,
+    "first_open": 679,
+    "ob_viewed": 649,
+    "ob_completed": 633,
+    "pw_shown": 615,
+    "pw_converted": 64,
+    "pw_cvr_pct": 10.4,
+    "pw_dismissed": 435,
+    "trial_start": 76,
     "sub_cancelled": 0
   },
   "paywall": {
-    "onboarding_shown": 375,
-    "onboarding_converted": 37,
-    "inapp_shown": 493,
-    "inapp_tapped": 129,
-    "inapp_purchased": 14,
-    "purchase_event": 84
+    "onboarding_shown": 615,
+    "onboarding_converted": 64,
+    "inapp_shown": 538,
+    "inapp_tapped": 138,
+    "inapp_purchased": 12,
+    "purchase_event": 86
   },
   "product": {
-    "scan_completed_users": 443,
-    "first_scan_complete_users": 111,
-    "clean_completed_users": 74,
-    "first_delete_complete_users": 142,
-    "proof_of_value_started": 338,
-    "proof_of_value_complete": 334
+    "scan_completed_users": 594,
+    "first_scan_complete_users": 158,
+    "clean_completed_users": 94,
+    "first_delete_complete_users": 200,
+    "proof_of_value_started": 579,
+    "proof_of_value_complete": 563
   },
   "countries_top5_cvr": {
-    "Spain": 5.7,
-    "Romania": 0.0,
+    "Spain": 6.2,
+    "Romania": 5.7,
+    "Costa Rica": 5.7,
     "Philippines": 0.0,
-    "Costa Rica": 0.0,
-    "Hungary": 14.3
+    "Hungary": 7.0
   },
   "engineering": {
-    "app_exception_events": 2,
-    "app_exception_users": 2
+    "app_exception_events": 4,
+    "app_exception_users": 4
   },
   "caveats": {
-    "paid_ua_halt": "Apple Search Ads installs to Romania and Costa Rica stopped 2026-07-18 (medium='search': RO 271->0, CR 134->1). W30 growth, CVR and retention figures are distorted by this; do not use as a clean baseline.",
-    "aso": "unavailable - Astro MCP not running",
-    "window": "true last Mon-Sun; run was a day late (Monday cron misfire)"
+    "paid_ua_halt": "RESOLVED: Apple Search Ads installs to Romania and Costa Rica resumed 2026-07-28 after the Jul 18-27 halt. W30 (and partially W31) WoW deltas are distorted by the halt/recovery; treat W31 as the first re-baselining week.",
+    "aso": "unavailable - Astro MCP not running, no Appeeky key (9th consecutive week)",
+    "window": "true last Mon-Sun (Jul 27-Aug 2); run was a day late (Monday cron misfire, Mac sleep)"
   }
 }

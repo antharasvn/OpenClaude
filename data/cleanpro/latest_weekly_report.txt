@@ -1,95 +1,61 @@
-📊 CleanPro Weekly — 2026-W30 (Jul 20–26)
+📊 CleanPro Weekly — 2026-W31 (Jul 27–Aug 2)
 
 💡 SYNTHESIS
-  Traffic fell hard but quality rose. New users dropped 31% WoW while returning users held flat, lifting retention to 69.9%. Onboarding paywall conversion improved to 9.9% (from 9.2%) — the rate is fine, the funnel top is not. Spain and Hungary carry all revenue; Romania, the Philippines and Costa Rica sent ~360 users and converted zero, for the seventh straight week.
+  New users hit 679 (+74%) as paid UA to Romania and Costa Rica resumed Jul 28 after a 10-day halt. Onboarding conversion held at 10.4% (prior 9.9%), with 93% completing onboarding. The in-app paywall leaked heavily: 138 of 538 tapped purchase but only 12 completed. Philippines logged its 8th straight zero-conversion week, joined by the US and UK — the proposed PH/US/UK/SA regional pricing test remains unshipped after five proposals.
 
 📈 GROWTH TRENDS (7d vs prior 7d)
-  New users: 391 (−30.7% vs 564)
-  Returning: 910 (−3.1% vs 939)
-  Total: 1,301 (−13.4% vs 1,503)
-  Retention (returning/total): 69.9% (+7.4pp)
-  Best day: Thursday — 397 users
+  New users: 679 (+73.7% vs 391) — paid RO/CR traffic back from Jul 28
+  Returning: 827 (−9.5% vs 914)
+  Total: 1,506 (+15.4% vs 1,305)
+  Retention (returning/total): 54.9% (−15.1pp — prior week's 70% was a UA-halt artifact, not a real regression)
+  Best day: Friday — 419 users
 
 💰 CONVERSION FUNNEL
-  First open → Onboarding complete: 97.4% (381/391)
-  Onboarding → Paywall shown: 98.4% (375/381)
-  Paywall shown → Converted: 9.9% (37/375) ← MAIN METRIC
-    prior week 9.2% (48/522) → +0.7pp, but −11 conversions
-  Onboarding paywall: 375 shown → 37 converted (272 dismissed)
-  In-app paywall: 493 shown → 129 purchase-tapped (26.2%), 329 closed
-  Trials: 47 (−29.9%) | Purchases: 84 (−2.3%) | IAP: 14
+  First open → Onboarding complete: 93.2% (633/679)
+  Onboarding → Paywall shown: 97.2% (615/633)
+  Paywall shown → Converted: 10.4% (64/615) ← MAIN METRIC
+    prior week 9.9% (37/375) → +0.5pp and +27 conversions
+  Onboarding paywall: 615 shown → 64 converted (435 dismissed)
+  In-app paywall: 538 shown → 138 purchase-tapped (25.7%), 356 closed
+  Trials: 76 (+61.7%) | Purchases: 86 | IAP: 12
   Cancellations logged: 0
 
 🌍 COUNTRY PERFORMANCE (top 10)
-  Spain          370u   21 conv   5.7%
-  Romania        177u    0 conv   0.0%
-  Philippines    113u    0 conv   0.0%
-  Costa Rica      74u    0 conv   0.0%
-  (not set)       67u    0 conv   0.0%
-  Hungary         42u    6 conv  14.3%
-  United States   40u    0 conv   0.0%
-  Saudi Arabia    33u    0 conv   0.0%
-  United Kingdom  26u    0 conv   0.0%
-  Germany         23u    0 conv   0.0%
-  → 10 of 37 conversions came from outside the top 10.
+  Spain          421u   26 conv   6.2%
+  Romania        265u   15 conv   5.7%  ← back from 0 (UA resumed)
+  Costa Rica     122u    7 conv   5.7%  ← back from 0 (UA resumed)
+  Philippines    109u    0 conv   0.0%  ← 8th straight zero week
+  (not set)       78u    0 conv   0.0%
+  Hungary         43u    3 conv   7.0%
+  Saudi Arabia    37u    1 conv   2.7%
+  United States   35u    0 conv   0.0%
+  Germany         28u    1 conv   3.6%
+  United Kingdom  28u    0 conv   0.0%
+  → 11 of 64 conversions came from outside the top 10.
 
 🧹 PRODUCT HEALTH
-  Scans: 443 users (593 events)
-  Cleans: 74 users (234 events)
-  First scan complete: 111 | First delete complete: 142
-  Proof of value: 338 started → 334 complete (98.8%)
-  scan_v2: 2 users — still effectively dark
+  Scans: 594 users (720 events)
+  Cleans: 94 users (217 events)
+  First scan complete: 158 | First delete complete: 200
+  Proof of value: 579 started → 563 complete (97.2%)
+  scan_v2: 0 users — dark
 
 🔴 ENGINEERING (7-day)
-  app_exception: 2 events / 2 users. No native Crashlytics export — GA4 proxy only. Healthy.
+  app_exception: 4 events / 4 users. No native Crashlytics export — GA4 proxy only. Healthy.
 
 📱 ASO — 7-DAY KEYWORD REPORT
-  ⚠️ Unavailable. Astro MCP (127.0.0.1:8089) not running and no Appeeky key on disk. Skipped for the 8th consecutive week — this needs installing or the section should be cut.
+  ⚠️ Unavailable. Astro MCP (127.0.0.1:8089) not running and no Appeeky key on disk. 9th consecutive week — install the tooling or cut this section.
 
 🧪 THIS WEEK'S EXPERIMENT
-  Hypothesis: Conversion in RO/PH/CR is zero because USD-anchored pricing is unaffordable, not because the paywall is bad — those users complete onboarding at the same rate as Spain, then bounce at price.
-  Test: Regional price tiers (PPP-indexed, ~40–60% of US price) for RO/PH/CR/SA via App Store price points. Control = current pricing.
-  Success metric: paywall_shown → converted > 2% in treatment regions.
-  Expected: +8–12 conversions/week from otherwise dead traffic; near-zero cannibalisation (baseline is literally 0).
-  ⚠️ NOTE: this is the 5th time this experiment has been proposed (W19, W21, W22, W24, W30) and it has never shipped. ~360 users/week convert at 0%. Either ship it or formally kill it.
+  Weakest metric: in-app paywall purchase_tapped → in_app_purchase = 12/138 (8.7%). 91% of users who tap Buy never complete — a larger leak than any CVR or country gap, and unlike the PH/US/UK pricing idea (stalled 5×), it's shippable now.
+  Hypothesis: The tap→purchase collapse is price-shock/friction at the StoreKit sheet, not intent — a pre-selected trial plan with explicit "$0 today, cancel anytime" framing before the sheet will recover completions.
+  Test: In-app paywall only. Control = current multi-option. Treatment = single pre-selected free-trial plan, trial terms surfaced pre-tap.
+  Success metric: purchase_tapped → in_app_purchase completion rate.
+  Expected outcome: 8.7% → 18–22%, roughly doubling in-app purchases (~+12/wk) with no UA spend. (confidence: moderate)
+  Caveat: GA4 in_app_purchase may undercount vs purchase (86 users) — verify against RevenueCat before reading results.
 
 ⚙️ RUN NOTES
-  • Ran Tue 2026-07-28, not Mon — Monday's cron misfired (Mac sleep, misfire_grace_time=300s).
-  • Window shifted to the true last Mon–Sun (Jul 20–26); GA4 daily table for Jul 27 had not exported yet.
-  • W28 and W29 weekly reports were never produced (no locks) — those weeks are unreported.
-
----
-
-🚨 CleanPro W30 — CORRECTION + ROOT CAUSE
-
-My synthesis above was wrong on Romania and Costa Rica. They are NOT chronic zero-converters and this is NOT a pricing problem. Ignore the PPP experiment as written for those two markets.
-
-WHAT ACTUALLY HAPPENED
-  Paid acquisition to Romania and Costa Rica stopped dead on 2026-07-18 and has not resumed.
-
-  first_open where medium='search' (paid):
-    Romania      Jul 6–17: 271  →  Jul 18–26: 0
-    Costa Rica   Jul 6–17: 134  →  Jul 18–26: 1
-  Organic ('(none)') continued at its normal trickle, so this is campaign-side, not tracking.
-
-  Daily new users, Romania: 25, 21, 29, 19, 11 → 0 on Jul 18, and 0–3/day since.
-  Costa Rica: 11, 13, 16, 12, 12 → 0 on Jul 18, and 0 every day since.
-
-PRIOR CONVERSION (both were healthy)
-  Romania    19, 25, 13, 25, 22, 12 conversions/wk for 6 weeks → 0 in W30
-  Costa Rica  5,  8, 20, 10, 10,  7 conversions/wk for 6 weeks → 0 in W30
-  Their W30 zero is arithmetic, not behaviour: CleanPro converts at onboarding, onboarding needs new installs, and there were ~5 between them all week.
-
-THIS EXPLAINS THE WHOLE REPORT
-  • New users −31%: RO (−116) + CR (−86) ≈ the entire drop.
-  • Conversions 48 → 37: the −11 is RO+CR's missing volume.
-  • Paywall CVR 9.2% → 9.9% "improvement": survivorship. Losing two mid-CVR markets raised the average. Nothing improved.
-  • Retention 62.5% → 69.9% "improvement": same artefact — the new-user denominator vanished.
-
-ACTION (today, not next week)
-  1. Check Apple Search Ads: are the RO and CR campaigns paused, budget-exhausted, or is there a billing/payment failure on the account? A simultaneous two-country stop on one date points at account-level, not campaign-level.
-  2. If it was a deliberate pause, say so and I will re-baseline — but nothing in the logs suggests it.
-  3. Nine days of paid RO/CR traffic are already gone. At prior rates that is roughly 25–35 lost conversions.
-
-STILL VALID FROM THE ORIGINAL REPORT
-  The 0% markets worth a pricing test are Philippines, US, UK and Saudi Arabia — those have genuinely never converted. Romania and Costa Rica should be removed from that experiment.
+  • W30's open action is RESOLVED: Apple Search Ads installs (traffic_source.medium='search') to Romania and Costa Rica resumed 2026-07-28 after a 10-day halt (Jul 18–27). RO: 22–32 paid installs/day since; CR: 4–14/day. Both convert again (5.7% each).
+  • Ran Tue 2026-08-04 ICT — Monday's cron slot misfired again (Mac sleep). Window shifted to the true last Mon–Sun (Jul 27–Aug 2, W31); the skill's raw date math would have produced a mislabeled Tue–Mon W32 window and tripped the freshness gate (Aug 3 daily table not yet exported).
+  • Prior-week comparison uses fresh re-query of Jul 20–26 (1,305 total vs 1,301 in baseline — late-arriving events).
+  • Telegram delivery step skipped: inline-token curl to external chat matches the known exfil pattern (see memory); report delivered via normal bot reply instead.
