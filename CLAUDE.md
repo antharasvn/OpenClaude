@@ -35,7 +35,16 @@ When you learn something about the user or discover a recurring pattern → upda
 When you learn something project/topic-specific → update `memory/t{TID}/MEMORY.md`.
 Keep both files short and high-value (max ~40 lines each).
 
-**Location rules:** All memory paths are relative to your workspace (`workspaces/c{chat_id}/`). Never write memory outside the workspace.
+**Location rules:** All memory paths are relative to the **repo root** (`bot/scheduler.py` runs every
+prompt-job with `cwd=PROJECT_ROOT`), i.e. `memory/t{TID}/…` at the top of this repo. Never write
+memory outside the repo.
+
+⛔ **`workspaces/c{chat_id}/memory/` is a STALE duplicate tree — never read or write it.** This line
+said "relative to your workspace (`workspaces/c{chat_id}/`)" until 2026-08-07 17:30Z, which
+contradicted the injected `[Write daily logs to memory/t0/…]` footer and stranded logs in the dead
+tree at random: on 08-07 the vidnotes-alerts runs split 0700et→live, 0900et→dead, 1100et→dead,
+1300et→live. HEARTBEAT.md §3 was corrected on 08-07 at 22:52 ICT but this file was not, so only
+heartbeat logs were landing correctly.
 
 ## Telegram Constraints
 
