@@ -76,6 +76,12 @@
   file with no rotation. Anchor to the `^2026-` timestamp before alerting.
 - Check for lock acquisition timeouts (zero lifetime so far; a bare `grep -i lock` on infra.log
   matches `bot was blocked by the user`, which is unrelated)
+- ⛔ **Never window infra.log with `awk '$0 >= "<date>"'`** (near-miss 2026-08-07 23:39Z). Traceback
+  continuation lines carry no timestamp, and comparing `httpcore.ConnectError:` to a date literal is
+  true (`h` > `2`), so months-old tracebacks surface as current — it looked like a live DNS +
+  `SchedulerNotRunningError` + BigQuery cluster. Anchor on the line start instead:
+  `grep -E "^2026-08-08 0[456]:" logs/infra.log | grep "\[ERROR\]"`. Same rule as `resp=` above:
+  date the line before believing it.
 
 ## How to Alert
 - Send via telegram-sender skill to chat 352342178 (Boss DM)
