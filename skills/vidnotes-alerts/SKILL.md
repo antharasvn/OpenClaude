@@ -115,6 +115,30 @@ WHERE _TABLE_SUFFIX >= "{YESTERDAY}"
 
 Replace `{YESTERDAY}` with the value from Step 1 — same day-boundary fix as Step 3.
 
+> ⛔ **THIS CHECK IS STRUCTURALLY DEAD AT 4h CADENCE — measured 2026-08-07, awaiting a boss decision.**
+> It has not been evaluable once since the floor was raised 10→50 on 2026-06-03. Over the 86 four-hour
+> windows in 2026-07-24→08-06, **zero** reached 50 paywall views (avg 9.0, max 20). Every run skips
+> Step 4 and reports "no anomalies", which reads as a passing check rather than a blind one.
+>
+> **Widening the window does not fix it** — that was the obvious repair floated in the 08-06 17:00 ET
+> run log, and the binomial math rules it out. The threshold (`0.70 × baseline`) sits exactly at the
+> alternative hypothesis's mean, so power is pinned near 50% at *every* sample size, while the false
+> alarm rate is what moves:
+>
+> | n (paywall views) | ≈ window needed | false alarm | power |
+> |---|---|---|---|
+> | 50 | never reached | 41.6% | 64.9% |
+> | 100 | ~2 days | 27.7% | 58.9% |
+> | 400 | ~7 days | 5.1% | 48.5% |
+> | 1000 | ~18 days | 0.5% | 47.8% |
+>
+> There is no window length that makes this both quiet and sensitive: at 24h (~57 views) it would fire
+> falsely ~40% of the time, and a 7-day window is too slow to be an *alert*. The real repairs are a
+> different statistic (e.g. sequential/CUSUM on the daily series) or moving conversion monitoring to
+> the daily report entirely. That is a monitoring-policy call, so **leave the rules below unchanged**
+> until the boss decides. Do not "fix" this by lowering the floor — floor=10 is what produced the
+> bogus 100%-drop breaches in the first place.
+
 **Evaluation rules:**
 
 1. If BigQuery fails or is unavailable, log `"BigQuery unavailable — skipping conversion check"` and skip this step entirely. Do NOT mark a breach.
