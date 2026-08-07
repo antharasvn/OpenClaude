@@ -58,6 +58,32 @@ WHERE _TABLE_SUFFIX >= FORMAT_DATE('%Y%m%d', CURRENT_DATE('Asia/Saigon'))
     converted = int(float(row.get('converted', 0) or 0))
     conv_pct = float(row.get('conv_pct', 0) or 0)
     baselines = load_baselines()
+    # ⛔ THIS CHECK IS MIS-CALIBRATED AND FIRES ~60% OF RUNS — boss decision pending, do not "repair" piecemeal.
+    # Broken since its first commit (8347d75, 2026-04-12); this file has never been modified since.
+    # Independently re-measured 2026-08-07 02:1xZ over the 57 real cron slots in 07-31→08-06
+    # (48 evaluable): **29 / 48 = 60.4% would alert**, mean windowed rate 5.16% vs a 7.0% threshold.
+    # Confirms the earlier 59.8% estimate. Defects, all verified against BigQuery:
+    #  1. BASELINE NEVER LOADS. data/cleanpro/baselines.json has no top-level `conversion_rate_7d`
+    #     (the real value lives at funnel.pw_cvr_pct = 10.4). So .get(...) silently returns the 10.0
+    #     default on every run — the threshold is hardcoded 7.0%, and weekly baseline refreshes are inert.
+    #  2. `rc_initial_purchase` DOES NOT EXIST in analytics_269202926 (0 rows, 7d). The event that
+    #     actually pairs with cleanpro_paywall_shown is **`cleanpro_paywall_converted`** (9 users/7d).
+    #     So the numerator is onboarding_paywall_converted only (49 users/7d) while the denominator
+    #     unions BOTH shown events (549 + 501) — in-app views can never contribute a conversion.
+    #  3. Floor of 10 is the exact value vidnotes-alerts was hardened away from on 2026-06-03 for
+    #     producing bogus "100% drop" breaches. Same failure mode, never backported here.
+    # THE TWO OBVIOUS REPAIRS DO NOT WORK — measured, not assumed:
+    #  - Adding cleanpro_paywall_converted to the numerator: 60.4% → 56.3%. Correct, but ~useless alone.
+    #  - Reading funnel.pw_cvr_pct: raises the threshold 7.0 → 7.28, so it fires MORE, not less.
+    #  - Even the clean apples-to-apples version (onboarding-only rate vs the onboarding-only 10.4
+    #    baseline) still alerts on 21/40 = 52.5% of slots.
+    # ROOT CAUSE is the statistic, not the wiring: a 4h WINDOWED rate (mean 8.63% onboarding-only) is
+    # structurally below a weekly COHORT rate (10.4%) because conversions lag their paywall view across
+    # the window edge. Calibrating a windowed alert against a cohort baseline is wrong by construction —
+    # the 0.70 threshold then lands mid-distribution and the check behaves like a coin flip, which is the
+    # same defect found in the vidnotes conversion check on 2026-08-07.
+    # Real repair = compare the window against the WINDOWED historical distribution (e.g. same-hour
+    # percentile or CUSUM on the daily series), or move conversion monitoring to the daily report.
     baseline = float(baselines.get('conversion_rate_7d', 10.0) or 10.0)
     if paywall_shown < 10 or conv_pct >= baseline * 0.70:
         print(f'No anomalies detected. paywall_shown={paywall_shown} conv_pct={conv_pct} baseline={baseline}')
