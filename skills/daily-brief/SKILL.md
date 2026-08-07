@@ -6,9 +6,12 @@ This skill is designed to be run on a schedule (e.g., every morning via cron/lau
 
 ## What It Does
 When invoked, Claude will:
-1. Read memory files to understand current context (`memory/MEMORY.md` and recent daily logs)
+1. Read memory files to understand current context: `memory/t0/MEMORY.md` at the repo root, plus
+   recent daily logs. **Not `memory/MEMORY.md`** — that path has never existed at the repo root, and
+   this job's plist sets `WorkingDirectory` to the repo root (corrected 2026-08-07 18:1xZ). Nothing
+   is auto-injected into a scheduled run except today's daily logs, so Read it explicitly.
 2. Check for any pending tasks or reminders
-3. Summarize what happened yesterday (from yesterday's `memory/YYYY-MM-DD.md`)
+3. Summarize what happened yesterday (from yesterday's `memory/t0/YYYY-MM-DD/*.md`)
 4. Note any upcoming deadlines, events, or items requiring attention
 5. Deliver a concise briefing via the `telegram-sender` skill
 

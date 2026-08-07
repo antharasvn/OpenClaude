@@ -25,15 +25,30 @@ Before responding to the user, write a brief daily log:
 
 ## Memory System
 
-| Tier | File | Purpose |
-|------|------|---------|
-| Hot | `memory/MEMORY.md` | User preferences, cross-topic facts — auto-injected into system prompt |
-| Hot | `memory/t{TID}/MEMORY.md` | Topic-specific persistent knowledge — auto-injected |
-| Cold | `memory/t{TID}/{date}/*.md` | Daily logs — written by you, searched when relevant |
+| Tier | File | Purpose | Actually injected? |
+|------|------|---------|--------------------|
+| Hot | `memory/t{TID}/MEMORY.md` | Topic-specific persistent knowledge | **NO — you must Read it explicitly** |
+| Cold | `memory/t{TID}/{date}/*.md` | Daily logs — written by you | **Yes, today's only**, in full, by the SessionStart hook |
 
-When you learn something about the user or discover a recurring pattern → update `memory/MEMORY.md`.
-When you learn something project/topic-specific → update `memory/t{TID}/MEMORY.md`.
-Keep both files short and high-value (max ~40 lines each).
+⛔ **"Auto-injected into system prompt" was WRONG and is corrected here (2026-08-07 18:1xZ).** Both Hot
+rows carried that claim, and a third row named `memory/MEMORY.md` — a file that **does not exist at the
+repo root**. Verified: `bot/scheduler.py:140-147` `_run_prompt` spawns `claude -p` directly and never
+calls `bot/permissions.py`, so **no `append_system_prompt` is built for any cron prompt-job** — no
+IDENTITY.md, no USER.md, no MEMORY.md. The `_build_append_system_prompt` machinery at
+`permissions.py:75-123` is reached only by the interactive chat path (`backends.py:249`), and it reads
+`{cwd}/memory/MEMORY.md`, i.e. the **stale** `workspaces/c352342178/` copy (8.5 KB, last touched
+2026-08-04) — never this repo's 36 KB `memory/t0/MEMORY.md`. It also skips topic memory outright for
+`thread_id == 0` (`permissions.py:110`).
+
+**Consequence: `memory/t0/MEMORY.md` is write-only unless a prompt explicitly Reads it.** Only
+`HEARTBEAT.md` §3 names the correct path. Filing a durable finding there does **not** make the next
+day's `vidnotes-alerts` / `cleanpro-weekly` / `weekly-conjecture` run see it — only same-day
+propagation works, via the daily-log hook. If a finding must change a job's behaviour, **put it in that
+job's `SKILL.md`**, not only in memory. (This is why the Crashlytics false negative recurred 4× while
+correctly documented in memory, and only stopped once the recipe was inlined into SKILL.md Step 5.)
+
+When you learn something project/topic-specific → update `memory/t{TID}/MEMORY.md`, and if it must
+change a scheduled job, patch that job's `SKILL.md` too. Keep memory files high-value.
 
 **Location rules:** All memory paths are relative to the **repo root** (`bot/scheduler.py` runs every
 prompt-job with `cwd=PROJECT_ROOT`), i.e. `memory/t{TID}/…` at the top of this repo. Never write

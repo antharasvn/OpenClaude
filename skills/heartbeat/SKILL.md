@@ -8,7 +8,9 @@ Designed to run on a schedule (e.g., every 2-4 hours via cron, launchd, or syste
 ## What It Does
 When invoked, the heartbeat skill will:
 1. Read `heartbeat-state.json` to determine when the last heartbeat ran
-2. Review memory files (`memory/MEMORY.md` and today's daily memory) for pending tasks, reminders, or items flagged for follow-up
+2. Review memory files (`memory/t0/MEMORY.md` at the repo root, plus today's daily logs) for pending
+   tasks, reminders, or items flagged for follow-up. **Not `memory/MEMORY.md`** — that path has never
+   existed at the repo root (corrected 2026-08-07 18:1xZ); nothing is auto-injected, so Read it.
 3. Check if anything notable has changed or needs attention
 4. If there is something worth reporting, send a brief update via the `telegram-sender` skill
 5. Update `heartbeat-state.json` with the current timestamp
