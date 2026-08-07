@@ -27,6 +27,13 @@
   and (b) `coalesce` collapses some consecutive misses, so the warning count is a **lower bound** —
   it reconciled exactly on 08-05 (20 ran + 4 missed = 24) and was one short on 08-06 (18 + 5 = 23).
   Use it to find *which* jobs and *when*; confirm counts against `Running job:` lines in infra.log.
+- **The detector LAGS — never use an unchanged `was missed by` count to clear the CURRENT window.**
+  APScheduler writes the warning when the executor NEXT evaluates that job, which can be longer than
+  one heartbeat interval. On 2026-08-07 05:03Z three slots (vidnotes-daily + vidnotes-alerts 12:00
+  ICT, echo-backend-alerts 12:05 ICT) were already irrecoverably dropped while the count sat at 49.
+  For "did anything drop just now", check `Running job:` lines + `last_run` against the derived slot.
+  Bonus: a host-sleep window is datable from your own Bash calls — a >1 min gap between consecutive
+  tool returns is the machine asleep, and it matches the `getUpdates` polling gap in `.err` exactly.
 - Known open defect (reported 2026-08-07, needs a bot restart = boss's call): `CronTrigger.from_crontab`
   in `bot/scheduler.py` does not remap crontab dow (0=Sun) to APScheduler dow (0=Mon), so every
   weekly job fires one day late. Don't re-report it as new; check `memory/t0/MEMORY.md` first.
