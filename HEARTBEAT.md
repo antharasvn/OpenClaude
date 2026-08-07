@@ -16,9 +16,23 @@
   that test every night: `vidnotes-alerts` (`0 7-23/2` Warsaw) is dark 23:00→07:00 Warsaw = 8h = 4x
   its 2h interval, and `cleanpro-alerts` (`0 8-22/2` Saigon) is dark 22:00→08:00 Saigon = 10h = 5x.
   A 2x rule false-alarms 4h and 6h per night respectively. Schedule gaps are not staleness.
+- **Do this BEFORE the hand-derivation above — dropped slots are NOT silent:**
+  `grep "was missed by" /tmp/claude-telegram-bot.err | tail -20`
+  APScheduler logs `Run time of job "<name>" was missed by H:MM:SS` for every slot it discards, with a
+  timestamp and the job name. **This never appears in `logs/infra.log`** — `bot/logging_setup.py` gives
+  `bot.infra` its own handler with `propagate=False`, while `apscheduler.executors.default` goes to the
+  ROOT logger → console → launchd's stderr file. That is why cycles up to 2026-08-07 00:41Z believed the
+  drops were invisible and rebuilt them by hand from cron expressions + `pmset`. Caveats: (a) the file
+  covers the CURRENT bot process only (it starts at process launch; `pgrep`+`ps -o etime` to date it),
+  and (b) `coalesce` collapses some consecutive misses, so the warning count is a **lower bound** —
+  it reconciled exactly on 08-05 (20 ran + 4 missed = 24) and was one short on 08-06 (18 + 5 = 23).
+  Use it to find *which* jobs and *when*; confirm counts against `Running job:` lines in infra.log.
 - Known open defect (reported 2026-08-07, needs a bot restart = boss's call): `CronTrigger.from_crontab`
   in `bot/scheduler.py` does not remap crontab dow (0=Sun) to APScheduler dow (0=Mon), so every
   weekly job fires one day late. Don't re-report it as new; check `memory/t0/MEMORY.md` first.
+- `coalesce=True` is ALREADY in effect (APScheduler 3.11.3 default; verified in `.venv` —
+  `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). Don't propose
+  it as a fix; only raising `misfire_grace_time` at `bot/scheduler.py:24` is a real change.
 
 ### 2. Bot Health
 - Check if the Telegram bot process is running: `pgrep -f "python.*-m bot"`
