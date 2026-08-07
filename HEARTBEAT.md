@@ -56,7 +56,12 @@
 ### 4. Infra Log Anomalies
 - Read last 20 lines of `logs/infra.log`
 - Check for repeated `resp=0` or `resp=66` (stuck/failed sessions)
-- Check for lock acquisition timeouts
+- **DATE these before believing them (2026-08-07 13:47Z): both are DEAD.** Last `resp=0` was
+  **2026-07-11**, last `resp=66` **2026-05-15**. A `grep -oE "resp=[0-9]+" | tail | uniq -c` shows
+  `2 resp=0 / 4 resp=66` and reads as live — it isn't, those are months-old lines near the tail of a
+  file with no rotation. Anchor to the `^2026-` timestamp before alerting.
+- Check for lock acquisition timeouts (zero lifetime so far; a bare `grep -i lock` on infra.log
+  matches `bot was blocked by the user`, which is unrelated)
 
 ## How to Alert
 - Send via telegram-sender skill to chat 352342178 (Boss DM)
