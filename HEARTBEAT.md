@@ -34,6 +34,20 @@
   For "did anything drop just now", check `Running job:` lines + `last_run` against the derived slot.
   Bonus: a host-sleep window is datable from your own Bash calls — a >1 min gap between consecutive
   tool returns is the machine asleep, and it matches the `getUpdates` polling gap in `.err` exactly.
+- ⛔ **"The host is awake, so jobs are firing" is FALSE. The scheduler stays blind for as long as the
+  host slept, AFTER it wakes** (mechanism confirmed 2026-08-07 22:19Z, n=3, residuals +6 s / −15 s / +9 s).
+  APScheduler's main loop waits on `Event.wait(timeout)`, and Darwin's `CLOCK_MONOTONIC` **does not
+  advance while the host is asleep** — so a timer armed for T fires at T *plus the cumulative sleep
+  since it was armed*, and the 300 s grace then discards every slot in that gap. Worked example from
+  08-08 ICT: last evaluation 01:05:00, next armed for 01:54:17, 1892 s of sleep intervened → executor
+  next evaluated at **02:25:43** (predicted 02:25:49) and discarded all four slots. The host was fully
+  awake and Telegram-polling every 10 s from 01:38:29 onward — **31 min of awake-but-blind.**
+  This **corrects `memory/t0/MEMORY.md`'s "slot awake → 0/54 missed (0%)"**: that was measured
+  slot-vs-dark-window, which cannot see this. The right question is *"was there sleep between the last
+  evaluation and the slot"*, not *"was the slot dark"*.
+  **Consequences for this checklist:** (a) never clear a window using host-awake or `getUpdates`
+  liveness; (b) the last `Running job:` line is the only proof of evaluation; (c) you can *predict* the
+  next evaluation — take the last evaluation, add the armed interval, add cumulative `pmset` sleep since.
 - Known open defect (reported 2026-08-07, needs a bot restart = boss's call): `CronTrigger.from_crontab`
   in `bot/scheduler.py` does not remap crontab dow (0=Sun) to APScheduler dow (0=Mon), so every
   weekly job fires one day late. Don't re-report it as new; check `memory/t0/MEMORY.md` first.
