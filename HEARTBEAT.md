@@ -140,6 +140,14 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
   a `dasd` hold is *sizeable but unbounded*, a display hold is not. And per memory §504, check the
   listed owner: a heartbeat's own `caffeinate` is not host health.
+  ⚠️ **`powerd`'s "Prevent sleep while display is on" is usually NOT the root hold — sort by age to
+  find the real one** (2026-08-09 05:23 ICT). That cycle read four concurrent holds; powerd's was the
+  oldest-looking at 37:14, but `AnyDesk` (pid 42666) had held `PreventUserIdleDisplaySleep` for 27:14
+  and `coreaudiod` a matching audio hold for 27:10 **created for pid 42666**. Display-on is the
+  *effect* of the remote session, so powerd is downstream. This matters for forecasting: a powerd
+  hold looks open-ended, but here every hold falls the moment the boss closes AnyDesk, and sleep
+  becomes possible within minutes. **Attribute S = 0 to the root owner and bound your prediction by
+  that process's life, not by powerd's.**
   ⛔ **"a dasd hold is short-lived" was WRONG and is corrected here (2026-08-09 01:52 ICT).** Three
   measured batches ran **~40 min** (00:25→01:05, covered the 01:05 slot clean), **≥26 min**
   (01:26→01:52, still up at probe), and **≥55 min** (02:49:13→03:44:26, still up at probe — new max,
