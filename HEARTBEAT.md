@@ -81,8 +81,15 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   cycle has an exact baseline instead of eyeballing `pmset` windows. **Paste epoch and ICT verbatim from
   the same call — never retype or approximate either**: the 00:20Z cycle hand-wrote one epoch as
   `…771.x` and mislabelled another probe by 20 min, and the next cycle had to reconstruct both.
-- **Predicting the next evaluation:** last `Running job:` time + armed interval + cumulative sleep since.
-  Confirmed n=4 (latest: armed 23:05:00 for 23:54:17, 2481 s slept → evaluated 00:35:38, 4 slots dropped).
+- **Predicting the next evaluation:** last `Running job:` time + armed wait + cumulative sleep since.
+  ⚠️ **The armed wait is `min(next_run_time)` across ALL jobs — never the watched job's own next slot.**
+  APScheduler waits until the *earliest* due job, so an interval job you don't care about sets the wake.
+  Getting this wrong makes the model look falsified by hundreds of seconds: on 08-09 the 01:05:00
+  evaluation looked armed for echo's 02:05:00, predicting 02:05:00 + 907 s sleep = 02:20:07 against an
+  observed 02:09:24 (−643 s). It was armed for the **interval pair's 01:54:17**, and
+  `01:54:17 + 907.1 s = 02:09:24.1` vs observed **02:09:24** — residual ≈ **0 s**.
+  Confirmed n=5; residuals +6 / −15 / +9 / −6 / ~0 s. Derive the arming set from `cron/jobs.json`
+  (every job, all timezones) plus the `next run at:` field in the `was missed by` warnings.
 - **Keep-awake source is NOT always the display.** Six cycles ran clean on a display-on assertion; the
   00:37 ICT cycle ran clean on transient `dasd` BackgroundTask assertions (Spotlight indexing) with the
   display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
