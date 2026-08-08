@@ -179,6 +179,23 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   sleep accrue: the onset is datable to the second from the `getUpdates` polling gap in
   `/tmp/claude-telegram-bot.err`. A later-than-predicted gap means something re-tickled HID and is
   **inconclusive, not a refutation**.
+  ✅ **First scoring of that rule — INCONCLUSIVE, as designed, and it yields two refinements**
+  (2026-08-09 06:40 ICT). The 06:21 cycle predicted display sleep 06:28:31 / system sleep ~06:29:31
+  from a 06:18:31 tickle. Neither happened: meter flat at **34510.3** from 06:21:57 through 06:39:58,
+  no `getUpdates` gap. Cause is datable, not speculative — at 06:40:40 `UserIsActive` age was
+  **00:06:17**, i.e. HID re-tickled at **06:34:23**. Re-tickle ⇒ inconclusive. Two fixes:
+  1. **Don't compute `last_tickle + 10 min` — read the release time off the assertion.** The
+     `UserIsActive` row prints `Timeout will fire in N secs`; that N *is* the countdown remainder.
+     It also confirms the 600 s length arithmetically at n=2 probes: 06:22:20 → age 229 s + 370 s
+     remaining = 599; 06:40:40 → 377 s + 223 s = 600. Matches `displaysleep 10` exactly.
+  2. ⛔ **The chain has an unstated precondition: no OTHER idle-sleep hold may be up.** "Display
+     sleeps → powerd's hold falls → system sleep within ~1 min" is only valid when powerd's is the
+     lone hold. At 06:40:40 `grok-1.0.0-macos-aarch64` (pid **88960**) again held
+     `NoIdleSleepAssertion` "grok: agent turn in progress" — a *different pid* from the 13250 seen at
+     05:42, so grok re-arms this hold **per agent turn**, and it blocks idle sleep independently of
+     the display. Before predicting sleep onset, check `PreventUserIdleSystemSleep` /
+     `NoIdleSleepAssertion` for non-powerd owners; if any is up, the onset is **unpredictable** (§1's
+     unbounded-holder rule), regardless of what the `UserIsActive` timer says.
 - `coalesce=True` is ALREADY in effect (APScheduler 3.11.3 default; verified in `.venv` —
   `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). Don't propose
   it as a fix; only raising `misfire_grace_time` at `bot/scheduler.py:24` is a real change.
