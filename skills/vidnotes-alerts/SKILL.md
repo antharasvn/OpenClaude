@@ -88,9 +88,32 @@ If the file exists but has missing or null fields, use the seed value for those 
 >
 > All Android degradation sits in **1.5.2**, which ran 80.0 / 88.9 / 84.9% on 08-04/05/06 before
 > breaking — so it is **not a bad build shipping**; it points at a server-side or config change on the
-> Android path from ~08-07. Onset is a drift, not a step (6h buckets 87.5 → 80.0 → 54.5 → 33.3 → 46.2
-> → 25.0), so there is no deploy-shaped break to correlate against. Android 1.4.10 held 100% but at
-> n=3/day — **too small to be a control; do not cite it as exonerating the client.**
+> Android path from ~08-07. Android 1.4.10 held 100% but at n=3/day — **too small to be a control; do
+> not cite it as exonerating the client.**
+>
+> ⛔ **"Onset is a drift, not a step … no deploy-shaped break to correlate against" was WRONG and is
+> corrected here (2026-08-08 11:0xZ).** That read came from 6h buckets (87.5 → 80.0 → 54.5 → 33.3 →
+> 46.2 → 25.0), which smear discrete outages across neighbouring buckets into a fake ramp. At **hourly**
+> resolution the failure is **episodic — total outages separated by healthy stretches**, so there IS a
+> discrete event to correlate against and whoever investigates should be looking for one:
+>
+> | ICT hours | Android started/completed | rate |
+> |---|---|---|
+> | 08-07 00–11 | 18 / 15 | 83% — healthy |
+> | 08-07 12–18 | 12 / 7 | 58% — degraded |
+> | 08-07 19–23 | 15 / 5 | 33% — bad |
+> | 08-08 00–02 | 6 / 5 | 83% — **healthy again** |
+> | 08-08 03–06 | **7 / 0** | **0% — total outage**, Fisher vs base p = 2.1e-05 |
+> | 08-08 09–18 | 22 / 17 | 77% — **recovered**, p = 0.78 vs base (n.s.) |
+>
+> The 03–06 ICT zero is not a completion-lag artifact: 07–08 ICT carried no traffic at all, so no
+> lagged completions are hiding there. (The 08-07 evening figure IS partly softened by lag — 23:00's
+> 4/0 may complete inside 08-08 00:00 — so treat the evening decline as moderate confidence and the
+> 03–06 blackout as high confidence.) Correlate against server/config events at **~03:00 ICT 08-08
+> (20:00 UTC 08-07)** and **~12:00 ICT 08-07**, not against a gradual ramp.
+>
+> Hourly distinct-user counts do **not** sum to the daily distinct total (a user active in two hours is
+> one user/day) — per-hour *rates* are valid, per-hour *sums* are not.
 
 Run this BigQuery SQL against the intraday table (NOT `events_*` — use `events_intraday_*`):
 
