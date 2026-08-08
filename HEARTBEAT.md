@@ -148,6 +148,17 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   hold looks open-ended, but here every hold falls the moment the boss closes AnyDesk, and sleep
   becomes possible within minutes. **Attribute S = 0 to the root owner and bound your prediction by
   that process's life, not by powerd's.**
+  ⛔ **That AnyDesk conclusion was WRONG and is corrected here (2026-08-09 05:42 ICT, 19 min later).**
+  At the next probe `PreventUserIdleDisplaySleep` was **0** — the AnyDesk and `coreaudiod` rows gone —
+  yet **powerd's hold survived and had aged to 55:52**, older than AnyDesk's ever was. A hold that
+  outlives the thing it is supposedly downstream of is not downstream of it. Worse, **AnyDesk released
+  without exiting** (pid 42666 still alive at `01-08:33:59`), so "bound the prediction by that
+  process's life" fails in *both* directions. The real root at that probe was a third process:
+  pid 13250 `grok-1.0.0-macos-aarch64`, `NoIdleSleepAssertion` named "grok: agent turn in progress",
+  which blocks idle sleep independent of the display — that is why S stayed 0 across the release.
+  **Age-sorting finds candidates, not causes.** Confirm a root hold by seeing it outlive another
+  hold's release, and treat any unbounded holder (a multi-minute "agent turn in progress", a `dasd`
+  batch) as unpredictable in release time — never schedule against it in either direction.
   ⛔ **"a dasd hold is short-lived" was WRONG and is corrected here (2026-08-09 01:52 ICT).** Three
   measured batches ran **~40 min** (00:25→01:05, covered the 01:05 slot clean), **≥26 min**
   (01:26→01:52, still up at probe), and **≥55 min** (02:49:13→03:44:26, still up at probe — new max,
