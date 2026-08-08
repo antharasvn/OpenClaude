@@ -115,7 +115,18 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   **Verify a predicted evaluation with `grep "was missed by" …err | tail -1` and read its LEADING
   timestamp — not the count** (§1's detector-lag rule bans the count, and it is the wrong field here
   anyway). Only fall back to `Running job:` when you expect the slot to survive.
-  Confirmed n=8; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 s. Derive the arming set from
+  ✅ **The model's POSITIVE branch is now confirmed too — it predicts survivals, not just deaths**
+  (2026-08-09 05:05 ICT, n=9). Every prior confirmation predicted a *discard*; this one predicted a
+  **clean fire** and got it. Armed at 04:21:36 for `echo-backend-alerts` 05:05:00 ICT, S = 0 s of
+  accrued sleep (meter flat at 34510.2–34510.3 across 04:45:05 → 05:05:31), predicted a clean fire
+  with **no** warning written — observed `Running job: echo-backend-alerts` at **05:05:00**, completed
+  05:05:07, `was missed by` unchanged at 42 with its latest stamp still 04:21:36. Residual **0 s**.
+  So a handoff may now assert *"this slot will survive"*, and it is **cheaper to resolve than a
+  discard**: a clean fire leaves durable evidence (`Running job:` in `logs/infra.log` + a fresh
+  `last_run` in `cron/state.json`), so **any** later cycle can settle it retroactively — no blocking
+  watch, and no §0 budget arithmetic about which cycle can reach the tick. Prefer forecasting the
+  survival branch for exactly this reason.
+  Confirmed n=9; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 s. Derive the arming set from
   `cron/jobs.json` (every job, all timezones) plus the `next run at:` field in the `was missed by`
   warnings. The n=7 case (2026-08-09 03:16:47, predicted 03:16:47.7) was written **two cycles ahead**
   of the tick and named the exact pair of jobs the warning would carry — the model is now precise
