@@ -18,6 +18,13 @@ kill either — 600 s of wall had already elapsed at the 02:49:16 wake and nothi
   If `ps` shows two `gtimeout 600 claude` processes, that is this, not a hung cycle.
 **Still never schedule an observation later than ~T+7 min of awake time.** A slot outside that window
 belongs to the NEXT cycle: write the log now and hand it over with the exact commands to resolve it.
+⚠️ **When you hand a checkpoint forward, name the cycle that can actually resolve it — don't assume
+"the next one" does.** Cycles start ~15 min apart, so a tick at T+10 min of *this* cycle lands only
+~5 min before the next cycle even starts, and can miss it too. Measured 2026-08-09: the 20:28Z cycle
+(start 03:26:17) handed the 03:54:17 interval-pair tick to "the next cycle"; that cycle started
+**03:44:08** with its `gtimeout` kill at **03:54:08** — short of the tick by **9 s**, so the checkpoint
+had to be handed forward a second time. Before writing the handoff, compare the tick against
+`next_cycle_start + 600 s` (≈ this cycle's start + ~15 min + 600 s), not against the interval alone.
 The 00:57Z cycle launched a background wait for a 01:05 slot, computed the kill at 01:06:10 against a
 01:05:50 return — **~20 s to write a 7 KB log** — and correctly aborted. Losing the log costs more
 than any single observation is worth.
@@ -112,10 +119,12 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
   a `dasd` hold is *sizeable but unbounded*, a display hold is not. And per memory §504, check the
   listed owner: a heartbeat's own `caffeinate` is not host health.
-  ⛔ **"a dasd hold is short-lived" was WRONG and is corrected here (2026-08-09 01:52 ICT).** Two
-  measured batches ran **~40 min** (00:25→01:05, covered the 01:05 slot clean) and **≥26 min**
-  (01:26→01:52, still up at probe). Age the holds in `pmset -g assertions` and treat the release time
-  as *unpredictable*, not imminent — you cannot schedule against it in either direction.
+  ⛔ **"a dasd hold is short-lived" was WRONG and is corrected here (2026-08-09 01:52 ICT).** Three
+  measured batches ran **~40 min** (00:25→01:05, covered the 01:05 slot clean), **≥26 min**
+  (01:26→01:52, still up at probe), and **≥55 min** (02:49:13→03:44:26, still up at probe — new max,
+  measured 2026-08-09 03:44 ICT). The spread 26→55+ min shows no characteristic length. Age the holds
+  in `pmset -g assertions` and treat the release time as *unpredictable*, not imminent — you cannot
+  schedule against it in either direction.
 - `coalesce=True` is ALREADY in effect (APScheduler 3.11.3 default; verified in `.venv` —
   `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). Don't propose
   it as a fix; only raising `misfire_grace_time` at `bot/scheduler.py:24` is a real change.
