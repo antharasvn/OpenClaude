@@ -86,8 +86,12 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 - **Keep-awake source is NOT always the display.** Six cycles ran clean on a display-on assertion; the
   00:37 ICT cycle ran clean on transient `dasd` BackgroundTask assertions (Spotlight indexing) with the
   display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
-  a `dasd` hold is short-lived, a display hold is not. And per memory §504, check the listed owner: a
-  heartbeat's own `caffeinate` is not host health.
+  a `dasd` hold is *sizeable but unbounded*, a display hold is not. And per memory §504, check the
+  listed owner: a heartbeat's own `caffeinate` is not host health.
+  ⛔ **"a dasd hold is short-lived" was WRONG and is corrected here (2026-08-09 01:52 ICT).** Two
+  measured batches ran **~40 min** (00:25→01:05, covered the 01:05 slot clean) and **≥26 min**
+  (01:26→01:52, still up at probe). Age the holds in `pmset -g assertions` and treat the release time
+  as *unpredictable*, not imminent — you cannot schedule against it in either direction.
 - `coalesce=True` is ALREADY in effect (APScheduler 3.11.3 default; verified in `.venv` —
   `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). Don't propose
   it as a fix; only raising `misfire_grace_time` at `bot/scheduler.py:24` is a real change.
