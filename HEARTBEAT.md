@@ -165,6 +165,20 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   measured 2026-08-09 03:44 ICT). The spread 26→55+ min shows no characteristic length. Age the holds
   in `pmset -g assertions` and treat the release time as *unpredictable*, not imminent — you cannot
   schedule against it in either direction.
+- **Read `pmset -g custom` too — assertions say WHAT holds the host awake, the timers say FOR HOW
+  LONG** (added 2026-08-09 06:21 ICT; never read by any prior cycle). Measured on this host:
+  `displaysleep 10`, `sleep 1`, identical on AC and Battery. So powerd's "Prevent sleep while display
+  is on" — which §1 above calls open-ended — is really a **10-minute countdown re-armed by every HID
+  event**, and since `sleep 1` has long expired by then, system sleep follows within ~1 min of the
+  display going dark. Date the last HID event from the `UserIsActive` row's age in
+  `pmset -g assertions` (or its `Timeout will fire in N secs`), then predict sleep onset at
+  last_tickle + ~11 min. What is unbounded is the *user*, not the assertion. This also explains the
+  05:42 paradox above: `PreventUserIdleDisplaySleep` can read **0** while powerd's hold stands,
+  because powerd tracks the display's *power state*, not the assertion count. Confidence moderate,
+  n=0 — the timers are measured, the chain is inferred. Confirm it for free on any cycle that sees
+  sleep accrue: the onset is datable to the second from the `getUpdates` polling gap in
+  `/tmp/claude-telegram-bot.err`. A later-than-predicted gap means something re-tickled HID and is
+  **inconclusive, not a refutation**.
 - `coalesce=True` is ALREADY in effect (APScheduler 3.11.3 default; verified in `.venv` —
   `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). Don't propose
   it as a fix; only raising `misfire_grace_time` at `bot/scheduler.py:24` is a real change.
