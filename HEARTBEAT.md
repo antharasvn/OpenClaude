@@ -98,8 +98,15 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   evaluation looked armed for echo's 02:05:00, predicting 02:05:00 + 907 s sleep = 02:20:07 against an
   observed 02:09:24 (−643 s). It was armed for the **interval pair's 01:54:17**, and
   `01:54:17 + 907.1 s = 02:09:24.1` vs observed **02:09:24** — residual ≈ **0 s**.
-  Confirmed n=5; residuals +6 / −15 / +9 / −6 / ~0 s. Derive the arming set from `cron/jobs.json`
-  (every job, all timezones) plus the `next run at:` field in the `was missed by` warnings.
+  Confirmed n=7; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 s. Derive the arming set from
+  `cron/jobs.json` (every job, all timezones) plus the `next run at:` field in the `was missed by`
+  warnings. The n=7 case (2026-08-09 03:16:47, predicted 03:16:47.7) was written **two cycles ahead**
+  of the tick and named the exact pair of jobs the warning would carry — the model is now precise
+  enough to pre-announce which slots die, so state that prediction in the handoff every cycle.
+  ⚠️ The 20:08Z cycle derived the arming set correctly for the tick it was watching and then, one
+  paragraph later, forecast the *next* arming from cron expressions alone — missing the interval pair
+  at 03:54:17 and calling 04:00:00. **Interval jobs have no cron expression; re-read them from
+  `cron/jobs.json` every time you forecast an arming, not just the first time.**
 - **Keep-awake source is NOT always the display.** Six cycles ran clean on a display-on assertion; the
   00:37 ICT cycle ran clean on transient `dasd` BackgroundTask assertions (Spotlight indexing) with the
   display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
