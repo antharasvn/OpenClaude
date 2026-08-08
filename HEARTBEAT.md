@@ -57,6 +57,26 @@
   **no** daily log; `prompt` jobs spawn `claude -p` (`vidnotes-alerts`) and take **minutes** and do
   write one. Comparing the two reads as "the fast job exits early and reports a false green" — it
   doesn't. Check `type` in `cron/jobs.json` before treating a short duration or a missing log as a fault.
+- **Clock-skew sleep meter — use this, NOT `pmset -g log`** (added 2026-08-09 00:37 ICT; `pmset -g log`
+  hung twice on 08-08 precisely when the host was sleeping heavily, i.e. exactly when it is needed).
+  Darwin's `CLOCK_MONOTONIC` does not advance during sleep, so wall-minus-monotonic *is* cumulative sleep:
+  ```
+  python3 -c "
+  import time, subprocess, re
+  boot=int(re.search(r'sec = (\d+)', subprocess.run(['/usr/sbin/sysctl','-n','kern.boottime'],capture_output=True,text=True).stdout).group(1))
+  print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), '%.1f'%time.time(), 'cum_sleep %.1f'%(time.time()-boot-time.monotonic()))"
+  ```
+  (`sysctl` is not on PATH — use `/usr/sbin/sysctl`.) Take it EVERY cycle and record it, so the next
+  cycle has an exact baseline instead of eyeballing `pmset` windows. **Paste epoch and ICT verbatim from
+  the same call — never retype or approximate either**: the 00:20Z cycle hand-wrote one epoch as
+  `…771.x` and mislabelled another probe by 20 min, and the next cycle had to reconstruct both.
+- **Predicting the next evaluation:** last `Running job:` time + armed interval + cumulative sleep since.
+  Confirmed n=4 (latest: armed 23:05:00 for 23:54:17, 2481 s slept → evaluated 00:35:38, 4 slots dropped).
+- **Keep-awake source is NOT always the display.** Six cycles ran clean on a display-on assertion; the
+  00:37 ICT cycle ran clean on transient `dasd` BackgroundTask assertions (Spotlight indexing) with the
+  display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
+  a `dasd` hold is short-lived, a display hold is not. And per memory §504, check the listed owner: a
+  heartbeat's own `caffeinate` is not host health.
 - `coalesce=True` is ALREADY in effect (APScheduler 3.11.3 default; verified in `.venv` —
   `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). Don't propose
   it as a fix; only raising `misfire_grace_time` at `bot/scheduler.py:24` is a real change.
