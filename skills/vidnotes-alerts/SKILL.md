@@ -58,6 +58,40 @@ If the file exists but has missing or null fields, use the seed value for those 
 
 ## Step 3: Check transcription success (intraday)
 
+> ⛔ **THIS CHECK POOLS PLATFORMS AND THEREFORE CANNOT SEE A ONE-PLATFORM FAULT — measured
+> 2026-08-08 02:48Z, awaiting a boss decision. Evaluation rules below are UNCHANGED; do not
+> "fix" this yourself.**
+>
+> The query has no `platform` dimension. On 2026-08-08 that hid a live, worsening Android-only
+> regression for two days:
+>
+> | day ICT | Android | iOS |
+> |---|---|---|
+> | 08-01→08-06 | **81.1%** (167/206) | 90.1% (274/304) |
+> | 08-07 | **65.0%** (26/40) | 85.0% (51/60) |
+> | 08-08 (to 09:50) | **46.7%** (7/15) | 92.3% (24/26) |
+>
+> Android 08-07+08 combined = **60.0% (33/55) vs 81.1% baseline, Fisher two-sided p = 0.0020**, while
+> iOS was *above* its own baseline. Pooled over the same span the rate reads **75.6% (31/41)** —
+> which **passes** the strict `< 75.0` threshold, because 26 healthy iOS attempts outweigh 15 broken
+> Android ones. **A single-platform fault is invisible here at any threshold value**, so a passing
+> Step 3 is not evidence that transcription is healthy.
+>
+> **Consequences when you run this check:**
+> 1. A pooled PASS near the threshold (say 74–80%) is **not informative** — say so in the log rather
+>    than writing "no anomalies".
+> 2. The `started < 20` floor bites harder per-platform than pooled, so splitting the query is not a
+>    free change — it is exactly the same tradeoff already flagged for the floor, and it is a
+>    **monitoring-policy call the boss has not yet made.**
+> 3. Do NOT silently start alerting on a per-platform breach. Report the split in the run log; alert
+>    only on the pooled rules below.
+>
+> All Android degradation sits in **1.5.2**, which ran 80.0 / 88.9 / 84.9% on 08-04/05/06 before
+> breaking — so it is **not a bad build shipping**; it points at a server-side or config change on the
+> Android path from ~08-07. Onset is a drift, not a step (6h buckets 87.5 → 80.0 → 54.5 → 33.3 → 46.2
+> → 25.0), so there is no deploy-shaped break to correlate against. Android 1.4.10 held 100% but at
+> n=3/day — **too small to be a control; do not cite it as exonerating the client.**
+
 Run this BigQuery SQL against the intraday table (NOT `events_*` — use `events_intraday_*`):
 
 ```sql
