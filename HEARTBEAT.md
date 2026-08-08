@@ -2,15 +2,25 @@
 
 ## Every Check (runs every 15 min)
 
-### 0. Cycle budget — you have 10 minutes, hard (measured 2026-08-09 01:00 ICT)
-The wrapper is `gtimeout 600 claude -p "Run heartbeat: …"` (seen in `ps`), so the cycle is **killed at
-T+600 s**, mid-write, with no chance to save a log. This is the mechanism behind memory §249's
+### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
+The wrapper is `gtimeout 600 claude -p "Run heartbeat: …"` (seen in `ps`), so the cycle is killed at
+T+600 s, mid-write, with no chance to save a log. This is the mechanism behind memory §249's
 `exit 124` — that entry records the symptom as fixed but never names the cap.
-**Never schedule an observation later than ~T+7 min from cycle start.** A slot that falls outside
-that window belongs to the NEXT cycle: write the log now and hand it over with the exact commands to
-resolve it. The 00:57Z cycle launched a background wait for a 01:05 slot, computed the kill at
-01:06:10 against a 01:05:50 return — **~20 s to write a 7 KB log** — and correctly aborted. Losing
-the log costs more than any single observation is worth.
+⛔ **"killed at T+600 s" meant wall clock until 2026-08-09 02:50 ICT. It does not.** The same
+`CLOCK_MONOTONIC`-freezes-during-sleep mechanism that blinds APScheduler (§1) also freezes this timer.
+Measured, n=1: cycle 83477 started 02:31:46, host slept **1007.6 s** mid-cycle, and at `etime`
+**18:30 (1110 s wall)** the process was **still alive** on ~102 s of awake time. It was not a deferred
+kill either — 600 s of wall had already elapsed at the 02:49:16 wake and nothing fired.
+**Two consequences, opposite in sign:**
+- Don't abort a cheap observation just because wall clock passed T+10 min — check awake time
+  (wall `etime` minus the cum_sleep delta from §1's meter) before believing you are out of budget.
+- A heartbeat can now outlive its own 15-min interval in wall time and overlap the next cycle.
+  If `ps` shows two `gtimeout 600 claude` processes, that is this, not a hung cycle.
+**Still never schedule an observation later than ~T+7 min of awake time.** A slot outside that window
+belongs to the NEXT cycle: write the log now and hand it over with the exact commands to resolve it.
+The 00:57Z cycle launched a background wait for a 01:05 slot, computed the kill at 01:06:10 against a
+01:05:50 return — **~20 s to write a 7 KB log** — and correctly aborted. Losing the log costs more
+than any single observation is worth.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
