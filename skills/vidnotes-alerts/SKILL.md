@@ -220,9 +220,23 @@ firebase experimental:mcp --only crashlytics   # firebase CLI 15.x; `firebase mc
 
 `--only crashlytics` is load-bearing: the DEFAULT tool set is 45 tools with **zero** crashlytics.
 
-Working client: `workspaces/c352342178/vidnotes/cl_mcp.py` — `sed` the START/END timestamps
-into a /tmp copy and run it with `python3` (~40s). Copy from the durable path; the /tmp copy gets
-purged. Do not re-derive the JSON-RPC handshake.
+Working client: `workspaces/c352342178/vidnotes/cl_mcp.py` — just run `python3 cl_mcp.py` (~40s).
+Do not re-derive the JSON-RPC handshake.
+
+⛔ **The old "`sed` the START/END timestamps into a /tmp copy" instruction was STALE and is corrected
+here (2026-08-09 04:50 ICT).** Verified at `cl_mcp.py:6-12`: the script reads `START`/`END` from
+`sys.argv[1..2]` and, when they are absent, **defaults to the trailing 4h window** — exactly what this
+step wants. No /tmp copy, no `sed`, no purge risk. Pass explicit timestamps only for a non-4h window.
+
+⛔ **A bare `429 Resource has been exhausted` is TRANSIENT — retry once before declaring unavailable
+(added 2026-08-09 04:50 ICT).** On the 2026-08-08 21:00Z run the first call returned
+`HTTP Error: 429, Resource has been exhausted` on **both** app IDs; a retry after **90 s** returned
+`This report response contains no results` on both — a real zero. This is **not** the false-negative
+pattern above (that one is "no crashlytics tools in the roster" from probing the MCP): here the script
+worked, reached the API, and was rate-limited. Without the retry, rule 1 below would have logged
+"Crashlytics unavailable" and skipped the crash check — and on that run the other two checks were
+already floor-blocked, so the run would have been **0-for-3 while reporting "no anomalies."**
+**Sleep 90 s and re-run once; only a second failure counts as unavailable.**
 
 - Tool `crashlytics_get_report`, `report:"topIssues"`, `filter.issueErrorTypes:["FATAL"]`.
 - **All args are camelCase** — `appId`, not `app_id` (snake_case fails with "Must specify 'appId'").
@@ -241,7 +255,7 @@ purged. Do not re-derive the JSON-RPC handshake.
 
 **Evaluation rules:**
 
-1. If Crashlytics is unavailable or the MCP call fails, log `"Crashlytics unavailable — skipping crash check"` and skip this step entirely. Do NOT mark a breach.
+1. If Crashlytics is unavailable or the MCP call fails, log `"Crashlytics unavailable — skipping crash check"` and skip this step entirely. Do NOT mark a breach. **A 429 does not qualify on its first occurrence — retry once after 90 s per the ⛔ block above, and only declare unavailable if the retry also fails.**
 2. If `new_unseen_crashes >= 3` → set `CRASH_BREACH = true`. Store the list of new issue IDs, titles, and event counts for the alert message and for the baselines update in Step 8.
 
 ---
