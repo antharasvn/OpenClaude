@@ -51,6 +51,12 @@
 - Known open defect (reported 2026-08-07, needs a bot restart = boss's call): `CronTrigger.from_crontab`
   in `bot/scheduler.py` does not remap crontab dow (0=Sun) to APScheduler dow (0=Mon), so every
   weekly job fires one day late. Don't re-report it as new; check `memory/t0/MEMORY.md` first.
+- **Runtime and log-presence are only comparable WITHIN a job type** (near-alarm 2026-08-08 09:48Z).
+  `cron/jobs.json` gives each job a `type`: `script` jobs run a Python file (`cleanpro-alerts` →
+  `scripts/cleanpro_alerts_runner.py`, `cleanpro-exp-monitor`) and finish in **7–31 s** while writing
+  **no** daily log; `prompt` jobs spawn `claude -p` (`vidnotes-alerts`) and take **minutes** and do
+  write one. Comparing the two reads as "the fast job exits early and reports a false green" — it
+  doesn't. Check `type` in `cron/jobs.json` before treating a short duration or a missing log as a fault.
 - `coalesce=True` is ALREADY in effect (APScheduler 3.11.3 default; verified in `.venv` —
   `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). Don't propose
   it as a fix; only raising `misfire_grace_time` at `bot/scheduler.py:24` is a real change.
