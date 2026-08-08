@@ -74,7 +74,8 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   slot-vs-dark-window, which cannot see this. The right question is *"was there sleep between the last
   evaluation and the slot"*, not *"was the slot dark"*.
   **Consequences for this checklist:** (a) never clear a window using host-awake or `getUpdates`
-  liveness; (b) the last `Running job:` line is the only proof of evaluation; (c) you can *predict* the
+  liveness; (b) `Running job:` proves evaluation but its ABSENCE does not disprove one — see below;
+  (c) you can *predict* the
   next evaluation — take the last evaluation, add the armed interval, add cumulative `pmset` sleep since.
 - Known open defect (reported 2026-08-07, needs a bot restart = boss's call): `CronTrigger.from_crontab`
   in `bot/scheduler.py` does not remap crontab dow (0=Sun) to APScheduler dow (0=Mon), so every
@@ -105,7 +106,16 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   evaluation looked armed for echo's 02:05:00, predicting 02:05:00 + 907 s sleep = 02:20:07 against an
   observed 02:09:24 (−643 s). It was armed for the **interval pair's 01:54:17**, and
   `01:54:17 + 907.1 s = 02:09:24.1` vs observed **02:09:24** — residual ≈ **0 s**.
-  Confirmed n=7; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 s. Derive the arming set from
+  ⛔ **An evaluation that discards every job it finds writes NOTHING to `logs/infra.log`** (measured
+  2026-08-09 04:21:36 ICT). `Running job:` is logged by `bot/scheduler.py` only when a job actually
+  runs; a slot past `misfire_grace_time` is dropped inside APScheduler, so the sole trace is the
+  **timestamp on the `was missed by` warning in `/tmp/claude-telegram-bot.err`**. The n=8 confirmation
+  below was nearly recorded as a falsification because the watcher polled
+  `grep -c "Running job:" logs/infra.log`, which sat unchanged at 6545 across the predicted instant.
+  **Verify a predicted evaluation with `grep "was missed by" …err | tail -1` and read its LEADING
+  timestamp — not the count** (§1's detector-lag rule bans the count, and it is the wrong field here
+  anyway). Only fall back to `Running job:` when you expect the slot to survive.
+  Confirmed n=8; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 s. Derive the arming set from
   `cron/jobs.json` (every job, all timezones) plus the `next run at:` field in the `was missed by`
   warnings. The n=7 case (2026-08-09 03:16:47, predicted 03:16:47.7) was written **two cycles ahead**
   of the tick and named the exact pair of jobs the warning would carry — the model is now precise
