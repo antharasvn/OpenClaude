@@ -184,7 +184,22 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   by a cycle that never saw the instant. Note the fatal window there was only 2 min 45 s wide *and*
   required a >5 min nap inside it; a survival call is cheap to make confidently once the exclusion
   window covers most of the arming interval.
-  Confirmed n=14; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 / 0 / +0.1 / −0.5 / −0.7 / 0 s. The n=10 case
+  ⛔ **`last_run` in `cron/state.json` is written on job COMPLETION, not on fire — do not score it
+  inside ~35 s of the slot** (2026-08-09 15:55 ICT). At the n=15 settlement the 15:54:33 probe read
+  `cleanpro-exp-monitor.last_run` still at the *previous* slot and it was nearly recorded as a failed
+  field; `logs/infra.log` showed `Job auto-commit completed successfully` 15:54:20 (3 s) and
+  `Job cleanpro-exp-monitor completed successfully` 15:54:38 (**21 s**), and each `last_run` matched its
+  *completion*. That is inside §1's documented 7–31 s `script`-job runtime band. **Settle the fire
+  instant from `Running job:` in `logs/infra.log`, which is stamped at the fire; treat `last_run` as
+  corroboration only, or probe ≥ 40 s after the slot.**
+  ✅ **n=15 (2026-08-09 15:54:17, residual 0 s) — the SECOND tick blocked on rather than handed
+  forward, and it cost almost nothing.** A fresh full-600 s `UserIsActive` tickle at 15:48:16 excluded
+  sleep through ~15:59:16, covering the whole remaining arming interval, so the survival call was
+  *unconditional* and resolvable in-cycle: write the log first, then wait ~3 min, then two greps.
+  All five fields hit (both jobs at 15:54:17, count stayed 52, stamp stayed 14:04:52, both `last_run`s
+  advanced). **Prefer this pairing — exclusion primitive + survival forecast — over a handoff whenever
+  the tick clears §0's awake-time budget.**
+  Confirmed n=15; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 / 0 / +0.1 / −0.5 / −0.7 / 0 / 0 s. The n=10 case
   (2026-08-09 07:36:18, predicted 07:36:18 from armed 07:05:00 + S=1878.0 s across TWO sleep
   windows) also called the exact warning text — one job, `Echo Backend Alerts`, `next run at:
   2026-08-08 21:05:00 EDT`. It is the first tick *blocked on* rather than handed forward, because
@@ -418,6 +433,9 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 2. Bot Health
 - Check if the Telegram bot process is running: `pgrep -f "python.*-m bot"`
+  ⚠️ **That pattern SELF-MATCHES the shell running it** (2026-08-09 15:49 ICT) — the command line of
+  the `zsh` executing the `pgrep` contains the pattern, so it returns a phantom second PID. Confirm any
+  extra PID with `ps -o pid,ppid,lstart,command -p <pid>` before reporting a duplicate bot instance.
 - Check `/tmp/claude-telegram-bot.err` for recent errors (last 5 min)
 - Alert if bot is down or throwing repeated errors
 
