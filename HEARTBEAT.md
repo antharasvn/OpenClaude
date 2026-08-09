@@ -18,6 +18,14 @@ kill either — 600 s of wall had already elapsed at the 02:49:16 wake and nothi
   If `ps` shows two `gtimeout 600 claude` processes, that is this, not a hung cycle.
 **Still never schedule an observation later than ~T+7 min of awake time.** A slot outside that window
 belongs to the NEXT cycle: write the log now and hand it over with the exact commands to resolve it.
+⚠️ **Awake-time budget survives a nap; the PROCESS may not — write early and thin if sleep is near**
+(2026-08-09 10:47 ICT, n=1). The 03:10:48Z cycle started 10:10:48 ICT, the host slept at **10:13:28**
+(2 min 40 s in), woke 10:28:57, slept again 10:29:18 after a 21 s sliver, and the cycle **left no
+daily log at all** — no `heartbeat-031*z.md` anywhere, and no surviving process. It had budget to
+spare under the awake-time rule above. Cause is not isolated (a `gtimeout` kill and `claude -p` dying
+across two suspend/resume cycles are not separable from what is on disk), so treat this as a
+reliability floor, not a mechanism: **a cycle beginning within ~3 min of a likely onset should write
+its log first and gather second.** Confidence moderate, n=1.
 ⚠️ **When you hand a checkpoint forward, name the cycle that can actually resolve it — don't assume
 "the next one" does.** Cycles start ~15 min apart, so a tick at T+10 min of *this* cycle lands only
 ~5 min before the next cycle even starts, and can miss it too. Measured 2026-08-09: the 20:28Z cycle
@@ -313,6 +321,19 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   `0x0001884400018bd5`, creation **09:32:24** derived identically at three probes. **So the whole cron
   scheduler's survival can rest on one unrelated process's assertion.** A forecast made in this state
   must be labelled *conditional on that hold*, never asserted. Discount `ExternalMedia` as always (§1).
+  ✅ **That state was SCORED and it behaved exactly as labelled — plus the first measured length for a
+  grok hold: ~40 min** (2026-08-09 10:47 ICT). Onset came **10:13:28**, 4 min 52 s after the 10:08:36
+  probe; back out `sleep 1` ⇒ grok released ~**10:12:28**, so the hold created 09:32:24 ran **~40 min**
+  — same order as the `dasd` batches (26 / 40 / 55+ min), so still no characteristic length across
+  holder types. The *state* was diagnosed correctly and the *timing* was correctly called
+  unpredictable; this is the first time the no-exclusion-window state was named in advance and then
+  validated by a real onset, which is also the negative-space proof that the exclusion window is what
+  had been protecting the 09:54 / 10:00 / 10:05 slots (all three fired clean, then sleep).
+  ⛔ **Generalise the release pattern: grok releases its per-turn hold WITHOUT exiting** — pid 13250
+  still alive at `01-05:03:35` with no assertion. Identical to the AnyDesk case above. Two independent
+  holders now share this shape, so **"bound the prediction by the holder process's life" is wrong by
+  default**, not as a quirk — never use process liveness as a proxy for an assertion still being held;
+  read the assertion.
   ⚠️ Do **not** count `bluetoothd`'s `com.apple.BTStack` `PreventUserIdleSystemSleep` as a blocking
   hold. It reads age 00:00:00 and toggles continuously; it was present and demonstrably did not stop
   the 06:49:41 onset. Only holds with a real age qualify. Same for `ExternalMedia` — powerd has held
