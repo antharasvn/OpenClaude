@@ -290,6 +290,29 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   running alongside the 600 s `displaysleep` countdown, and the two probes merely caught it at
   different phases. Still unexplained: why a 300 s `TimeoutActionTurnOff` exists alongside the 600 s
   one and never fires — it is evidently re-armed by the same HID events. Confidence moderate, n=2.
+  ✅ **Resolved — it fires fine; earlier probes just always had HID re-arming it** (2026-08-09 10:08
+  ICT, n=3 on the constant: 10:05:42 id `0x00018f6500108c65`, 173 s + 126 s = **299**). That probe was
+  the first with `UserIsActive` = **0**, so nothing was left to re-arm it: predicted expiry 10:07:48,
+  and at two independent probes (10:08:24, 10:08:36) the hold was **gone**, meter flat at 38390.8
+  across it. Bounded to (10:05:42, 10:08:24] — consistent with 10:07:48, not resolved to the second.
+  **Its expiry turns the display off and does NOT touch system sleep**, so it is never the thing that
+  kills a slot. ⚠️ **Gotcha: `pmset` prints the `InternalPreventDisplaySleep` status row only while the
+  hold is up — when it expires the row leaves the block entirely rather than reading 0.** A cycle
+  grepping for `InternalPreventDisplaySleep *0` finds nothing and cannot distinguish "expired" from
+  "never sampled"; test for the row's *presence*.
+- ⛔ **The sleep-exclusion primitive is UNAVAILABLE when `UserIsActive` = 0 — check for it before
+  leaning on any survival forecast** (2026-08-09 10:05 ICT). The n=2/n=3 exclusion cases both had a
+  fresh full-600 s tickle to lean on. This configuration is the opposite and reads:
+  `UserIsActive` **0**, `PreventUserIdleDisplaySleep` **0**, and powerd's display-on stopwatch
+  (§1's re-tickle instrument) **absent from the owner list**. Its absence *is* the measurement — the
+  display is already off, so the 600 s countdown has expired rather than been re-armed, and there is
+  **no exclusion window at all**. When that happens the chain collapses to
+  **`onset = the remaining unbounded hold's release + ~60 s`** (`sleep 1`), which §1's unbounded-holder
+  rule makes unpredictable in *both* directions. Here the sole remaining hold was `pid 13250`
+  `grok-1.0.0-macos-aarch64` `NoIdleSleepAssertion` "grok: agent turn in progress" — id
+  `0x0001884400018bd5`, creation **09:32:24** derived identically at three probes. **So the whole cron
+  scheduler's survival can rest on one unrelated process's assertion.** A forecast made in this state
+  must be labelled *conditional on that hold*, never asserted. Discount `ExternalMedia` as always (§1).
   ⚠️ Do **not** count `bluetoothd`'s `com.apple.BTStack` `PreventUserIdleSystemSleep` as a blocking
   hold. It reads age 00:00:00 and toggles continuously; it was present and demonstrably did not stop
   the 06:49:41 onset. Only holds with a real age qualify. Same for `ExternalMedia` — powerd has held
