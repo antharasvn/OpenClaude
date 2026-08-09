@@ -339,6 +339,15 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   (`0x0001a361000199b9`, creation 13:14:44/45 at both probes, 135.6 min, count 0 both times), so use it
   as corroboration, but **record the `UserIsActive` id with its age every probe** — it is one field
   from one row and it settles the question alone.
+  ✅ **Same id extended to 3812 s (2026-08-09 16:12 ICT), and it survives a mid-span holder arrival.**
+  `0x0001a36700099a6e` still up at 16:12:38 (age 00:01:26, 513 secs left) — 15:09:06 → 16:12:38 on one
+  id, 6.4× its own 600 s timeout, meter flat at 44789.7 throughout. Note the **age field resets on
+  every tickle while the id persists**, which is exactly why the id is the instrument and the age is
+  not. Also a clean illustration of the count-branch closing mid-span: `PreventUserIdleDisplaySleep`
+  read 0 at the 15:09–15:30 probes but **1** at 16:12 (AnyDesk re-created its hold ~15:57:31, with the
+  paired `coreaudiod` `Created for PID: 42666`), so 13:14:45 → 15:57:31 stays re-tickle-**proved** while
+  the segment after it is merely inconclusive. The id test kept working across that transition; the
+  count test did not.
   ⚠️ **Don't mistake `InternalPreventDisplaySleep` / `com.apple.powermanagement.delayDisplayOff` for
   the display countdown** (first seen 2026-08-09 09:26 ICT). powerd holds it with its own short fuse —
   observed age 00:04:39, `Timeout will fire in 21 secs Action=TimeoutActionTurnOff` — in the *same*
