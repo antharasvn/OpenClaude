@@ -140,6 +140,12 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   37471.2 ⇒ **S = 919.5 s**. Cadence at 08:12:07/08:12:18 rules out sleep before it. Generalise: when
   the meter brackets an arming, find the gap, then order it against the arming by any timestamped log
   line — the nap counts only if it falls *after*.
+  ✅ **That corollary is now SCORED and it DISCRIMINATED** (2026-08-09 09:25 ICT, n=12, residual
+  **−0.5 s**). The two orderings gave different predictions — nap-after ⇒ S = 919.5 ⇒ **09:20:19.5**,
+  nap-before ⇒ S = 903.0 ⇒ 09:20:03 — and the observed evaluation was **09:20:19**. The forecast also
+  called every field of the warning in advance: one job, `Echo Backend Alerts`, `next run at:
+  2026-08-08 23:05:00 EDT`, `missed by 0:15:19` (observed `0:15:19.555906`), count 47 → 48. So a
+  bracketing meter no longer forces you to publish a range for S — order the nap and publish a point.
   ⚠️ **Never let a survival forecast extend past the exclusion window that justifies it.** The
   07:29 cycle's forecast of clean fires at 07:54:17 and 08:00:00 was **falsified** — its
   sleep-exclusion primitive expired 07:42:21 and onset came 07:49:13, killing four slots. Forecasting
@@ -263,6 +269,13 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   (b) the alternative to a re-tickle is a transient `PreventUserIdleDisplaySleep` holder (the AnyDesk
   case above) that has since released — a single probe cannot separate the two, but both are
   postponements, so the *inconclusive* verdict is unchanged either way. Confidence moderate, n=1.
+  ⚠️ **Don't mistake `InternalPreventDisplaySleep` / `com.apple.powermanagement.delayDisplayOff` for
+  the display countdown** (first seen 2026-08-09 09:26 ICT). powerd holds it with its own short fuse —
+  observed age 00:04:39, `Timeout will fire in 21 secs Action=TimeoutActionTurnOff` — in the *same*
+  probe where the `UserIsActive` row read **569 secs left**. A 21 s fuse and a 569 s fuse coexisting is
+  unexplained; no mechanism here reconciles them, and none is being invented. The countdown remainder
+  still comes off the `UserIsActive` row only. Re-probe this on any cycle that actually sees onset.
+  Confidence unknown, n=1.
   ⚠️ Do **not** count `bluetoothd`'s `com.apple.BTStack` `PreventUserIdleSystemSleep` as a blocking
   hold. It reads age 00:00:00 and toggles continuously; it was present and demonstrably did not stop
   the 06:49:41 onset. Only holds with a real age qualify. Same for `ExternalMedia` — powerd has held
