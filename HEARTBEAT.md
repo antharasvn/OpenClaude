@@ -196,6 +196,25 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
      the display. Before predicting sleep onset, check `PreventUserIdleSystemSleep` /
      `NoIdleSleepAssertion` for non-powerd owners; if any is up, the onset is **unpredictable** (§1's
      unbounded-holder rule), regardless of what the `UserIsActive` timer says.
+  ✅ **Chain CONFIRMED, and refinement #2 is now quantified — a non-powerd hold POSTPONES onset, it
+  does not cancel it** (2026-08-09 07:29 ICT, n=1, first sleep after ~9.5 h awake). Predicted from
+  the 06:40:40 probe: display timeout **06:44:23** (age 377 s + 223 s remaining), `sleep 1` ⇒ system
+  sleep **~06:45:23**. Observed onset **06:49:41–06:49:51** (last `getUpdates` before a 1018 s gap).
+  Residual **+258 s**. An HID re-tickle is **excluded arithmetically, not assumed**: a tickle at
+  06:38:41 would fit the observed onset but contradicts the 06:40:40 age reading (6:17 ⇒ 06:34:23),
+  and any tickle after 06:40:40 pushes onset to ≥ 06:51:40, later than observed. The only surviving
+  candidate is the hold refinement #2 named — grok pid 88960 `NoIdleSleepAssertion`, absent by
+  07:31:21. **So predict onset as `max(display_timeout + 60 s, the other hold's release)`.** Practical
+  consequence: a cycle that sees a fresh full-600 s `UserIsActive` tickle can assert sleep is
+  **excluded** for ~11 min and safely watch a tick in that window — that is a real scheduling
+  primitive, and it is the *negative* direction (proving sleep can't happen) that is reliable, since
+  the positive direction still depends on an unbounded holder.
+  ⚠️ Do **not** count `bluetoothd`'s `com.apple.BTStack` `PreventUserIdleSystemSleep` as a blocking
+  hold. It reads age 00:00:00 and toggles continuously; it was present and demonstrably did not stop
+  the 06:49:41 onset. Only holds with a real age qualify.
+  ⚠️ A wake in the `getUpdates` gap is not necessarily a *usable* wake: 06:49:41→07:22:11 is **two**
+  windows separated by a **20-second** dark wake at 07:06:39, far too short for the executor to
+  evaluate. Count sleep from the meter (Δ 1878.0 s), not from one gap.
 - `coalesce=True` is ALREADY in effect (APScheduler 3.11.3 default; verified in `.venv` —
   `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). Don't propose
   it as a fix; only raising `misfire_grace_time` at `bot/scheduler.py:24` is a real change.
