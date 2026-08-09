@@ -311,6 +311,19 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   proved**; only from 09:32:46 is a holder responsible. **Generalise: sample the assertion COUNT every
   cycle, not just powerd's age** — a count of 0 at a probe retroactively rules out the holder branch for
   the span up to it, converting "inconclusive, cause identified" into an attributed re-tickle.
+  ✅ **Cheaper and hole-free instrument — the `UserIsActive` ASSERTION ID is itself the re-tickle
+  proof** (2026-08-09 15:27 ICT, n=1). The row carries `Timeout will fire in N secs
+  Action=TimeoutActionRelease`, so the assertion **releases at its own 600 s timeout**. Therefore
+  **the same id observed at two probes more than 600 s apart proves the countdown was re-armed** — HID
+  activity by construction, no inference. Measured: id `0x0001a36700099a6e` at 15:09:06 (age 0, 600
+  secs left), 15:28:13 (age 0, 600), 15:30:22 (age 2, **598**) — 1276 s on one id, across the 08:08Z
+  cycle's predicted ~15:20:06 onset, which did not happen (meter flat 44789.7 → 44789.8, no
+  `getUpdates` gap). This closes caveat (b) above: a transient `PreventUserIdleDisplaySleep` holder
+  keeps the display on **without** re-arming `UserIsActive`, so it yields id churn/release — a
+  *different* observable, not a confounded one. powerd's stopwatch agreed here
+  (`0x0001a361000199b9`, creation 13:14:44/45 at both probes, 135.6 min, count 0 both times), so use it
+  as corroboration, but **record the `UserIsActive` id with its age every probe** — it is one field
+  from one row and it settles the question alone.
   ⚠️ **Don't mistake `InternalPreventDisplaySleep` / `com.apple.powermanagement.delayDisplayOff` for
   the display countdown** (first seen 2026-08-09 09:26 ICT). powerd holds it with its own short fuse —
   observed age 00:04:39, `Timeout will fire in 21 secs Action=TimeoutActionTurnOff` — in the *same*
