@@ -269,13 +269,27 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   (b) the alternative to a re-tickle is a transient `PreventUserIdleDisplaySleep` holder (the AnyDesk
   case above) that has since released — a single probe cannot separate the two, but both are
   postponements, so the *inconclusive* verdict is unchanged either way. Confidence moderate, n=1.
+  ✅ **Caveat (b) IS separable when you have repeated probes — first clean split 2026-08-09 09:44 ICT.**
+  powerd's hold `[0x000179aa000187c4]` ran one continuous 75 min (creation 08:30:06, same id at the
+  08:48 / 08:49 / 09:08 / 09:26 / 09:45 probes). AnyDesk (pid 42666) re-created its
+  `PreventUserIdleDisplaySleep` at **09:32:46** — *strictly inside* that window — so the segment splits:
+  **08:30:06 → 09:32:46 had `PreventUserIdleDisplaySleep` observed 0 at three separate probes**, which
+  excludes the transient-holder branch by direct observation and makes that segment **re-tickle,
+  proved**; only from 09:32:46 is a holder responsible. **Generalise: sample the assertion COUNT every
+  cycle, not just powerd's age** — a count of 0 at a probe retroactively rules out the holder branch for
+  the span up to it, converting "inconclusive, cause identified" into an attributed re-tickle.
   ⚠️ **Don't mistake `InternalPreventDisplaySleep` / `com.apple.powermanagement.delayDisplayOff` for
   the display countdown** (first seen 2026-08-09 09:26 ICT). powerd holds it with its own short fuse —
   observed age 00:04:39, `Timeout will fire in 21 secs Action=TimeoutActionTurnOff` — in the *same*
-  probe where the `UserIsActive` row read **569 secs left**. A 21 s fuse and a 569 s fuse coexisting is
-  unexplained; no mechanism here reconciles them, and none is being invented. The countdown remainder
-  still comes off the `UserIsActive` row only. Re-probe this on any cycle that actually sees onset.
-  Confidence unknown, n=1.
+  probe where the `UserIsActive` row read **569 secs left**. The countdown remainder still comes off
+  the `UserIsActive` row only.
+  ✅ **The "21 s vs 569 s" is arithmetic, not a paradox — it is a 300 s re-armed fuse** (2026-08-09
+  09:44 ICT, n=2). Age + remaining sums to the same constant at both probes: 09:26:29 id
+  `0x000184bd00108c65` 279 s + 21 s = **300**; 09:45:31 id `0x00018abe00108c65` 106 s + 193 s = **299**.
+  Different ids ⇒ powerd churns the hold, as it does around wake. So it is a second, *shorter* clock
+  running alongside the 600 s `displaysleep` countdown, and the two probes merely caught it at
+  different phases. Still unexplained: why a 300 s `TimeoutActionTurnOff` exists alongside the 600 s
+  one and never fires — it is evidently re-armed by the same HID events. Confidence moderate, n=2.
   ⚠️ Do **not** count `bluetoothd`'s `com.apple.BTStack` `PreventUserIdleSystemSleep` as a blocking
   hold. It reads age 00:00:00 and toggles continuously; it was present and demonstrably did not stop
   the 06:49:41 onset. Only holds with a real age qualify. Same for `ExternalMedia` — powerd has held
