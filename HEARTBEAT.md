@@ -232,9 +232,33 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   excluded through 07:42:21 as promised. **Take a probe mid-window if you want the positive branch
   to be scoreable at all**; without one, only the exclusion half survives. `runningboardd`'s
   `osservice<…CFNetwork.StorageDB>` hold falls under the bluetoothd rule below — age 00:00:00, not blocking.
+  ✅ **n=3 INCONCLUSIVE — but the postponement is ATTRIBUTED for the first time, via a new free test:
+  powerd's hold age is a display-on stopwatch** (2026-08-09 08:49 ICT). Predicted from the 08:29:16
+  probe: display timeout 08:39:10, system sleep ~08:40:10. Observed: **no sleep at all** — meter flat
+  at **38390.7** across 08:29:37 / 08:47:37 / 08:49:34, and no `getUpdates` gap since 08:28:34.
+  The n=2 case had to be filed as unattributable ("no intermediate probe exists, so an HID re-tickle
+  cannot be excluded"). **That gap is now closable retroactively, with no intermediate probe:**
+  powerd's `PreventUserIdleSystemSleep` "Prevent sleep while display is on" is created when the
+  display turns on and released when it sleeps, so **its age is how long the display has been on.**
+  Here it read `00:18:02` @ 08:48:08 and `00:19:28` @ 08:49:34 — both resolving to creation
+  **08:30:06**, same assertion id `0x000179aa000187c4`, i.e. one continuous hold. **19.5 min of
+  display-on against a 600 s `displaysleep` countdown, with `PreventUserIdleDisplaySleep` = 0 at both
+  probes, means the countdown was re-armed by HID — proof, not inference.** Live confirmation in the
+  same probe: the `UserIsActive` row kept its id `0x0001797200098727` while its device flipped
+  `Logi K580 Keyboard` (age 4 s, 596 secs left) → `Logi M650 L` (age 0 s, 600 secs left).
+  **So: read powerd's hold age on ANY later cycle; `age > 600 s` retroactively proves a re-tickle and
+  converts an unexplained no-onset from "unattributable" to "inconclusive, cause identified."**
+  ⚠️ Two caveats, both measured here: (a) **compare assertion IDs, not just ages** — the previous
+  cycle read powerd at age 00:00:06 @ 08:29:16 (creation 08:29:10), a *different* hold from the
+  08:30:06 one, so powerd churns its hold briefly around wake and the stopwatch resets with it;
+  (b) the alternative to a re-tickle is a transient `PreventUserIdleDisplaySleep` holder (the AnyDesk
+  case above) that has since released — a single probe cannot separate the two, but both are
+  postponements, so the *inconclusive* verdict is unchanged either way. Confidence moderate, n=1.
   ⚠️ Do **not** count `bluetoothd`'s `com.apple.BTStack` `PreventUserIdleSystemSleep` as a blocking
   hold. It reads age 00:00:00 and toggles continuously; it was present and demonstrably did not stop
-  the 06:49:41 onset. Only holds with a real age qualify.
+  the 06:49:41 onset. Only holds with a real age qualify. Same for `ExternalMedia` — powerd has held
+  `com.apple.powermanagement.externalmediamounted` for **36:54:21** across every sleep today, so a
+  long age alone does not make a hold sleep-blocking; only the idle-sleep assertion types count.
   ⚠️ A wake in the `getUpdates` gap is not necessarily a *usable* wake: 06:49:41→07:22:11 is **two**
   windows separated by a **20-second** dark wake at 07:06:39, far too short for the executor to
   evaluate. Count sleep from the meter (Δ 1878.0 s), not from one gap.
