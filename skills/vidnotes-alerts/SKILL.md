@@ -67,15 +67,31 @@ If the file exists but has missing or null fields, use the seed value for those 
 >
 > | day ICT | Android | iOS |
 > |---|---|---|
-> | 08-01→08-06 | **81.1%** (167/206) | 90.1% (274/304) |
+> | 08-01→08-06 | **80.9%** (144/178) | 90.2% (185/205) |
 > | 08-07 | **65.0%** (26/40) | 85.0% (51/60) |
-> | 08-08 (to 09:50) | **46.7%** (7/15) | 92.3% (24/26) |
+> | 08-08 (complete) | **68.9%** (31/45) | 85.7% (42/49) |
+> | 08-09 (to 14:00) | **73.7%** (14/19) | 85.2% (23/27) |
 >
-> Android 08-07+08 combined = **60.0% (33/55) vs 81.1% baseline, Fisher two-sided p = 0.0020**, while
-> iOS was *above* its own baseline. Pooled over the same span the rate reads **75.6% (31/41)** —
-> which **passes** the strict `< 75.0` threshold, because 26 healthy iOS attempts outweigh 15 broken
-> Android ones. **A single-platform fault is invisible here at any threshold value**, so a passing
-> Step 3 is not evidence that transcription is healthy.
+> Android 08-07+08 complete days = **67.1% (57/85) vs 80.9% baseline, Fisher two-sided p = 0.0193**.
+> Pooled over the same span the rate reads **77.3% (150/194)** — which **passes** the strict `< 75.0`
+> threshold, because healthy iOS attempts outweigh broken Android ones. **A single-platform fault is
+> invisible here at any threshold value**, so a passing Step 3 is not evidence that transcription is
+> healthy.
+>
+> ⛔ **"iOS was *above* its own baseline" was WRONG and is corrected here (2026-08-09 14:0x ICT).**
+> That rested on 08-08 read to 09:50 ICT (24/26 = 92.3%). The **completed** 08-08 day is 42/49 =
+> **85.7% — below** iOS's 90.2% baseline. State the limit honestly, though: iOS 08-07+08 = 85.3%
+> (93/109) vs 90.2%, **p = 0.198 — not significant**. iOS is *directionally* down ~5pp, not proven
+> down. (An hour-matched 00–14 ICT cut reaches p = 0.036 but does not survive the switch to complete
+> days — window-driven, do not cite it.) Android is still worse than iOS within 08-07→09, p = 0.046.
+> **Consequence: "Android-hit-hardest" is solid; "Android-exclusive" is NOT established.** Keep a
+> shared server-side transcription path on the table, not only an Android-specific one. The two
+> partial-day rows above were what manufactured the false contrast — prefer complete days when a day
+> has finalized.
+>
+> Recovery status as of 08-09 14:00 ICT: Android 65.0 → 68.9 → 73.7% across the three days — trending
+> up, **still below baseline, not resolved.** No episodic-outage hour on 08-09 (every Android hour
+> completed ≥1), unlike the 08-08 03–06 ICT 7/0 blackout.
 >
 > **Consequences when you run this check:**
 > 1. A pooled PASS near the threshold (say 74–80%) is **not informative** — say so in the log rather
