@@ -174,7 +174,17 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   observed **11:51:46**. This is the labelling paying off: publish the discard unconditionally and the
   instant conditionally, and a blown instant costs nothing. Always re-derive S from the meter before
   recording a miss as a falsification.
-  Confirmed n=13; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 / 0 / +0.1 / −0.5 / −0.7 s. The n=10 case
+  ✅ **The retroactive-settlement dividend is now DEMONSTRATED, not just argued** (2026-08-09 15:08
+  ICT, **n=14**, residual **0 s**). The 07:50 cycle published an unconditional survival call for
+  `echo-backend-alerts` 15:05:00 with four ancillary fields and a kill at 15:00:12 — it could not reach
+  its own tick. The next cycle settled all five in two greps off durable evidence: fire at **15:05:00**,
+  no warning, count stayed **52**, stamp stayed **14:04:52**, `last_run` `2026-08-09T08:05:06.793400Z`.
+  No blocking watch, no §0 arithmetic about which cycle can reach the tick. **Publish the ancillary
+  fields (count, latest stamp, `last_run`) with every survival call** — they are what makes it settleable
+  by a cycle that never saw the instant. Note the fatal window there was only 2 min 45 s wide *and*
+  required a >5 min nap inside it; a survival call is cheap to make confidently once the exclusion
+  window covers most of the arming interval.
+  Confirmed n=14; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 / 0 / +0.1 / −0.5 / −0.7 / 0 s. The n=10 case
   (2026-08-09 07:36:18, predicted 07:36:18 from armed 07:05:00 + S=1878.0 s across TWO sleep
   windows) also called the exact warning text — one job, `Echo Backend Alerts`, `next run at:
   2026-08-08 21:05:00 EDT`. It is the first tick *blocked on* rather than handed forward, because
