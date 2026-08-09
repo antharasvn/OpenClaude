@@ -126,7 +126,17 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   `last_run` in `cron/state.json`), so **any** later cycle can settle it retroactively — no blocking
   watch, and no §0 budget arithmetic about which cycle can reach the tick. Prefer forecasting the
   survival branch for exactly this reason.
-  Confirmed n=10; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 / 0 s. The n=10 case
+  ⚠️ **Compute S from the METER, not from summed `getUpdates` gaps** (n=11, 2026-08-09 08:12 ICT).
+  Same tick scored twice: meter S = 1082.9 → predicted 08:12:19.9 vs observed **08:12:20**, residual
+  **+0.1 s**; summed gaps (323 + 755 = 1078) → 08:12:15, residual +5 s. The gaps miss short naps —
+  the meter rose **16.5 s in 64 s of wall** with no poll gap over 45 s that same cycle — and they
+  also carry wake overhead. Poll gaps date an onset; only the meter measures S.
+  ⚠️ **Never let a survival forecast extend past the exclusion window that justifies it.** The
+  07:29 cycle's forecast of clean fires at 07:54:17 and 08:00:00 was **falsified** — its
+  sleep-exclusion primitive expired 07:42:21 and onset came 07:49:13, killing four slots. Forecasting
+  the survival branch is still right (§1 above), but past the exclusion window it is *conditional*,
+  and must be labelled so. A survival forecast whose reach exceeds its guarantee is a guess.
+  Confirmed n=11; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 / 0 / +0.1 s. The n=10 case
   (2026-08-09 07:36:18, predicted 07:36:18 from armed 07:05:00 + S=1878.0 s across TWO sleep
   windows) also called the exact warning text — one job, `Echo Backend Alerts`, `next run at:
   2026-08-08 21:05:00 EDT`. It is the first tick *blocked on* rather than handed forward, because
@@ -215,6 +225,13 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   **excluded** for ~11 min and safely watch a tick in that window — that is a real scheduling
   primitive, and it is the *negative* direction (proving sleep can't happen) that is reliable, since
   the positive direction still depends on an unbounded holder.
+  ✅ **Exclusion primitive now n=2; the positive direction scored INCONCLUSIVE a second time**
+  (2026-08-09 08:10 ICT). From the 07:31:21 full-600 s tickle: predicted display timeout 07:41:21,
+  system sleep ~07:42:21; observed onset **07:49:13**, residual **+412 s**. With no intermediate
+  probe an HID re-tickle cannot be excluded arithmetically, so it is inconclusive — but sleep *was*
+  excluded through 07:42:21 as promised. **Take a probe mid-window if you want the positive branch
+  to be scoreable at all**; without one, only the exclusion half survives. `runningboardd`'s
+  `osservice<…CFNetwork.StorageDB>` hold falls under the bluetoothd rule below — age 00:00:00, not blocking.
   ⚠️ Do **not** count `bluetoothd`'s `com.apple.BTStack` `PreventUserIdleSystemSleep` as a blocking
   hold. It reads age 00:00:00 and toggles continuously; it was present and demonstrably did not stop
   the 06:49:41 onset. Only holds with a real age qualify.
