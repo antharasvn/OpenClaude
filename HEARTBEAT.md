@@ -126,7 +126,13 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   `last_run` in `cron/state.json`), so **any** later cycle can settle it retroactively — no blocking
   watch, and no §0 budget arithmetic about which cycle can reach the tick. Prefer forecasting the
   survival branch for exactly this reason.
-  Confirmed n=9; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 s. Derive the arming set from
+  Confirmed n=10; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 / 0 s. The n=10 case
+  (2026-08-09 07:36:18, predicted 07:36:18 from armed 07:05:00 + S=1878.0 s across TWO sleep
+  windows) also called the exact warning text — one job, `Echo Backend Alerts`, `next run at:
+  2026-08-08 21:05:00 EDT`. It is the first tick *blocked on* rather than handed forward, because
+  the sleep-exclusion primitive above proved no sleep could intervene. Use that pairing: a fresh
+  full-600 s `UserIsActive` tickle turns an `armed + S` forecast into a deterministic in-cycle
+  observation, provided the tick also clears §0's awake-time budget. Derive the arming set from
   `cron/jobs.json` (every job, all timezones) plus the `next run at:` field in the `was missed by`
   warnings. The n=7 case (2026-08-09 03:16:47, predicted 03:16:47.7) was written **two cycles ahead**
   of the tick and named the exact pair of jobs the warning would carry — the model is now precise
