@@ -139,6 +139,13 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   **+0.1 s**; summed gaps (323 + 755 = 1078) → 08:12:15, residual +5 s. The gaps miss short naps —
   the meter rose **16.5 s in 64 s of wall** with no poll gap over 45 s that same cycle — and they
   also carry wake overhead. Poll gaps date an onset; only the meter measures S.
+  ⛔ **The gap error is NOT consistently negative — don't treat summed gaps as a safe lower bound**
+  (2026-08-09 11:52 ICT). The n=11 wording above ("miss short naps") reads as if gaps undercount; over
+  **three** windows they **overcounted by 76.9 s**: gaps 324 + 323 + 974 = **1621 s** against a meter Δ
+  of 41197.5 − 39653.4 = **1544.1 s**, ≈ 25.6 s of wake overhead per window. The two error sources
+  trade places — missed naps pull negative, per-window wake overhead pulls positive — so the sign
+  depends on how many windows you sum. n=2 in each direction. Never substitute gaps for the meter in
+  either direction.
   ✅ **Corollary — use the gaps to ORDER a nap against the arming, which turns a range for S into a
   point** (2026-08-09 09:06 ICT). That same 16.5 s nap sat between two meter readings (37471.2 @
   08:12:02, 37487.7 @ 08:13:06) straddling the 08:12:20 evaluation, so the 08:47 cycle had to publish
@@ -159,7 +166,15 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   sleep-exclusion primitive expired 07:42:21 and onset came 07:49:13, killing four slots. Forecasting
   the survival branch is still right (§1 above), but past the exclusion window it is *conditional*,
   and must be labelled so. A survival forecast whose reach exceeds its guarantee is a guess.
-  Confirmed n=11; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 / 0 / +0.1 s. The n=10 case
+  ✅ **A falsified CONDITIONAL timestamp is not a falsified model — re-score it with the true S**
+  (2026-08-09 11:52 ICT, **n=13**, residual **−0.7 s**). The 11:05:00 slot was published as
+  unconditional-discard + conditional-instant 11:26:02.6. The discard was right (and called the job and
+  the count, 48 → 49); the instant was **out by +1543 s** because three sleep windows intervened. Meter
+  at arming 38390.8, at evaluation 41197.5 ⇒ S = **2806.7** ⇒ `11:05:00 + 2806.7 = 11:51:46.7` vs
+  observed **11:51:46**. This is the labelling paying off: publish the discard unconditionally and the
+  instant conditionally, and a blown instant costs nothing. Always re-derive S from the meter before
+  recording a miss as a falsification.
+  Confirmed n=13; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 / 0 / +0.1 / −0.5 / −0.7 s. The n=10 case
   (2026-08-09 07:36:18, predicted 07:36:18 from armed 07:05:00 + S=1878.0 s across TWO sleep
   windows) also called the exact warning text — one job, `Echo Backend Alerts`, `next run at:
   2026-08-08 21:05:00 EDT`. It is the first tick *blocked on* rather than handed forward, because
@@ -361,6 +376,19 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   ⚠️ A wake in the `getUpdates` gap is not necessarily a *usable* wake: 06:49:41→07:22:11 is **two**
   windows separated by a **20-second** dark wake at 07:06:39, far too short for the executor to
   evaluate. Count sleep from the meter (Δ 1878.0 s), not from one gap.
+- ✅ **To decide whether a stale job is the KNOWN misfire or a SECOND bug, reconcile expected slots
+  against `was missed by` warnings inside the bot process's lifetime** (2026-08-09 11:52 ICT). A job
+  reading `last_status: OK` + `ce=0` while weeks stale (§326's silent-failure mode) does not say
+  *which* fault it is. Method: `ps -o lstart -p $(pgrep -f "python.*-m bot")` to date the process
+  (the `.err` file starts there, §1 caveat (a)), enumerate the slots each stale job owed since then
+  from `cron/jobs.json`, and count its warnings via
+  `grep "was missed by" /tmp/claude-telegram-bot.err | sed -E 's/.*job "([^(]*)\(.*/\1/' | sort | uniq -c`.
+  Worked example — the six-job reporting blackout: process up since 08-07 19:54, owed slots CleanPro
+  Daily 2 + VidNotes Daily 1 + the 14:00 quad 1 each = **7**, observed warnings **7**, zero
+  unexplained ⇒ entirely the `CLOCK_MONOTONIC` misfire mechanism, no second fault. **A shortfall is
+  the interesting result** — it means slots were never evaluated at all, which is a different bug.
+  Mind `coalesce` (below): the count is a lower bound, so reconcile per job, not in aggregate, and
+  treat an exact match as strong evidence rather than proof.
 - `coalesce=True` is ALREADY in effect (APScheduler 3.11.3 default; verified in `.venv` —
   `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). Don't propose
   it as a fix; only raising `misfire_grace_time` at `bot/scheduler.py:24` is a real change.
