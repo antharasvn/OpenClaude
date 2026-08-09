@@ -308,6 +308,15 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   hold is up — when it expires the row leaves the block entirely rather than reading 0.** A cycle
   grepping for `InternalPreventDisplaySleep *0` finds nothing and cannot distinguish "expired" from
   "never sampled"; test for the row's *presence*.
+  ⛔ **"Its expiry turns the display off" is too strong — the `TimeoutActionTurnOff` is GATED on
+  `PreventUserIdleDisplaySleep` = 0** (2026-08-09 11:09 ICT, n=1). Probed at 11:07:39: id
+  `0x0001985a00108c65`, age 293 s, **7 secs** remaining ⇒ due ~11:07:46. At 11:09:23 a **different**
+  id `0x000199f700108c65`, creation 11:08:58 (25 s + 274 s = 299 — the 300 s constant now n=4). Across
+  that span powerd's display-on hold kept **one unchanged id**, so the display never turned off, and
+  AnyDesk's `PreventUserIdleDisplaySleep` was up throughout. The 10:08 case fired visibly precisely
+  because that count was **0** there. Caveat: a 72 s hole (11:07:46 → 11:08:58) has no probe, so
+  "reached 0" vs "released early" is unseparable — but no display-off occurred on either branch.
+  Operationally unchanged: still never touches system sleep, so still never kills a slot.
 - ⛔ **The sleep-exclusion primitive is UNAVAILABLE when `UserIsActive` = 0 — check for it before
   leaning on any survival forecast** (2026-08-09 10:05 ICT). The n=2/n=3 exclusion cases both had a
   fresh full-600 s tickle to lean on. This configuration is the opposite and reads:
@@ -334,6 +343,16 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   holders now share this shape, so **"bound the prediction by the holder process's life" is wrong by
   default**, not as a quirk — never use process liveness as a proxy for an assertion still being held;
   read the assertion.
+  ⚠️ **An AnyDesk session arms TWO holds, and only the display one has ever been tracked here**
+  (2026-08-09 11:07 ICT). Observed pair: pid 42666 `AnyDesk` `PreventUserIdleDisplaySleep` created
+  10:39:58, **and** pid 672 `coreaudiod` `PreventUserIdleSystemSleep`
+  (`…BuiltInHeadphoneOutputDevice…preventuseridlesleep`, **`Created for PID: 42666`**) created
+  10:40:02. The second blocks idle **system** sleep independently of the display, so sleep stays
+  excluded even after the `UserIsActive` 600 s countdown lapses and the display chain would otherwise
+  fire. This is §1's unbounded-holder case pointing the *helpful* way — it grants no guarantee (§1:
+  AnyDesk releases without exiting), so a forecast leaning on it is **conditional**, but a cycle that
+  sees only the `UserIsActive` row will badly **under**estimate the exclusion window. Always read the
+  `Created for PID:` line: a `coreaudiod` audio hold is usually a proxy for some other process.
   ⚠️ Do **not** count `bluetoothd`'s `com.apple.BTStack` `PreventUserIdleSystemSleep` as a blocking
   hold. It reads age 00:00:00 and toggles continuously; it was present and demonstrably did not stop
   the 06:49:41 onset. Only holds with a real age qualify. Same for `ExternalMedia` — powerd has held
