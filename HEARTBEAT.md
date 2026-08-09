@@ -131,6 +131,15 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   **+0.1 s**; summed gaps (323 + 755 = 1078) → 08:12:15, residual +5 s. The gaps miss short naps —
   the meter rose **16.5 s in 64 s of wall** with no poll gap over 45 s that same cycle — and they
   also carry wake overhead. Poll gaps date an onset; only the meter measures S.
+  ✅ **Corollary — use the gaps to ORDER a nap against the arming, which turns a range for S into a
+  point** (2026-08-09 09:06 ICT). That same 16.5 s nap sat between two meter readings (37471.2 @
+  08:12:02, 37487.7 @ 08:13:06) straddling the 08:12:20 evaluation, so the 08:47 cycle had to publish
+  **S ∈ [903.0, 919.5]**. The poll cadence dates it: 10–11 s throughout except **08:12:18 → 08:12:42
+  (24 s)**. It counts toward S because **a process cannot write a log line at a wall time the host
+  slept through** — APScheduler stamped 08:12:20, so the nap starts ≥ 08:12:20 ⇒ meter at arming =
+  37471.2 ⇒ **S = 919.5 s**. Cadence at 08:12:07/08:12:18 rules out sleep before it. Generalise: when
+  the meter brackets an arming, find the gap, then order it against the arming by any timestamped log
+  line — the nap counts only if it falls *after*.
   ⚠️ **Never let a survival forecast extend past the exclusion window that justifies it.** The
   07:29 cycle's forecast of clean fires at 07:54:17 and 08:00:00 was **falsified** — its
   sleep-exclusion primitive expired 07:42:21 and onset came 07:49:13, killing four slots. Forecasting
