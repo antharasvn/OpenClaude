@@ -44,7 +44,15 @@ to *every* cycle in that window.
 (start 03:26:17) handed the 03:54:17 interval-pair tick to "the next cycle"; that cycle started
 **03:44:08** with its `gtimeout` kill at **03:54:08** — short of the tick by **9 s**, so the checkpoint
 had to be handed forward a second time. Before writing the handoff, compare the tick against
-`next_cycle_start + 600 s` (≈ this cycle's start + ~15 min + 600 s), not against the interval alone.
+`next_cycle_start + 600 s`, not against the interval alone.
+✅ **`next_cycle_start` is `THIS cycle's COMPLETION + 15 min` — NOT its start + 15 min, and NOT the
+"17 min" figure in memory** (confirmed 2026-08-11 01:51 ICT, **n=2**, 1 s apart). Score it from the
+harness's own `Last heartbeat ran at:` line against your `ps` start time: 18:17:27Z → 18:32:29Z =
+**15 min 02 s**, and 18:36:25Z → 18:51:28Z = **15 min 03 s**. The apparent 17–19 min spacing between
+log *labels* is an artefact — it is `15 min + the previous cycle's duration`. 1832z predicted ≈01:52
+on this basis and observed **01:51:28** (residual −32 s). **Consequence you can act on: a cycle that
+writes early and exits fast pulls the next cycle's start earlier, widening the fleet's reach** — so
+when a tick sits just past your own kill, finishing quickly is itself the way to get it covered.
 The 00:57Z cycle launched a background wait for a 01:05 slot, computed the kill at 01:06:10 against a
 01:05:50 return — **~20 s to write a 7 KB log** — and correctly aborted. Losing the log costs more
 than any single observation is worth.
@@ -102,10 +110,22 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   weekly job fires one day late. Don't re-report it as new; check `memory/t0/MEMORY.md` first.
 - **Runtime and log-presence are only comparable WITHIN a job type** (near-alarm 2026-08-08 09:48Z).
   `cron/jobs.json` gives each job a `type`: `script` jobs run a Python file (`cleanpro-alerts` →
-  `scripts/cleanpro_alerts_runner.py`, `cleanpro-exp-monitor`) and finish in **7–31 s** while writing
-  **no** daily log; `prompt` jobs spawn `claude -p` (`vidnotes-alerts`) and take **minutes** and do
+  `scripts/cleanpro_alerts_runner.py`, `cleanpro-exp-monitor`) and finish in **seconds to ~2 min** while
+  writing **no** daily log; `prompt` jobs spawn `claude -p` (`vidnotes-alerts`) and take **minutes** and do
   write one. Comparing the two reads as "the fast job exits early and reports a false green" — it
   doesn't. Check `type` in `cron/jobs.json` before treating a short duration or a missing log as a fault.
+  ⛔ **"`script` jobs finish in 7–31 s" was WRONG and is corrected here (2026-08-11 01:15 ICT).** That
+  band was an aggregate over two jobs with very different distributions, and the `probe ≥ 40 s` rule
+  derived from it (§1's `last_run` ⛔ below) sits **inside** the real spread. Measured
+  `cleanpro-exp-monitor` completions off `logs/infra.log`, 2026-08-10: 15 / 50 / **77** / 23 / 33 / 19 /
+  20 / 36 / 19 s — median ~23 s, prior max 77 s — and the 2026-08-11 01:13:34 run completed at 01:15:36,
+  a new max of **122 s** (`ce=0`, `last_status: OK`, no `[ERROR]`, no timeout applies to `script` jobs).
+  The 180 s figure above is deliberately clear of that: a 120 s rule would *itself* have false-alarmed on
+  this very run, which is why the threshold is set well outside the observed tail, not at it. Its partner
+  `auto-commit` really does finish in 3–5 s, which is what made the aggregate look tight.
+  **Never treat the two interval-pair jobs as one population, and probe `last_run` ≥ 120 s after the
+  slot** — a cycle using 40 s would have read the stale `last_run` as a missed slot and alerted on a job
+  that fired exactly on time. Settling the fire off `Running job:` avoids the trap entirely; prefer it.
 - **Clock-skew sleep meter — use this, NOT `pmset -g log`** (added 2026-08-09 00:37 ICT; `pmset -g log`
   hung twice on 08-08 precisely when the host was sleeping heavily, i.e. exactly when it is needed).
   Darwin's `CLOCK_MONOTONIC` does not advance during sleep, so wall-minus-monotonic *is* cumulative sleep:
@@ -201,9 +221,10 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   `cleanpro-exp-monitor.last_run` still at the *previous* slot and it was nearly recorded as a failed
   field; `logs/infra.log` showed `Job auto-commit completed successfully` 15:54:20 (3 s) and
   `Job cleanpro-exp-monitor completed successfully` 15:54:38 (**21 s**), and each `last_run` matched its
-  *completion*. That is inside §1's documented 7–31 s `script`-job runtime band. **Settle the fire
+  *completion*. That is inside §1's `script`-job runtime band. **Settle the fire
   instant from `Running job:` in `logs/infra.log`, which is stamped at the fire; treat `last_run` as
-  corroboration only, or probe ≥ 40 s after the slot.**
+  corroboration only, or probe ≥ 180 s after the slot** (was "≥ 40 s" until 2026-08-11 01:15 ICT —
+  raised because the real band reaches 77–101 s, see the band correction above; 40 s false-alarms).
   ✅ **n=15 (2026-08-09 15:54:17, residual 0 s) — the SECOND tick blocked on rather than handed
   forward, and it cost almost nothing.** A fresh full-600 s `UserIsActive` tickle at 15:48:16 excluded
   sleep through ~15:59:16, covering the whole remaining arming interval, so the survival call was
@@ -233,6 +254,32 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   paragraph later, forecast the *next* arming from cron expressions alone — missing the interval pair
   at 03:54:17 and calling 04:00:00. **Interval jobs have no cron expression; re-read them from
   `cron/jobs.json` every time you forecast an arming, not just the first time.**
+  ⛔ **ONE evaluation splits its pending slots at the 300 s grace boundary — a discard at slot T does
+  NOT imply a discard at slot T+δ** (falsification 2026-08-11 04:05:33, the first *unconditional*
+  forecast ever scored wrong here). The 2051z cycle called both the 04:00:00 `vidnotes-alerts` and the
+  04:05:00 `echo-backend-alerts` slots unconditional DISCARDs because the host was in a ~10 % duty-cycle
+  sleep-cycling regime. A single evaluation at **04:05:33** handled both: 04:00:00 was **5:33** late
+  (> 300 s `misfire_grace_time`) → discarded, 04:05:00 was **33 s** late → **fired clean** (completed
+  04:05:42, `last_run` advanced). `armed + S` was never at fault — it was never consulted; gap-derived
+  S = 385 − 50 overhead = 335 s off the 03:41:47 arming predicts **04:05:35** vs observed 04:05:33
+  (**+2 s**). The cycle's *own* stated estimate ("≥ 500 s accrues") puts the evaluation at ≈04:08:20,
+  where the 04:05 slot is 200 s late and **still survives** — so the call contradicted its own numbers.
+  **Method: compute the evaluation instant ONCE, then test every pending slot against it
+  independently — a later slot dies only if `evaluation − slot > 300 s`, i.e. only if
+  `evaluation > T + δ + 300 s`.** A regime label ("cycling", "S = 0", "no exclusion window") selects the
+  *input* to the model; it is never a substitute for running it. Enumerate the pending slots from
+  `cron/jobs.json` before forecasting, or a survivor gets swept up in a neighbour's discard.
+- ⛔ **Never dismiss a power assertion using a sleep window that closed BEFORE the hold was created —
+  order the two timestamps first** (2026-08-11 04:16 ICT). 2051z read `pid 407(dasd)` `BackgroundTask`
+  `DASActivity:501:com.apple.FileProvider.maintenance.fpck-repair` id `0x0000fa48000b862c` at 03:56:58
+  (age 00:01:05 ⇒ creation **03:55:53**) and filed it "demonstrably not blocking — the host is sleeping
+  through it." The sleep it cited ended **03:56:06**, thirteen seconds *after* the hold was created,
+  and no sleep occurred for the next 20 min: same id still up at 04:16:19, aged **00:20:27**, meter flat
+  at 3378.0. The hold was the thing that **ended** the cycling regime. This also contradicted §1's own
+  record (the 00:37 ICT cycle "ran clean on transient `dasd` BackgroundTask assertions with the display
+  off"), so check the checklist before overriding it. `BackgroundTask` is not an idle-sleep assertion
+  type, but a `dasd` batch demonstrably suppresses sleep anyway — treat it as §1's unbounded holder
+  (measured batches 26 / 40 / 55+ min / now 20+ min), conditional in both directions.
 - **Keep-awake source is NOT always the display.** Six cycles ran clean on a display-on assertion; the
   00:37 ICT cycle ran clean on transient `dasd` BackgroundTask assertions (Spotlight indexing) with the
   display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
@@ -398,6 +445,19 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   because that count was **0** there. Caveat: a 72 s hole (11:07:46 → 11:08:58) has no probe, so
   "reached 0" vs "released early" is unseparable — but no display-off occurred on either branch.
   Operationally unchanged: still never touches system sleep, so still never kills a slot.
+- ⛔ **`Timeout will fire in N secs` on a NON-`UserIsActive` holder is an UPPER bound on that hold's
+  life — it is the WRONG DIRECTION for a sleep-exclusion window, never build a floor from it**
+  (2026-08-11 02:50 ICT). Some `PreventUserIdleSystemSleep` owners carry a real absolute countdown
+  (`AddressBookSourceSync`, n=4 as of 2026-08-10 02:28 ICT: the timeout does **not** re-arm, unlike
+  `UserIsActive` — see the id test above). That makes the timeout a genuine *release* deadline, and it
+  is tempting to read a large N as free exclusion: at 02:46:33 on 08-11, `pid 80238` held one with
+  **1613 secs** remaining, which would appear to guarantee the 03:05:00 slot outright. **It
+  guarantees nothing.** `Timeout will fire in N` says the hold is gone **by** that instant, not that
+  it survives **until** it — the holder may release early, as the 1910z→1928z instance did somewhere
+  in an unresolvable 16 min window. An exclusion window needs a *lower* bound on holder life.
+  **Only `UserIsActive` yields a floor**, because powerd's display-on hold tracks the display
+  countdown and that chain is measured (n=2 exclusion cases above). Treat every other holder as
+  §1's unbounded case even when it prints a number.
 - ⛔ **The sleep-exclusion primitive is UNAVAILABLE when `UserIsActive` = 0 — check for it before
   leaning on any survival forecast** (2026-08-09 10:05 ICT). The n=2/n=3 exclusion cases both had a
   fresh full-600 s tickle to lean on. This configuration is the opposite and reads:
