@@ -85,6 +85,8 @@ Completion `22:21:43Z` = 05:21:43 ICT, +900 s = 05:36:43, meter flat at 3739.3 a
 05:37:00 ⇒ S = 0 ⇒ predicted **05:36:43**, `ps` start **05:36:44**. Residual series for the rule is now
 **15:02 / 15:03 / 0 / 0 / +0.6 (S=361) / +1 (S=0)** — it holds in both regimes, so the `+ S` term is
 a strict generalisation of the old rule rather than a replacement. Confidence high.
+✅ **n=6, residual 0 s (2026-08-11 05:55 ICT):** completion `22:40:25Z` = 05:40:25 ICT, +900 s, meter
+flat at 3739.3 across 05:37:00 → 05:55:45 ⇒ S = 0 ⇒ predicted **05:55:25**, `ps` start **05:55:25**.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
@@ -454,6 +456,15 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   (creation 05:08:52, same id) = 1708 s of display-on against a 600 s countdown. **Re-tickle proved by
   construction.** Operational rule: when anyone is remoted in, the count test is unavailable for the
   whole session — **read the `UserIsActive` id, not the count.**
+  ✅ **Mirror image of that span, 19 min later — the count test came back and AGREED** (2026-08-11
+  05:56 ICT). AnyDesk's `0x00010aba00058be1` released, so `PreventUserIdleDisplaySleep` read **0**,
+  and all three instruments returned the same verdict on one probe: `UserIsActive` id
+  `0x000109fe00098b4c` **unchanged since 05:17:20 = 2328 s = 3.9×** its 600 s `TimeoutActionRelease`;
+  powerd's stopwatch `0x000109fa00018adc` age **00:47:16** (creation 05:08:52, same id) = 2836 s of
+  display-on against a 600 s countdown; count **0**, excluding the transient-holder branch outright.
+  The pair of cycles is a natural experiment — **the id test returns the same answer with a display
+  holder up for the whole span and with none up** — which promotes it from "the one that still works"
+  to the default. Record the `UserIsActive` id every probe; treat the count as corroboration.
   ⚠️ **`sharingd`'s `PreventUserIdleSystemSleep` "Handoff" CHURNS its id — never build a floor on it**
   (same probe): `0x00010bc600018c27` @ 05:17:20 → `0x00010faf00018cd4` @ 05:37:20 (age 00:04:07 ⇒
   creation 05:33:13). Two different holds 20 min apart, each a few minutes old. It has a real age so
