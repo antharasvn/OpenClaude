@@ -89,6 +89,8 @@ a strict generalisation of the old rule rather than a replacement. Confidence hi
 flat at 3739.3 across 05:37:00 → 05:55:45 ⇒ S = 0 ⇒ predicted **05:55:25**, `ps` start **05:55:25**.
 ✅ **n=7, residual 0 s (2026-08-11 06:14 ICT):** completion `22:59:21Z` = 05:59:21 ICT, +900 s, meter
 flat at 3739.3 across 05:55:45 → 06:14:43 ⇒ S = 0 ⇒ predicted **06:14:21**, `ps` start **06:14:21**.
+✅ **n=8, residual 0 s (2026-08-11 06:33 ICT):** completion `23:18:08Z` = 06:18:08 ICT, +900 s, meter
+flat at 3739.3 across 06:14:43 → 06:33:27 ⇒ S = 0 ⇒ predicted **06:33:08**, `ps` start **06:33:08**.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
@@ -571,6 +573,21 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   AnyDesk releases without exiting), so a forecast leaning on it is **conditional**, but a cycle that
   sees only the `UserIsActive` row will badly **under**estimate the exclusion window. Always read the
   `Created for PID:` line: a `coreaudiod` audio hold is usually a proxy for some other process.
+  🆕 **The `Created for PID:` shape GENERALISES past AnyDesk — Chrome media playback arms THREE holds
+  at once** (2026-08-11 06:33 ICT, new holder class). Observed together, all three sharing the id
+  prefix `0x00011cfe` and all created **06:30:00**: pid 2210 `Google Chrome`
+  `NoIdleSleepAssertion` "Playing audio" `[0x00011cfe000190b3]`, pid 2210 `NoDisplaySleepAssertion`
+  "Video Wake Lock" `[0x00011cfe000590b2]`, and pid 444 `coreaudiod` `PreventUserIdleSystemSleep`
+  `[0x00011cfe0001852e]` **`Created for PID: 2334`** — where 2334 is a `Google Chrome Helper`. The
+  `NoIdleSleepAssertion` blocks idle **system** sleep independent of the display, exactly like grok's
+  per-turn hold, so a tab playing video excludes sleep on its own. Unbounded in release time (a video
+  ends whenever it ends) ⇒ **conditional, never a floor**.
+  ⛔ **Corollary that bites the count test: `PreventUserIdleDisplaySleep` = 1 does NOT identify its
+  holder, and the holder can swap under an unchanged count.** At 06:14:57 the 1 was AnyDesk
+  (`0x000115ae00058e6a`, pid 90021, + its paired coreaudiod `0x000115b100018cf3`); 19 min later both
+  were **gone** and the 1 was Chrome's Video Wake Lock — same reading, different cause, no transition
+  visible in the count. Read the owner rows, not the status block; and per the id test above, record
+  the `UserIsActive` id rather than leaning on the count at all.
   ⚠️ Do **not** count `bluetoothd`'s `com.apple.BTStack` `PreventUserIdleSystemSleep` as a blocking
   hold. It reads age 00:00:00 and toggles continuously; it was present and demonstrably did not stop
   the 06:49:41 onset. Only holds with a real age qualify. Same for `ExternalMedia` — powerd has held
