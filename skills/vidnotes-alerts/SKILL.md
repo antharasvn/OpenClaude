@@ -89,9 +89,24 @@ If the file exists but has missing or null fields, use the seed value for those 
 > partial-day rows above were what manufactured the false contrast — prefer complete days when a day
 > has finalized.
 >
-> Recovery status as of 08-09 14:00 ICT: Android 65.0 → 68.9 → 73.7% across the three days — trending
-> up, **still below baseline, not resolved.** No episodic-outage hour on 08-09 (every Android hour
-> completed ≥1), unlike the 08-08 03–06 ICT 7/0 blackout.
+> Recovery status as of **2026-08-10 20:00 ICT** (updated; the prior entry read "as of 08-09 14:00
+> ICT … 65.0 → 68.9 → 73.7%, still below baseline" off a partial 08-09). Complete days, Android:
+>
+> | day ICT | Android | vs 80.9% baseline | iOS |
+> |---|---|---|---|
+> | 08-06 (pre-break) | 85.1% (40/47) | — | 81.0% (34/42) |
+> | 08-07 | 65.0% (26/40) | p = 0.038 | 85.0% (51/60) |
+> | 08-08 | 68.9% (31/45) | p = 0.091 | 85.7% (42/49) |
+> | 08-09 (complete) | 74.3% (26/35) | **p = 0.36 — n.s.** | 84.0% (42/50) |
+> | 08-10 to 20:00 ICT | 78.6% (22/28) | **p = 0.80 — n.s.** | 87.5% (28/32) |
+>
+> **Four-day monotone climb, and the deficit is no longer statistically detectable** — Android vs iOS
+> on 08-10 is p = 0.49 (the 08-07→09 gap was p = 0.046). ⚠️ **This is consistent with recovery, NOT
+> proof of it: 08-09+10 pooled is 76.2% (48/63), 95% CI [64.4, 85.0] — an interval that still contains
+> both the 80.9% baseline and the degraded 68.9%.** n is too small to separate the two hypotheses. Do
+> not write "resolved" in a run log; write "no longer significantly below baseline, underpowered."
+> Keep watching complete days. No episodic-outage hour on 08-09 or 08-10 (every Android hour completed
+> ≥1), unlike the 08-08 03–06 ICT 7/0 blackout — the outage signature has not recurred in ~2 days.
 >
 > **Consequences when you run this check:**
 > 1. A pooled PASS near the threshold (say 74–80%) is **not informative** — say so in the log rather
