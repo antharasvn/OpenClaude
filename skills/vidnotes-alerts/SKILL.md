@@ -123,6 +123,22 @@ If the file exists but has missing or null fields, use the seed value for those 
 > Treat the 08-10 evening event as **resolved**; correlate any server/config rollback against
 > **~19:45 ICT 08-10 (12:45 UTC)**, and the onset against **16:00 ICT (09:00 UTC)**.
 >
+> **Recovery reconfirmed 2026-08-11 02:00 ICT — second consecutive clean run, no recurrence.**
+> Trailing 4h (22:00 08-10 → 02:00 08-11 ICT): main funnel **7/9 = 77.8%** (above the 75% line,
+> p = 0.67 vs baseline, n.s.); Android onboarding **13/13 users = 100%**, 15/17 events = 88.2%.
+> An 8h widening reads 19/28 = 67.9% but **p = 0.081 — n.s.**, and the sub-threshold mass is confined
+> to 18:00–22:00 ICT (the tail *inside* the already-bounded break), 12/19 = 63.2%, p = 0.065.
+> The last two hours are 4/4 and 2/2. Unlike the 08-10 22:00 and 08-11 00:00 runs, a wider window
+> **would not have breached significance here** — the floor-suppression streak is broken.
+>
+> ⛔ **NEVER SUM PER-HOUR DISTINCT-USER COUNTS TO GET A BLOCK RATE — it manufactures significance.**
+> Second documented instance (2026-08-11 02:00 ICT; first was the 08-08 6h-bucket fake "drift"). The
+> 18:00–22:00 ICT block summed hourly reads **12/20 = 60.0%, p = 0.019 — apparently significant**;
+> the same block queried with one deduplicated `COUNT(DISTINCT …)` over the whole span is
+> **12/19 = 63.2%, p = 0.065 — not significant.** A user active in two hours is counted twice in the
+> sum and once in truth, and the inflated denominator/numerator pair shifts p across the 0.05 line.
+> Always re-query a block directly over its own time range; the hourly table is for *shape* only.
+>
 > **The load-bearing signal is `onboarding_transcription_*`, which this skill does not monitor.** It
 > carries ~3x the volume of the main funnel (n=69 vs 24) and broke at p=2.5e-15 where the mandated
 > Step 3 check detected **nothing**. It is not quota-explained (onboarding is first-run; error codes
