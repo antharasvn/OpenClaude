@@ -87,6 +87,8 @@ Completion `22:21:43Z` = 05:21:43 ICT, +900 s = 05:36:43, meter flat at 3739.3 a
 a strict generalisation of the old rule rather than a replacement. Confidence high.
 ✅ **n=6, residual 0 s (2026-08-11 05:55 ICT):** completion `22:40:25Z` = 05:40:25 ICT, +900 s, meter
 flat at 3739.3 across 05:37:00 → 05:55:45 ⇒ S = 0 ⇒ predicted **05:55:25**, `ps` start **05:55:25**.
+✅ **n=7, residual 0 s (2026-08-11 06:14 ICT):** completion `22:59:21Z` = 05:59:21 ICT, +900 s, meter
+flat at 3739.3 across 05:55:45 → 06:14:43 ⇒ S = 0 ⇒ predicted **06:14:21**, `ps` start **06:14:21**.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
@@ -154,6 +156,12 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   The 180 s figure above is deliberately clear of that: a 120 s rule would *itself* have false-alarmed on
   this very run, which is why the threshold is set well outside the observed tail, not at it. Its partner
   `auto-commit` really does finish in 3–5 s, which is what made the aggregate look tight.
+  ⚠️ **The same trap one level down: never quote a `script` job's runtime as a POINT estimate from one
+  prior fire** (2026-08-11 06:14 ICT). The n=17 survival call predicted `echo-backend-alerts` would
+  complete "≈06:05:09 (prior runs 9 s)" and it completed **06:05:03** — 3 s. Same job, same day:
+  04:05:33→04:05:42 (**9 s**), 02:05:0x (**~5 s**), 06:05:00→06:05:03 (**3 s**). Every *instant* field
+  of the call hit at residual 0 s; only the duration guess missed, and it missed **short**, which is
+  the direction that makes a `last_run` probe look stale. Predict the fire instant, not the completion.
   **Never treat the two interval-pair jobs as one population, and probe `last_run` ≥ 120 s after the
   slot** — a cycle using 40 s would have read the stale `last_run` as a missed slot and alerted on a job
   that fired exactly on time. Settling the fire off `Running job:` avoids the trap entirely; prefer it.
