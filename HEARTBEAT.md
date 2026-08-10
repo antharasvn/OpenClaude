@@ -80,6 +80,11 @@ inside S = 0 windows** — the rule had never been scored against sleep. **Conse
 to the reach dividend above: in a sleep-cycling regime the heartbeat fleet's reach degrades in lockstep
 with the cron scheduler.** Never promise "the next cycle starts at completion + 15 min" outside a
 sleep-exclusion window; state the reach as a range and prefer retroactive settlement.
+✅ **n=5, residual +1 s (2026-08-11 05:36 ICT) — the corrected rule re-scored on the S = 0 branch.**
+Completion `22:21:43Z` = 05:21:43 ICT, +900 s = 05:36:43, meter flat at 3739.3 across 05:17:00 →
+05:37:00 ⇒ S = 0 ⇒ predicted **05:36:43**, `ps` start **05:36:44**. Residual series for the rule is now
+**15:02 / 15:03 / 0 / 0 / +0.6 (S=361) / +1 (S=0)** — it holds in both regimes, so the `+ S` term is
+a strict generalisation of the old rule rather than a replacement. Confidence high.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
@@ -439,7 +444,22 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   cycle's predicted ~15:20:06 onset, which did not happen (meter flat 44789.7 → 44789.8, no
   `getUpdates` gap). This closes caveat (b) above: a transient `PreventUserIdleDisplaySleep` holder
   keeps the display on **without** re-arming `UserIsActive`, so it yields id churn/release — a
-  *different* observable, not a confounded one. powerd's stopwatch agreed here
+  *different* observable, not a confounded one.
+  ✅ **First span where the count test was blind THROUGHOUT and the id test carried it alone**
+  (2026-08-11 05:37 ICT). `PreventUserIdleDisplaySleep` read **1** at *both* probes (AnyDesk
+  `0x00010aba00058be1`, creation 05:12:04), so the 09:44 ICT count rule could rule out nothing — the
+  16:12 case at least had the holder arrive mid-span. Both remaining instruments agreed:
+  `UserIsActive` id `0x000109fe00098b4c` unchanged 05:17:20 → 05:37:20 = **1200 s = 2.0×** its own
+  600 s `TimeoutActionRelease`, and powerd's stopwatch `0x000109fa00018adc` at age **00:28:28**
+  (creation 05:08:52, same id) = 1708 s of display-on against a 600 s countdown. **Re-tickle proved by
+  construction.** Operational rule: when anyone is remoted in, the count test is unavailable for the
+  whole session — **read the `UserIsActive` id, not the count.**
+  ⚠️ **`sharingd`'s `PreventUserIdleSystemSleep` "Handoff" CHURNS its id — never build a floor on it**
+  (same probe): `0x00010bc600018c27` @ 05:17:20 → `0x00010faf00018cd4` @ 05:37:20 (age 00:04:07 ⇒
+  creation 05:33:13). Two different holds 20 min apart, each a few minutes old. It has a real age so
+  it does not fall under the `bluetoothd` age-00:00:00 discount, but it is transient by the same
+  reasoning as §1's unbounded-holder rule pointed the other way — treat it as neither a floor nor a
+  ceiling. powerd's stopwatch agreed here
   (`0x0001a361000199b9`, creation 13:14:44/45 at both probes, 135.6 min, count 0 both times), so use it
   as corroboration, but **record the `UserIsActive` id with its age every probe** — it is one field
   from one row and it settles the question alone.
