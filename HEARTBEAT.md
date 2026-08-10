@@ -26,6 +26,18 @@ spare under the awake-time rule above. Cause is not isolated (a `gtimeout` kill 
 across two suspend/resume cycles are not separable from what is on disk), so treat this as a
 reliability floor, not a mechanism: **a cycle beginning within ~3 min of a likely onset should write
 its log first and gather second.** Confidence moderate, n=1.
+⛔ **The awake-time reprieve exists ONLY when the host sleeps — when S = 0, `gtimeout 600` is a HARD
+600 s WALL-CLOCK cap, and that is when cycles die logless** (2026-08-10 08:14Z, n=2, both today).
+The reprieve above is a *consequence* of `CLOCK_MONOTONIC` freezing during sleep; with S = 0 awake time
+≡ wall time and nothing pauses the timer. Two cycles today ran and left **no daily log at all** —
+**04:02:58Z** (meter −6.7 at 11:18:20 ⇒ S = 0 since the 09:11:41 boot) and **07:59:41Z** (meter flat at
+1028.4 from 12:30:59 ⇒ S = 0). Neither is explicable by sleep, and the paragraph above files the
+lost-log symptom under a sleep narrative, which reads as inapplicable while the host is caffeinated.
+**It is backwards: a caffeinate/HID-held window is when the cap bites HARDEST.** So: **read the meter
+first; if S = 0 over the last cycle, write the log at ~T+5 min and refine it in place** rather than
+gathering to completion and writing at the end. This is not the §0 sleep case and does not need a
+"likely onset" to trigger — a long exclusion window (e.g. a 12 h `caffeinate -t 43200`) makes it apply
+to *every* cycle in that window.
 ⚠️ **When you hand a checkpoint forward, name the cycle that can actually resolve it — don't assume
 "the next one" does.** Cycles start ~15 min apart, so a tick at T+10 min of *this* cycle lands only
 ~5 min before the next cycle even starts, and can miss it too. Measured 2026-08-09: the 20:28Z cycle
