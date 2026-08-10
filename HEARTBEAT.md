@@ -67,6 +67,19 @@ every reach claim: say "cannot reach" only when the slot is outside `your_comple
 by more than that margin, and otherwise hand the slot forward as retroactively-settleable rather than
 promising a live watch.** The error here pointed the safe way — the next cycle had already been told
 not to block — but the opposite sign would have stranded a tick nobody watched.
+⛔ **`completion + 15 min` is INCOMPLETE — the heartbeat's own timer freezes during sleep exactly like
+APScheduler's. The rule is `completion + 900 s + S`** (2026-08-11 05:16 ICT, n=1, residual **+0.6 s**).
+The heartbeat is **not** an APScheduler job: it is launchd **`com.claude.heartbeat.plist`,
+`StartInterval 900`**, wrapping `skills/heartbeat/run.sh`, which stamps the state file *after*
+`claude -p` exits — hence "completion", not "start". Measured: completion `21:55:35Z` = 04:55:35 ICT,
++900 s = 05:10:35, S = **361.4 s** across two sleep windows (05:01:51→05:06:11, 05:06:42→05:09:15)
+⇒ predicted **05:16:36.4**, `ps` start **05:16:37**. launchd **deferred the missed interval by exactly
+the sleep duration** rather than firing on wake, so the 900 s countdown is subject to the same
+`CLOCK_MONOTONIC` freeze as §1's `armed + S`. **All four residual-0 confirmations above were measured
+inside S = 0 windows** — the rule had never been scored against sleep. **Consequence, opposite in sign
+to the reach dividend above: in a sleep-cycling regime the heartbeat fleet's reach degrades in lockstep
+with the cron scheduler.** Never promise "the next cycle starts at completion + 15 min" outside a
+sleep-exclusion window; state the reach as a range and prefer retroactive settlement.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
@@ -299,6 +312,12 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   S = 0**. This forecloses the "some *other* hold was really responsible" reading: a lone `dasd`
   `BackgroundTask` suppresses system sleep by itself. **≥57 min is a new max, and the band 26 → 57+
   still shows no characteristic length — never read "approaching an hour" as a release signal.**
+  ✅ **That same hold's FULL length is now measured: ≈64 min 58 s** (2026-08-11 05:17 ICT). It was gone
+  by the 05:17:20 probe; sleep onset came **05:01:51** (`getUpdates` gap), so backing out `sleep 1`
+  puts release at ≈**05:00:51** against creation 03:55:53. Bounded certainly to (04:52:58, ~05:00:51]
+  because at 04:52:58 it was the *only* hold ⇒ **≥57:05 certain, ≈65 min by the sleep-1 chain.**
+  Band is now **26 / 40 / 55+ / 57+ / ≈65 min** and sleep resumed within ~60 s of the release, which
+  is the cleanest confirmation of the 04:16 correction above. Still no characteristic length.
 - **Keep-awake source is NOT always the display.** Six cycles ran clean on a display-on assertion; the
   00:37 ICT cycle ran clean on transient `dasd` BackgroundTask assertions (Spotlight indexing) with the
   display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
