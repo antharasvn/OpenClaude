@@ -112,11 +112,47 @@ If the file exists but has missing or null fields, use the seed value for those 
 > The 76.7% daily number is p = 0.62 vs baseline — **the aggregate looks fine while the second half of
 > the day is broken.** Never again certify recovery from a daily figure alone; split the day.
 >
+> **BREAK WINDOW NOW CLOSED: 16:00 → ~19:43 ICT 08-10 (measured 2026-08-11 00:00 ICT).** The two
+> backend-shaped signatures both stop dead and do not recur: `unknown` (42 ev, **16:03 → 19:43**) and
+> the entitlement error `"subscription is active, but access could not be verified"` (24 ev, **16:54 →
+> 19:38**, plus `premium_entitlement_mismatch` 4 ev at 19:19). Onboarding recovered to **10/11 users =
+> 90.9% (22–00 ICT)** and **11/12 = 91.7% (last 4h)**; vs the broken window p = 0.40, i.e. no longer
+> distinguishable from healthy. Every failure logged **after 20:00 ICT** is by-design or client-side —
+> `daily_transcription_limit` (19, to 22:31), `usage_limit_unknown` (21, to 21:26),
+> `no_internet`/`network`/`network_error` (36), `video_length_limit`, `video_file_not_found`.
+> Treat the 08-10 evening event as **resolved**; correlate any server/config rollback against
+> **~19:45 ICT 08-10 (12:45 UTC)**, and the onset against **16:00 ICT (09:00 UTC)**.
+>
 > **The load-bearing signal is `onboarding_transcription_*`, which this skill does not monitor.** It
 > carries ~3x the volume of the main funnel (n=69 vs 24) and broke at p=2.5e-15 where the mandated
 > Step 3 check detected **nothing**. It is not quota-explained (onboarding is first-run; error codes
 > are `unknown` 44, `network`/`UnknownHostException` 11 — not `daily_transcription_limit`).
 > Not a telemetry outage either: 525–880 events/hr and 36–51 users/hr throughout.
+>
+> ⛔ **THE ONBOARDING EVENT NAMES ARE `started` / `success` / `failed` — NOT `_start` / `_complete`
+> (added 2026-08-11 00:00 ICT).** Verified against the live intraday table; the only three events
+> matching `onboarding_transcription%` are:
+> `onboarding_transcription_started`, `onboarding_transcription_success`, `onboarding_transcription_failed`.
+> **There is no `onboarding_transcription_complete`.** A query written by analogy with the main funnel's
+> `transcription_start`/`transcription_complete` returns **zero rows and no error** — which reads as
+> "the onboarding funnel had no traffic", the exact opposite of the truth. This cost a query on the
+> 08-11 00:00 run. Copy the names above verbatim.
+>
+> ⛔ **"23.2% (16/69), p = 2.5e-15" MIXED UNITS and is corrected here (2026-08-11 00:00 ICT).** The
+> denominator was a **raw event count** and the numerator **distinct users**. Onboarding retries hard
+> (76 start events from 30 users on 08-10 evening), so mixing the two understates the rate ~3x.
+> Recomputed on 08-10, consistent units both ways:
+>
+> | 08-10 window ICT | per **user** | per **event** |
+> |---|---|---|
+> | 05–15 (healthy) | 38/38 = **100%** | 43/45 = **95.6%** |
+> | 15–22 (broken) | 22/30 = **73.3%** | 23/76 = **30.3%** |
+> | Fisher vs healthy | **p = 7.9e-4** | **p = 1.8e-13** |
+>
+> **The break is REAL in both units — that conclusion stands.** What was wrong is the magnitude: user
+> impact was 100% → 73.3%, not → 23.2%, and the headline p was inflated by the unit mismatch. Quote
+> the per-user rate when describing user impact and the per-event rate when describing backend load;
+> never one over the other.
 >
 > Cross-platform corroboration (⇒ shared server-side path, not Android-only): iOS
 > `file_import_failed` carries `failure_stage=backend_transcription` (24) and
