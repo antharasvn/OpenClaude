@@ -199,7 +199,14 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   All five fields hit (both jobs at 15:54:17, count stayed 52, stamp stayed 14:04:52, both `last_run`s
   advanced). **Prefer this pairing — exclusion primitive + survival forecast — over a handoff whenever
   the tick clears §0's awake-time budget.**
-  Confirmed n=15; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 / 0 / +0.1 / −0.5 / −0.7 / 0 / 0 s. The n=10 case
+  ✅ **n=16 (2026-08-10 14:00:00 ICT, residual 0 s) — the widest survival call yet: SIX jobs in one
+  slot, all five ancillary fields hit, published two cycles ahead by 06:28Z and settled by a third
+  cycle that never saw the tick.** It also answered a standing diagnostic for free: `cleanpro-alerts`
+  and the four `*-daily` are all `script` jobs and all fired clean at S = 0, so the `cleanpro-daily` /
+  `vidnotes-daily` staleness is **purely the `CLOCK_MONOTONIC` misfire mechanism, not a second bug in
+  the `script`-job path**. Generalise: when standing staleness is unexplained, forecast a slot that
+  exercises the *same job type* and let the survival call rule out the second-bug branch.
+  Confirmed n=16; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 / 0 / +0.1 / −0.5 / −0.7 / 0 / 0 / 0 s. The n=10 case
   (2026-08-09 07:36:18, predicted 07:36:18 from armed 07:05:00 + S=1878.0 s across TWO sleep
   windows) also called the exact warning text — one job, `Echo Backend Alerts`, `next run at:
   2026-08-08 21:05:00 EDT`. It is the first tick *blocked on* rather than handed forward, because
