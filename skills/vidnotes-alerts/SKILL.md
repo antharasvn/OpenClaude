@@ -98,15 +98,45 @@ If the file exists but has missing or null fields, use the seed value for those 
 > | 08-07 | 65.0% (26/40) | p = 0.038 | 85.0% (51/60) |
 > | 08-08 | 68.9% (31/45) | p = 0.091 | 85.7% (42/49) |
 > | 08-09 (complete) | 74.3% (26/35) | **p = 0.36 — n.s.** | 84.0% (42/50) |
-> | 08-10 to 20:00 ICT | 78.6% (22/28) | **p = 0.80 — n.s.** | 87.5% (28/32) |
+> | 08-10 (05–22 ICT) | 76.7% (23/30) | **p = 0.62 — n.s.** | 89.2% (33/37) |
 >
-> **Four-day monotone climb, and the deficit is no longer statistically detectable** — Android vs iOS
-> on 08-10 is p = 0.49 (the 08-07→09 gap was p = 0.046). ⚠️ **This is consistent with recovery, NOT
-> proof of it: 08-09+10 pooled is 76.2% (48/63), 95% CI [64.4, 85.0] — an interval that still contains
-> both the 80.9% baseline and the degraded 68.9%.** n is too small to separate the two hypotheses. Do
-> not write "resolved" in a run log; write "no longer significantly below baseline, underpowered."
-> Keep watching complete days. No episodic-outage hour on 08-09 or 08-10 (every Android hour completed
-> ≥1), unlike the 08-08 03–06 ICT 7/0 blackout — the outage signature has not recurred in ~2 days.
+> ⛔ **"Four-day monotone climb / consistent with recovery" was WRONG as a health claim, and is
+> corrected here (2026-08-10 22:00 ICT).** It was written off a *partial* 08-10 (22/28 to 20:00 ICT)
+> and, worse, off a **daily aggregate that masks an intra-day break**. Splitting 08-10 at 15:00 ICT:
+>
+> | 08-10 window ICT | Android main | iOS main | Android **onboarding** |
+> |---|---|---|---|
+> | 05–15 (healthy) | 95.2% (20/21) | 95.8% (23/24) | **95.5% (42/44)** |
+> | 15/16–22 (broken) | **33.3% (3/9)** | 80.0% (12/15) | **23.2% (16/69)** — p = **2.5e-15** |
+>
+> The 76.7% daily number is p = 0.62 vs baseline — **the aggregate looks fine while the second half of
+> the day is broken.** Never again certify recovery from a daily figure alone; split the day.
+>
+> **The load-bearing signal is `onboarding_transcription_*`, which this skill does not monitor.** It
+> carries ~3x the volume of the main funnel (n=69 vs 24) and broke at p=2.5e-15 where the mandated
+> Step 3 check detected **nothing**. It is not quota-explained (onboarding is first-run; error codes
+> are `unknown` 44, `network`/`UnknownHostException` 11 — not `daily_transcription_limit`).
+> Not a telemetry outage either: 525–880 events/hr and 36–51 users/hr throughout.
+>
+> Cross-platform corroboration (⇒ shared server-side path, not Android-only): iOS
+> `file_import_failed` carries `failure_stage=backend_transcription` (24) and
+> `error_code=service_temporarily_unavailable` (12); iOS 21:00 ICT ran a **retry storm — 22 raw starts
+> from ~5 users → 3 completes, 19 `app_error`**. iOS *distinct-user* rate alone is n.s. (p = 0.28), so
+> the iOS evidence lives in the raw-event/error-param stream, not the rate.
+>
+> **Discrete correlation target:** `429_rate_limited` (first 05:06), `network_unreachable` (05:09) and
+> `service_unavailable` (05:00) span the **whole** day — those signatures did NOT start at 16:00, only
+> the failure *rate* did. The one afternoon-confined signature is
+> **`"Your subscription is active, but access could not be verified."` — 24 events, 16:54–19:38 ICT**,
+> revenue-affecting. Correlate against that, not against the all-day error classes.
+>
+> Two confounds already killed — do not re-derive them wrongly:
+> - **`value_first_v1` is NOT causal.** It is the *only* onboarding arm (all 119 started / 64 success /
+>   55 failed sit in it). Do not blame the experiment.
+> - **Some non-completion is BY DESIGN.** `daily_transcription_limit` (13), `quota_exceeded`, and
+>   `429 "Too many requests from this network"` include legitimate free-tier enforcement. Step 3
+>   **cannot separate "backend broke" from "user hit their free cap"** — a second structural limit on
+>   top of platform-pooling.
 >
 > **Consequences when you run this check:**
 > 1. A pooled PASS near the threshold (say 74–80%) is **not informative** — say so in the log rather
@@ -116,6 +146,17 @@ If the file exists but has missing or null fields, use the seed value for those 
 >    **monitoring-policy call the boss has not yet made.**
 > 3. Do NOT silently start alerting on a per-platform breach. Report the split in the run log; alert
 >    only on the pooled rules below.
+> 4. ⛔ **The 4h window + floor-20 combination is now DEMONSTRATED to suppress a real p<1e-3 break.**
+>    On 2026-08-10 22:00 ICT the trailing 4h read **11/18 = 61.1% — below the 75% threshold — and was
+>    skipped solely because n=18 missed the floor by 2.** The same data on a 7h window (15–22 ICT) is
+>    15/24 = 62.5% with n=24 ≥ 20 → **would have breached.** When this happens, the run log must say
+>    "floor-suppressed, below threshold", never "no anomalies". Widening the window / monitoring the
+>    onboarding funnel remain **boss policy calls — still do not self-authorize them.**
+>
+> **Also record the GA4 property timezone:** only one intraday table exists at a time and
+> `events_intraday_20260810` spanned `08-09 22:00 UTC → 08-10 15:01 UTC`. Day boundary 22:00 UTC ⇒ the
+> property tz is **Europe/Warsaw (UTC+2)** — not ICT, not UTC. "Today's intraday" ≈ 05:00→22:00 ICT,
+> which is why the `>= {YESTERDAY}` suffix filter is load-bearing for the early slots.
 >
 > All Android degradation sits in **1.5.2**, which ran 80.0 / 88.9 / 84.9% on 08-04/05/06 before
 > breaking — so it is **not a bad build shipping**; it points at a server-side or config change on the
