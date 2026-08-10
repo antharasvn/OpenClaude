@@ -473,6 +473,21 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 - Check today's daily logs at `memory/t0/{YYYY-MM-DD}/` for context on what's been done
 - **Path warning:** `workspaces/c352342178/memory/` is a STALE duplicate tree. Never read or write it.
   Heartbeat logs go to `memory/t0/{YYYY-MM-DD}/heartbeat-{HHMM}z.md` at the repo root.
+- ⛔ **LOCAL MIDNIGHT SILENTLY BREAKS THE HANDOFF CHAIN — a cycle that starts before it and hands off
+  to a cycle that starts after it must ALSO write into the next day's directory** (added 2026-08-11
+  00:02 ICT). The SessionStart hook injects **today's** daily logs only, and "today" is ICT. The
+  16:55Z cycle started 23:55 ICT and logged to `memory/t0/2026-08-10/`; the ≈00:12 ICT cycle's
+  injected context is `memory/t0/2026-08-11/`, which was **empty**. Everything §1/§7 exists to carry
+  — the pending survival calls, the caffeinate exclusion window and its 00:27:32 expiry, the meter
+  baseline, the measured 17-min cadence, the do-not-alert list, the standing order on the 00:00 ICT
+  `vidnotes-alerts` deliverable — would have vanished at midnight with no error and no gap in the
+  logs, and the next cycle would have re-derived it all from scratch or, worse, re-reported known
+  items as new. Note this is the *same class* of failure as the CLAUDE.md finding that
+  `memory/t0/MEMORY.md` is write-only: a file being written is not evidence that anything reads it.
+  **Rule: if your cycle starts within ~20 min of local midnight, write the handoff to
+  `memory/t0/{TOMORROW}/00-handoff-from-{TODAY}.md` as well as your own log** (condensed carry-over
+  is enough — link the full log by path). Worked example:
+  `memory/t0/2026-08-11/00-handoff-from-2026-08-10.md`.
 
 ### 4. Infra Log Anomalies
 - Read last 20 lines of `logs/infra.log`
