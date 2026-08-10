@@ -582,6 +582,15 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   `NoIdleSleepAssertion` blocks idle **system** sleep independent of the display, exactly like grok's
   per-turn hold, so a tab playing video excludes sleep on its own. Unbounded in release time (a video
   ends whenever it ends) ⇒ **conditional, never a floor**.
+  ⛔ **And the triple CHURNS ITS IDS IN LOCKSTEP — never point the id test at this holder** (2026-08-11
+  06:51 ICT, 18 min after the class was first filed). All three ids changed together, `0x00011cfe…`
+  (creation 06:30:00) → **`0x00011ff6…`** (creation **06:42:40**), while pids, assertion names and the
+  `Created for PID: 2334` line were all identical — i.e. **one continuing media session re-creating its
+  whole assertion set**, not a new one. Same shape as `sharingd`'s Handoff churn, one class wider. The
+  id test is sound for `UserIsActive` *only* because that row's `TimeoutActionRelease` makes a
+  persistent id proof of re-tickle; here an id change is ordinary churn, not a release, so reading it
+  that way would score ~13 min of continuous sleep-blocking as two short unrelated holds. **Take the
+  floor from `UserIsActive`; treat Chrome as an unbounded conditional postponement only.**
   ⛔ **Corollary that bites the count test: `PreventUserIdleDisplaySleep` = 1 does NOT identify its
   holder, and the holder can swap under an unchanged count.** At 06:14:57 the 1 was AnyDesk
   (`0x000115ae00058e6a`, pid 90021, + its paired coreaudiod `0x000115b100018cf3`); 19 min later both
