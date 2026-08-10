@@ -56,6 +56,17 @@ when a tick sits just past your own kill, finishing quickly is itself the way to
 The 00:57Z cycle launched a background wait for a 01:05 slot, computed the kill at 01:06:10 against a
 01:05:50 return — **~20 s to write a 7 KB log** — and correctly aborted. Losing the log costs more
 than any single observation is worth.
+✅ **n=3, residual 0 s (2026-08-11 04:52 ICT):** completion `21:37:27Z` + 15:00 = **04:52:27 ICT**,
+`ps` start **04:52:27**.
+⚠️ **But the REACH estimate built on it was off by 2 min 33 s, because it compounds a guess about your
+OWN exit time.** 2134z predicted "next cycle starts ≈04:55, killed ≈05:05 — it lands on the 05:05:00
+slot"; it actually completed 04:37:27 (3 min earlier than its own ≈04:40 guess), so the next cycle
+started 04:52:27 and was killed **05:02:27 — unable to reach the slot at all.** The +15 min rule was
+exact; the error was entirely in the self-estimate. **So carry your exit uncertainty (~3 min) into
+every reach claim: say "cannot reach" only when the slot is outside `your_completion + 15 min + 600 s`
+by more than that margin, and otherwise hand the slot forward as retroactively-settleable rather than
+promising a live watch.** The error here pointed the safe way — the next cycle had already been told
+not to block — but the opposite sign would have stranded a tick nobody watched.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
@@ -279,7 +290,15 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   record (the 00:37 ICT cycle "ran clean on transient `dasd` BackgroundTask assertions with the display
   off"), so check the checklist before overriding it. `BackgroundTask` is not an idle-sleep assertion
   type, but a `dasd` batch demonstrably suppresses sleep anyway — treat it as §1's unbounded holder
-  (measured batches 26 / 40 / 55+ min / now 20+ min), conditional in both directions.
+  (measured batches 26 / 40 / 55+ min / **≥57 min**), conditional in both directions.
+  ✅ **Strongest form of this observed 2026-08-11 04:52 ICT — that same hold `0x0000fa48000b862c` reached
+  `00:57:05` as the ONLY assertion on the host.** `PreventUserIdleSystemSleep`, `UserIsActive`,
+  `PreventUserIdleDisplaySleep` and `PreventSystemSleep` all read **0**; every transient row the prior
+  cycle saw (`runningboardd` WhatsApp `FinishTask`, `dasd` `ApplePushServiceTask`) was gone; only
+  powerd's always-discounted `ExternalMedia` remained — and the host had still gone **56 min with
+  S = 0**. This forecloses the "some *other* hold was really responsible" reading: a lone `dasd`
+  `BackgroundTask` suppresses system sleep by itself. **≥57 min is a new max, and the band 26 → 57+
+  still shows no characteristic length — never read "approaching an hour" as a release signal.**
 - **Keep-awake source is NOT always the display.** Six cycles ran clean on a display-on assertion; the
   00:37 ICT cycle ran clean on transient `dasd` BackgroundTask assertions (Spotlight indexing) with the
   display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
