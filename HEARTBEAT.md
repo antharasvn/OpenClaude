@@ -419,6 +419,18 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   08-08 ICT: last evaluation 01:05:00, next armed for 01:54:17, 1892 s of sleep intervened → executor
   next evaluated at **02:25:43** (predicted 02:25:49) and discarded all four slots. The host was fully
   awake and Telegram-polling every 10 s from 01:38:29 onward — **31 min of awake-but-blind.**
+  ✅ **n=4, residual ≈ −0.6 s, and the first test that scores the 300 s grace ON BOTH SIDES IN ONE
+  EVALUATION** (2026-08-11 19:17 ICT). Last evaluation 18:05:00, armed for 19:05:00, S′ = **726.6 s**
+  (meter 5133.3 @ 17:40:30 → 5859.9 @ 18:52:24; all four `getUpdates` poll gaps fall after 18:05:00)
+  ⇒ predicted **19:17:06.6**, observed **19:17:06** with `was missed by 0:12:06.679162`. In that one
+  wake `echo-backend-alerts` (726.6 s late) was **discarded** while `auto-commit` and
+  `cleanpro-exp-monitor` (both 212.6 s late, slot 19:13:34) **ran** — 427 s of margin on one side, 87 s
+  on the other. **Every earlier test watched a single job cross the threshold, which cannot separate
+  "the grace works" from "the executor was late for everything"; a straddling wake can, and costs
+  nothing extra to observe.** Method: **when a threshold is under test, prefer an event that straddles
+  it to a cleaner one-sided case.** Also worth noting the two methods for dating sleep agreed —
+  831 s of poll gap across four windows vs 726.6 s on the meter, i.e. ~26 s of polling overhead per
+  window; **quote the meter, use the gaps only to locate the windows in time.**
   This **corrects `memory/t0/MEMORY.md`'s "slot awake → 0/54 missed (0%)"**: that was measured
   slot-vs-dark-window, which cannot see this. The right question is *"was there sleep between the last
   evaluation and the slot"*, not *"was the slot dark"*.
@@ -528,6 +540,13 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   the sign is not guaranteed** — the same deletion on a job whose next period is shorter than the one
   you jump to overstates reach, §0's stranding sign. It also mislabels the fleet's next observable:
   "nobody reaches it" was false, 17:05:00 being reachable by a cycle starting ≈16:59.
+  ✅ **PAID OFF WITHIN 3 h, and the payoff was an observation that would otherwise have been declared
+  unreachable** (2026-08-11 19:17 ICT). `echo-backend-alerts` ran 18:05:00 and re-armed **19:05:00**
+  (hourly), ahead of the interval pair's 19:13:34. Keeping it in the pool put the predicted evaluation at
+  19:05:00 + S′ = **19:17:06.6**, inside the 19:22:00 kill; deleting it would have armed on 19:13:34 ⇒
+  19:25:41, **3 m 41 s past the kill**, and the cycle would have handed a live, settleable tick forward
+  as retroactive. The deletion error does not just mislabel the arming — **it can hide a reachable
+  observation from the cycle that is standing right next to it.**
   **Recompute `min(next_run_time)` over all 14 enabled jobs from `cron/jobs.json` every cycle; never
   carry an arming forward in prose** — the same re-derive-from-state rule §1 already applies to weekly
   slots and timezones.
