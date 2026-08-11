@@ -186,6 +186,20 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   12:30 ICT, memory §560: 13/17); the arrival path is healthy and the **delivery** path is what fails.
   A regime label absorbing an unlike failure is the same error as §1's "compute the evaluation once,
   then test each slot independently".
+  ⛔ **That same label was ALSO absorbing `cleanpro-weekly`, whose 08-11 slot was DISCARDED — decompose
+  BOTH halves of a shared row, not the one that happens to be in front of you** (2026-08-11 13:01 ICT).
+  The ⚠️ above decomposed `vidnotes-weekly` and left the other job in the same table cell
+  ("`last_run` 07-28 / 08-03 | **known** crontab-dow off-by-one") untouched, so the corrected narrative
+  kept covering an uncorrected job for the rest of the day. Decomposed: **08-04 03:30 ICT ran**
+  (`last_run` `2026-08-03T20:37:28Z`); **08-11 03:30 ICT was dropped by the `CLOCK_MONOTONIC` misfire** —
+  `2026-08-11 03:41:47 … "CleanPro Weekly (… day_of_week='1', hour='3', minute='30', next run at:
+  2026-08-18 03:30:00 +07)" was missed by 0:11:47`, i.e. 11 min 47 s past the 300 s grace, next chance
+  **08-18**. So the dow defect is not why *either* weekly report is missing this week: `vidnotes-weekly`
+  fired clean and timed out, `cleanpro-weekly` never fired. **Two failures, two different mechanisms,
+  one shared label that hid both** — and `cleanpro-weekly` shows the §1 broken-health-signal case at the
+  same time (a discarded slot never runs, so `ce=0` / `last_status: OK` survive a total non-delivery).
+  Bonus: `next run at:` printed `missed_slot + one WEEK`, the first scoring of line 436's ⛔ on a
+  non-hourly trigger — the `+ one interval` rule generalises to the trigger's own period.
 - **Do NOT compare `now - last_run` against a nominal interval** (this checklist said "alert if > 2x
   the interval" until 2026-08-07 00:23Z — it was wrong). Cron jobs with designed overnight gaps fail
   that test every night: `vidnotes-alerts` (`0 7-23/2` Warsaw) is dark 23:00→07:00 Warsaw = 8h = 4x
