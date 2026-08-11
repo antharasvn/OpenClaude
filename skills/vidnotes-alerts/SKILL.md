@@ -204,6 +204,20 @@ If the file exists but has missing or null fields, use the seed value for those 
 >    15/24 = 62.5% with n=24 ≥ 20 → **would have breached.** When this happens, the run log must say
 >    "floor-suppressed, below threshold", never "no anomalies". Widening the window / monitoring the
 >    onboarding funnel remain **boss policy calls — still do not self-authorize them.**
+> 5. ⛔ **THE FLOOR IS NOW MEASURED FIRING BACKWARDS — IT ALERTED ON NOISE AND SUPPRESSED SIGNAL ON
+>    THE SAME DAY, SIX HOURS APART (2026-08-11).** This is the sharpest available argument for the
+>    pending policy call, so record it precisely:
+>
+>    | run ICT | reading | n vs floor | outcome | binom p vs 81.8% | non-completions led by |
+>    |---|---|---|---|---|---|
+>    | 14:00 | 16/22 = 72.7% | 22 ≥ 20 | **ALERTED** | **0.269 — n.s.** | `daily_transcription_limit` (by design) |
+>    | 20:00 | 10/18 = 55.6% | 18 < 20 | **SUPPRESSED** | **0.0092 — significant** | `backend_404`, `job_not_found`, `http_502` |
+>
+>    **The gate is anti-correlated with the truth here**: `n ≥ 20` passed the quota-driven false alarm
+>    and blocked the backend-driven real one. Sample size is not the discriminator — **error
+>    composition is.** Third floor-suppression instance overall (08-10 22:00, 08-11 00:00, 08-11
+>    20:00), and the first where the suppressed window was *both* significant *and*
+>    backend-dominated. Still **do not self-authorize** a floor change; report and escalate.
 >
 > **Also record the GA4 property timezone:** only one intraday table exists at a time and
 > `events_intraday_20260810` spanned `08-09 22:00 UTC → 08-10 15:01 UTC`. Day boundary 22:00 UTC ⇒ the
