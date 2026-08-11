@@ -38,6 +38,26 @@ first; if S = 0 over the last cycle, write the log at ~T+5 min and refine it in 
 gathering to completion and writing at the end. This is not the §0 sleep case and does not need a
 "likely onset" to trigger — a long exclusion window (e.g. a 12 h `caffeinate -t 43200`) makes it apply
 to *every* cycle in that window.
+⛔ **The MECHANISM above is WRONG for the logless deaths, and the runtime distribution says so — a
+normal cycle finishes at ~40 % of the cap, so a cycle that dies at 600 s HUNG, it did not run long**
+(2026-08-11 17:04 ICT, n=13). This applies §1's own where-do-the-successes-sit test (line 261 ⛔) to the
+heartbeat's own `gtimeout 600 claude -p` — the first time that test has been scored on a population
+other than the weekly trio. Each cycle's `ps` start paired against its completion, both already in §0's
+residual series: **5:06 / 3:41 / 3:56 / 3:47 / 5:18 / 3:31 / 3:56 / 4:25 / 3:54 / 4:03 / 3:48 / ≈4:00**
+⇒ **median ≈ 3 m 55 s, max 5 m 18 s (318 s), against the 600 s cap** — 2.6× headroom at the median,
+1.9× at the max, and a **282 s gap** between the observed maximum and the kill. That is the *opposite*
+signature to the weekly jobs, whose successes climb continuously to 540 s against 600 with the top two
+clearing the kill by 72 s and 0 s. **Successes clustered far below the cap plus a pile at exactly the
+cap is the HANG branch, not the capacity branch.** Consequences: (a) raising this cap would not recover
+a logless cycle — it would only let each hang burn longer; the `timeout=600` → 1800 fix is right for
+`bot/scheduler.py:149` and **wrong here**; (b) the write-early-and-refine prescription below is still
+correct, because it is cheap insurance against a hang whatever the cause — keep doing it, just don't
+attach "the cap bites hardest here" as the reason; (c) what would actually settle it is capturing
+`claude -p` stderr or stamping a breadcrumb at entry in `skills/heartbeat/run.sh` — boss's call, and it
+queues *behind* the weekly-cap decision, not alongside it. Confidence **high** on the discrimination,
+**moderate** on the hang attribution (the two logless cycles left nothing on disk, so the stall is
+inferred from the distribution, not observed). Generalise the generalisation: **the successes-vs-cap
+test is worth running against any timeout you are about to reason about, including your own.**
 ⚠️ **When you hand a checkpoint forward, name the cycle that can actually resolve it — don't assume
 "the next one" does.** Cycles start ~15 min apart, so a tick at T+10 min of *this* cycle lands only
 ~5 min before the next cycle even starts, and can miss it too. Measured 2026-08-09: the 20:28Z cycle
