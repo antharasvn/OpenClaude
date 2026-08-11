@@ -258,6 +258,19 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   discarded slot / timeout. Lines 288 and 298 cite its `last_run` as dow evidence *and* identify the
   stamp as `fire + 600 s`, yet never conclude the job delivered nothing — the 13:01 ⛔'s own error, one
   table row further down.
+  ⛔ **That ledger read the OUTCOME column and stopped — read the RUNTIMES in the same lines, and the
+  40 % stops looking like flakiness: it is the ordinary right tail of a distribution whose cap is set
+  too low** (2026-08-11 16:40 ICT). Every fire→completion pair for the three weekly jobs, excluding the
+  five sub-60 s non-deliveries below: **2:16 / 3:02 / 4:25 / 5:54 / 6:05 / 7:26 / 7:28 / 7:29 / 8:48 /
+  9:00** — n=10, **median ≈ 6 m 45 s, max 9 m 00 s, against the 600 s cap.** The top two real successes
+  clear the kill by **72 s** and **0 s**. A hang would show as successes clustered far below 600 s plus
+  a separate pile at exactly 600 s; instead they climb *continuously* to 540 s. **So the diagnosis is
+  capacity, not a hang, and the fix is the `timeout=600` at `bot/scheduler.py:149` — 1800 s puts the cap
+  at ~2.7× the median.** (`_run_script`'s 300 s at :117-121 is NOT implicated: `script` jobs' measured
+  max is 2 m 15 s, 45 % of theirs.) The median is an **under**estimate — every sample above the cap was
+  censored into the timeout bucket. Generalise beyond this job: **when a ledger shows a timeout rate, the
+  next question is always where the SUCCESSES sit relative to the cap** — that one comparison separates
+  "it sometimes hangs" from "the cap is below the workload", and the two have different fixes.
   ⛔ **THIRD non-delivery mode, invisible to every check §1 prescribes: the sub-60-second "success".**
   The OK column above is inflated. A `prompt` job spawns `claude -p`; a weekly report cannot be built in
   seconds. Observed: `weekly-conjecture` 07-06 (**8 s**), `cleanpro-weekly` 07-07 (**4 s**),
