@@ -204,6 +204,28 @@ sign that strands a tick nobody watched (the ⛔ above is the mirror case). **St
 estimate once, with planned work priced in, and revise only for genuinely unplanned work** — and even
 then the honest margin stays ~3 min. This is a second reason the handoff carries the tick, not a
 threshold: a threshold bakes in this error, a tick does not.
+⛔ **BOTH stories above are FALSIFIED. The logless deaths are USAGE LIMITS — `claude -p` is refused and
+exits in SECONDS — and it has been printed to `/tmp/claude-heartbeat.log` all along** (2026-08-11 17:29
+ICT, n=20, observed not inferred). `com.claude.heartbeat.plist` declares `StandardOutPath
+/tmp/claude-heartbeat.log` + `StandardErrorPath /tmp/claude-heartbeat.err` (170 KB / 30 KB on disk),
+and `skills/heartbeat/run.sh` **already** prints `[heartbeat] Starting heartbeat at <ISO Z>` before the
+invocation and `|| echo "[heartbeat] Timed out or failed (exit $?)"` after it. **101 `Starting` vs 100
+`Completed`** — the delta is the in-flight cycle, so *no cycle has ever left no trace*; they leave no
+**daily log**. §0's own two cited deaths, read from that file: `04:02:58Z` started 04:02:17Z, printed
+**`You've hit your weekly limit · resets 11am (Asia/Saigon)`**, **exit 1** — **~41 s**; `07:59:41Z`
+started 07:56:42Z, **exit 143** (SIGTERM 128+15) — **2 m 59 s**, and gtimeout's own timeout return is
+**124**, not 143. **Neither ran long; the cap fired on neither.** The real population is 20 failures,
+19 × exit 1, in two contiguous blocks: **weekly limit 02:28:18Z→04:02:17Z (7 cycles)** and **session
+limit 08:33:46Z→11:39:22Z (13 cycles)** — all of 08-10 between 02:28Z and 11:39Z was a dead fleet.
+**Rule: before queuing an instrumentation request, read the runner and its launchd plist for redirects
+that already exist** — the 16:59 entry asked the boss for stderr capture and an entry breadcrumb that
+were both already there, costing ~15 h of a wrong mechanism here plus a spurious queue item. A runtime
+distribution can prove the cap is *not* the constraint; it cannot say what is. Second-order: a chain
+ending *"not a heartbeat's call to change"* is the exact place this fleet stops looking — re-read it as
+a prompt to check whether the change is already made. **Read `/tmp/claude-heartbeat.log` before
+theorising about a missing cycle.** The write-early prescription survives all three mechanisms and
+stays in force. **Cross-applies to §1's third non-delivery mode (line 294): same binary, same shape —
+raise it to high confidence, and see the adjacent-pair evidence there.**
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
@@ -299,6 +321,28 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   immediate exits (API error / rate limit) that still return 0 and stamp `completed successfully`.
   Cause unconfirmed (per-job `claude -p` stderr is not captured) — confidence **moderate** — but the
   rule is safe either way and is the `prompt`-side mirror of the runtime rule below:
+  ✅ **CONFIRMED IN SOURCE, and both hedges above are wrong: it does NOT "return 0", and stderr IS
+  captured — `_run_prompt` never checks either** (2026-08-11 17:46 ICT). The two runners are
+  asymmetric at `bot/scheduler.py`: `_run_script` (:111-128) ends with `if proc.returncode != 0:
+  raise RuntimeError(... stderr.decode()[-500:])`, while `_run_prompt` (:130-166) has **no returncode
+  check at all** — it goes straight from `communicate()` to `result = stdout.decode()` and returns.
+  `stderr` is PIPEd at :143, bound at :148, and **discarded unread**. So a `claude -p` that exits **1**
+  with `You've hit your weekly limit` on stderr is stamped `last_status: OK` / `ce: 0` / fresh
+  `last_run` by `_on_success` (:169-176) — the failure is **unrepresentable in `cron/state.json`**,
+  which is exactly why this mode is invisible to every check §1 prescribes. Confidence **high**, read
+  from source. Corollaries: (a) the announce is gated on `result.strip()` (:150), so a refused
+  invocation sends **no** Telegram message and raises **no** exception — it reports OK *and* delivers
+  nothing; (b) the OK column in the 40 % ledger above is **inflated**, so the true weekly
+  non-delivery rate is worse than 40 % (that ledger's timeouts are a different mode and do set ERROR
+  — don't merge them). Fix is one line mirroring `_run_script`, which makes the mode alertable through
+  the `ce`/`last_status` path §1 already reads every cycle:
+  `if proc.returncode != 0: raise RuntimeError(f"Prompt job {job['id']} exited with code {proc.returncode}: {stderr.decode()[-500:]}")`
+  — **boss's call** (bot change + restart). It queues *alongside* the `timeout=600 → 1800` decision at
+  :149 — independent lines in the same function — and is the cheaper of the two, changing no runtime
+  behaviour on a healthy job. **Method rule, second instance in two cycles: before asking for
+  instrumentation, check whether the value is already captured and merely unlogged.** 1021z withdrew a
+  stderr/breadcrumb ask because the plist already redirected it; here stderr is already sitting in a
+  local variable. The gap is usually the last 30 cm, not the wiring.
   > **A `prompt` job that completes in < 60 s did not deliver.** For `script` jobs a short runtime is
   > normal (`auto-commit` 3–5 s); for `prompt` jobs it is the tell. Same field, opposite reading,
   > selected entirely by `type` in `cron/jobs.json`.
