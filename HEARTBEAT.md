@@ -231,9 +231,19 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   04:05:33→04:05:42 (**9 s**), 02:05:0x (**~5 s**), 06:05:00→06:05:03 (**3 s**). Every *instant* field
   of the call hit at residual 0 s; only the duration guess missed, and it missed **short**, which is
   the direction that makes a `last_run` probe look stale. Predict the fire instant, not the completion.
-  **Never treat the two interval-pair jobs as one population, and probe `last_run` ≥ 120 s after the
+  **Never treat the two interval-pair jobs as one population, and probe `last_run` ≥ 180 s after the
   slot** — a cycle using 40 s would have read the stale `last_run` as a missed slot and alerted on a job
   that fired exactly on time. Settling the fire off `Running job:` avoids the trap entirely; prefer it.
+  ⛔ **That bolded threshold read `≥ 120 s` until 2026-08-11 12:05 ICT, contradicting BOTH its own
+  justifying paragraph nine lines above ("a 120 s rule would *itself* have false-alarmed on this very
+  run", of the 122 s `cleanpro-exp-monitor` fire) and the `≥ 180 s` at §1's `last_run` ⛔ below.** One
+  cycle (01:15 ICT) raised the rule from 40 s and wrote the new figure as 180 in one place and 120 in
+  the other; nothing scored it in between, so the checklist carried two thresholds for one probe for
+  ~11 h. **Corroborated live and from a THIRD job the same day: `vidnotes-daily` (a `script` job never
+  before timed) fired 12:00:00 and completed 12:01:59 — 119 s**, i.e. a 120 s probe clears the stale
+  `last_run` by **1 second**. The band is therefore not a two-job artefact: `auto-commit` 3–5 s,
+  `cleanpro-exp-monitor` median ~23 s / max 122 s, `vidnotes-daily` **119 s**. **180 s is the rule;
+  do not lower it, and do not read the surviving "77–101 s" or "7–31 s" bands as current.**
   ⚠️ **`cron/state.json` is keyed by the job SLUG; `cron/jobs.json` and the `was missed by` warning text
   use the DISPLAY NAME** (2026-08-11 11:05 ICT). `state.json` has `echo-backend-alerts`, the other two
   say `Echo Backend Alerts`. A settle script that joins on the name a warning printed throws `KeyError`
