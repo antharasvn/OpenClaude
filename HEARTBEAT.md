@@ -528,6 +528,28 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   evaluation looked armed for echo's 02:05:00, predicting 02:05:00 + 907 s sleep = 02:20:07 against an
   observed 02:09:24 (−643 s). It was armed for the **interval pair's 01:54:17**, and
   `01:54:17 + 907.1 s = 02:09:24.1` vs observed **02:09:24** — residual ≈ **0 s**.
+  ⛔ **And when you advance an INTERVAL job, advance the SCHEDULED slot, not the instant it actually
+  ran — the lattice is ANCHORED, not chained. A late run does NOT shift the next slot** (2026-08-11
+  19:38 ICT, measured, two independent perturbations). 1212z handed forward *"the interval pair re-arms
+  from wherever it actually runs at ≈19:17:07 (+2 h)"* ⇒ 21:17:07. Wrong: the next slot is **21:13:34**.
+  `grep "Running job: auto-commit" logs/infra.log` settles it retroactively, and the evidence predates
+  the claim: **08-10 03:57:40 ran 203 s late (slot 03:54:17, inside grace) and the next fire was
+  05:54:17 — exactly on the pre-existing lattice, not 05:57:40**; and **08-11 03:13:34 was DROPPED
+  entirely, yet 05:13:34 fired on the lattice to the second.** Mechanism: `_process_jobs` sets
+  `job.next_run_time = trigger.get_next_fire_time(run_times[-1], now)`, and `run_times[-1]` is the
+  **scheduled** slot, so `IntervalTrigger` advances `scheduled + interval` and lateness never
+  accumulates. Consequence: a chained model puts the pair's arming **3 m 32 s late on every forecast
+  made after any late run**, for as long as nobody restarts the bot — and since line 526 says an
+  interval job routinely *sets* the wake, that error propagates into every §1 evaluation prediction and
+  makes a straddle test look falsified. **The one thing that DOES move the lattice is a bot restart**
+  (job re-added with `next_run_time = now + interval`): the whole `…54:17 → …13:34` shift is the 08-10
+  09:13:14 restart, which also ate the 09:54:17 slot. So **line 529's `01:54:17` is the PRE-RESTART
+  lattice and has been dead since 08-10 09:13** — fine as a dated worked example, never as a current
+  slot. Method rule, the same one the 17:29 ⛔ filed against instrumentation asks, now in a second
+  domain: **before predicting a schedule forward, check whether the schedule's own history already
+  answers it.** A periodic job that has been perturbed and recovered has published its recurrence rule
+  for free, retroactively; 1212z reached for a live-observation method when 20 lines of `infra.log`
+  settled it outright. Falsifiable: if the pair fires at 21:17:07 rather than 21:13:34, this is wrong.
   ⛔ **The MIRROR error, and the wording above invites it: once a job's slot RESOLVES, ADVANCE that job
   by its own period and leave it in the `min()` pool — never delete it** (2026-08-11 16:21 ICT). "Never
   the watched job's own next slot" is right for the slot you just consumed and **wrong for its
