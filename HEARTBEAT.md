@@ -241,6 +241,29 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 - Known open defect (reported 2026-08-07, needs a bot restart = boss's call): `CronTrigger.from_crontab`
   in `bot/scheduler.py` does not remap crontab dow (0=Sun) to APScheduler dow (0=Mon), so every
   weekly job fires one day late. Don't re-report it as new; check `memory/t0/MEMORY.md` first.
+  ⛔ **APPLY IT TO ALL THREE WEEKLY JOBS — the `dow=0` one keeps getting left on its crontab reading,
+  because that is the value where the off-by-one is invisible** (2026-08-11 13:22 ICT). The shifted
+  slots, all now confirmed against measured fires (**3 for 3**):
+
+  | job | crontab | shifted slot | evidence |
+  |---|---|---|---|
+  | `vidnotes-weekly` | `30 7 * * 1` Europe/Warsaw | **Tue** 12:30 ICT | fired 08-11 12:30:00 |
+  | `cleanpro-weekly` | `30 3 * * 1` Asia/Saigon | **Tue** 03:30 ICT | 08-11 03:30 slot, warning at 03:41:47 |
+  | `weekly-conjecture` | `0 8 * * 0` America/New_York | **Mon** 19:00 ICT | `last_run` `2026-08-10T12:10:00Z`, a **Monday** |
+
+  `dow=1 → Tuesday` reads as obviously shifted; **`dow=0 → Monday` does not, because the crontab and
+  APScheduler readings share the digit `0`** — nothing looks wrong, so the wrap case gets derived from
+  the expression instead of from the job's own state. That is what happened: 0543z wrote
+  "`weekly-conjecture` next slot **Sun 08-16**" *in the same sentence that named the defect for
+  `vidnotes-weekly`*, and 0601z then applied the shift correctly to both `dow=1` jobs and never
+  revisited the third. Next slot is **Mon 2026-08-17 19:00 ICT**, one day later than published.
+  **Method: derive a weekly job's next slot from its `last_run` weekday, not from its cron expression**
+  — `weekly-conjecture`'s `last_run` is a Monday and settles it in one step. (Mind §1's timeout-stamp
+  tell when doing this: `12:10:00Z` is `fire + 600 s`, so the *fire* was 12:00:00Z = 08:00 EDT.)
+  Cost of the error is two-sided — a cycle watching Sunday sees nothing and can raise a false
+  staleness, while the real Monday slot goes unwatched. Same shape as the ⛔/⚠️ pair below on
+  re-reading interval jobs and converting timezones: **re-derive a schedule from state every time;
+  never carry one forward in prose.**
 - **Runtime and log-presence are only comparable WITHIN a job type** (near-alarm 2026-08-08 09:48Z).
   `cron/jobs.json` gives each job a `type`: `script` jobs run a Python file (`cleanpro-alerts` →
   `scripts/cleanpro_alerts_runner.py`, `cleanpro-exp-monitor`) and finish in **seconds to ~2 min** while
