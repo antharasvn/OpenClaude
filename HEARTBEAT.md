@@ -234,6 +234,10 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   **Never treat the two interval-pair jobs as one population, and probe `last_run` ≥ 120 s after the
   slot** — a cycle using 40 s would have read the stale `last_run` as a missed slot and alerted on a job
   that fired exactly on time. Settling the fire off `Running job:` avoids the trap entirely; prefer it.
+  ⚠️ **`cron/state.json` is keyed by the job SLUG; `cron/jobs.json` and the `was missed by` warning text
+  use the DISPLAY NAME** (2026-08-11 11:05 ICT). `state.json` has `echo-backend-alerts`, the other two
+  say `Echo Backend Alerts`. A settle script that joins on the name a warning printed throws `KeyError`
+  and costs a probe. Join on the slug.
 - **Clock-skew sleep meter — use this, NOT `pmset -g log`** (added 2026-08-09 00:37 ICT; `pmset -g log`
   hung twice on 08-08 precisely when the host was sleeping heavily, i.e. exactly when it is needed).
   Darwin's `CLOCK_MONOTONIC` does not advance during sleep, so wall-minus-monotonic *is* cumulative sleep:
@@ -429,6 +433,17 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   because at 04:52:58 it was the *only* hold ⇒ **≥57:05 certain, ≈65 min by the sleep-1 chain.**
   Band is now **26 / 40 / 55+ / 57+ / ≈65 min** and sleep resumed within ~60 s of the release, which
   is the cleanest confirmation of the 04:16 correction above. Still no characteristic length.
+  ⛔ **That ≈65 min is NO LONGER the all-class ceiling — a grok hold has been observed at ≥ 78 min 53 s
+  and still running, so stop treating "longer than anything measured" as a release signal** (2026-08-11
+  11:03 ICT). `pid 16591(grok)` `[0x0001452f00019b64]` `NoIdleSleepAssertion` "grok: agent turn in
+  progress", **one id across five consecutive cycles** — ages 04:46 / 24:04 / 42:46 / 60:18 / **78:53**
+  ⇒ creation 09:44:43, single pid, no stacking — held S = 0 for **2 h 50 min** with the display off and
+  `UserIsActive` **0** throughout (no HID for ≈65 min). Four cycles in a row each called its then-current
+  age notable and predicted nothing; each was right that it was not a release signal. Class bands:
+  `dasd` 26 / 40 / 55+ / ≈65, Chrome media ≈40, **grok ≈40 / ≤22:34 / [45:37, 64:55] / ≥78:53**. The
+  bands do not cluster by class and the maximum keeps moving, so the unbounded-holder rule is not a
+  statement about typical length that a long observation can erode — **never schedule against a release
+  in either direction, however old the hold.**
 - **Keep-awake source is NOT always the display.** Six cycles ran clean on a display-on assertion; the
   00:37 ICT cycle ran clean on transient `dasd` BackgroundTask assertions (Spotlight indexing) with the
   display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
