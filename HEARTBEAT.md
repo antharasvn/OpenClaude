@@ -106,6 +106,15 @@ flat at 5133.3 across 08:13:05 → 08:52:02 ⇒ S = 0 ⇒ predicted **08:51:36**
 flat at 5133.3 across 08:13:05 → 09:10:54 ⇒ S = 0 ⇒ predicted **09:10:32**, `ps` start **09:10:32**.
 ✅ **n=13, residual 0 s (2026-08-11 09:30 ICT):** completion `02:14:57Z` = 09:14:57 ICT, +900 s, meter
 flat at 5133.3 across 08:13:05 → 09:30:21 ⇒ S = 0 ⇒ predicted **09:29:57**, `ps` start **09:29:57**.
+✅ **n=14, residual 0 s (2026-08-11 09:49 ICT):** completion `02:33:51Z` = 09:33:51 ICT, +900 s, meter
+flat at 5133.3 across 08:13:05 → 09:49:10 ⇒ S = 0 ⇒ predicted **09:48:51**, `ps` start **09:48:51**.
+⚠️ **Third instance in one day of the self-estimate missing SHORT and pushing a marginal tick out of
+reach — treat ~3 min as a floor on that margin, not a worst case.** 0230z predicted "I complete ≈09:36
+⇒ your start ≈09:51, kill ≈10:01, so the 10:00:00 tick sits ~1 min *inside* your kill"; it completed
+**09:33:51** (2 min 09 s early), so the actual kill was **09:58:51** and the tick landed **1 min 09 s
+PAST** it. Because start and kill move together, finishing early flips a marginal tick from reachable
+to unreachable — the same sign as the 08:51 ⛔. The predecessor's *conclusion* ("unreachable, settle
+retroactively") survived only because it hands the **tick**, not the threshold. Keep doing that.
 ⛔ **A handoff must hand forward the TICK, never a precomputed "if you start before X you may block"
 threshold — that threshold has the WRONG SIGN and it nearly cost a log** (2026-08-11 08:51 ICT).
 0133z wrote *"next cycle starts ≈08:56, kill ≈09:06 … if it finds itself started before ≈08:55 it may
@@ -313,6 +322,19 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   All five fields hit (both jobs at 15:54:17, count stayed 52, stamp stayed 14:04:52, both `last_run`s
   advanced). **Prefer this pairing — exclusion primitive + survival forecast — over a handoff whenever
   the tick clears §0's awake-time budget.**
+  ✅ **New use of the primitive: a LATER cycle can upgrade a predecessor's CONDITIONAL survival call to
+  UNCONDITIONAL by re-reading the floor — no blocking watch, and it works on ticks nobody can reach**
+  (2026-08-11 09:49 ICT). 0230z published `CleanPro Alerts` 10:00:00 as conditional-on-S=0: its floor
+  reached only 09:39:00 against a 46 min arming interval. At 09:49:29 the `UserIsActive` row read age
+  **00:00:07**, `Timeout will fire in 593 secs` ⇒ display timeout 09:59:22, `sleep 1` ⇒ onset
+  **≥ 10:00:22** — **22 s past the tick** — so S = 0 through the slot is now *arithmetic*, not a
+  regime guess, and the call goes unconditional while still being settled retroactively by a third
+  cycle. **Why a margin that thin is still sound: the floor is MONOTONE — every HID event re-arms the
+  600 s countdown, so activity can only push onset later, and `max(floor, holder release)` (the 07:29
+  rule) can only add.** The sole falsifying branch is a *deliberate* sleep (lid close /
+  Ctrl-Shift-Power), which no cycle has yet observed. **Generalise: re-read the floor against every
+  inherited conditional call — a tick you cannot reach is often one you can still de-risk**, and this
+  is strictly cheaper than the n=15 pairing because it needs neither reach nor a blocking wait.
   ✅ **n=16 (2026-08-10 14:00:00 ICT, residual 0 s) — the widest survival call yet: SIX jobs in one
   slot, all five ancillary fields hit, published two cycles ahead by 06:28Z and settled by a third
   cycle that never saw the tick.** It also answered a standing diagnostic for free: `cleanpro-alerts`
