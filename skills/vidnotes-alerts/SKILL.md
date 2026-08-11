@@ -275,6 +275,14 @@ If the file exists but has missing or null fields, use the seed value for those 
 > the param. Skip it when wording an alert. (Underneath it is a minor UX signal — one user tripped it
 > 10× in a single session — but it is never an incident.)
 >
+> **`error_code=i` is a SECOND minified label and it is NOT the same kind of thing as `d` (decoded
+> 2026-08-11 18:00 ICT).** Same R8 leak, same `context=home_url_import` / `status_code=0` / `fatal=0`
+> / Android shape — but its `error_message` is **"All YouTube transcription methods failed"**, i.e. a
+> real extraction failure, not a validation string. Do not pattern-match single-letter codes into the
+> "harmless" bucket: **decode each one, they mean different things.** Volume when first seen was 4 ev
+> / 1 user (a new install, `ga_session_number=1`, retrying 4× in one session) — noise at that scale,
+> but if `i` ever reaches multi-user volume it IS worth an alert body mention, unlike `d`.
+>
 > ⛔ **CLOCK-SKEWED DEVICES PUT FUTURE-DATED EVENTS INSIDE EVERY WINDOW (added 2026-08-11).**
 > `event_timestamp >= NOW - 4h` has **no upper bound**, so the "4h window" is really `[T-4h, ∞)`.
 > Measured on the 14:00 ICT run: `MAX(event_timestamp)` was **17:43 ICT — 3h43m in the future**, two
