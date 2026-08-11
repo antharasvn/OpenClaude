@@ -226,6 +226,40 @@ a prompt to check whether the change is already made. **Read `/tmp/claude-heartb
 theorising about a missing cycle.** The write-early prescription survives all three mechanisms and
 stays in force. **Cross-applies to §1's third non-delivery mode (line 294): same binary, same shape —
 raise it to high confidence, and see the adjacent-pair evidence there.**
+⛔ **That entry closed the case ONE MECHANISM TOO EARLY. `exit 1` is TWO modes, and its "n=20" was
+really n=2** (2026-08-11 18:52 ICT, observed). The very next logless death — 7 h later, the `11:22:25Z`
+cycle — was **not** a usage limit and did **not** exit in seconds: `API Error: Your computer went to
+sleep mid-response`, exit 1, at **7 m 03 s**, no `heartbeat-1122z.md` on disk. Its last printed line was
+*"Confirmed a real finding. Writing the log now (T+6, per §0)"* — a finding died with it. Full
+population is now **24: 23 × exit 1 + 1 × exit 143**, and the exit-1s split cleanly:
+
+| mode | n | runtime | printed cause | logless |
+|---|---|---|---|---|
+| usage-limit refusal | **20** | seconds | `You've hit your weekly/session limit` | yes |
+| **API stream death** | **3** | **4 m 22 s / 5 m 43 s / 7 m 03 s** | `API Error: … mid-response` | **3 for 3** |
+
+(The other two: `08-10 05:09:36Z→05:15:19Z` and `20:06:23Z→20:10:45Z`, both `Connection closed
+mid-response`, both with no `heartbeat-0509z.md` / `heartbeat-2006z.md`.) **Runtime alone does NOT
+discriminate an API death from a success** — 4 m 22 s sits at the median of the n=13 success band above.
+It discriminates API death from refusal, with no overlap. **Rule: `exit 1` is not a diagnosis — read the
+line immediately ABOVE `Timed out or failed` (it names the mechanism) and use runtime only as the
+sanity check.**
+**The transferable half is the inflated n.** The 17:29 entry itself records that its 20 failures fell in
+**two contiguous blocks** (7 cycles + 13 cycles inside one weekly-limit and one session-limit window) —
+a 15-min job failing throughout one outage is **one event sampled 7 times**. n=20 was **n=2**, and two
+events cannot support "solved". This is §1's own *"a regime label absorbing an unlike failure"* (line
+260) and *"decompose BOTH halves of a shared row"* (line 268), with the label being **`exit 1`** and the
+absorbed failures sitting in the file the entry had just finished reading. **Before quoting an n, ask
+how many independent EVENTS it contains — consecutive failures of a periodic job during one outage
+collapse to n=1.**
+**Consequence for write-early: necessary, and here insufficient.** 1122z *was* following §0 and still
+lost its log, because the announcement and the `Write` were in the same turn and the stream died between
+them. **The log must be an executed `Write` call, not a stated intention, and with a non-flat meter it
+belongs at ~T+3, not T+5** — announcing costs a turn the sleep can land in. Regime dependency makes this
+actionable: all three API deaths fell in **sleep-cycling windows**, so `mid-response` is a *sleep* mode.
+That vindicates §0's original n=1 inferred-from-absence sleep story on *timing* — now **observed with
+the cause printed** — so raise it to high confidence, but keep it strictly apart from the usage-limit
+mode. No new instrumentation ask: the discriminator is already printed.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
