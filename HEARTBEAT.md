@@ -91,6 +91,13 @@ flat at 3739.3 across 05:37:00 → 05:55:45 ⇒ S = 0 ⇒ predicted **05:55:25**
 flat at 3739.3 across 05:55:45 → 06:14:43 ⇒ S = 0 ⇒ predicted **06:14:21**, `ps` start **06:14:21**.
 ✅ **n=8, residual 0 s (2026-08-11 06:33 ICT):** completion `23:18:08Z` = 06:18:08 ICT, +900 s, meter
 flat at 3739.3 across 06:14:43 → 06:33:27 ⇒ S = 0 ⇒ predicted **06:33:08**, `ps` start **06:33:08**.
+✅ **n=9, residual 0 s (2026-08-11 08:12 ICT) — and the first LARGE-S measurement, which is what the
+rule was previously untested on.** Completion `00:34:33Z` = 07:34:33 ICT, +900 s = 07:49:33,
+S = **1394.1** (meter 3739.2 @ 07:31:54 → 5133.3 @ 08:13:05) across **seven** sleep windows ⇒ predicted
+**08:12:47.1**, `ps` start **08:12:47**. The `+ S` term had been scored on sleep only once before
+(S = 361 s). Series: **15:02 / 15:03 / 0 / 0 / +0.6 (S=361) / +1 / 0 / 0 / 0 (S=1394)**. Confidence high.
+Corollary worth knowing: **an apparent 38-min hole between two cycles is the deferral, not a logless
+death** — check the meter before hunting for a missing log.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
@@ -503,6 +510,34 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   excluding the transient-holder branch, and powerd's stopwatch (`0x000109fa00018adc`, creation
   05:08:52, age 02:22:09) on its *valid* branch for once and agreeing. Churn ⇒ ≥600 s HID idle;
   persist across >600 s ⇒ re-tickle. **Both directions, one field, one row.**
+  ⛔ **The PERSIST branch is FALSIFIED without an `S = 0` precondition — `TimeoutActionRelease` counts
+  down on MONOTONIC time and freezes during sleep, so a persisted id bounds AWAKE time, never wall
+  time** (2026-08-11 08:13 ICT). Measured: id `0x000126c30009927d` unchanged **07:12:21 → 08:13:34 =
+  3673 s = 6.1×** its own 600 s timeout — which the rule above reads as "re-tickle proved by
+  construction, HID active throughout" — while the meter says **S = 1394.1 s** (3739.2 @ 07:31:54 →
+  5133.3 @ 08:13:05) and powerd's display-on hold **churned** (`0x000109fa00018adc` creation 05:08:52 →
+  `0x00012e5e0001955d` creation **08:07:22**), i.e. the display went dark and came back. The id test
+  said HID was active; the display had slept. No sub-span of *continuous awake* time need reach 600 s —
+  ~1480 s awake pre-onset, six ~20 s dark-wake slivers, then a tickle at the 08:06:53 wake resets it —
+  so the assertion never released. **Churn branch is unaffected** (id changes ⇒ ≥600 s HID idle, still
+  positive evidence). **Persist branch is valid only across a span with S = 0**; with S > 0 it can read
+  exactly backwards. Every prior confirmation (05:37 / 05:56 / 07:31 ICT) was measured inside an S = 0
+  window — the same pattern that hid the missing `+ S` in §0's `completion + 900 s` rule. Ranking, all
+  three instruments now carrying a precondition of the same kind:
+  **id (S = 0 over the span) > count (0 over the span) > powerd stopwatch (count 0 over the span);
+  with S > 0 all three are blind and only the meter + `getUpdates` gaps say anything.** When two
+  instruments disagree, the one with an unmet precondition is the wrong one. **Record the meter delta
+  alongside every `UserIsActive` id reading — a bare id is no longer a conclusion.**
+  ⚠️ **The sleep-onset chain's positive branch has now erred in BOTH directions — stop calling it
+  "overshoots"** (same cycle). 0030z predicted, from tickle 07:29:57: display timeout 07:39:57, system
+  sleep **≈07:40:57**. Observed onset is bounded by the `getUpdates` cadence to **(07:36:32, 07:39:42)**
+  — sleep began at or before the predicted *display* timeout — residual **−75 to −265 s** against a
+  prior series of **+258 / +412 / no-onset / no-onset**. Nothing can make system sleep precede the
+  display countdown on the powerd chain, so the surviving candidates are a display sleep that did not
+  come from the idle countdown (manual sleep, lock, hot corner, screensaver, lid) — unmodelled and
+  undecidable from disk. Also note 0030z's scoring table enumerated three cells and the observed one was
+  the **fourth — id unchanged AND onset** — which the old rule called impossible; that is why this is a
+  falsification and not a fifth inconclusive. Enumerate all four cells when scoring the chain.
   🆕 **A no-onset is only EXCUSABLE while some unbounded holder is up — when they all clear, the
   positive branch becomes falsifiable, so take that observation** (2026-08-11 07:31 ICT). The positive
   direction has scored +258 s / +412 s / no-onset / no-onset and has never landed, each time excused by
