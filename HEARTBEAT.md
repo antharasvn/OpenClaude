@@ -405,6 +405,21 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   evaluation looked armed for echo's 02:05:00, predicting 02:05:00 + 907 s sleep = 02:20:07 against an
   observed 02:09:24 (−643 s). It was armed for the **interval pair's 01:54:17**, and
   `01:54:17 + 907.1 s = 02:09:24.1` vs observed **02:09:24** — residual ≈ **0 s**.
+  ⛔ **The MIRROR error, and the wording above invites it: once a job's slot RESOLVES, ADVANCE that job
+  by its own period and leave it in the `min()` pool — never delete it** (2026-08-11 16:21 ICT). "Never
+  the watched job's own next slot" is right for the slot you just consumed and **wrong for its
+  successor**. 0901z settled `echo-backend-alerts` at 16:05:00 and then published *"next arming after
+  16:05 is the interval pair … at 17:13:34 ICT — four cycles out, nobody reaches it from here"*. But
+  `echo-backend-alerts` is `5 * * * *` America/New_York — **hourly** — so it re-arms for **17:05:00**,
+  which precedes 17:13:34 by 8 min 34 s. Three consecutive `Running job:` lines at 14:05:00 / 15:05:00 /
+  16:05:00 make the period unmistakable; the job was dropped from the pool, not mis-read. Cost here fell
+  the safe way (arming declared *later* than truth, so nobody was promised an unreachable tick), **but
+  the sign is not guaranteed** — the same deletion on a job whose next period is shorter than the one
+  you jump to overstates reach, §0's stranding sign. It also mislabels the fleet's next observable:
+  "nobody reaches it" was false, 17:05:00 being reachable by a cycle starting ≈16:59.
+  **Recompute `min(next_run_time)` over all 14 enabled jobs from `cron/jobs.json` every cycle; never
+  carry an arming forward in prose** — the same re-derive-from-state rule §1 already applies to weekly
+  slots and timezones.
   ⛔ **An evaluation that discards every job it finds writes NOTHING to `logs/infra.log`** (measured
   2026-08-09 04:21:36 ICT). `Running job:` is logged by `bot/scheduler.py` only when a job actually
   runs; a slot past `misfire_grace_time` is dropped inside APScheduler, so the sole trace is the
