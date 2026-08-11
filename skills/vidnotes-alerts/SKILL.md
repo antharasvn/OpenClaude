@@ -238,6 +238,41 @@ If the file exists but has missing or null fields, use the seed value for those 
 >
 > Hourly distinct-user counts do **not** sum to the daily distinct total (a user active in two hours is
 > one user/day) — per-hour *rates* are valid, per-hour *sums* are not.
+>
+> ⛔ **A MARGINAL BREACH (70–75%) IS USUALLY QUOTA, NOT AN OUTAGE — ALWAYS PULL THE ERROR
+> COMPOSITION BEFORE WORDING THE ALERT (added 2026-08-11 14:00 ICT, from the first firing of this
+> rule since the floor went to 20).** The rules below are **UNCHANGED** — 16/22 = 72.7% breached and
+> was alerted. But 72.7% vs the 81.8% baseline is **binomial two-sided p = 0.269 — n.s.**, and the
+> in-window error params were led by **`daily_transcription_limit`, 12 events / 4 users — free-tier
+> enforcement working correctly**, plus `limit_precheck`, `library_limit`, `transcription_limit`,
+> `youtube_transcript_unavailable`. The real backend signatures (`http_502`,
+> `service_temporarily_unavailable`, `backend_404`, `job_not_found`) were **one user each**. So the
+> alert was true-to-rule and misleading-as-an-incident. **Run this alongside Step 3 and put the
+> composition in the alert body**, so the reader can tell a cap from a fault:
+>
+> ```sql
+> SELECT platform, event_name, p.key AS param, p.value.string_value AS val,
+>        COUNT(*) AS ev, COUNT(DISTINCT user_pseudo_id) AS users
+> FROM `vidnotes-7864d.analytics_508326759.events_intraday_*`, UNNEST(event_params) AS p
+> WHERE _TABLE_SUFFIX >= "{YESTERDAY}"
+>   AND event_timestamp >= UNIX_MICROS(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 4 HOUR))
+>   AND (event_name LIKE "%fail%" OR event_name LIKE "%error%" OR event_name LIKE "%limit%")
+>   AND p.key IN ("error_code","failure_reason","reason","failure_stage")
+>   AND p.value.string_value IS NOT NULL
+> GROUP BY 1,2,3,4 ORDER BY ev DESC LIMIT 30
+> ```
+>
+> Note the scalar-subquery form (`(SELECT value.string_value FROM UNNEST(event_params) WHERE key IN …)`)
+> **fails** with "Scalar subquery produced more than one element" when an event carries two of those
+> keys — use the `, UNNEST(…) AS p` join above. Whether by-design codes should leave the denominator
+> is a **boss policy call — do not self-authorize it.**
+>
+> ⛔ **CLOCK-SKEWED DEVICES PUT FUTURE-DATED EVENTS INSIDE EVERY WINDOW (added 2026-08-11).**
+> `event_timestamp >= NOW - 4h` has **no upper bound**, so the "4h window" is really `[T-4h, ∞)`.
+> Measured on the 14:00 ICT run: `MAX(event_timestamp)` was **17:43 ICT — 3h43m in the future**, two
+> iOS users in hours 16/17. Harmless there (both completed, so they *raised* the rate), but it can cut
+> either way and it silently breaks any hour-bucketed chart. Add
+> `AND event_timestamp <= UNIX_MICROS(CURRENT_TIMESTAMP())` whenever the window edge is load-bearing.
 
 Run this BigQuery SQL against the intraday table (NOT `events_*` — use `events_intraday_*`):
 
