@@ -384,6 +384,13 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   interval family and forgot the cron family: `Echo Backend Alerts` (`5 * * * *` America/New_York) is
   due **09:05:00 ICT**, earlier, so `min(next_run_time)` is 09:05:00 and the pair never sets the wake.
   **Enumerate BOTH families from `cron/jobs.json` and take the min — neither family is the default.**
+  ⚠️ **A job also hides behind a TIMEZONE conversion, not just behind its family — convert every job's
+  next slot to one clock before counting how many share it** (2026-08-11 11:21 ICT). 0402z called
+  12:00:00 ICT a **two**-job slot (`CleanPro Alerts` 08-22/2 Saigon + `VidNotes Alerts` 7-23/2 Warsaw)
+  and missed **`VidNotes Daily`** (`0 7 * * *` Europe/Warsaw = CEST ⇒ 07:00 CEST = **12:00:00 ICT**, the
+  same instant) — a **three**-job slot. Harmless there because the arming was set by an earlier tick,
+  but it is §1's 04:05:33 ⛔ in embryo: an unnamed job rides in on the call and gets scored against a
+  forecast that never listed it. Build the pending-slot table in ICT from `cron/jobs.json` every time.
   ⛔ **The `next run at:` field in a `was missed by` warning is the trigger's NEXT slot AFTER
   rescheduling — i.e. `missed_slot + one interval`, NOT the slot that died** (2026-08-11 08:33 ICT).
   This is the first ancillary field ever called wrong in a settled forecast: 0112z applied the rule
@@ -444,6 +451,16 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   bands do not cluster by class and the maximum keeps moving, so the unbounded-holder rule is not a
   statement about typical length that a long observation can erode — **never schedule against a release
   in either direction, however old the hold.**
+  ⛔ **And when the boss sits down, that hold's length becomes LEFT-BOUNDED ONLY — the `sleep 1`
+  back-out dates a release only when the release is what PERMITTED the sleep** (2026-08-11 11:21 ICT).
+  That same grok hold `[0x0001452f00019b64]` was gone by 11:22:33, but the meter stayed flat at 5133.3
+  throughout, because HID returned at **11:10:10** and held the host awake across the release. There is
+  no onset to back `sleep 1` out of, so the release bounds only to **(11:03:36, 11:22:33]** and the
+  length to **[78:53, 97:50]** — versus the `dasd` case, where sleep resumed within ~60 s and pinned the
+  release to a second. **Expect this exact loss whenever a long hold ends near a wake, which is when
+  they most often do end.** Corollary in the same probe: pid **16591 was still alive** with no assertion
+  (`ps` elapsed 02:40:38) — fourth confirmation that process liveness is not a proxy for a held
+  assertion. Record the bracketing probe times on any hold you are timing; they are all you may get.
 - **Keep-awake source is NOT always the display.** Six cycles ran clean on a display-on assertion; the
   00:37 ICT cycle ran clean on transient `dasd` BackgroundTask assertions (Spotlight indexing) with the
   display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
