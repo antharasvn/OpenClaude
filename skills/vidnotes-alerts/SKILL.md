@@ -267,6 +267,14 @@ If the file exists but has missing or null fields, use the seed value for those 
 > keys — use the `, UNNEST(…) AS p` join above. Whether by-design codes should leave the denominator
 > is a **boss policy call — do not self-authorize it.**
 >
+> **`error_code=d` is a MINIFIED LABEL, NOT A FAULT — do not chase it (decoded 2026-08-11 16:00 ICT).**
+> It routinely tops this table by volume (16 ev / 3 users in one 4h window) and looks alarming. Its
+> siblings decode it: `error_message="Please enter a valid video URL starting with http:// or
+> https://"`, `context=home_url_import`, `status_code=0`, `fatal=0`, Android 1.5.2 only. It is
+> **client-side URL validation** on pasted non-URL text; `d` is an R8-minified enum name leaking into
+> the param. Skip it when wording an alert. (Underneath it is a minor UX signal — one user tripped it
+> 10× in a single session — but it is never an incident.)
+>
 > ⛔ **CLOCK-SKEWED DEVICES PUT FUTURE-DATED EVENTS INSIDE EVERY WINDOW (added 2026-08-11).**
 > `event_timestamp >= NOW - 4h` has **no upper bound**, so the "4h window" is really `[T-4h, ∞)`.
 > Measured on the 14:00 ICT run: `MAX(event_timestamp)` was **17:43 ICT — 3h43m in the future**, two
