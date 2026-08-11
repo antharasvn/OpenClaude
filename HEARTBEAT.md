@@ -177,8 +177,18 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   masks a job that never ran; here `last_run` masks a job that ran and produced nothing. Only
   `last_status` / `consecutive_errors` carry it, and `ce` resets to 0 on the next success — so a
   single good run erases all trace. **Read `last_status` alongside `last_run` on every `prompt`-type
-  job; the tell is a `last_run` sitting exactly `fire + 600 s`.** Do not extend this to `script` jobs
-  — no timeout applies to them (§1's runtime band).
+  job; the tell is a `last_run` sitting exactly `fire + 600 s`.**
+  ⛔ **"Do not extend this to `script` jobs — no timeout applies to them" was WRONG and is corrected
+  here (2026-08-11 14:26 ICT). `script` jobs ARE capped, at 300 s, and the cap has fired at least 10
+  times across SIX different jobs.** Source, not inference — `bot/scheduler.py:117-121` `_run_script`
+  is the same `asyncio.wait_for` construct as `_run_prompt` at :149, only the value differs:
+  `timeout=300` ⇒ `raise TimeoutError(f"Script {job['id']} timed out after 5 min")`. Observed in
+  `logs/infra.log`: `cleanpro-exp-monitor` 06-05, 07-02, 07-30 (**2×**, `ce` reached 2), `echo-daily`
+  07-15, `echo-backend-alerts` 07-22 + 08-04, `cleanpro-daily` 07-30, `cleanpro-alerts` 08-04,
+  `vidnotes-daily` 08-04. **So the timeout-stamp tell applies to BOTH job types — only the offset
+  differs: `fire + 600 s` for `prompt`, `fire + 300 s` for `script`.** The old wording did not merely
+  omit this, it **instructed cycles not to look**, and **6 of the 14 enabled jobs are `script` type**.
+  Read `last_status` alongside `last_run` on *every* job, whatever its type.
   ⚠️ **And don't let the standing dow-defect narrative absorb a delivery failure.** Cycles had filed
   `vidnotes-weekly`'s `2026-07-28` staleness as "`CLOCK_MONOTONIC` misfire + the crontab-dow defect".
   Decomposed: 07-28 ran; **08-04 lost to a bot restart** (memory §599), not a misfire; **08-11 fired
@@ -275,7 +285,13 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   derived from it (§1's `last_run` ⛔ below) sits **inside** the real spread. Measured
   `cleanpro-exp-monitor` completions off `logs/infra.log`, 2026-08-10: 15 / 50 / **77** / 23 / 33 / 19 /
   20 / 36 / 19 s — median ~23 s, prior max 77 s — and the 2026-08-11 01:13:34 run completed at 01:15:36,
-  a new max of **122 s** (`ce=0`, `last_status: OK`, no `[ERROR]`, no timeout applies to `script` jobs).
+  a new max of **122 s** (`ce=0`, `last_status: OK`, no `[ERROR]`). ⛔ **That parenthesis originally
+  ended "…, no timeout applies to `script` jobs" — false, see the 300 s correction above. The 122 s
+  run was at 41 % of a HARD 300 s cap, not in open space**, and `cleanpro-exp-monitor` is the job that
+  has hit that cap four times. New maxima measured 2026-08-11 14:00:00: `echo-daily` **2 m 08 s** and
+  `mangii-daily` **2 m 15 s** — both above the 122 s figure, both ~43 % of the cap. Consequence for
+  the 180 s probe rule below: it now sits between the observed max and the kill, so **a `script` job
+  still stale at `slot + 300 s` is not "running long", it is dead.**
   The 180 s figure above is deliberately clear of that: a 120 s rule would *itself* have false-alarmed on
   this very run, which is why the threshold is set well outside the observed tail, not at it. Its partner
   `auto-commit` really does finish in 3–5 s, which is what made the aggregate look tight.
@@ -872,6 +888,25 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   persistent id proof of re-tickle; here an id change is ordinary churn, not a release, so reading it
   that way would score ~13 min of continuous sleep-blocking as two short unrelated holds. **Take the
   floor from `UserIsActive`; treat Chrome as an unbounded conditional postponement only.**
+  ⛔ **The "three holds at once" above is a MEDIA signature, not a Chrome signature — and a holder can
+  HAND OFF TO ITSELF under a different assertion NAME, so a disappearing row is not a release**
+  (2026-08-11 14:05 ICT). At 14:05:48 Chrome's sole hold was pid 2210 `[0x00017e8a00019108]`
+  `NoIdleSleepAssertion` **"WebRTC has active PeerConnections"**, age 00:16:22 ⇒ creation **≈13:49:26**
+  — within **5 s** of 0642z's 13:49:21 probe, the exact instant that cycle saw
+  `PreventUserIdleDisplaySleep` fall **1 → 0** and wrote "Chrome's Video Wake Lock released", closing
+  the class at "life ≤ 9 min 46 s". True of the *triple*, false of the *holder*: Chrome blocked idle
+  **system** sleep continuously ≈13:39:35 → ≥14:05:48 (**≥26 min**) across a transition that looked
+  like a release on every instrument that cycle had. Three consequences: (a) a WebRTC call arms **one**
+  hold — **no** paired `coreaudiod` `Created for PID:` row, **no** `NoDisplaySleepAssertion` — so a
+  cycle looking for the triple sees nothing and calls Chrome clear; (b) **the count test is blind in
+  the direction that matters**: `PreventUserIdleDisplaySleep` reads **0**, the "valid branch" for
+  powerd's stopwatch and the branch that supposedly excludes transient holders, while a *system* hold
+  is up — so refinement #2's precondition ("no OTHER idle-sleep hold may be up") is violated
+  **invisibly to the count**, and any onset prediction off the display chain is unsound there;
+  (c) generalise past Chrome — **re-enumerate owners by PID, not by assertion name.** Same shape as
+  grok's stacking and the lockstep churn, one level out: there the *ids* churned under a fixed name,
+  here the *name* changed under a fixed pid. An S = 0 attribution made off `UserIsActive` is unharmed;
+  what breaks is the narrative "X released", which is the label-absorbs-an-unlike-event error again.
   ⛔ **Corollary that bites the count test: `PreventUserIdleDisplaySleep` = 1 does NOT identify its
   holder, and the holder can swap under an unchanged count.** At 06:14:57 the 1 was AnyDesk
   (`0x000115ae00058e6a`, pid 90021, + its paired coreaudiod `0x000115b100018cf3`); 19 min later both
