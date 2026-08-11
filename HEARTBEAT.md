@@ -98,6 +98,8 @@ S = **1394.1** (meter 3739.2 @ 07:31:54 → 5133.3 @ 08:13:05) across **seven** 
 (S = 361 s). Series: **15:02 / 15:03 / 0 / 0 / +0.6 (S=361) / +1 / 0 / 0 / 0 (S=1394)**. Confidence high.
 Corollary worth knowing: **an apparent 38-min hole between two cycles is the deferral, not a logless
 death** — check the meter before hunting for a missing log.
+✅ **n=10, residual 0 s (2026-08-11 08:33 ICT):** completion `01:18:05Z` = 08:18:05 ICT, +900 s, meter
+flat at 5133.3 across 08:13:05 → 08:33:27 ⇒ S = 0 ⇒ predicted **08:33:05**, `ps` start **08:33:05**.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
@@ -302,6 +304,20 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   paragraph later, forecast the *next* arming from cron expressions alone — missing the interval pair
   at 03:54:17 and calling 04:00:00. **Interval jobs have no cron expression; re-read them from
   `cron/jobs.json` every time you forecast an arming, not just the first time.**
+  ⛔ **Same error with the operands SWAPPED, so state the rule symmetrically** (2026-08-11 08:33 ICT).
+  0112z closed with "next arming after 08:23:14 is the **09:13:34** interval pair" — it remembered the
+  interval family and forgot the cron family: `Echo Backend Alerts` (`5 * * * *` America/New_York) is
+  due **09:05:00 ICT**, earlier, so `min(next_run_time)` is 09:05:00 and the pair never sets the wake.
+  **Enumerate BOTH families from `cron/jobs.json` and take the min — neither family is the default.**
+  ⛔ **The `next run at:` field in a `was missed by` warning is the trigger's NEXT slot AFTER
+  rescheduling — i.e. `missed_slot + one interval`, NOT the slot that died** (2026-08-11 08:33 ICT).
+  This is the first ancillary field ever called wrong in a settled forecast: 0112z applied the rule
+  correctly to `CleanPro Alerts` (missed 08:00 +07 → printed **10:00 +07**, a 2 h step) and then, in
+  the same table, printed the *missed slot itself* for `Echo Backend Alerts` (`21:05 EDT` vs observed
+  **22:05 EDT**). The warnings were never inconsistent — check them: 08-09 07:36:18 (missed 20:05 EDT →
+  21:05), 08-09 09:20:19 (22:05 → 23:05), 08-11 05:11:01 (18:05 → 19:05), 08-11 08:23:14 (21:05 →
+  22:05). **When pre-announcing warning text, print `missed_slot + interval` in the JOB'S OWN timezone,
+  for every row — this is the field a later cycle uses to identify which slot died.**
   ⛔ **ONE evaluation splits its pending slots at the 300 s grace boundary — a discard at slot T does
   NOT imply a discard at slot T+δ** (falsification 2026-08-11 04:05:33, the first *unconditional*
   forecast ever scored wrong here). The 2051z cycle called both the 04:00:00 `vidnotes-alerts` and the
