@@ -447,6 +447,26 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   proved**; only from 09:32:46 is a holder responsible. **Generalise: sample the assertion COUNT every
   cycle, not just powerd's age** — a count of 0 at a probe retroactively rules out the holder branch for
   the span up to it, converting "inconclusive, cause identified" into an attributed re-tickle.
+  ⛔ **powerd's stopwatch is a DISPLAY-on stopwatch, not an HID stopwatch — "age > 600 s ⇒ re-tickle
+  proved" is FALSE whenever a display holder is up, and here is the counterexample** (2026-08-11 07:09
+  ICT, first time caveat (b) actually bit). The rule's proof step is valid only on the branch where
+  `PreventUserIdleDisplaySleep` = **0** over the span; 2351z published it with the count at **1**
+  (Chrome's Video Wake Lock) and was falsified within 18 min. Measured: the `UserIsActive` id
+  **churned** — `0x000109fe00098b4c` (last tickle 06:42:40, due to release 06:52:40) →
+  `0x00012385000991d9` (creation **06:59:57**), i.e. **≈7 min of `UserIsActive` = 0, HID demonstrably
+  idle** — while powerd's `0x000109fa00018adc` ticked straight through it, unchanged since 05:08:52
+  (age 02:00:16 at that probe). A second churn followed inside the same cycle:
+  → `0x000126c30009927d` (creation **07:12:21**), a further **2 min 24 s** idle. **Rank the
+  instruments: `UserIsActive` id > count > stopwatch.** An id CHANGE is positive evidence of a ≥600 s
+  HID-idle gap; the stopwatch is corroboration only, and only where the count is 0. This does not
+  weaken the id test — the 05:37 and 05:56 ICT entries stand — it strips the *third* instrument of the
+  proof role they lent it.
+  ✅ **First measured length for the Chrome media class: ≈39–42 min** (same probe pair). The triple
+  released in (07:09:09, 07:12:21] against a first-observed creation of 06:30:00 — a lower bound,
+  since that is the first *observed* id of a churning set. Band across holder types is now
+  `dasd` 26 / 40 / 55+ / ≈65, grok ≈40, **Chrome ≈40 min** — no characteristic length, and it does
+  **not** cluster by class, so §1's unbounded-holder rule still governs all of them. Keep session
+  length and id length apart: this session ran ≈40 min while each of its ids lived ≈12.7 min.
   ✅ **Cheaper and hole-free instrument — the `UserIsActive` ASSERTION ID is itself the re-tickle
   proof** (2026-08-09 15:27 ICT, n=1). The row carries `Timeout will fire in N secs
   Action=TimeoutActionRelease`, so the assertion **releases at its own 600 s timeout**. Therefore
@@ -475,6 +495,23 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   The pair of cycles is a natural experiment — **the id test returns the same answer with a display
   holder up for the whole span and with none up** — which promotes it from "the one that still works"
   to the default. Record the `UserIsActive` id every probe; treat the count as corroboration.
+  ✅ **Both DIRECTIONS of the id test are now scored inside 20 min, and the count agreed each time it
+  was available** (2026-08-11 07:31 ICT). 0008z scored the **churn** branch with the count blind (1,
+  Chrome's Video Wake Lock) and the stopwatch saying the opposite; this cycle scored the **persist**
+  branch with the count **0 at both ends**: id `0x000126c30009927d` unchanged 07:12:21 → 07:31:01 =
+  **1120 s = 1.87×** its own 600 s `TimeoutActionRelease` ⇒ re-tickle proved by construction, count 0
+  excluding the transient-holder branch, and powerd's stopwatch (`0x000109fa00018adc`, creation
+  05:08:52, age 02:22:09) on its *valid* branch for once and agreeing. Churn ⇒ ≥600 s HID idle;
+  persist across >600 s ⇒ re-tickle. **Both directions, one field, one row.**
+  🆕 **A no-onset is only EXCUSABLE while some unbounded holder is up — when they all clear, the
+  positive branch becomes falsifiable, so take that observation** (2026-08-11 07:31 ICT). The positive
+  direction has scored +258 s / +412 s / no-onset / no-onset and has never landed, each time excused by
+  a holder or a re-tickle. At 07:31:01 powerd's display-on hold was the **sole** idle-sleep assertion —
+  no `dasd`, no grok, no AnyDesk, and Chrome's media triple released — leaving §1's unbounded-holder
+  rule nothing to point at. Score such a window with the id test: id **changed** + onset ⇒ chain
+  **confirmed**; id **unchanged** + no onset ⇒ inconclusive, cause proved; id **changed** + **no onset**
+  ⇒ **genuine falsification**, unreachable in every prior case. Set the observation up before the
+  confounders return — they are unbounded in arrival as well as release.
   ⚠️ **`sharingd`'s `PreventUserIdleSystemSleep` "Handoff" CHURNS its id — never build a floor on it**
   (same probe): `0x00010bc600018c27` @ 05:17:20 → `0x00010faf00018cd4` @ 05:37:20 (age 00:04:07 ⇒
   creation 05:33:13). Two different holds 20 min apart, each a few minutes old. It has a real age so
