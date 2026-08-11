@@ -519,6 +519,26 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   strands ticks); planning on the min **understates** it and wastes an upgrade. Both errors have now
   occurred inside a single handoff. **Read N and compute; never quote a constant.** Corollary for the
   handoff: state the probe *condition* (`you need P + N ≥ tick − 60 s`), not a probe *time*.
+  ⛔ **The `+ 60 s` trailing term above is WRONG — the measured value is ~5 s, so the rule is
+  `probe + N + 5 s` and every floor built on 60 s OVERSTATES its exclusion window by up to 55 s**
+  (2026-08-11 16:05 ICT, from `memory/t0/MEMORY.md:502`, **n=38** measured 08-01→08-07). The 12:24 ⛔
+  above correctly caught `sleep 1` being misread as one *second* and raised the term 1 → 60 — but
+  `pmset -g custom` is a **setting**, and MEMORY.md:502 is the **measurement of what that setting
+  actually does**. It does not do a minute: the `sleep` idle timer **cannot run while the display is
+  on**, because powerd holds `PreventUserIdleSystemSleep` "Prevent sleep while display is on"
+  (verified to the second — assertion age 01:16:25 at 21:10:08 ICT vs display-on 19:53:43). The two
+  terms are therefore **sequential, not alternative**: the `UserIsActive` timeout fires → display goes
+  off → onset follows by **median 6 s, min 5 s** (37/38 initiating sleeps). A floor takes the
+  **minimum**, so the term is **5 s**. The fix imported an unmeasured premise in the same edit that
+  fixed a parse — check memory for a measurement before promoting a config value into arithmetic.
+  **Scope of the exposure, and why this tightens rather than alarms:** only **35/69** display-off
+  events led to sleep at all (34 never slept, incl. dark-but-awake windows of 316/292/236 min) — a
+  `NoIdleSleepAssertion`/`PreventUserIdleSystemSleep` holder blocks it about half the time, and
+  `max(floor, holder release)` (the 07:29 rule) already covers that branch. So a call made under a
+  live holder is unaffected. **What breaks is the bare-floor call at a sub-minute margin** — e.g. the
+  09:49 ICT upgrade that cleared its tick by **22 s** on `+60`; on the corrected term it does **not**
+  clear, and should have been left conditional. Recompute any inherited floor before relying on it.
+  Confidence high on the correction, moderate on 5 s vs 6 s — do not shave it below 5 s.
   ✅ **n=16 (2026-08-10 14:00:00 ICT, residual 0 s) — the widest survival call yet: SIX jobs in one
   slot, all five ancillary fields hit, published two cycles ahead by 06:28Z and settled by a third
   cycle that never saw the tick.** It also answered a standing diagnostic for free: `cleanpro-alerts`
