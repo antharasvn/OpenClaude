@@ -80,6 +80,18 @@ inside S = 0 windows** — the rule had never been scored against sleep. **Conse
 to the reach dividend above: in a sleep-cycling regime the heartbeat fleet's reach degrades in lockstep
 with the cron scheduler.** Never promise "the next cycle starts at completion + 15 min" outside a
 sleep-exclusion window; state the reach as a range and prefer retroactive settlement.
+⚠️ **But "degrades in lockstep" cuts the other way for an ALREADY-ARMED tick — the two clocks slide
+TOGETHER, so sleep does not degrade its reachability** (2026-08-11 10:44 ICT, composed from the two
+confirmed rules, **n=0 end-to-end — score it on any cycle that sees sleep intervene before a handed
+tick**). launchd's `StartInterval 900` defers by S and APScheduler's armed wait fires at `armed + S`;
+both freeze on the same `CLOCK_MONOTONIC`. Sleep accruing after *both* reference instants (your
+completion and the arming) shifts your successor's start **and** the evaluation instant by the same S,
+leaving the successor's position *relative to the tick* invariant. **So sleep degrades the INSTANT and
+can flip the BRANCH (survival → discard past the 300 s grace); it does not make a reachable tick
+unreachable.** Don't pad a reach claim for sleep risk — pad it for your own ~3 min exit uncertainty,
+which is the error that has actually stranded ticks (three times on 08-11). Exactness caveat: sleep
+between the arming and your completion moves the evaluation *only*, pushing the tick later relative to
+your successor — the safe direction, still retroactively settleable.
 ✅ **n=5, residual +1 s (2026-08-11 05:36 ICT) — the corrected rule re-scored on the S = 0 branch.**
 Completion `22:21:43Z` = 05:21:43 ICT, +900 s = 05:36:43, meter flat at 3739.3 across 05:17:00 →
 05:37:00 ⇒ S = 0 ⇒ predicted **05:36:43**, `ps` start **05:36:44**. Residual series for the rule is now
