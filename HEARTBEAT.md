@@ -100,6 +100,22 @@ Corollary worth knowing: **an apparent 38-min hole between two cycles is the def
 death** — check the meter before hunting for a missing log.
 ✅ **n=10, residual 0 s (2026-08-11 08:33 ICT):** completion `01:18:05Z` = 08:18:05 ICT, +900 s, meter
 flat at 5133.3 across 08:13:05 → 08:33:27 ⇒ S = 0 ⇒ predicted **08:33:05**, `ps` start **08:33:05**.
+✅ **n=11, residual 0 s (2026-08-11 08:51 ICT):** completion `01:36:36Z` = 08:36:36 ICT, +900 s, meter
+flat at 5133.3 across 08:13:05 → 08:52:02 ⇒ S = 0 ⇒ predicted **08:51:36**, `ps` start **08:51:36**.
+⛔ **A handoff must hand forward the TICK, never a precomputed "if you start before X you may block"
+threshold — that threshold has the WRONG SIGN and it nearly cost a log** (2026-08-11 08:51 ICT).
+0133z wrote *"next cycle starts ≈08:56, kill ≈09:06 … if it finds itself started before ≈08:55 it may
+block"* for a **09:05:00** tick. The next cycle started **08:51:36** — satisfying that branch — and
+blocking would have been **fatal**: its kill was **09:01:36**, short of the tick by **3 min 24 s**.
+**Start and kill move together, so relative to a FIXED tick, starting EARLIER strictly REDUCES reach.**
+0133z completed 08:36:36 against its own ≈08:41 guess (4 min 24 s early), which pulled the start
+08:56 → 08:51:36 *and* the kill 09:06 → 09:01:36, turning a marginally reachable tick unreachable.
+**This does not contradict the reach dividend above** — that holds for coverage of *future* time in
+aggregate, and is false for any *already-scheduled* tick, which just falls further past the earlier
+kill. Keep the two apart. **Rule: hand forward the tick + the ancillary fields only; the receiving
+cycle recomputes reach from its OWN `ps` start + 600 s and blocks only if `tick < own_kill − ~60 s`**
+(log-writing margin). A threshold silently embeds the predecessor's guess at its own exit time, which
+this section already measures at ~3 min of uncertainty.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
