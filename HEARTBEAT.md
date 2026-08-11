@@ -302,6 +302,14 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   `last_status` / `consecutive_errors` carry it, and `ce` resets to 0 on the next success — so a
   single good run erases all trace. **Read `last_status` alongside `last_run` on every `prompt`-type
   job; the tell is a `last_run` sitting exactly `fire + 600 s`.**
+  ⚠️ **Match the offset FLOOR (`≥ fire + cap`), not the exact value — "exactly + 600 s" holds only in
+  S = 0 windows** (2026-08-11 20:17 ICT, derived from the wall-vs-monotonic correction below). The cap
+  is monotonic, so a job that times out across host sleep stamps `fire + cap + S`, and a cycle matching
+  on exactly +600 would fail to recognise a genuine non-delivery as a timeout at all — reading it as
+  healthy, the same broken-health-signal failure §1 exists to catch. Unobserved so far, which is itself
+  the evidence for the correction: **16 of 16 weekly timeouts stamped at exactly +600 s ⇒ S ≈ 0 through
+  every one of them**, i.e. weekly slots have simply kept landing in awake windows. **Falsifier: any
+  timeout stamp materially above `fire + cap`.** Its continued absence does not refute this.
   ⛔ **"Do not extend this to `script` jobs — no timeout applies to them" was WRONG and is corrected
   here (2026-08-11 14:26 ICT). `script` jobs ARE capped, at 300 s, and the cap has fired at least 10
   times across SIX different jobs.** Source, not inference — `bot/scheduler.py:117-121` `_run_script`
@@ -504,6 +512,36 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   `mangii-daily` **2 m 15 s** — both above the 122 s figure, both ~43 % of the cap. Consequence for
   the 180 s probe rule below: it now sits between the observed max and the kill, so **a `script` job
   still stale at `slot + 300 s` is not "running long", it is dead.**
+  ⛔ **That last sentence is FALSE across a sleep window, and the reason generalises to EVERY runtime
+  figure in this checklist: `logs/infra.log` durations are WALL clock, the scheduler's caps are
+  MONOTONIC (awake) time, and the two have been compared directly for months** (2026-08-11 20:17 ICT,
+  observed). `asyncio.wait_for` runs on the asyncio event-loop clock = `time.monotonic()`, which on
+  Darwin **does not advance while the host is asleep** — the same freeze this file already establishes
+  for APScheduler's `Event.wait` (line 436) and launchd's `StartInterval` (line 90). Every runtime band
+  quoted in §0/§1 is two infra.log timestamps subtracted, i.e. wall. Nobody had noticed they are
+  different clocks. **Observed: 13 `script`-job runs completed successfully with a wall duration ABOVE
+  their own 300 s cap**, across 6 jobs and 4 months — `echo-daily` **22:34**, `mangii-daily` **22:40**,
+  `vidnotes-daily` **18:45**, `cleanpro-exp-monitor` **15:40**, `echo-backend-alerts` **9:34**, and
+  decisively **`auto-commit` at 15:27 against a median of 0:01 and p90 0:02 over n=1151** — concurrent
+  to the second with `cleanpro-exp-monitor`'s 15:40. A one-second `git` job cannot run fifteen minutes,
+  and two unrelated scripts do not slow down together by the same amount; `echo-daily` + `mangii-daily`
+  repeat the pattern on 07-05 and 07-17 (same fire instant, both ≈22 min). That is a host-wide time
+  jump, and it is the only reading under which these runs survive a 300 s cap. **Consequences:**
+  (a) a `script` job whose wall duration exceeds 300 s is **not** a broken cap or a false green — do not
+  alert on it; (b) `auto-commit` was alive and un-stamped **15 min** past its slot, so **read the meter
+  before declaring a job dead at `slot + 300 s`** — both that rule and the 180 s probe are wall-clock
+  rules pointed at a monotonic cap; (c) the 16:40 weekly ledger below compares wall-clock successes to
+  a monotonic cap, so its "median ≈ 6 m 45 s" is **inflated** by any sleep those runs spanned — a second
+  bias, **opposite in sign** to the censoring bias that entry already names, and neither was known when
+  "1800 s puts the cap at ~2.7× the median" was written; (d) **the capacity diagnosis still survives for
+  the timeouts**, by that ledger's own evidence — all 16 stamped at exactly `fire + 600 s` wall, and
+  under a monotonic cap a sleep-spanning timeout would stamp `fire + 600 + S`, so **S ≈ 0 across all 16**
+  and they genuinely burned 600 s of awake time. The `timeout=600 → 1800` ask stands; only its *sizing*
+  argument softens, and it should be reported that way rather than as weakened.
+  **Method rule: before comparing a measured duration to a timeout, check both are in the same clock.**
+  This host has two, they diverge by hours per day, and every *other* cross-clock comparison in §0/§1 was
+  already known to matter — it was simply never applied to the job runtimes themselves. Confidence
+  **high** (the co-occurrence plus a 1 s job at 15:27 admits no other reading).
   The 180 s figure above is deliberately clear of that: a 120 s rule would *itself* have false-alarmed on
   this very run, which is why the threshold is set well outside the observed tail, not at it. Its partner
   `auto-commit` really does finish in 3–5 s, which is what made the aggregate look tight.
