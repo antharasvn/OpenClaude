@@ -147,6 +147,17 @@ kill. Keep the two apart. **Rule: hand forward the tick + the ancillary fields o
 cycle recomputes reach from its OWN `ps` start + 600 s and blocks only if `tick < own_kill − ~60 s`**
 (log-writing margin). A threshold silently embeds the predecessor's guess at its own exit time, which
 this section already measures at ~3 min of uncertainty.
+⚠️ **State that effect SYMMETRICALLY — "starting earlier strictly reduces reach" is only the FAR-END
+half, and the near-end half fired for the first time on 2026-08-11 15:03 ICT.** Finishing early slides
+your whole 600 s window earlier, so it **loses ticks off the far end and GAINS them off the near end**:
+0745z estimated its own completion at ≈14:53, completed **14:48:46** (4 min 14 s early — the fourth
+short miss that day), and therefore predicted its successor would start ≈15:08, *past* the 15:05:00
+tick, handing it over as "settle retroactively". The successor actually started **15:03:46**, putting
+the tick **74 s in its future** — a live read was available. Only the far-end case can strand an
+observation, so the existing wording is safe; the cost of the missing half is a cycle that reads line
+137 alone, inherits a "already past, retroactive" label, and **skips a live observation it could have
+made**. Both halves have the same fix, which is again what saved this one: **hand the TICK and
+recompute reach from your own `ps` start — never inherit the predecessor's placement of it in time.**
 ⛔ **Never "correct" a completion estimate afterwards for work you had ALREADY planned when you made it —
 that double-counts, and it overstates reach** (2026-08-11 09:30 ICT). 0210z §6 predicted "I complete
 ≈09:16 ⇒ next start ≈09:31, kill ≈09:41", then §7 — appended after settling its tick in-cycle — added
@@ -546,6 +557,14 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   bands do not cluster by class and the maximum keeps moving, so the unbounded-holder rule is not a
   statement about typical length that a long observation can erode — **never schedule against a release
   in either direction, however old the hold.**
+  ⛔ **grok re-arms PER TURN, not per PID — so a PID is not a hold identity, and tracking by pid
+  OVERSTATES a class length** (2026-08-11 14:46 ICT). The pid churn above (16591 / 63497 / 86967) was
+  incidental — grok restarting between turns — and 0723z read it as "the per-turn re-arm under a fresh
+  pid, n=4". Measured against a fixed pid: **pid 86967** held `[0x0001858d00019338]` (creation
+  14:19:21) at 14:26:50 and `[0x00018bb10001964f]` (creation **14:45:33**) at 14:46:35 — **same pid,
+  two different holds**, with a gap between them. A cycle joining on pid reads one continuous
+  ≥27-minute hold where there were two short ones. **Track the assertion id, exactly as this section
+  already requires for `UserIsActive` — the id is the instrument for every holder class, not just HID.**
   ⛔ **And when the boss sits down, that hold's length becomes LEFT-BOUNDED ONLY — the `sleep 1`
   back-out dates a release only when the release is what PERMITTED the sleep** (2026-08-11 11:21 ICT).
   That same grok hold `[0x0001452f00019b64]` was gone by 11:22:33, but the meter stayed flat at 5133.3
