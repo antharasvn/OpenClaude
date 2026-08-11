@@ -158,6 +158,21 @@ observation, so the existing wording is safe; the cost of the missing half is a 
 137 alone, inherits a "already past, retroactive" label, and **skips a live observation it could have
 made**. Both halves have the same fix, which is again what saved this one: **hand the TICK and
 recompute reach from your own `ps` start — never inherit the predecessor's placement of it in time.**
+⛔ **The self-estimate error is BIASED, not noisy — 5 for 5 SHORT on 2026-08-11, never once long — so
+SUBTRACT it; do not pad symmetrically around it** (2026-08-11 15:23 ICT). Measured: 0133z ≈08:41 →
+**08:36:36** (−4:24), 0210z ≈09:16 → **09:14:57** (−1:03), 0230z ≈09:36 → **09:33:51** (−2:09), 0745z
+≈14:53 → **14:48:46** (−4:14), 0803z ≈15:11 → **15:08:01** (−2:59). Lines 91 and 129 above call this
+"~3 min of exit uncertainty" and tell you to **pad** a reach claim by it — but padding a symmetric band
+around a biased estimator leaves the central value ~3 min too late, and **both** §0 failure modes are
+downstream of exactly that. A too-late completion ⇒ too-late predicted successor start *and* kill ⇒
+(a) far end: a tick just inside the predicted kill is really past the true kill — **stranded**, the
+sign line 161 warns about; (b) near end: a tick just before the predicted start is really still live —
+a **skipped live read**, line 150. One subtraction fixes both, where a symmetric pad fixes neither.
+**Rule: publish the completion estimate as `naive − 3 min`, then carry the residual (~±1.5 min) as the
+margin.** Confidence moderate — n=5, one day, one model. Re-score if a cycle ever misses long; do not
+deepen the correction past 3 min on this evidence. Note this changes only what you PUBLISH about
+yourself — the handoff still carries the tick, never a threshold (line 137), which is what keeps the
+error survivable in the first place.
 ⛔ **Never "correct" a completion estimate afterwards for work you had ALREADY planned when you made it —
 that double-counts, and it overstates reach** (2026-08-11 09:30 ICT). 0210z §6 predicted "I complete
 ≈09:16 ⇒ next start ≈09:31, kill ≈09:41", then §7 — appended after settling its tick in-cycle — added
@@ -221,6 +236,47 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   same time (a discarded slot never runs, so `ce=0` / `last_status: OK` survive a total non-delivery).
   Bonus: `next run at:` printed `missed_slot + one WEEK`, the first scoring of line 436's ⛔ on a
   non-hourly trigger — the `+ one interval` rule generalises to the trigger's own period.
+  ⛔ **Both ⛔s above stopped one step short of the BASE RATE, and it is 40 %: two of every five weekly
+  reports that fire never arrive, and have not for FOUR MONTHS** (2026-08-11 15:41 ICT). The 12:43 and
+  13:01 entries correctly diagnosed *this week's* two failures as unlike mechanisms — neither asked how
+  often it happens. Full ledger of every weekly fire in `logs/infra.log` since 2026-04-13:
+
+  | job | OK | timed out | rate | fires |
+  |---|---|---|---|---|
+  | `vidnotes-weekly` | 5 | **9** | **64 %** | 14 |
+  | `weekly-conjecture` | 7 | **5** | **42 %** | 12 |
+  | `cleanpro-weekly` | 12 | 2 | 14 % | 14 |
+  | **total** | **24** | **16** | **40 %** | **40** |
+
+  Every stamp is exactly `fire + 600 s` (sole exception 2026-04-27 19:10:27, +627 s) — the
+  `asyncio.wait_for(timeout=600)` at `bot/scheduler.py:149`, nothing subtler. **Why four months of
+  cycles saw green: `consecutive_errors` RESETS TO 0 on the next success, and these are WEEKLY jobs**,
+  so an alternating job presents `ce=1` for at most seven days and clean forever after. The history
+  exists only in `logs/infra.log`, which no step of §1 reads for outcomes. **Add the third weekly job
+  to every weekly decomposition** — `weekly-conjecture` fired 08-10 19:00:00 and timed out 19:10:00
+  (`ce=1`), so **all three weekly reports are missing this week**, by three mechanisms: timeout /
+  discarded slot / timeout. Lines 288 and 298 cite its `last_run` as dow evidence *and* identify the
+  stamp as `fire + 600 s`, yet never conclude the job delivered nothing — the 13:01 ⛔'s own error, one
+  table row further down.
+  ⛔ **THIRD non-delivery mode, invisible to every check §1 prescribes: the sub-60-second "success".**
+  The OK column above is inflated. A `prompt` job spawns `claude -p`; a weekly report cannot be built in
+  seconds. Observed: `weekly-conjecture` 07-06 (**8 s**), `cleanpro-weekly` 07-07 (**4 s**),
+  `weekly-conjecture` 07-20 (**8 s**), `cleanpro-weekly` 07-21 (**4 s**), `vidnotes-weekly` 07-21
+  (**4 s**) — five in sixteen days against 3–9 min normal runtimes for the same jobs. Near-certainly
+  immediate exits (API error / rate limit) that still return 0 and stamp `completed successfully`.
+  Cause unconfirmed (per-job `claude -p` stderr is not captured) — confidence **moderate** — but the
+  rule is safe either way and is the `prompt`-side mirror of the runtime rule below:
+  > **A `prompt` job that completes in < 60 s did not deliver.** For `script` jobs a short runtime is
+  > normal (`auto-commit` 3–5 s); for `prompt` jobs it is the tell. Same field, opposite reading,
+  > selected entirely by `type` in `cron/jobs.json`.
+
+  So `last_status: OK` + fresh `last_run` survives **two of the three** modes:
+
+  | mode | `last_run` | `last_status` | `ce` | only visible in |
+  |---|---|---|---|---|
+  | slot discarded (misfire) | **stale** | OK | 0 | `.err` `was missed by` |
+  | fired, timed out at 600 s | fresh (`= fire+600`) | ERROR | 1, decays | `state.json` + infra.log |
+  | fired, exited in seconds | fresh | **OK** | **0** | infra.log **runtime** |
 - **Do NOT compare `now - last_run` against a nominal interval** (this checklist said "alert if > 2x
   the interval" until 2026-08-07 00:23Z — it was wrong). Cron jobs with designed overnight gaps fail
   that test every night: `vidnotes-alerts` (`0 7-23/2` Warsaw) is dark 23:00→07:00 Warsaw = 8h = 4x
