@@ -367,6 +367,21 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   Ctrl-Shift-Power), which no cycle has yet observed. **Generalise: re-read the floor against every
   inherited conditional call — a tick you cannot reach is often one you can still de-risk**, and this
   is strictly cheaper than the n=15 pairing because it needs neither reach nor a blocking wait.
+  ⛔ **A floor probe's REACH is `probe + N + 60 s`, where `N` is the `Timeout will fire in N secs`
+  value READ OFF the `UserIsActive` row — it is NOT a constant, and this rule existed only in daily
+  logs until 2026-08-11 12:24 ICT, where it drifted to three different values in one handoff chain.**
+  The 60 s is `sleep 1` from `pmset -g custom` (one **minute**). Since `0 ≤ N ≤ 600`, one probe reaches
+  somewhere in `[probe + 60 s, probe + 660 s]` — a 10-minute spread, so **neither bound may be
+  pre-committed when deciding which cycle can upgrade a tick.** What the chain carried: 0441z stated
+  `probe + ~601 s` (= `600 + 1`, i.e. `sleep 1` misread as one *second*) while its own worked example
+  measured `11:49:25 → onset ≥ 12:00:25` = **probe + 660**; 0500z then inherited the 601 and used
+  **three** constants in one section — `+601` (quoted), `+600` (a reach claim), and `+65` (the
+  worst-case-N form, in the sentence naming which cycle could upgrade the tick). **Live cost:** it put
+  the upgrade of the 13:05:00 tick two cycles out when the correct arithmetic put it one — a probe at
+  12:56 with a fresh N reaches 13:07:00. Planning on the max **overstates** reach (§0's sign that
+  strands ticks); planning on the min **understates** it and wastes an upgrade. Both errors have now
+  occurred inside a single handoff. **Read N and compute; never quote a constant.** Corollary for the
+  handoff: state the probe *condition* (`you need P + N ≥ tick − 60 s`), not a probe *time*.
   ✅ **n=16 (2026-08-10 14:00:00 ICT, residual 0 s) — the widest survival call yet: SIX jobs in one
   slot, all five ancillary fields hit, published two cycles ahead by 06:28Z and settled by a third
   cycle that never saw the tick.** It also answered a standing diagnostic for free: `cleanpro-alerts`
