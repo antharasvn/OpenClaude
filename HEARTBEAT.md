@@ -169,6 +169,23 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   A job dropped by `misfire_grace_time` never runs, never errors, and keeps `last_status: OK`
   forever — `OK` plus staleness is a *broken health signal*, not a healthy job. Resolve schedules
   from `cron/jobs.json` (per-job timezones), never from prior heartbeat prose.
+  ⛔ **The MIRROR trap, sign flipped: `last_run` ADVANCES ON A TIMED-OUT `prompt` JOB, so a FRESH
+  `last_run` is not evidence anything was delivered** (2026-08-11 12:43 ICT). `vidnotes-weekly` fired
+  its slot at 12:30:00 and died at **12:40:00** (`Prompt job … timed out after 10 min`) — yet
+  `last_run` was stamped **`2026-08-11T05:40:00Z`**, i.e. at the *timeout*, so the staleness test
+  above reads it as freshly healthy for the next 7 days while **no weekly report exists**. Above, `OK`
+  masks a job that never ran; here `last_run` masks a job that ran and produced nothing. Only
+  `last_status` / `consecutive_errors` carry it, and `ce` resets to 0 on the next success — so a
+  single good run erases all trace. **Read `last_status` alongside `last_run` on every `prompt`-type
+  job; the tell is a `last_run` sitting exactly `fire + 600 s`.** Do not extend this to `script` jobs
+  — no timeout applies to them (§1's runtime band).
+  ⚠️ **And don't let the standing dow-defect narrative absorb a delivery failure.** Cycles had filed
+  `vidnotes-weekly`'s `2026-07-28` staleness as "`CLOCK_MONOTONIC` misfire + the crontab-dow defect".
+  Decomposed: 07-28 ran; **08-04 lost to a bot restart** (memory §599), not a misfire; **08-11 fired
+  clean and timed out**. The dow defect only *shifts* the slot (`30 7 * * 1 Europe/Warsaw` → **Tuesday**
+  12:30 ICT, memory §560: 13/17); the arrival path is healthy and the **delivery** path is what fails.
+  A regime label absorbing an unlike failure is the same error as §1's "compute the evaluation once,
+  then test each slot independently".
 - **Do NOT compare `now - last_run` against a nominal interval** (this checklist said "alert if > 2x
   the interval" until 2026-08-07 00:23Z — it was wrong). Cron jobs with designed overnight gaps fail
   that test every night: `vidnotes-alerts` (`0 7-23/2` Warsaw) is dark 23:00→07:00 Warsaw = 8h = 4x
