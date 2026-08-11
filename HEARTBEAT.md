@@ -260,6 +260,28 @@ actionable: all three API deaths fell in **sleep-cycling windows**, so `mid-resp
 That vindicates §0's original n=1 inferred-from-absence sleep story on *timing* — now **observed with
 the cause printed** — so raise it to high confidence, but keep it strictly apart from the usage-limit
 mode. No new instrumentation ask: the discriminator is already printed.
+✅ **Run that implication the OTHER way: if `mid-response` is a sleep mode, then §1's `UserIsActive`
+floor ARITHMETICALLY EXCLUDES it — so write-early is insurance against a risk that is measurable
+per-cycle, not a constant** (2026-08-11 19:52 ICT, used and paid off in-cycle). The floor has only ever
+been pointed at *cron slots*; it applies to the heartbeat process itself, which is the one consumer
+that can act on it. Probe **19:54:11**: `UserIsActive` id `0x0001c5e4000987ec`, age 0,
+`Timeout will fire in 600 secs` ⇒ display timeout 20:04:11, **+5 s** (the corrected term, n=38 — not
+the old 60 s) ⇒ onset **≥ 20:04:16**, past that cycle's **20:02:51** kill; `max(floor, holder release)`
+only adds, and grok + `xcodebuild` "Xcode running tests" were both up. **No sleep possible inside the
+cycle ⇒ the one mode that kills a cycle *after* it has started work was off the table**, so blocking
+~2 min on a live tick was safe rather than a gamble against §0. It settled the 20:00:00 two-job slot at
+**residual 0 s**, all five ancillary fields (count stayed 13, stamp stayed 19:17:06,
+`cleanpro-alerts.last_run` `13:00:10.588763Z`, meter flat 5860.0) — an observation the write-early
+default would have handed forward. **So: read the floor every cycle and let it choose the posture —
+floor covers your remaining budget ⇒ you may spend it on a live read; non-flat meter and no floor ⇒
+write at T+3 and gather second.** The usage-limit mode is unaffected (it kills in seconds, before there
+is anything to protect). Confidence **high** on the arithmetic, **moderate** on `mid-response` being
+purely a sleep mode (n=3, all in sleep windows — one counterexample in an S = 0 window falsifies it).
+⚠️ **And arm a watch against an ABSOLUTE target instant, never `now + delta`** (same cycle): the first
+loop was armed `now + 165 s` off a mis-estimated current time and expired at **19:58:56**, 64 s short of
+the slot. That is §0's biased self-estimate one level down — same error, same sign, inside a single
+Bash call. Use `target=$(date -j -f "%Y-%m-%d %H:%M:%S" "<slot>" +%s)`. Cost was 0 here only because
+the budget was real; on a tighter cycle it silently converts a live read into a missed one.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
