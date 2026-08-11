@@ -108,6 +108,12 @@ flat at 5133.3 across 08:13:05 → 09:10:54 ⇒ S = 0 ⇒ predicted **09:10:32**
 flat at 5133.3 across 08:13:05 → 09:30:21 ⇒ S = 0 ⇒ predicted **09:29:57**, `ps` start **09:29:57**.
 ✅ **n=14, residual 0 s (2026-08-11 09:49 ICT):** completion `02:33:51Z` = 09:33:51 ICT, +900 s, meter
 flat at 5133.3 across 08:13:05 → 09:49:10 ⇒ S = 0 ⇒ predicted **09:48:51**, `ps` start **09:48:51**.
+✅ **n=15, residual 0 s (2026-08-11 10:07 ICT):** completion `02:52:54Z` = 09:52:54 ICT, +900 s ⇒
+predicted **10:07:54**, `ps` start **10:07:54**. S = 0 (same flat 5133.3 run).
+✅ **n=16, residual 0 s (2026-08-11 10:26 ICT):** completion `03:11:42Z` = 10:11:42 ICT, +900 s, meter
+flat at 5133.3 across 08:13:05 → 10:27:29 (**2 h 14 min of S = 0**) ⇒ predicted **10:26:42**, `ps`
+start **10:26:42**. Sixteen consecutive residual-0 readings, both regimes; treat the rule as settled
+and stop re-deriving it — spend the cycle on the forecast, not the confirmation.
 ⚠️ **Third instance in one day of the self-estimate missing SHORT and pushing a marginal tick out of
 reach — treat ~3 min as a floor on that margin, not a worst case.** 0230z predicted "I complete ≈09:36
 ⇒ your start ≈09:51, kill ≈10:01, so the 10:00:00 tick sits ~1 min *inside* your kill"; it completed
