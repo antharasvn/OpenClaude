@@ -104,6 +104,8 @@ flat at 5133.3 across 08:13:05 → 08:33:27 ⇒ S = 0 ⇒ predicted **08:33:05**
 flat at 5133.3 across 08:13:05 → 08:52:02 ⇒ S = 0 ⇒ predicted **08:51:36**, `ps` start **08:51:36**.
 ✅ **n=12, residual 0 s (2026-08-11 09:10 ICT):** completion `01:55:32Z` = 08:55:32 ICT, +900 s, meter
 flat at 5133.3 across 08:13:05 → 09:10:54 ⇒ S = 0 ⇒ predicted **09:10:32**, `ps` start **09:10:32**.
+✅ **n=13, residual 0 s (2026-08-11 09:30 ICT):** completion `02:14:57Z` = 09:14:57 ICT, +900 s, meter
+flat at 5133.3 across 08:13:05 → 09:30:21 ⇒ S = 0 ⇒ predicted **09:29:57**, `ps` start **09:29:57**.
 ⛔ **A handoff must hand forward the TICK, never a precomputed "if you start before X you may block"
 threshold — that threshold has the WRONG SIGN and it nearly cost a log** (2026-08-11 08:51 ICT).
 0133z wrote *"next cycle starts ≈08:56, kill ≈09:06 … if it finds itself started before ≈08:55 it may
@@ -118,6 +120,17 @@ kill. Keep the two apart. **Rule: hand forward the tick + the ancillary fields o
 cycle recomputes reach from its OWN `ps` start + 600 s and blocks only if `tick < own_kill − ~60 s`**
 (log-writing margin). A threshold silently embeds the predecessor's guess at its own exit time, which
 this section already measures at ~3 min of uncertainty.
+⛔ **Never "correct" a completion estimate afterwards for work you had ALREADY planned when you made it —
+that double-counts, and it overstates reach** (2026-08-11 09:30 ICT). 0210z §6 predicted "I complete
+≈09:16 ⇒ next start ≈09:31, kill ≈09:41", then §7 — appended after settling its tick in-cycle — added
+"settling in-cycle cost ~3 min, which pushes the next start ~3 min later" ⇒ ≈09:34 / kill ≈09:44. But
+the ≈09:16 figure was written in §6, *after* §3 had already committed to the in-cycle settlement: the
+3 min was inside it. Actual completion **09:14:57** (1 min *earlier* than the guess), start **09:29:57**,
+kill **09:39:57** — the refinement moved the estimate **4 min the wrong way**. Overstating reach is the
+sign that strands a tick nobody watched (the ⛔ above is the mirror case). **State the completion
+estimate once, with planned work priced in, and revise only for genuinely unplanned work** — and even
+then the honest margin stays ~3 min. This is a second reason the handoff carries the tick, not a
+threshold: a threshold bakes in this error, a tick does not.
 Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 1. Cron Job Health
