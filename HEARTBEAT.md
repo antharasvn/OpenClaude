@@ -102,6 +102,8 @@ death** — check the meter before hunting for a missing log.
 flat at 5133.3 across 08:13:05 → 08:33:27 ⇒ S = 0 ⇒ predicted **08:33:05**, `ps` start **08:33:05**.
 ✅ **n=11, residual 0 s (2026-08-11 08:51 ICT):** completion `01:36:36Z` = 08:36:36 ICT, +900 s, meter
 flat at 5133.3 across 08:13:05 → 08:52:02 ⇒ S = 0 ⇒ predicted **08:51:36**, `ps` start **08:51:36**.
+✅ **n=12, residual 0 s (2026-08-11 09:10 ICT):** completion `01:55:32Z` = 08:55:32 ICT, +900 s, meter
+flat at 5133.3 across 08:13:05 → 09:10:54 ⇒ S = 0 ⇒ predicted **09:10:32**, `ps` start **09:10:32**.
 ⛔ **A handoff must hand forward the TICK, never a precomputed "if you start before X you may block"
 threshold — that threshold has the WRONG SIGN and it nearly cost a log** (2026-08-11 08:51 ICT).
 0133z wrote *"next cycle starts ≈08:56, kill ≈09:06 … if it finds itself started before ≈08:55 it may
@@ -667,6 +669,17 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   holders now share this shape, so **"bound the prediction by the holder process's life" is wrong by
   default**, not as a quirk — never use process liveness as a proxy for an assertion still being held;
   read the assertion.
+  🆕 **grok's per-turn hold STACKS ACROSS PROCESSES — "the grok hold" is not a single row** (2026-08-11
+  09:11 ICT). Two concurrent `NoIdleSleepAssertion` "grok: agent turn in progress" holds were up at one
+  probe: pid **63497** `[0x00013b9c0001986d]` (creation **09:03:52**) and pid **16591**
+  `[0x00013c99000198a6]` (creation **09:08:04**). Every prior sighting (05:42 / 06:40 / 10:05 / 10:47
+  ICT 08-09) was a lone hold, and the finding then was that grok re-arms per turn under a *new pid* —
+  both are true at once here, since pid 16591 **also churned its own hold** (a different id, creation
+  08:43:20, was up 20 min earlier and is gone). So the set is `{released, re-created, plus a second
+  process}`. **Consequence: an id churn on one grok pid does NOT mean the class released, and reading
+  one row understates the postponement.** Same failure shape as Chrome's lockstep triple — when
+  attributing an S = 0 window, enumerate every owner row, never a single one. It changes no forecast
+  on its own: each hold stays §1's unbounded conditional in both directions.
   ⚠️ **An AnyDesk session arms TWO holds, and only the display one has ever been tracked here**
   (2026-08-09 11:07 ICT). Observed pair: pid 42666 `AnyDesk` `PreventUserIdleDisplaySleep` created
   10:39:58, **and** pid 672 `coreaudiod` `PreventUserIdleSystemSleep`
