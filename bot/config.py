@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     telegram_bot_token: SecretStr = SecretStr("")
     allowed_users: str = Field(default="", validation_alias="ALLOWED_USERS")
     claude_model: str = ""
+    agent_cli: str = Field(default="grok", validation_alias="AGENT_CLI")
+    grok_model: str = Field(default="", validation_alias="GROK_MODEL")
     working_dir: str = Field(default=str(SCRIPT_DIR))
     log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
 
@@ -121,6 +123,8 @@ _settings = get_settings()
 TELEGRAM_BOT_TOKEN: str = _settings.telegram_bot_token.get_secret_value()
 ALLOWED_USERS_RAW: str = _settings.allowed_users
 CLAUDE_MODEL: str = _settings.claude_model
+AGENT_CLI: str = (_settings.agent_cli or "grok").strip().lower()
+GROK_MODEL: str = _settings.grok_model
 WORKING_DIR: str = _settings.working_dir
 
 WORKSPACES_DIR: Path = _settings.workspaces_dir
@@ -155,6 +159,29 @@ def set_claude_model(model: str) -> None:
     """Update CLAUDE_MODEL at runtime."""
     global CLAUDE_MODEL
     CLAUDE_MODEL = model
+
+
+SUPPORTED_CLIS = ("grok", "claude")
+
+
+def get_agent_cli() -> str:
+    """Which agent CLI backs the chat stream ('grok' or 'claude')."""
+    return AGENT_CLI if AGENT_CLI in SUPPORTED_CLIS else "grok"
+
+
+def set_agent_cli(cli: str) -> None:
+    """Update the active agent CLI at runtime."""
+    global AGENT_CLI
+    AGENT_CLI = cli.strip().lower()
+
+
+def get_agent_model() -> str:
+    """Model override for the active CLI, or '' to use that CLI's own default.
+
+    The two CLIs take different model namespaces, so a Claude id must never
+    leak into a grok invocation.
+    """
+    return (GROK_MODEL if get_agent_cli() == "grok" else CLAUDE_MODEL) or ""
 
 
 def is_authorized(user_id: int) -> bool:

@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 
 from bot.cache import FileBackedCache
-from bot.config import SESSION_FILE  # noqa: F401 — kept so patches on the module attr work
+from bot.config import SESSION_FILE, get_agent_cli  # noqa: F401 — SESSION_FILE patched by tests
 
 # ---------------------------------------------------------------------------
 # In-memory session cache with write-behind (backed by FileBackedCache)
@@ -45,19 +45,27 @@ def session_key(chat_id: int, thread_id: int, user_id: int) -> str:
 
 
 def get_session_id(chat_id: int, thread_id: int, user_id: int) -> str | None:
-    """Get the Claude session ID for a given chat/thread/user combination."""
+    """Get the agent session ID for a given chat/thread/user combination.
+
+    Session IDs are per-CLI: resuming a claude session id under grok exits 1
+    with empty stdout, which would wedge the chat on every later message.
+    Entries written before this field existed are treated as claude's.
+    """
     key = session_key(chat_id, thread_id, user_id)
     entry = _cache.get(key)
     if isinstance(entry, dict):
+        if entry.get("cli", "claude") != get_agent_cli():
+            return None
         return entry.get("session_id")
     return None
 
 
 def set_session_id(chat_id: int, thread_id: int, user_id: int, sid: str) -> None:
-    """Store a Claude session ID for a given chat/thread/user combination."""
+    """Store an agent session ID for a given chat/thread/user combination."""
     key = session_key(chat_id, thread_id, user_id)
     data = _cache.all()
     data.setdefault(key, {})["session_id"] = sid
+    data[key]["cli"] = get_agent_cli()
     data[key]["updated_at"] = datetime.now().isoformat()
     _cache.set(key, data[key])
 

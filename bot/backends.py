@@ -13,11 +13,13 @@ import os
 import shutil
 import time
 from collections.abc import AsyncIterator
+from pathlib import Path
 
 from bot.config import (
     ALL_TOOLS,
     CLAUDE_TIMEOUT,
-    get_claude_model,
+    get_agent_cli,
+    get_agent_model,
 )
 from bot.formatting import format_tool_status
 from bot.logging_setup import _summarize_input
@@ -209,6 +211,54 @@ async def stream_sdk(
 
 # ── Subprocess backend ───────────────────────────────────────────────
 
+def _build_cli_cmd(
+    cli: str, message: str, sid: str | None, verbose: bool,
+) -> tuple[str, list[str]]:
+    """Build the argv for the active agent CLI.
+
+    grok's ``streaming-messages-json`` emits the same system/assistant/result
+    envelope as claude's ``stream-json``, so the parser below is shared.  The
+    flags are not shared: grok has no --dangerously-skip-permissions, and its
+    tools carry different names than ALL_TOOLS, so allow-listing claude's names
+    would grant grok nothing.  Permissions stay enforced by the guard.sh
+    PreToolUse hooks, which grok honours via claude-name matcher aliasing.
+    """
+    if cli == "grok":
+        grok_bin = shutil.which("grok") or str(Path.home() / ".grok" / "bin" / "grok")
+        cmd = [
+            grok_bin,
+            "-p", message,
+            "--output-format", "streaming-messages-json",
+            "--permission-mode", "bypassPermissions",
+        ]
+        if verbose:
+            cmd.append("--include-partial-messages")
+        if sid:
+            cmd.extend(["--resume", sid])
+        model = get_agent_model()
+        if model:
+            cmd.extend(["--model", model])
+        return grok_bin, cmd
+
+    claude_bin = shutil.which("claude") or "/root/.local/bin/claude"
+    cmd = [
+        claude_bin,
+        "-p", message,
+        "--output-format", "stream-json",
+        "--verbose",
+        "--dangerously-skip-permissions",
+        "--allowedTools", ALL_TOOLS,
+    ]
+    if verbose:
+        cmd.append("--include-partial-messages")
+    if sid:
+        cmd.extend(["--resume", sid])
+    model = get_agent_model()
+    if model:
+        cmd.extend(["--model", model])
+    return claude_bin, cmd
+
+
 async def stream_subprocess(
     message: str,
     chat_id: int,
@@ -224,26 +274,14 @@ async def stream_subprocess(
     set_session_id_fn,
 ) -> AsyncIterator[dict]:
     """Legacy subprocess-based streaming.  Yields event dicts."""
-    claude_bin = shutil.which("claude") or "/root/.local/bin/claude"
-    logger.info("Using claude binary: %s (exists: %s)", claude_bin, os.path.isfile(claude_bin))
-    cmd = [
-        claude_bin,
-        "-p", message,
-        "--output-format", "stream-json",
-        "--verbose",
-        "--dangerously-skip-permissions",
-        "--allowedTools", ALL_TOOLS,
-    ]
+    cli = get_agent_cli()
+    cli_label = cli.capitalize()
+    cli_bin, cmd = _build_cli_cmd(cli, message, sid, verbose)
+    logger.info("Using %s binary: %s (exists: %s)", cli, cli_bin, os.path.isfile(cli_bin))
 
-    if verbose:
-        cmd.append("--include-partial-messages")
-    if sid:
-        cmd.extend(["--resume", sid])
-    model = get_claude_model()
-    if model:
-        cmd.extend(["--model", model])
-
-    logger.info("Calling Claude (subprocess) for user %d (session: %s)", user_id, sid or "new")
+    logger.info(
+        "Calling %s (subprocess) for user %d (session: %s)", cli, user_id, sid or "new",
+    )
     _record_restart_commit(chat_id)
 
     env = build_env(is_admin, cwd, thread_id)
@@ -278,12 +316,13 @@ async def stream_subprocess(
                 proc.kill()
                 await proc.communicate()
                 logger.error(
-                    "Claude CLI timed out after %ds for user %d",
+                    "%s CLI timed out after %ds for user %d",
+                    cli_label,
                     CLAUDE_TIMEOUT, user_id,
                 )
                 yield {
                     "type": "error",
-                    "text": "Claude took too long to respond. Try again or /new to start fresh.",
+                    "text": f"{cli_label} took too long to respond. Try again or /new to start fresh.",
                 }
                 return
 
@@ -303,13 +342,14 @@ async def stream_subprocess(
                     proc.kill()
                     await proc.communicate()
                     logger.error(
-                        "Claude CLI timed out after %ds for user %d",
+                        "%s CLI timed out after %ds for user %d",
+                    cli_label,
                         CLAUDE_TIMEOUT, user_id,
                     )
                     yield {
                         "type": "error",
                         "text": (
-                            "Claude took too long to respond."
+                            f"{cli_label} took too long to respond."
                             " Try again or /new to start fresh."
                         ),
                     }
@@ -326,7 +366,7 @@ async def stream_subprocess(
             try:
                 event = json.loads(decoded)
             except json.JSONDecodeError:
-                logger.debug("Non-JSON line from Claude: %s", decoded[:200])
+                logger.debug("Non-JSON line from %s: %s", cli_label, decoded[:200])
                 continue
 
             event_type = event.get("type")
@@ -345,6 +385,16 @@ async def stream_subprocess(
             elif event_type == "tool_result":
                 _append_restart_context(chat_id, "Tool completed")
                 yield {"type": "tool_result"}
+
+            elif event_type == "user":
+                # Both CLIs deliver tool results as tool_result blocks inside a
+                # user message rather than a top-level tool_result event.
+                content = event.get("message", {}).get("content", [])
+                if isinstance(content, list) and any(
+                    isinstance(b, dict) and b.get("type") == "tool_result" for b in content
+                ):
+                    _append_restart_context(chat_id, "Tool completed")
+                    yield {"type": "tool_result"}
 
             elif event_type == "stream_event" and verbose:
                 delta = event.get("event", {}).get("delta", {})
@@ -381,16 +431,16 @@ async def stream_subprocess(
     if natural_rc != 0:
         if natural_rc < 0:
             sig = -natural_rc
-            logger.info("Claude CLI killed by signal %d (likely bot restart)", sig)
+            logger.info("%s CLI killed by signal %d (likely bot restart)", cli_label, sig)
             if result_text is None:
                 yield {"type": "silent"}
             return
-        logger.error("Claude CLI error (rc=%d)", natural_rc)
+        logger.error("%s CLI error (rc=%d)", cli_label, natural_rc)
         ws_log.error("CLI error rc=%d", natural_rc)
         if result_text is None:
-            yield {"type": "error", "text": f"Claude CLI error (exit code {natural_rc})"}
+            yield {"type": "error", "text": f"{cli_label} CLI error (exit code {natural_rc})"}
         return
 
     if result_text is None:
         logger.warning("No result event received from stream")
-        yield {"type": "error", "text": "Claude returned no result."}
+        yield {"type": "error", "text": f"{cli_label} returned no result."}

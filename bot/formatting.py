@@ -3,10 +3,31 @@
 from pathlib import Path
 
 
+# grok names its built-in tools differently than claude.  Mapping them here
+# keeps the Telegram status lines readable on either CLI.
+_GROK_TOOL_ALIASES = {
+    "read_file": "Read",
+    "write": "Write",
+    "search_replace": "Edit",
+    "run_terminal_command": "Bash",
+    "list_dir": "Glob",
+    "grep": "Grep",
+    "web_search": "WebSearch",
+    "web_fetch": "WebFetch",
+    "spawn_subagent": "Task",
+}
+
+
+def _tool_path(tool_input: dict) -> str:
+    """File path from a tool call — grok's read_file uses target_file."""
+    return tool_input.get("file_path") or tool_input.get("target_file") or "file"
+
+
 def format_tool_status(tool_name: str, tool_input: dict) -> str:
     """Format a human-readable status line for an active tool call."""
+    tool_name = _GROK_TOOL_ALIASES.get(tool_name, tool_name)
     if tool_name == "Read":
-        path = tool_input.get("file_path", "file")
+        path = _tool_path(tool_input)
         return f"\U0001f4c4 Reading {Path(path).name}..."
     if tool_name == "Glob":
         pattern = tool_input.get("pattern", "")
@@ -24,7 +45,7 @@ def format_tool_status(tool_name: str, tool_input: dict) -> str:
             return f"\u2699\ufe0f {desc}"
         return "\u2699\ufe0f Running command..."
     if tool_name in ("Write", "Edit"):
-        path = tool_input.get("file_path", "file")
+        path = _tool_path(tool_input)
         return f"\u270f\ufe0f Editing {Path(path).name}..."
     if tool_name == "WebSearch":
         return "\U0001f310 Searching web..."

@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -10,6 +11,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
+from bot.config import get_agent_cli
 from bot.logging_setup import infra_logger as logger
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -133,14 +135,26 @@ class JobScheduler:
             raise FileNotFoundError(f"Skill file not found: {skill_path}")
 
         prompt = skill_path.read_text()
-        claude_bin = Path.home() / ".local" / "bin" / "claude"
-        if not claude_bin.exists():
-            claude_bin = "claude"  # fall back to PATH
+
+        # Cron jobs run on the same CLI as chat.  grok names its tools
+        # differently, so claude's --allowedTools list would allow-list nothing
+        # there; its equivalent is bypassPermissions, with the guard.sh
+        # PreToolUse hooks still enforcing.
+        if get_agent_cli() == "grok":
+            grok_bin = shutil.which("grok") or str(Path.home() / ".grok" / "bin" / "grok")
+            argv = [grok_bin, "-p", prompt, "--permission-mode", "bypassPermissions"]
+        else:
+            claude_bin = Path.home() / ".local" / "bin" / "claude"
+            if not claude_bin.exists():
+                claude_bin = "claude"  # fall back to PATH
+            argv = [
+                str(claude_bin),
+                "-p", prompt,
+                "--allowedTools", "Read,Write,Edit,Bash,Glob,Grep,WebFetch,WebSearch",
+            ]
 
         proc = await asyncio.create_subprocess_exec(
-            str(claude_bin),
-            "-p", prompt,
-            "--allowedTools", "Read,Write,Edit,Bash,Glob,Grep,WebFetch,WebSearch",
+            *argv,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=str(PROJECT_ROOT),
