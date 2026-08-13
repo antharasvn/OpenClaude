@@ -360,6 +360,18 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   at :149 and the `timeout=300` margin item: three related asks, one restart.
   **Free falsifier, today: the 14:00 ICT slot.** Clear ⇒ load-dependent, not deterministic. Either way
   **read `logs/infra.log` at ~14:05 ICT and write the outcome down before the counters clear.**
+  ✅ **Scored against the full history in the same cycle, and it is an ESCALATION, not a one-off — five
+  simultaneous timeouts is 2.5× the previous all-time maximum.** Every `timed out after 5 min` in
+  `logs/infra.log`, bucketed by minute, tops out at **2** before this (`2026-08-04 12:05`); the rest are
+  singletons. **08-13 14:05 = 5.** Per-job history explains why no cycle had a prior: `pdfai-daily` and
+  `aividly-daily` had **never timed out at all**, `mangii-daily` once (05-07 14:05), `echo-daily` twice
+  (05-07 14:05, 07-15 14:18). Note **three of those four priors are the 14:00 slot**, and 05-07 was
+  already a *pair* (echo + mangii) at 14:05 — so the slot has been the system's pressure point since
+  May, and the series over it reads **2 → 1 → 5**. Two consequences: (a) the destagger ask is not
+  speculative tidying, it targets the one slot with the entire failure history; (b) **treat a multi-job
+  same-second timeout as its own signal** — bucketing timeouts by minute is one `grep -oE` and it
+  separates "a job got slow" from "the slot is oversubscribed", which no per-job field in
+  `cron/state.json` can express. Confidence high, read from the full log.
 - ⛔ **`armed + S` must accumulate S from the MOST RECENT evaluation — every executor evaluation
   RE-ARMS every pending wait, and carrying S from an older arming predicts discards that do not happen**
   (2026-08-14 03:16 ICT, n=1 retrodicted at **−12 s**, n=1 predicted forward at **−3 s**). The 1946z
