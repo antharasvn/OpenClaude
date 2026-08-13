@@ -447,6 +447,19 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   Note the grace is now the binding constraint, not the arithmetic: 222 s late against a 300 s
   `misfire_grace_time` left **78 s** of margin, so **any sleep window >300 s before an interval slot
   discards it outright** — check the meter before predicting an interval fire, not just the anchor.
+  ⛔ **`+ S` is a PER-SLOT deviation and does NOT re-phase the anchor — recompute S fresh for every slot,
+  and never read a snap-back to the grid as a restart** (2026-08-13 21:56 ICT, n=3 interval + n=1 cron,
+  one uninterrupted bot process). The line above scores S on ONE slot and is silent on whether it carries
+  forward. It does not: `IntervalTrigger.get_next_fire_time` computes from the previous **nominal**
+  (scheduled) fire time, not the actual run time, so a late fire snaps straight back to
+  `anchor + n × interval`. Measured on the 12:33:23 anchor, all three slots after the S = 222 s shifted
+  fire: **14:37:03** (shifted) → **16:33:23 / 18:33:23 / 20:33:23**, i.e. exactly on grid, never
+  14:37:03 + n×7200. Same for `cron` triggers: the alerts pair fired **18:02:13** (133 s late, inside
+  grace) and the next slot landed **20:00:00** exact. **The dangerous sign:** a cycle carrying S forward
+  predicts 16:37:05, observes 16:33:23, and reads it as **3 m 42 s EARLY** — which is the exact signature
+  of the restart re-phase two paragraphs up. It then re-derives a wrong anchor from a `Bot starting` line
+  that never happened, and every downstream prediction inherits it. That is the same false alarm the next
+  line warns about, produced one slot later by the formula itself. Confidence high.
   directions — a cycle watching the stale anchor sees silence and reads a healthy job as a dropped
   slot, while the real fire goes unwatched. **Why this survived two ⛔-grade rewrites of §1: for
   interval jobs there is no cron expression to re-derive from**, so "re-derive from state, never from
