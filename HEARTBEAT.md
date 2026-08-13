@@ -486,6 +486,39 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   > normal (`auto-commit` 3–5 s); for `prompt` jobs it is the tell. Same field, opposite reading,
   > selected entirely by `type` in `cron/jobs.json`.
 
+  ⛔ **That rule had NEVER BEEN COUNTED, and when scored it is 15 % of 864 runs on ONE job — the n=5
+  above was drawn from the three rarest `prompt` jobs while the largest population sat in the same
+  file** (2026-08-14 06:35 ICT, measured). `vidnotes-alerts` is a `prompt` job firing **12×/day**.
+  Pairing every `Running job: X` with its `Job X completed successfully` in `logs/infra.log`:
+
+  | job | n | min | median | max | **sub-60 s** |
+  |---|---|---|---|---|---|
+  | **`vidnotes-alerts`** | **864** | 3 s | **92 s** | 2797 s | **132 (15 %)** |
+  | `cleanpro-weekly` | 12 | 4 s | 335 s | 449 s | 3 |
+  | `weekly-conjecture` | 7 | 8 s | 370 s | 540 s | 1 |
+  | `vidnotes-weekly` | 5 | 4 s | 354 s | 528 s | 1 |
+
+  **132 silent non-deliveries on the one job the boss reads alerts from.** The two populations are
+  disjoint by ~8×: last 10 real runs **93/130/165/101/111/154/138/112/178/93 s**, recent short runs
+  **7–12 s**. No "nothing to alert, exited early" reading survives — 7 s does not cover `claude -p`
+  booting and completing one API round trip. **Cross-fleet corroboration:** five of the last fifteen
+  short runs are `08-10 00:00/02:00/04:00/16:00/18:02`, and §0 line 215 records 08-10 as a *usage-limit*
+  day for the **heartbeat** fleet (weekly 02:28→04:02Z, session 08:33→11:39Z), observed in
+  `/tmp/claude-heartbeat.log`. **One upstream condition hits both fleets; only the heartbeat fleet has a
+  log that says so**, because `_run_prompt` PIPEs stderr at :143, binds it at :148, and never reads it.
+  **Apply §0's n-inflation rule to this number before quoting it:** 132 is the count of **lost
+  deliveries** (the operationally real figure), *not* of independent events — the 08-10 run of four in
+  five slots is one event sampled 4×. Do not present 15 % as an event rate; it was not decomposed.
+  **Consequence: the `_run_prompt` returncode check (line 478) is the HIGHEST-VALUE item in the boss
+  queue, not the cheapest afterthought** — it converts 132 invisible failures into the `ce`/`last_status`
+  path §1 already reads every cycle. Confidence **high** the short runs are non-deliveries (disjoint
+  distributions + observed 08-10 correlation), **moderate** on usage limits as sole cause.
+  **Method, and it is the FOURTH instance of §3 line 1505's dominant failure mode:** the three priors
+  were *reasoning about a file nobody opened*; this is **a rule nobody scored**. §1 wrote this as a
+  definition and never asked how often it fires, though the measurement is one pass over a file §1
+  already reads. **A checklist rule that has never been counted is a hypothesis — and the population is
+  usually already on disk.**
+
   So `last_status: OK` + fresh `last_run` survives **two of the three** modes:
 
   | mode | `last_run` | `last_status` | `ce` | only visible in |
@@ -1479,7 +1512,26 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   skips leading whitespace before failing, so the offset characterises the input — measured, `''` → OK
   (guard holds), `'\n'` → **char 1**, `'  \n'` → **char 3**. Only a non-empty non-JSON body, or an
   unguarded empty one, gives **char 0**; the file's sole unguarded `json.loads` is the Telegram-response
-  parse at `:32`. The danger is not just the lost cycle: a boss who *did* open line 21 would see the
+  parse at `:32`.
+  ⚠️ **"sole" is WRONG — there is a SECOND char-0 candidate at `:37`, and the fix to that entry is to
+  apply its own rule to itself** (2026-08-14 06:15 ICT). `load_baselines()` at `:35-38` does
+  `json.loads(BASELINES.read_text())` guarded by `.exists()` **only** — a present-but-empty
+  `baselines.json` gives char 0 too, and it is reached on *every* run (`:60`), where `:32` is reached
+  only when an alert fires. Excluded by **measurement, not reading**: the file is **1533 bytes and
+  parses clean** (keys `updated, week, period, growth, funnel, paywall, product, countries_top5_cvr`).
+  So `:32` survives by elimination and the 05:12 conclusion holds — but it was asserted on an
+  uniqueness claim that was false, i.e. **the entry that says "open the line before carrying it
+  forward" had not enumerated the alternatives.** Corroborating evidence nobody had read: the failing
+  run took **10 s** vs **14 s / 14 s** for the two preceding successes, so it cleared the BigQuery call
+  and died late — consistent with `:32`, not with `:21`. **Consequence that inverts the reading:** `:32`
+  runs *after* `urlopen` returns, so the alert was probably **delivered** and the crash is
+  post-delivery; `print('TELEGRAM_SENT_OK')` at `:100-101` just never executes, so `last_status` reads
+  as total failure either way. Still **unverified by observation** —
+  `stderr.decode()[-500:]` at `bot/scheduler.py` truncates above the calling frame. **Free falsifier
+  every 2 h:** a run that errors identically while the conv-check *cannot* fire (`paywall_shown < 10`
+  or `conv_pct >= 7.0`) makes `:32` unreachable and refutes it. **Transferable: elimination is only as
+  strong as the enumeration — count the candidate sites before naming one, and prefer a cheap
+  measurement (parse the file) over a second reading of the same code.** The danger is not just the lost cycle: a boss who *did* open line 21 would see the
   guard, judge the suspicion refuted, and close the case. **Rule: before carrying a suspected line
   number forward a SECOND time, open that line — and mark inherited suspicions as unverified in your
   log so the next cycle knows they are guesses.**
