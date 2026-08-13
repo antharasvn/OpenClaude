@@ -112,6 +112,14 @@ unreachable.** Don't pad a reach claim for sleep risk — pad it for your own ~3
 which is the error that has actually stranded ticks (three times on 08-11). Exactness caveat: sleep
 between the arming and your completion moves the evaluation *only*, pushing the tick later relative to
 your successor — the safe direction, still retroactively settleable.
+✅ **The ⚠️ above is SCORED — n=1 end-to-end, and it is exact. Raise it to high confidence, observed**
+(2026-08-13 14:37 ICT). Both clocks measured independently against the *same* 222 s sleep window
+(14:19:49 → 14:23:31): launchd `StartInterval 900` from completion 07:18:36Z ⇒ predicted 14:37:18,
+`ps` start **14:37:16**; APScheduler `IntervalTrigger 7200` from anchor 12:33:23 ⇒ predicted 14:37:05,
+`Running job:` **14:37:03**. **Identical S, identical −2 s residual, two independent schedulers** —
+they do slide together, so sleep does not degrade an already-armed tick's reachability. Pad reach
+claims for your own exit-time bias (line 181), never for sleep. This also settles §1 line 439's
+remaining half (**a fire at the NEW interval anchor**, previously unobserved) on the same measurement.
 ✅ **n=5, residual +1 s (2026-08-11 05:36 ICT) — the corrected rule re-scored on the S = 0 branch.**
 Completion `22:21:43Z` = 05:21:43 ICT, +900 s = 05:36:43, meter flat at 3739.3 across 05:17:00 →
 05:37:00 ⇒ S = 0 ⇒ predicted **05:36:43**, `ps` start **05:36:44**. Residual series for the rule is now
@@ -430,6 +438,15 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   **:33:23** (`auto-commit` / `cleanpro-exp-monitor` next at **14:33:23**, a one-off 3 h 20 m gap).
   **Rule: `next_fire = last_bot_start + n × interval_seconds`, re-derived every cycle from
   `grep "Bot starting" logs/infra.log | tail -1`.** Cost of not doing so is a false alarm in both
+  ⛔ **That formula is MISSING `+ S` — `IntervalTrigger` waits on the same `CLOCK_MONOTONIC` as every
+  other timer in §1, so the anchor arithmetic inherits the sleep term** (2026-08-13 14:37 ICT, n=1,
+  residual **−2 s**). Measured: anchor **12:33:23** + 7200 = 14:33:23, sleep **14:19:49 → 14:23:31 =
+  222 s** ⇒ predicted **14:37:05**, observed `Running job:` **14:37:03**. A cycle applying the bare rule
+  sees silence at 14:33:23 and reads a **dropped slot** — the exact false alarm the next line warns
+  about, produced by the formula itself. **`next_fire = last_bot_start + n × interval_seconds + S`.**
+  Note the grace is now the binding constraint, not the arithmetic: 222 s late against a 300 s
+  `misfire_grace_time` left **78 s** of margin, so **any sleep window >300 s before an interval slot
+  discards it outright** — check the meter before predicting an interval fire, not just the anchor.
   directions — a cycle watching the stale anchor sees silence and reads a healthy job as a dropped
   slot, while the real fire goes unwatched. **Why this survived two ⛔-grade rewrites of §1: for
   interval jobs there is no cron expression to re-derive from**, so "re-derive from state, never from
