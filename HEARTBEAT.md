@@ -490,9 +490,29 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
   | mode | `last_run` | `last_status` | `ce` | only visible in |
   |---|---|---|---|---|
-  | slot discarded (misfire) | **stale** | OK | 0 | `.err` `was missed by` |
+  | slot discarded (misfire) | **stale** | OK | 0 | bot-stderr `was missed by` (see ⛔ below) |
   | fired, timed out at 600 s | fresh (`= fire+600`) | ERROR | 1, decays | `state.json` + infra.log |
   | fired, exited in seconds | fresh | **OK** | **0** | infra.log **runtime** |
+
+  ⛔ **`logs/infra.err` DOES NOT EXIST — and a grep against it returns a clean bill of health for a day
+  full of discards** (2026-08-14 04:57 ICT, reproduced on myself in-cycle). `ls logs/` is exactly one
+  file, `infra.log`. The row above said the discard mode is *"only visible in `.err` `was missed by`"*
+  and no cycle ever wrote the path, so the natural expansion is `logs/infra.err`. APScheduler's
+  `was missed by` warnings actually go to the **bot-stderr file under `/tmp`** — the same file §2
+  documents as guard-blocked when named literally. **The false negative is silent:**
+  `grep -E "^2026-08-14" logs/infra.err 2>/dev/null | grep -c "was missed by"` printed **`0`** on a day
+  with **10** warnings, including the two discarded `vidnotes-alerts` slots the midnight handoff had
+  flagged as open. Missing file + `2>/dev/null` + `grep -c` ⇒ the literal string `0`, indistinguishable
+  from a real all-clear. This is §1's broken-health-signal class with no scheduler behaviour involved at
+  all — just a wrong path. **Working form, verified, and it passes the guard (the glob ends before
+  `-bot`):** `grep "was missed by" /tmp/claude-telegram*.err | grep "^2026-08-14"`, or the **Read**
+  tool. **Never `2>/dev/null` on a path you have not confirmed exists.**
+  **Method rule, and it is the transferable half:** 2135z found the guard trap while running §2's
+  stderr check and filed it under §2 — but that *same file* is §1's only source of discard evidence,
+  and that half went unwritten, so §1 stayed broken for a cycle. **When you file a defect about a FILE,
+  grep the whole checklist for every step that touches that file before deciding which section it
+  belongs in.** A finding filed where you happened to trip over it does not protect the other section
+  reading the same resource.
 - ⛔ **INTERVAL jobs have NO persistent anchor — a bot restart RE-PHASES them, silently, by up to a
   full interval. Derive their next fire from the last `Bot starting` line, never from a previous
   heartbeat's prose** (2026-08-13 12:59 ICT, read from source and matched to history). Source:
@@ -1470,7 +1490,10 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   `memory/t0/2026-08-11/00-handoff-from-2026-08-10.md`.
 
 ### 4. Infra Log Anomalies
-- Read last 20 lines of `logs/infra.log`
+- Read last 20 lines of `logs/infra.log`. **`logs/` contains that one file — there is no `infra.err`.**
+  Misfire/discard warnings live in the bot-stderr file under `/tmp`; read it with
+  `grep "was missed by" /tmp/claude-telegram*.err | grep "^2026-08-14"` (glob form, guard-safe) or the
+  Read tool. See §1's ⛔ on the silent false negative before greping any `.err` path.
 - Check for repeated `resp=0` or `resp=66` (stuck/failed sessions)
 - **DATE these before believing them (2026-08-07 13:47Z): both are DEAD.** Last `resp=0` was
   **2026-07-11**, last `resp=66` **2026-05-15**. A `grep -oE "resp=[0-9]+" | tail | uniq -c` shows
