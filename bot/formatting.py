@@ -30,8 +30,16 @@ def format_tool_status(tool_name: str, tool_input: dict) -> str:
         path = _tool_path(tool_input)
         return f"\U0001f4c4 Reading {Path(path).name}..."
     if tool_name == "Glob":
-        pattern = tool_input.get("pattern", "")
-        return f"\U0001f50d Searching {pattern}..."
+        # grok's list_dir passes a directory rather than a glob pattern.
+        pattern = (
+            tool_input.get("pattern")
+            or tool_input.get("target_directory")
+            or tool_input.get("path")
+            or ""
+        )
+        if pattern:
+            return f"\U0001f50d Searching {pattern}..."
+        return "\U0001f50d Listing files..."
     if tool_name == "Grep":
         pattern = tool_input.get("pattern", "")
         return f'\U0001f50d Searching for "{pattern}"...'
