@@ -1514,6 +1514,30 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   Misfire/discard warnings live in the bot-stderr file under `/tmp`; read it with
   `grep "was missed by" /tmp/claude-telegram*.err | grep "^2026-08-14"` (glob form, guard-safe) or the
   Read tool. See §1's ⛔ on the silent false negative before greping any `.err` path.
+- ⛔ **A nonzero `[ERROR]` count is NOT a finding, and "zero `[ERROR]` lines dated today" is NOT an
+  all-clear — it is a PARTIAL-DAY COUNT compared against nothing** (2026-08-14 05:38 ICT, read from the
+  full log). Every cycle overnight on 08-14 reported *"zero `[ERROR]` lines dated 2026-08-14"* as its §4
+  result. At 05:30 eleven appeared —
+  `httpx.ConnectError: All connection attempts failed`, 05:30:11 → 05:30:49 (38 s) — and the natural
+  reading is a regression. It is the base rate. Full-day counts, all classes: **08-01 → 08-13 =
+  18 / 5 / 36 / 32 / 16 / 28 / 34 / 1 / 5 / 25 / 1 / 17 / 34**, median ≈ 18/day, essentially all
+  transient `ConnectError` bursts — and 08-13 carried **34** of them with the bot running **unrestarted**
+  straight through (`Bot starting` last at 08-13 12:33:21). So an early-day "0" carries **no
+  information**: the day was 4 h old and these arrive in bursts.
+  **Two tests, both cheap, before treating any burst as a finding:**
+  - **Did it self-heal?** A `200 OK getUpdates` resuming within ~2 min plus unbroken bot uptime ⇒ regime.
+    (Today: healed at **05:31:12**, 61 s; nothing was scheduled in the window.)
+  - **Is it out of line with its own history?**
+    `grep -oE "^2026-[0-9]{2}-[0-9]{2}.*\[ERROR\]" logs/infra.log | grep -oE "^2026-[0-9]{2}-[0-9]{2}" | uniq -c | tail -15`
+  Both pass ⇒ say so with the numbers. **Never write "zero errors today" as an all-clear before the day
+  is over** — quote the count *and* the base rate, or say nothing. Keep the sub-message: it varies by
+  day (`All connection attempts failed` on 08-14, `[Errno 8] nodename nor servname provided` — DNS — on
+  08-13) and same-class/different-sub-message is still one class.
+  **Lineage, and the reason this belongs in the checklist rather than one log:** §1's 40 %-weekly ledger
+  ⛔ (*where do the successes sit relative to the cap*) and §1's five-simultaneous-timeouts ⛔ (*2.5× the
+  previous all-time maximum*) both established that **a raw count means nothing until it is scored
+  against its own history**. §4 was the last section still reporting raw counts, in both directions —
+  a bare "0" and a bare "11" are the same defect.
 - Check for repeated `resp=0` or `resp=66` (stuck/failed sessions)
 - **DATE these before believing them (2026-08-07 13:47Z): both are DEAD.** Last `resp=0` was
   **2026-07-11**, last `resp=66` **2026-05-15**. A `grep -oE "resp=[0-9]+" | tail | uniq -c` shows
