@@ -318,6 +318,61 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   the evidence for the correction: **16 of 16 weekly timeouts stamped at exactly +600 s ⇒ S ≈ 0 through
   every one of them**, i.e. weekly slots have simply kept landing in awake windows. **Falsifier: any
   timeout stamp materially above `fire + cap`.** Its continued absence does not refute this.
+  ✅ **The `+ S` term is now OBSERVED on a cap — from the opposite direction: a job that SURVIVED a cap
+  it would have blown on wall clock** (2026-08-14 03:16 ICT, n=1, `script` side). `cleanpro-daily` fired
+  03:00:00 and completed **03:16:47** — **1007 s wall against the 300 s** `asyncio.wait_for` at
+  `bot/scheduler.py:117-121` — and did **not** raise, because the host slept **03:03:11 → 03:15:25
+  (734 s)** inside the window. `asyncio.wait_for` waits on the loop clock = `time.monotonic()`, which
+  freezes on Darwin sleep exactly like APScheduler's timer and launchd's `StartInterval` (§0 line 90).
+  **1007 − 734 = 273 s of awake time, 27 s under the cap.** Two consequences: (a) read every runtime
+  against `pmset -g log` before comparing it to a cap — a `script` job showing 16 min of wall time is
+  not evidence the cap failed to fire; (b) **a "clean run" is not a clearance** — 273/300 s is a 9 %
+  margin, so `timeout=300` at :117-121 belongs in the boss's queue **alongside** the `timeout=600`→1800
+  at :149, by §1 line 375's own where-do-the-successes-sit test. Falsifier, free: the **08-15 03:00**
+  slot — if the host is awake through it, its wall runtime IS its monotonic runtime. Confidence high.
+- ⛔ **The 300 s `script` cap has a CONCURRENCY branch nobody has filed: 14:00 ICT is a SIX-JOB slot,
+  and on 2026-08-13 five of them timed out at the same second** (2026-08-14 03:36 ICT, observed).
+  `cron/jobs.json`: `echo-daily`, `mangii-daily`, `pdfai-daily`, `aividly-daily` are all
+  `0 3 * * * America/New_York`; `cleanpro-alerts` (`0 8-22/2` Saigon) and `vidnotes-alerts` share the
+  same instant ⇒ **14:00 ICT**. On 08-13 all six launched inside 3 s and infra.log shows
+  **`14:05:04` ERROR × 5** — `aividly-daily`, `cleanpro-alerts`, `echo-daily`, `mangii-daily`,
+  `pdfai-daily`, every one *"timed out after 5 min"*. **Not the §1 monotonic artefact above:** S = 0
+  across 14:00→14:05 (nearest sleep 14:19:49→14:23:31, recorded by the 1437z cycle), so 304 s wall
+  **is** 304 s awake. **And the slot is not new — the same six-job pile-up fired at the identical
+  instant on 08-06 / 08-09 / 08-10 / 08-11 / 08-12 with ZERO timeouts**
+  (`grep -E "^2026-08-(0[6-9]|1[0-4]) 14:0[0-9]" logs/infra.log`), so the collision is structural and
+  long-standing while the failure is new to 08-13. That is the signature of a **load-dependent** cap,
+  not a per-job workload problem — which matters because §1's where-do-the-successes-sit test is a
+  *per-job* test and cannot see it: each of these five jobs looks comfortable in isolation.
+  **Why this stayed invisible, and why you must look TODAY:** `cleanpro-alerts` retries every 2 h, so
+  its 16:00 success reset `ce` to 0 and presented the event as a one-job blip; the other four are
+  *daily*, so their `ce=1` survives only until the next 14:00 ICT slot, which **erases the only record
+  that 08-13's Echo / Mangii / PDFAI / AIVidly reports were never delivered.** This is §1's
+  `ce`-resets-to-0 blindness on a 24 h period instead of a weekly one.
+  Non-delivery is **inferred, not observed** — those four runners write no `reports/*/daily` tree (only
+  `cleanpro` and `vidnotes` do), so there is no disk artefact; the evidence is that
+  `scripts/echo_daily_runner.py` calls `send_telegram(report)` at **line 407** of a `main()` spanning
+  318–435, i.e. delivery is the last step and a 300 s SIGKILL precedes it.
+  **Cheapest fix is destaggering, not raising the cap** — four of the five share one cron expression,
+  so `0 3` / `10 3` / `20 3` / `30 3` is a single `cron/jobs.json` edit and removes the contention;
+  raising `timeout=300` at `bot/scheduler.py:117-121` would let six concurrent BigQuery jobs run longer
+  against each other instead. **Boss's call**, sent 03:45 ICT — queues alongside the `timeout=600`→1800
+  at :149 and the `timeout=300` margin item: three related asks, one restart.
+  **Free falsifier, today: the 14:00 ICT slot.** Clear ⇒ load-dependent, not deterministic. Either way
+  **read `logs/infra.log` at ~14:05 ICT and write the outcome down before the counters clear.**
+- ⛔ **`armed + S` must accumulate S from the MOST RECENT evaluation — every executor evaluation
+  RE-ARMS every pending wait, and carrying S from an older arming predicts discards that do not happen**
+  (2026-08-14 03:16 ICT, n=1 retrodicted at **−12 s**, n=1 predicted forward at **−3 s**). The 1946z
+  cycle summed **S = 4136 s** from the `00:50:54` arming and forecast *"03:00 `cleanpro-daily` —
+  discard, the script never runs."* But the **01:20:06** evaluation re-armed everything; S since then is
+  **3218 s**, so the 02:00 slot evaluated at 02:00:00 + 3218 = **02:53:38** (observed **02:53:26**), and
+  that evaluation re-armed the rest with the host awake — which is why the 03:00 slot **fired on time
+  and succeeded**. The stale 918 s pushed four predicted instants ~15 min late and produced the wrong
+  verdict on the one tick flagged alert-worthy. Scored forward in the same cycle: `03:05:00 + 734 s` ⇒
+  predicted **03:17:14**, observed **03:17:11**. **Rule: S runs from the timestamp of the latest
+  `was missed by` line, not from the arming you happened to read first.** Corollary for the lag bound —
+  the detector's lag is a *sleep* artefact (50 min asleep tonight, 3 s awake), so the ~1 h working bound
+  applies only while the host is cycling.
   ⛔ **"Do not extend this to `script` jobs — no timeout applies to them" was WRONG and is corrected
   here (2026-08-11 14:26 ICT). `script` jobs ARE capped, at 300 s, and the cap has fired at least 10
   times across SIX different jobs.** Source, not inference — `bot/scheduler.py:117-121` `_run_script`
@@ -500,6 +555,23 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   doing — check whether it is matching a substring of a path. And when a checklist prescribes a
   literal command, that command is a dependency: if the environment breaks it, patch the checklist,
   because the next cycle will paste it verbatim.**
+  ⛔ **The trap is WIDER than "a substring of a path" — guard.sh matches the ARGUMENT TEXT too, so
+  writing the word `kill` inside a Telegram MESSAGE BODY is blocked** (2026-08-14 03:40 ICT, observed).
+  The alert for this cycle's Finding 1 contained the prose *"a 300s kill lands before it"* and
+  `./skills/telegram-sender/send.sh --chat … --text "…"` was refused with the same
+  *"BLOCKED: You are not allowed to kill processes. Use ./bin/restart.sh for the bot."* The entry above
+  frames the false positive as a **path** collision (`/tmp/claude-telegram-bot.err`), which reads as
+  "only affects file arguments" and gives no reason to suspect the payload of an unrelated command.
+  **Any Bash invocation whose full command line contains `kill` / `pkill` / `killall` /
+  `claude-telegram-bot` is refused, wherever those characters sit — including inside a quoted string
+  you are merely transmitting.** This bites the heartbeat specifically, because §0/§1 vocabulary is
+  full of it: "the gtimeout kill", "killed at T+600 s", "a cycle that dies at the kill". A cycle that
+  describes its own budget arithmetic to the boss in the checklist's own words will be blocked, and the
+  natural misreading is that *sending* is unavailable. **Fix is free: say "timeout" / "SIGKILL at 300 s"
+  / "the 600 s cap" in outbound prose.** Generalise: **a guard that greps a command line cannot
+  distinguish mention from use — when a block makes no sense for what you are doing, scan your own
+  argument strings for the trigger word before concluding the tool is broken.** Confidence high, n=1
+  observed, and the falsifier is free — any blocked command with no trigger substring anywhere in it.
   APScheduler logs `Run time of job "<name>" was missed by H:MM:SS` for every slot it discards, with a
   timestamp and the job name. **This never appears in `logs/infra.log`** — `bot/logging_setup.py` gives
   `bot.infra` its own handler with `propagate=False`, while `apscheduler.executors.default` goes to the
