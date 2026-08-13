@@ -1469,6 +1469,26 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
 ### 3. Memory & Reminders
 - **Read memory FIRST, before drafting any alert** — otherwise known issues get re-reported as new discoveries
+- ⛔ **MIRROR of that rule: reading memory first also propagates its UNVERIFIED guesses. A suspected
+  file:line repeated across cycles hardens into a fact without anyone opening the file — and a wrong
+  lead costs more than no lead** (2026-08-14 05:12 ICT, third instance of this class). Four consecutive
+  logs (08-13 1618z → 08-14 2154z + the midnight handoff) carried *"suspect
+  `scripts/cleanpro_alerts_runner.py:21` (`json.loads` on empty/whitespace stdout)"*. **Line 21 reads
+  `json.loads(cp.stdout or '[]')` — already guarded, and it cannot produce the observed error.** The
+  discriminator was in the message all along: `Expecting value: line 1 column 1 (char 0)`. The decoder
+  skips leading whitespace before failing, so the offset characterises the input — measured, `''` → OK
+  (guard holds), `'\n'` → **char 1**, `'  \n'` → **char 3**. Only a non-empty non-JSON body, or an
+  unguarded empty one, gives **char 0**; the file's sole unguarded `json.loads` is the Telegram-response
+  parse at `:32`. The danger is not just the lost cycle: a boss who *did* open line 21 would see the
+  guard, judge the suspicion refuted, and close the case. **Rule: before carrying a suspected line
+  number forward a SECOND time, open that line — and mark inherited suspicions as unverified in your
+  log so the next cycle knows they are guesses.**
+  **This is the same class as §0's `/tmp/claude-heartbeat.log` ⛔ (15 h of a wrong mechanism because
+  nobody read the runner or its plist) and §1's `logs/infra.err` ⛔ (a path no cycle confirmed existed).
+  Three instances now of *the checklist reasoning about a file it had not opened* — treat that as the
+  fleet's dominant failure mode, not a coincidence.** Second-order, free: **an error message's character
+  offset is evidence, not decoration** — here it separated two call sites the truncated log
+  (`stderr.decode()[-500:]` at `bot/scheduler.py`) had made indistinguishable.
 - Read `memory/t0/MEMORY.md` (repo root) for pending tasks or reminders
 - Check today's daily logs at `memory/t0/{YYYY-MM-DD}/` for context on what's been done
 - **Path warning:** `workspaces/c352342178/memory/` is a STALE duplicate tree. Never read or write it.
