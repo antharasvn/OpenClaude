@@ -40,7 +40,7 @@ echo "[heartbeat] Starting heartbeat at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 # Run Claude with heartbeat prompt
 cd "$PROJECT_DIR"
 
-/opt/homebrew/bin/gtimeout 600 claude -p "Run heartbeat: read HEARTBEAT.md for the checklist, then work through each item. Review pending tasks, check memory for reminders or things you wanted to follow up on. Last heartbeat ran at: $LAST_RUN. If anything notable, send a brief update via the telegram-sender skill. If nothing to report, just say 'Heartbeat: nothing to report' and do not send a Telegram message." \
+/opt/homebrew/bin/gtimeout 600 claude -p "Run heartbeat: YOUR FIRST TOOL CALL, before any other command, must be: ps -eo pid,lstart,etime,command | grep '[g]timeout 600 claude' -- that lstart is your cycle start and your kill is lstart + 600 s. Do NOT use 'date' or 'ps -o lstart= -p \$\$' to establish it; both timestamp your first tool call instead of the cycle, read 10-92 s late, and manufacture budget you do not have. Then read HEARTBEAT.md for the checklist, then work through each item. Review pending tasks, check memory for reminders or things you wanted to follow up on. Last heartbeat ran at: $LAST_RUN. If anything notable, send a brief update via the telegram-sender skill. If nothing to report, just say 'Heartbeat: nothing to report' and do not send a Telegram message." \
     --allowedTools "Read,Write,Edit,Bash,Glob,Grep,WebFetch,WebSearch,Skill" || echo "[heartbeat] Timed out or failed (exit $?)"
 
 # Update state file with new timestamp

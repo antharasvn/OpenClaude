@@ -19,6 +19,19 @@
 > exactly this mistake while the correct form sat 300 lines below their first tool call. If you are
 > about to defer a checklist fix to the boss, re-read line 215 first: you are probably allowed to
 > make it yourself.)*
+>
+> ⛔ **That edit did NOT stop the streak — 1006z tripped it too (n=5), and the reason is that this
+> block is still INSIDE the document.** A cycle's habitual first move is to orient with `date`, and
+> it makes that call *before* it has Read HEARTBEAT.md at all, so no placement within this file can
+> reach it — moving the text to the top only shortened the distance, it did not change the ordering.
+> **The only text every cycle sees before its first tool call is the `claude -p` prompt itself**, so
+> 1006z put the imperative there: `skills/heartbeat/run.sh` now opens with "YOUR FIRST TOOL CALL …
+> must be `ps -eo … | grep '[g]timeout 600 claude'`". Verified by expansion (`\$\$` survives
+> literally, `$LAST_RUN` still interpolates, `bash -n` clean). **Score it: if a cycle still uses
+> `date` first, the prompt channel is refuted too and the fix has to become mechanical** — stamp the
+> wrapper start into the state file or an env var so it needs no discipline at all.
+> **Transferable: when a rule is violated N times in a row, ask WHEN the reader reaches it, not just
+> where it sits. Documentation cannot govern behaviour that precedes reading the documentation.**
 
 The wrapper is `gtimeout 600 claude -p "Run heartbeat: …"` (seen in `ps`), so the cycle is killed at
 T+600 s, mid-write, with no chance to save a log. This is the mechanism behind memory §249's
