@@ -464,6 +464,29 @@ call on the one thing that *does* need `ps`: your own start.
   (b) **an alert-type job that retries every 2 h needs its `last_run` compared against the LATEST slot,
   not the one you are curious about** — a fresh `last_run` two slots on is proof the earlier question
   is moot, and no cycle needs to re-open it.
+- ⛔ **Reading `cron/jobs.json` is NOT enough — parse it with APScheduler's semantics, where
+  `day_of_week` is 0 = MONDAY, so `* * 1` is TUESDAY, not Monday** (2026-08-14 15:09 ICT, observed on
+  myself). I resolved `cleanpro-weekly` (`30 3 * * 1 Asia/Saigon`) as "Mondays 03:30 ICT" and wrote a
+  whole finding around a missed **08-10** slot. APScheduler prints its own answer: the discard warning
+  reads `day_of_week='1' … next run at: 2026-08-18 03:30:00 +07`, and the real missed slot was
+  **Tuesday 08-11**. Standard cron is 0 = Sunday; APScheduler is 0 = Mon. Every `day_of_week`
+  expression in `cron/jobs.json` is off by one day if you read it as crontab(5).
+  **This is line 451's timezone trap in its day-of-week form, and it defeats line 451's own rule.**
+  That entry says *"resolve schedules from `cron/jobs.json`, never from prior heartbeat prose"* — I did
+  read the file, and still got it wrong, because the defect was in the **engine convention**, not the
+  source. So: **reading the right file is necessary and not sufficient; you must decode it with the
+  right engine's semantics.**
+  **The free check that settles it without knowing either convention — use this, it needs no doc:**
+  `grep "Running job: <id>" logs/infra.log | tail -3` and ask what weekday those dates were.
+  `cleanpro-weekly` fired 07-21, 07-28, 08-04 — three Tuesdays, which refutes "Monday" before you
+  write a word. Corroborates instantly and costs one call. MEMORY.md:573 *already* had
+  `vidnotes-weekly` as "Tue 12:30 ICT" off the identical expression, so the fleet knew and the
+  knowledge never reached the checklist.
+  **Second-order, and the reason this is worth a ⛔ rather than a footnote: the misfire warning names
+  `next run at:` explicitly.** Never compute a weekly job's next slot by hand when APScheduler has
+  already printed it — same class as §0 line 406 (your predecessor's completion is already in your
+  prompt) and §0 line 399 (the on-grid fire is a free sleep meter). **Prefer the scheduler's own
+  statement of its schedule over any re-derivation of it.**
 - ⛔ **The 300 s `script` cap has a CONCURRENCY branch nobody has filed: 14:00 ICT is a SIX-JOB slot,
   and on 2026-08-13 five of them timed out at the same second** (2026-08-14 03:36 ICT, observed).
   `cron/jobs.json`: `echo-daily`, `mangii-daily`, `pdfai-daily`, `aividly-daily` are all
