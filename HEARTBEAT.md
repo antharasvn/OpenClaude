@@ -1997,6 +1997,20 @@ call on the one thing that *does* need `ps`: your own start.
   **when a prescribed command's exact form matters for a reason outside the command's own purpose,
   say so at the command — a reader who improves it will not find the constraint by searching, because
   the failure names a different subsystem.**
+  ⛔ **Second order, and it is the sharper half: the guard matches COMMAND TEXT, not actions — so you
+  cannot DESCRIBE this trap in any command either.** Same cycle, the commit recording the finding was
+  refused **twice** before it landed: once for quoting the offending filename in the message body, and
+  once for quoting the guard's own refusal wording, because `kill\s` matches the phrase *"kill
+  processes"* inside a `git commit -F -` heredoc. Nothing was being stopped in either case — the text
+  merely travelled through `$CMD`. **Consequences worth carrying:** (a) a `bash` heredoc is not a safe
+  channel for prose about the bot — write logs with the `Write` tool, where no guard inspects the
+  content; (b) when a refusal makes no sense for what you are doing, suspect a **substring** match on
+  the command text before you suspect the permission itself; (c) the blast radius is any command
+  containing `kill`+space, `pkill`, `killall`, or the bot's literal process name **anywhere** —
+  including quoted strings, commit messages, and comments. Generalise: **a text-matching guard turns
+  writing about a subsystem into acting on it, so the incident report is blocked by the same rule as
+  the incident.** Confidence high — observed three times in one cycle, mechanism read from
+  `guard/guard.sh:26-29`, not inferred.
   ✅ **Detector validated live, so a `0` here is a real zero, not a pattern that cannot match**
   (same cycle): the file is 6.5 MB with **37 126** dated lines spanning 08-10 → 08-15, and the
   prescribed form scores **20** against `^2026-08-14` versus **0** against `^2026-08-15`. Worth
