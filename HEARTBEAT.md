@@ -328,6 +328,16 @@ hook size, and injected-log volume. Two corrections to the ⛔ above, both sharp
   right process.**
 - **Expect it to grow.** It is dominated by session startup, and the injected daily-log bundle is
   already ~147 KB. Never re-derive this as "about 40 s, just subtract it."
+✅ **n=3, and the growth prediction lands hard: +92 s, ~1.6× the previous worst — plus the cleanest
+proof that the `ps`-vs-`date` framing was never the point** (2026-08-14 09:41 ICT). Both proxies were
+read in **one** call and returned the **same instant** — `date -u` **09:43:31** and `ps -p $$ -o
+lstart=` **09:43:31** — against a true wrapper start of **09:41:59**. Identical because they timestamp
+the same event: your first tool call. Series is now `date` **+50 / +59 / +92**, `$$` **+42 / +26 /
++92**; the injected log bundle was **154.3 KB** this cycle, up from the ~147 KB cited above. **The new
+danger is directional, not just size:** at +92 s the proxy says your kill is 09:53:31 when it is
+**09:51:59** — it *manufactures* budget, and line 189 already measures self-estimates as biased
+**short**. The two errors stack toward believing you can reach a tick you cannot. Read the wrapper PID
+(line 293) once, before any timing claim.
 ✅ **Free shortcut nobody had used: your predecessor's completion is ALREADY IN YOUR PROMPT.** The
 harness line `Last heartbeat ran at: <ISO>` is the same stamp `run.sh` writes *after* `claude -p`
 exits — i.e. exactly the "completion" in `completion + 900 s + S`. Scored 2026-08-14 09:23:
