@@ -1858,6 +1858,32 @@ call on the one thing that *does* need `ps`: your own start.
   fix is queued, ask which previously-settled findings were resting on the broken state.** Confidence
   high that the weekly is the writer; moderate that a mid-write death yields char 0 specifically
   (heredoc form read on the vidnotes sibling, not on the cleanpro one — one grep for whoever wants it).
+  ⛔ **FOURTH turn, and it ran that grep: `skills/cleanpro-weekly/SKILL.md:223` is a POINTER, not a
+  write, and its target DOES NOT EXIST — so there is no code in this repo that writes
+  `data/cleanpro/baselines.json`** (2026-08-14 18:59 ICT, four direct greps). `:220-223` reads
+  *"Step 10-12: Update baselines … Same as daily but weekly paths:"* then three path bullets — no
+  command, no heredoc, no `json.dump`. **`skills/` has no `cleanpro-daily`** (only `cleanpro-weekly`
+  on the CleanPro side), and `:138` defers the same way (*"Same approach as daily"*). `cleanpro-daily`
+  is a **script** job (`scripts/cleanpro_daily_runner.py`) which **never mentions baselines**; the sole
+  `scripts/` file that does is the read-only alerts runner. The mtime argument survives — the file is
+  1533 B at **Aug 4 03:35** against the weekly's 03:37 stamp — so **"the weekly is the writer" holds;
+  "the weekly has a write recipe" does not.** An agent improvised Step 10-12 from a dangling reference.
+  Three consequences: (a) **the mid-write shape cannot be settled by grep in either direction** — each
+  run improvises, so the failure form is not fixed across runs, which is worse than a known-bad
+  heredoc because it cannot be pattern-matched; leave it moderate, falsifier is observational only.
+  (b) **The queued pairing gets a second, independent ground:** `timeout=600 → 1800` at
+  `bot/scheduler.py:149` lets the weekly reach Step 10-12 for the first time since 08-04, and Step
+  10-12 is **unspecified** — the repair walks the job into undefined behaviour on the very file whose
+  unguarded `:37` read is the open char-0 candidate. (c) **New small boss item, should land before or
+  with `:149`:** inline the baselines write atomically (temp + `os.replace`) or repoint `:138`/`:220-223`
+  at something real.
+  **Transferable — this is a FOURTH form of the fleet's dominant failure mode (line 1824), the
+  CITATION form.** 18:21 *did* open the file and *did* cite the right line; the line was a **pointer**,
+  it read the pointer as the referent, and then sourced the missing mechanism from a **different
+  skill's** file to fill the gap. Opening the file was necessary, not sufficient — the unfollowed step
+  was **following the reference one hop further**. **Rule: when a cited line delegates ("same as X",
+  "see Y", "as above"), the citation is not complete until X is opened — and a delegation target that
+  does not exist is itself the finding.** Cost: one grep. Confidence high.
 - Read `memory/t0/MEMORY.md` (repo root) for pending tasks or reminders
 - Check today's daily logs at `memory/t0/{YYYY-MM-DD}/` for context on what's been done
 - **Path warning:** `workspaces/c352342178/memory/` is a STALE duplicate tree. Never read or write it.
