@@ -131,6 +131,17 @@ queues *behind* the weekly-cap decision, not alongside it. Confidence **high** o
 **moderate** on the hang attribution (the two logless cycles left nothing on disk, so the stall is
 inferred from the distribution, not observed). Generalise the generalisation: **the successes-vs-cap
 test is worth running against any timeout you are about to reason about, including your own.**
+✅ **Sharpened 2026-08-15 03:4x ICT: run the test on the caps NESTED INSIDE the one you are judging,
+because a timeout larger than its enclosing budget is worse than no timeout — it answers the grep.**
+`cleanpro-daily`'s "hang" (`QUEUE.md` #2) is a **300/600 inversion**: `bot/scheduler.py:120` kills the
+script at 300 s while `daily_report_common.py:48` allows every `bq query` **600 s**, so no query can
+ever time out — the outer kill always wins, killing the process with no error and no name for the
+stalled query. (`run()`'s 300 s default at `:31` *equals* the cap, so it too can never fire in time.)
+The signature this fleet reads as "hang" — successes at 44–51 % of cap, a 146 s dead zone, failures
+at *exactly* the cap — is **also** what an unreachable inner timeout produces, so the test cannot
+tell them apart on its own. **Always read the next cap outward before judging a timeout's value, and
+never treat a `grep -n timeout` hit as evidence the path is guarded: two of the three values here are
+hits and both are dead.** Confidence high (both values read from source).
 ⚠️ **When you hand a checkpoint forward, name the cycle that can actually resolve it — don't assume
 "the next one" does.** Cycles start ~15 min apart, so a tick at T+10 min of *this* cycle lands only
 ~5 min before the next cycle even starts, and can miss it too. Measured 2026-08-09: the 20:28Z cycle

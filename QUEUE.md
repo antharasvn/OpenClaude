@@ -47,8 +47,31 @@ the **hang** signature, not capacity — so **raising 300 would recover nothing 
 longer**. The prior 273 s figure was the 08-14 run, the one the host slept 734 s inside
 (`Dark Wake Thermal Emergency`); it is 2× the median and the only reading near the cap.
 
-**The actual ask:** the script wedges outright roughly twice a month. Needs a look at what it blocks
-on (network I/O with no per-request timeout is the obvious candidate), not a bigger budget.
+**ANSWERED 2026-08-15 03:4x ICT — and the guess in this row was wrong.** It read *"network I/O with
+no per-request timeout is the obvious candidate."* There **is** a per-request timeout; it is **twice
+the job's whole budget**, which is worse than none because it answers the grep:
+
+| layer | value | source |
+| --- | --- | --- |
+| scheduler kills the script | **300 s** | `bot/scheduler.py:120` |
+| every `bq query` is allowed | **600 s** | `scripts/daily_report_common.py:48` |
+| generic `run()` default | **300 s** | `scripts/daily_report_common.py:31` |
+
+**The inner timeout is unreachable** — at 600 s inside a 300 s cap no query can ever time out; the
+outer kill always wins, and `run()`'s default *equals* the cap so it cannot fire in time either. The
+process dies mid-flight with no error and **no indication which query stalled**. This predicts the
+distribution above better than "hang" does: past ~168 s nothing can interrupt a slow query before
+300 s, so runs land at ~132 s or at exactly the cap, never in the 146 s dead zone. A true wedge and
+a merely slow query are indistinguishable from outside.
+
+**The actual ask (one line, but not a heartbeat's call):** set `daily_report_common.py:48` to
+`timeout=120` — strictly below the outer cap, leaving room to catch the raise, report the failing
+SQL, and still finish inside 300. **It is a shared module behind six live jobs** (`cleanpro`, `echo`,
+`mangii`, `pdfai`, `aividly`, `vidnotes` daily runners), first firing 03:00 ICT, which is why no
+cycle has applied it. `cleanpro` merely surfaced it first — it makes the heaviest queries.
+Minor, same file: `cleanpro_daily_runner.py:447,451` (heatmap + `curl`) have no timeout at all, but
+run *after* `send_telegram` at `:439` and so cannot cost the report.
+Evidence: `memory/t0/2026-08-15/heartbeat-2041z.md`.
 
 ## 3. Mis-calibrated threshold at `bot/scheduler.py:99`
 
