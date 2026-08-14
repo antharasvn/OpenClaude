@@ -932,6 +932,36 @@ call on the one thing that *does* need `ps`: your own start.
   all — just a wrong path. **Working form, verified, and it passes the guard (the glob ends before
   `-bot`):** `grep "was missed by" /tmp/claude-telegram*.err | grep "^2026-08-14"`, or the **Read**
   tool. **Never `2>/dev/null` on a path you have not confirmed exists.**
+  ⛔ **RECURRED at n=2 through a DIFFERENT check, with the warning sitting in the reader's injected
+  context — so the defect is not placement, it is that this note was filed under the DISCARD check
+  instead of under the FILE** (2026-08-15 00:26 ICT, observed on 1659z's log by its successor).
+  1659z's §2 reported *"No `2026-08-15` lines in `logs/infra.err` at all — the new ICT day opens with
+  a clean error file."* The file does not exist; that sentence is a health verdict on a path with no
+  bytes behind it. **The damning part is that 1659z got the discard check RIGHT** — it used
+  `/tmp/claude-telegram*.err` and even wrote a "Detector discipline" section naming the glob and the
+  guard block — **and then used the dead path two paragraphs later for the error tally.** The midnight
+  handoff it had been injected with *also* names `logs/infra.*` as the documented-broken target.
+  **A warning attached to one CONSUMER generalises only as far as that consumer**; the resource stays
+  live for every other caller, and the same dead path re-enters through whichever check nobody
+  annotated. So state it as a property of the path, not of the check: **`logs/` holds exactly one
+  file, `infra.log`. Any read of `logs/infra.err` — discards, error tallies, anything — is a
+  guaranteed false all-clear.** (Line 2148 already says this; it is 1200 lines from §2, where the
+  error tally actually gets run.)
+  ⚠️ **Second mechanism, and it indicts the batching habit §0 line 75 recommends: a LOUD failure
+  buried in a multi-part `bash` batch degrades to a QUIET one.** Line 253 of the 1659z log calls a
+  throwing detector "the *loud* failure and therefore harmless." That is true only when it throws
+  **alone**. This cycle ran the same grep inside a 7-part batch; `grep: logs/infra.err: No such file
+  or directory` came back as one stderr line among ~25 lines of good stdout, immediately after a
+  section that had legitimately printed nothing. It is trivially skimmed as "no matches." §0 tells
+  you to fold cheap probes into routine batches (correct, for the clock); the cost nobody had priced
+  is that **batching converts a detector's error channel into noise.** Mitigation, cheap: when a
+  batch section can fail on a missing path, print a sentinel (`ls -1 logs/`) rather than relying on
+  grep's stderr to be noticed.
+  ⚠️ **And note why this one gave no feedback: the broken detector AGREED with reality.** Today's real
+  tally from the live file is **0 errors** — so 1659z's conclusion was true, arrived at by a method
+  that cannot produce a false one. A wrong detector that happens to match is the case that survives
+  review, because nothing looks off. **The recurrence count for a silent-false-negative detector is
+  not the number of times it misled anyone — it is the number of times it was CONSULTED.**
   ⚠️ **The `^` in that second grep is LOAD-BEARING, and dropping it INFLATES the count — because the
   warning text embeds a FUTURE date** (2026-08-14 21:22 ICT, n=1, on myself). APScheduler's line is
   `Run time of job "X (trigger: …, next run at: <NEXT> …)" was missed by H:MM:SS`, so a discard
