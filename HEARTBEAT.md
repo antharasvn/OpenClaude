@@ -1853,6 +1853,26 @@ call on the one thing that *does* need `ps`: your own start.
   **Cheap habit that catches all three: before believing an empty result, ask what a POSITIVE result
   would have looked like and whether the command you actually ran could have produced one.**
   Confidence high; n=1 for this output, n=3+ for the class.
+  ⛔ **ASKING is not enough — RUN a positive control, because the tool itself may be the thing that is
+  broken** (2026-08-14 22:2x ICT, n=1, caught one call short of filing). Investigating whether the
+  poller survived a `Conflict` burst, I ran `lsof -nP -p 94033 -i` and got **nothing** — which reads
+  as *the bot holds no socket to Telegram*, i.e. a dead poller silently dropping every user message.
+  I applied the habit above and it **passed me through**: I could state exactly what a positive looks
+  like (an `ESTABLISHED` line to `api.telegram.org`) and the command was the documented one for the
+  job, so the empty result looked like a real negative. What actually settled it was one more call —
+  **`lsof -nP -i | wc -l` returns `0` for the ENTIRE HOST**: lsof is blocked/sandboxed under the
+  heartbeat and can never return a row, so its silence carries **zero information** about anything.
+  **The upgrade, and it is the whole point: the thought experiment fails precisely in the case that
+  matters — a tool that is broken produces a well-formed, plausible negative.** You cannot reason
+  your way out of it from inside; you need an *external* invocation whose output you already know
+  must be non-empty (drop the filter, widen to the whole host, grep a string you can see with your
+  own eyes). One extra call converts unfalsifiable silence into evidence.
+  **Fourth instance of the silent-false-negative family in three days** — §4 line 2044 (unanchored
+  `grep`), the paraphrased `pgrep` above, the `infra.err` path that does not exist, now a blocked
+  `lsof`. The first three were *wrong commands*; this one was the **right command in a crippled
+  environment**, which is why the existing habit did not catch it. Generalises well past this file:
+  **a diagnostic that cannot demonstrate a positive is not a diagnostic.** Confidence high, mechanism
+  certain (host-wide count is 0).
 - Check the bot stderr log for recent errors (last 5 min)
   ⛔ **`guard.sh` BLOCKS this step as written — use the glob path** (found 2026-08-14 04:36 ICT).
   `guard/guard.sh:27` blocks any Bash command whose text matches
@@ -2090,6 +2110,34 @@ call on the one thing that *does* need `ps`: your own start.
   `SchedulerNotRunningError` + BigQuery cluster. Anchor on the line start instead:
   `grep -E "^2026-08-08 0[456]:" logs/infra.log | grep "\[ERROR\]"`. Same rule as `resp=` above:
   date the line before believing it.
+  ✅ **n=2, and the trap reproduces EXACTLY as described — same three symptoms, same order**
+  (2026-08-14 22:2x ICT). I windowed with `awk '$0 >= "2026-08-14 22:11:20"'` and got back DNS
+  (`ServerNotFoundError … bigquery.googleapis.com`), `SchedulerNotRunningError: Scheduler is not
+  running`, and a `JSONDecodeError` — the identical trio this entry predicted in 2026-08-07. A
+  `SchedulerNotRunningError` reads as *the cron fleet is dead*, the second-highest-severity alert here.
+  Settled in one call: `grep -n 'SchedulerNotRunningError' logs/infra.log` puts both hits at lines
+  **18608 and 22482** of 25419 — weeks old. **The continuation lines sort above every date because
+  `a` > `2`, so the junk always lands at the TAIL, exactly where "most recent" belongs.** Prediction
+  from an entry alone is cheap; this one paid off twice.
+- ⛔ **`Conflict: terminated by other getUpdates request` is CHRONIC NOISE — and its message text is a
+  trap that instructs you to hunt a duplicate process** (2026-08-14 22:2x ICT, computed over the full
+  log). *"make sure that only one bot instance is running"* reads as an order, and acting on it points
+  straight at process management, which CLAUDE.md forbids outright. **Base rate: 65 occurrences across
+  26 distinct days** — 08-01 ×15, 06-06 ×10, 08-10 ×4, 08-14 ×2 — and no cycle has ever alerted on it.
+  Before spending any budget: `ps -eo pid,ppid,lstart,command | grep '[p]ython.*bot'`; **one PID that
+  predates the error ⇒ there is no duplicate**, and the burst is self-limited (today: 2 events 13 s
+  apart, nothing after).
+  **A causal story I built and then REFUTED — record it so nobody rebuilds it.** Today's Conflicts sit
+  **8 s** after an `httpx.ConnectError`, so "network blip drops the long-poll, Telegram still holds the
+  old one, the retry collides" fits beautifully and is mechanically plausible. Scored over the whole
+  log: **only 2 of 65 Conflicts (3 %) have a ConnectError within 120 s before them — and both are
+  today's**; conversely **6763 of 6764 ConnectErrors are followed by no Conflict at all.** It explains
+  none of the history (the other 63 are almost certainly restart overlap — `Bot starting` days).
+  **The transferable half: checking the base rate of the CONSEQUENT is the habit this file already has
+  (§4 above), and it would have passed this story — the Conflict really was rare. What kills it is the
+  base rate of the ANTECEDENT.** Adjacency in a 25-line tail plus a plausible mechanism is not
+  evidence; the question is *how often does the cause occur WITHOUT the effect*. Six thousand times,
+  here. Confidence high — computed over 6829 events, not read from a window.
 
 ## How to Alert
 - Send via telegram-sender skill to chat 352342178 (Boss DM)
