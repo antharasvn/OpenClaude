@@ -219,9 +219,76 @@ curl -s -X POST "https://api.telegram.org/bot${AAA_BOT_TOKEN}/sendMessage" \
 
 ## Step 10-12: Update baselines, git archive, finalize lockfile
 
-Same as daily but weekly paths:
+Weekly paths:
 - Baselines: `data/cleanpro/baselines.json`
 - Reports: `/Users/antharas/Projects/CleanPro/source/dev/reports/weekly/`
 - Lock: `data/cleanpro/locks/weekly-${WEEK_LABEL}.lock`
 
 Each section is independent. One failure must never block others.
+
+### 10. Update baselines — read-modify-write, ATOMIC, schema-preserving
+
+⛔ There is **no** "same as daily" procedure to copy — `cleanpro-daily` is a `script` job
+(`scripts/cleanpro_daily_runner.py`) and it never touches baselines. This step is the only writer of
+`data/cleanpro/baselines.json`. Do **not** improvise it, and do **not** write the file with a
+truncating heredoc (`cat > … << EOF`): `scripts/cleanpro_alerts_runner.py` reads this file on **every**
+2-hourly alerts run, so a run that dies mid-write leaves a truncated or empty file that breaks alerts
+until the next weekly, seven days later.
+
+Rules:
+1. **Read the existing file first** and update it in place. Never construct a fresh object from the
+   keys listed below — carry every key you did not compute through **unchanged**, including any added
+   after this was written. The current top-level keys are `updated`, `week`, `period`, `growth`,
+   `funnel`, `paywall`, `product`, `countries_top5_cvr`, `engineering`, `caveats`.
+2. Update only what this week's report actually computed. Set `updated` to today (`YYYY-MM-DD`),
+   `week` to `${WEEK_LABEL}`, and `period` to `${START}_${END}`.
+3. **A missing or unparseable existing file is not fatal** — start from `{}`, merge your computed
+   sections in, and log a `WARN`. Never abort the run over baselines.
+4. **Write atomically**: temp file in the *same* directory, then `os.replace`. This is what makes a
+   mid-write death leave the previous *valid* file rather than a broken one.
+
+```bash
+python3 - "$WEEK_LABEL" "$START" "$END" <<'PY'
+import json, os, sys, tempfile, datetime
+week, start, end = sys.argv[1], sys.argv[2], sys.argv[3]
+path = "data/cleanpro/baselines.json"
+
+try:
+    with open(path) as f:
+        data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError("baselines.json is not an object")
+except (OSError, ValueError) as e:
+    print(f"WARN: baselines unreadable ({e}) - starting from empty", file=sys.stderr)
+    data = {}
+
+# Merge THIS week's computed sections. Omit any section the report did not produce;
+# omitted sections keep last week's values rather than being cleared.
+updates = {
+    "updated": datetime.date.today().isoformat(),
+    "week": week,
+    "period": f"{start}_{end}",
+    # "growth": {...}, "funnel": {...}, "paywall": {...},
+    # "product": {...}, "countries_top5_cvr": [...],
+}
+data.update(updates)
+
+d = os.path.dirname(path) or "."
+os.makedirs(d, exist_ok=True)
+fd, tmp = tempfile.mkstemp(dir=d, prefix=".baselines.", suffix=".tmp")
+try:
+    with os.fdopen(fd, "w") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)          # atomic within the directory
+except BaseException:
+    os.unlink(tmp)
+    raise
+print(f"BASELINES_OK {path}")
+PY
+```
+
+Verify before moving on: `python3 -c "import json;json.load(open('data/cleanpro/baselines.json'))"`
+must exit 0. If it does not, the write did not land — say so in the report; do not leave it silent.
