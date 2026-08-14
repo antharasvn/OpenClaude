@@ -163,7 +163,18 @@ class JobScheduler:
             stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=600)
         except asyncio.TimeoutError:
             proc.kill()
-            raise TimeoutError(f"Prompt job {job['id']} timed out after 10 min")
+            # Drain what the CLI printed before the cap fired.  Without this the
+            # only prompt-job failures that ever need diagnosing are the ones
+            # that leave no diagnostics at all: communicate() never returns on
+            # this path, so the stderr of a capped job is destroyed with it.
+            tail = ""
+            try:
+                _, stderr = await asyncio.wait_for(proc.communicate(), timeout=10)
+                tail = stderr.decode(errors="replace").strip()[-300:]
+            except Exception:
+                logger.exception("Could not drain stderr for %s", job["id"])
+            msg = f"Prompt job {job['id']} timed out after 10 min"
+            raise TimeoutError(f"{msg}: {tail}" if tail else msg)
 
         result = stdout.decode()
 
