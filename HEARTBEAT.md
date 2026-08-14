@@ -351,6 +351,18 @@ loop was armed `now + 165 s` off a mis-estimated current time and expired at **1
 the slot. That is §0's biased self-estimate one level down — same error, same sign, inside a single
 Bash call. Use `target=$(date -j -f "%Y-%m-%d %H:%M:%S" "<slot>" +%s)`. Cost was 0 here only because
 the budget was real; on a tighter cycle it silently converts a live read into a missed one.
+⛔ **But an absolute-target wait is itself CAPPED by the Bash tool's own 180 s default timeout —
+a wait longer than that dies `exit 143`, loses the observation AND burns the full 180 s** (2026-08-14
+20:04 ICT, n=1, observed on myself). Armed a wait to 20:04:30 from 20:01:06 (204 s) and got
+`Command timed out after 3m 0s`, exit 143 — no grep output, no state read, ~3 min of a 600 s cycle
+gone for nothing. **The absolute-target form fixes the *arming* error (line 349) and does nothing
+about the *ceiling*.** Two fixes, use both: (a) pass `timeout:` explicitly on the Bash call when the
+wait exceeds ~170 s — the tool accepts up to 600000 ms; (b) prefer **short polls** over one long
+wait, since a poll that returns early costs nothing and a wait that overruns costs everything.
+Note the failure is silent in the worst way: `exit 143` is SIGTERM, the **same code** §0 line 276
+records for a `gtimeout`-killed cycle, so a successor reading only the exit code cannot tell "my
+Bash call was capped" from "the cycle was killed". Sanity-check the wait length against 180 s before
+arming it. Confidence high — mechanism is documented in the tool description, not inferred.
 Get cycle start from `ps -eo pid,lstart,etime,command | grep '[g]timeout 600 claude'`.
 ⚠️ **And get it from `ps` ONLY — a `date` at your first tool call reads ~50 s LATE, which is enough to
 manufacture a break in the residual-0 rule above** (2026-08-14 08:26 ICT, n=1, observed). Measured this
@@ -1929,6 +1941,20 @@ call on the one thing that *does* need `ps`: your own start.
   was **following the reference one hop further**. **Rule: when a cited line delegates ("same as X",
   "see Y", "as above"), the citation is not complete until X is opened — and a delegation target that
   does not exist is itself the finding.** Cost: one grep. Confidence high.
+  ✅ **CLOSED — Step 10-12 now HAS a procedure, written 2026-08-14 20:25 ICT (commit `69e1643`);
+  drop it from the boss queue.** The 18:59 entry's consequence (c) asked for *"inline the baselines
+  write atomically or repoint at something real"*; that is the **strictly-defensive half** of the
+  pairing with `bot/scheduler.py:149`, so it shipped rather than queuing a second time (1218z's rule,
+  line 1733). `skills/cleanpro-weekly/SKILL.md` §10 is now: read-modify-write that carries **unknown
+  top-level keys through unchanged**, a missing/unparseable file degrades to `{}` + `WARN` instead of
+  aborting, and the write is temp-file + `os.replace` in the same directory — so a mid-write death
+  leaves the **previous valid file**, not a truncated one. Embedded python verified to compile.
+  Grounded on the live file rather than invented: **10** top-level keys (`updated, week, period,
+  growth, funnel, paywall, product, countries_top5_cvr, engineering, caveats`) — note the 06:15 entry
+  above enumerates only **8**, so *that* uniqueness argument was reading a stale key list too.
+  **This does not close `:37`** — it makes the corrupt input unlikely where 1218z's `try/except` makes
+  it survivable; keep both. And it retires the 18:21 shelf-life worry: repairing the weekly no longer
+  walks it into undefined behaviour, so `:149` can land on its own merits.
 - Read `memory/t0/MEMORY.md` (repo root) for pending tasks or reminders
 - Check today's daily logs at `memory/t0/{YYYY-MM-DD}/` for context on what's been done
 - **Path warning:** `workspaces/c352342178/memory/` is a STALE duplicate tree. Never read or write it.
