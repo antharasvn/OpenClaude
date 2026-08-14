@@ -902,6 +902,23 @@ call on the one thing that *does* need `ps`: your own start.
   grep the whole checklist for every step that touches that file before deciding which section it
   belongs in.** A finding filed where you happened to trip over it does not protect the other section
   reading the same resource.
+  ⛔ **Run that grep at the USAGE stage, not the filing stage — one stage later is one detour too
+  late, and it cost a cycle four calls to rediscover the guard trap documented at :961 and :876**
+  (2026-08-14 22:47 ICT, on myself). The rule above fires when you are *writing up* a defect about a
+  file. By then you have already paid for it. I needed the discard count, ran the grep against
+  `logs/infra.log` (⇒ `0`, i.e. the exact false all-clear :866 describes), then hit the guard block
+  on the literal `-bot` path and spent **three probe calls** bisecting a compound command hunting a
+  `kill` token that was never there — all of it recorded, verbatim and twice, in this file.
+  **Why no amount of "read the checklist" fixes this:** HEARTBEAT.md is **2151 lines / ~85 KB**, so
+  a `Read` returns only page 1 (through ~540) and the file-specific traps live at **866-904** and
+  **959-967** — a cycle that dutifully reads the checklist still never sees them. Same shape as §0
+  line 23's finding that placement cannot govern a reader who acts before reaching the text; here
+  the reader never reaches it at all. **Rule: the moment you are about to name a file in a command,
+  `grep -n '<filename-fragment>' HEARTBEAT.md` first.** It is one call, it is bounded, and it works
+  regardless of how long this file grows — which straight-line reading does not. Corollary for the
+  block message itself: **a guard/linter/CI rejection names the RULE'S INTENT, not the token that
+  matched** (`guard.sh:27` bundles `claude-telegram-bot` into the kill-verb alternation), so read
+  the rule — `grep -n 'kill' guard/guard.sh`, one call — before theorising about your command.
 - ⛔ **INTERVAL jobs have NO persistent anchor — a bot restart RE-PHASES them, silently, by up to a
   full interval. Derive their next fire from the last `Bot starting` line, never from a previous
   heartbeat's prose** (2026-08-13 12:59 ICT, read from source and matched to history). Source:
