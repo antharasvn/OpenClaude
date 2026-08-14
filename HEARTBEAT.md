@@ -1821,6 +1821,18 @@ call on the one thing that *does* need `ps`: your own start.
   Misfire/discard warnings live in the bot-stderr file under `/tmp`; read it with
   `grep "was missed by" /tmp/claude-telegram*.err | grep "^2026-08-14"` (glob form, guard-safe) or the
   Read tool. See §1's ⛔ on the silent false negative before greping any `.err` path.
+  ⛔ **The `^` in that second grep is LOAD-BEARING — drop it and you over-count** (2026-08-14 17:31 ICT,
+  verified). APScheduler's discard warning embeds the *next* run time in the same `YYYY-MM-DD HH:MM:SS`
+  format as the line prefix, so `grep '2026-08-14 .*was missed by'` also matches **08-13** lines whose
+  body forecasts into 08-14. Measured this cycle: unanchored **12**, anchored **10** — the two extras
+  were 08-13 23:03:38 lines. Same family as §1 line 512 (a warning that *names* a future slot is not
+  evidence about that slot). The false positives are guaranteed to sit adjacent to the real ones, so
+  the inflated count looks plausible. **Anchor every date-scoped grep with `^`.**
+  ⚠️ **And hand forward the LANDMARK, not the count.** Seven cycles carried "10 discards today" without
+  the command that produced it; the first cycle to grep differently got a false *change* signal off a
+  day with no new discards. The **latest discard timestamp** (03:17:11 here) matched instantly under
+  both patterns — landmarks survive method drift, counts do not. Same shape as §0 line 165's
+  tick-not-threshold rule: hand the raw observable, never the processed conclusion.
 - ⛔ **A nonzero `[ERROR]` count is NOT a finding, and "zero `[ERROR]` lines dated today" is NOT an
   all-clear — it is a PARTIAL-DAY COUNT compared against nothing** (2026-08-14 05:38 ICT, read from the
   full log). Every cycle overnight on 08-14 reported *"zero `[ERROR]` lines dated 2026-08-14"* as its §4
