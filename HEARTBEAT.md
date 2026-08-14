@@ -1812,6 +1812,37 @@ call on the one thing that *does* need `ps`: your own start.
   fleet's dominant failure mode, not a coincidence.** Second-order, free: **an error message's character
   offset is evidence, not decoration** — here it separated two call sites the truncated log
   (`stderr.decode()[-500:]` at `bot/scheduler.py`) had made indistinguishable.
+  ⛔ **THIRD turn on that entry, and it inverts a QUEUE ITEM: the `:37` exclusion is durable only
+  while `cleanpro-weekly` stays BROKEN — repairing the weekly re-arms the candidate that was
+  eliminated to convict `:32`** (2026-08-14 18:21 ICT, observed). Both line numbers verified by
+  opening the file this cycle: `:32` is the sole unguarded `json.loads` on the alert path, `:37` is
+  guarded by `.exists()` only. The new fact is **who writes the file the 06:15 entry measured**.
+  The alerts runner **never writes it** (`BASELINES` appears only at `:10`, `:36`, `:37`; the two
+  `json.dumps` are the Telegram payload `:25` and the stdout result `:102`). The writer is
+  **`cleanpro-weekly`** (`skills/cleanpro-weekly/SKILL.md:223`), and mtime proves it: **Aug 4 03:35**
+  against that job's `last_run` **`2026-08-03T20:37:28Z` = 08-04 03:37 ICT** — fired 03:30, wrote
+  03:35, stamped 03:37. It has fired **nothing since** (the 08-11 Tuesday slot was discarded, §1 line
+  466), so the file is frozen at the 1533 bytes the 06:15 entry parsed. **That outage is the only
+  reason the exclusion still holds.** When `timeout=600 → 1800` at `bot/scheduler.py:149` lets the
+  weekly run again, a weekly dying mid-write leaves a truncated/empty `baselines.json` that `:37`
+  reads on **every** subsequent 2-hourly alerts run — char 0, unguarded, reached *before* the
+  BigQuery call, where `:32` needs an alert to actually fire. Mechanism corroborated on the sibling:
+  `skills/vidnotes-weekly/SKILL.md:619` rewrites baselines with a **`cat > … << EOF` heredoc**
+  (non-atomic truncate-then-write). And the contrast names the fix: `skills/vidnotes-alerts/SKILL.md:551`
+  handles this **by policy** — *"missing or unreadable → use seed values. Log warning. Never abort."* —
+  while the CleanPro Python twin has no guard, despite `load_baselines()` already returning exactly
+  those seeds on its not-exists branch. **One-line fix: `try/except (ValueError, OSError)` at `:37`
+  falling through to the `:38` seed dict; pair it with the `:149` timeout change rather than shipping
+  that alone.** This does **not** overturn `:32` for the *observed* failure — `:37` was genuinely
+  excluded at the time it occurred. What changes is the exclusion's **shelf life**.
+  **Transferable, and it is the next turn of this entry's own lesson: an elimination argument inherits
+  the VOLATILITY of every measurement it rests on.** 06:15 said *enumerate the alternatives before
+  asserting uniqueness*; add ***and check whether an excluded alternative can come back***. Here the
+  excluder is an outage, so the exclusion is an artefact of something we are actively trying to fix —
+  the most dangerous kind, because the repair is what breaks it. Generalise past this file: **when a
+  fix is queued, ask which previously-settled findings were resting on the broken state.** Confidence
+  high that the weekly is the writer; moderate that a mid-write death yields char 0 specifically
+  (heredoc form read on the vidnotes sibling, not on the cleanpro one — one grep for whoever wants it).
 - Read `memory/t0/MEMORY.md` (repo root) for pending tasks or reminders
 - Check today's daily logs at `memory/t0/{YYYY-MM-DD}/` for context on what's been done
 - **Path warning:** `workspaces/c352342178/memory/` is a STALE duplicate tree. Never read or write it.
