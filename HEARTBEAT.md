@@ -2452,3 +2452,26 @@ it. Confidence high; the `find` is dispositive.
 - Don't check disk space, Downloads folder, or calendar
 - Don't send "all clear" messages — silence is the signal for healthy
 - Don't restart services — only report issues
+
+⛔ **A single reading taken under a KNOWN perturbation was promoted to a job's runtime — and the
+perturbation was named in the same sentence** (2026-08-15 03:0x ICT, n=15, observed). `QUEUE.md`
+item #2 asked the boss to consider raising `bot/scheduler.py:120`'s `timeout=300`, on the grounds
+that `cleanpro-daily` ran "273 s of awake time against the 300 s cap" — a 9 % margin. That row
+*states* the host slept 734 s inside that window and still treats 273 s as the job's cost. Caught
+the live 03:00 ICT run this cycle (**138 s**, S = 0 confirmed by an on-grid `auto-commit` at
+02:33:23 and a last-sleep of 08-14 03:03), then pulled every run out of `logs/infra.log`:
+successes **136/121/125/112/127/122/137/154/118/139/138/138** ⇒ median **≈132 s**, max **154 s**
+(44–51 % of cap), plus **two failures at exactly 300 s** (07-30, 08-13). **146 s dead zone; nothing
+has ever finished in 155–299 s.** That is §0 line 116's *successes clustered far below the cap + a
+pile at the cap* = **hang branch** — so raising the cap recovers nothing and lets each hang burn
+longer, exactly the discrimination §0 already made for the heartbeat's own `gtimeout 600`. The
+273 s outlier is 2× the median and is the one run the host slept through, which plausibly *inflated*
+the awake time rather than merely hiding it (network I/O stalling across a resume).
+**Transferable — this is §0 line 310's n-inflation run in the opposite direction.** There, N
+consecutive failures inside one outage collapsed to n=1. Here, **n=1 under an anomaly was mistaken
+for the central value**: one sample taken during a perturbation is not the typical case, it *is* the
+perturbation, and twelve clean samples were sitting in the file §1 already reads every cycle.
+**Before quoting a margin against any cap, plot the successes** — the same test settles both
+directions, and it costs one `grep`. Real defect relocated: `cleanpro-daily` wedges on ~13 % of
+runs. Confidence **high** on the distribution and on "don't raise it", **moderate** on sleep causing
+the inflation (n=1 per side; workload variance not excluded).

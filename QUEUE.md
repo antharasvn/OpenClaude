@@ -30,13 +30,25 @@ which cluster at ~40 % of their cap. `HEARTBEAT.md` §1 lines 798–875.
 **Note:** this reasoning applies to `:163` only. The identical-looking `gtimeout 600` on the
 heartbeat itself is the *hang* branch — raising **that** cap would only let each hang burn longer.
 
-## 2. `script`-job cap: `timeout=300` — 9 % margin, currently passing
+## 2. `cleanpro-daily` HANGS on ~13 % of runs — and the cap is *not* the problem
 
-**Where:** `bot/scheduler.py:120`.
-**Why now:** `cleanpro-daily` on 2026-08-14 ran **273 s of awake time against the 300 s cap**. It
-showed 1007 s of *wall* time and did not raise only because the host slept 734 s inside the window —
-`asyncio.wait_for` waits on `time.monotonic()`, which freezes on Darwin sleep.
-**A clean run is not a clearance.** Next observation point: `cleanpro-daily` fires **03:00 ICT daily**.
+**Where:** `scripts/cleanpro_daily_runner.py` (cap at `bot/scheduler.py:120` — **leave it at 300**).
+**Superseded** the previous "9 % margin, currently passing" framing, which was built on a single
+sleep-contaminated sample. Settled 2026-08-15 03:0x ICT by catching the live 03:00 run (**138 s**,
+S = 0) and then reading the whole population out of `logs/infra.log`:
+
+| successes (s) | 136, 121, 125, 112, 127, 122, 137, 154, 118, 139, 138, 138 → **median ≈132, max 154** |
+| --- | --- |
+| failures | **2, both at exactly 300 s** (07-30, 08-13), `timed out after 5 min` |
+
+Successes sit at **44–51 % of the cap** with a **146 s dead zone** below it; nothing has ever
+finished in 155–299 s. By the fleet's own successes-vs-cap test (`HEARTBEAT.md` §0 line 116) that is
+the **hang** signature, not capacity — so **raising 300 would recover nothing and let each hang burn
+longer**. The prior 273 s figure was the 08-14 run, the one the host slept 734 s inside
+(`Dark Wake Thermal Emergency`); it is 2× the median and the only reading near the cap.
+
+**The actual ask:** the script wedges outright roughly twice a month. Needs a look at what it blocks
+on (network I/O with no per-request timeout is the obvious candidate), not a bigger budget.
 
 ## 3. Mis-calibrated threshold at `bot/scheduler.py:99`
 
