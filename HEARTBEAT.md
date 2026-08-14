@@ -1981,6 +1981,28 @@ call on the one thing that *does* need `ps`: your own start.
   ```
   grep -h "^<today>" /tmp/claude-telegram*.err | grep -E "ERROR|Conflict|ConnectError"
   ```
+  ⛔ **Keep the `*` GLOB — resolving it to the real filename `/tmp/claude-telegram-bot.err` is
+  BLOCKED by the guard, and the refusal message talks about killing processes** (2026-08-15 00:44 ICT,
+  n=1, observed on myself one cycle after the step was written). `guard/guard.sh:27` is
+  `grep -qiE "kill\s|pkill\s|killall\s|claude-telegram-bot"` — the literal bot name matches **anywhere
+  in the command**, so a harmless `grep … /tmp/claude-telegram-bot.err` is refused with
+  *"BLOCKED: You are not allowed to kill processes. Use ./bin/restart.sh for the bot."* The glob form
+  above contains no such substring and passes. **The trap is that the substitution is the natural next
+  move:** `ls` shows the glob matches exactly one file, so naming it reads as removing ambiguity — and
+  the error message gives the reader no route back, since nothing in it mentions the filename or the
+  glob. A cycle that takes it at face value concludes the stderr log is off-limits and **skips §2's
+  error check entirely** — a silent false negative in the very step 1721z patched to stop one.
+  **Same class as that fix, one level down: there, prose delegated the path to the reader; here, a
+  correct path invites a "cleanup" that a guard rejects for an unrelated stated reason.** Generalise:
+  **when a prescribed command's exact form matters for a reason outside the command's own purpose,
+  say so at the command — a reader who improves it will not find the constraint by searching, because
+  the failure names a different subsystem.**
+  ✅ **Detector validated live, so a `0` here is a real zero, not a pattern that cannot match**
+  (same cycle): the file is 6.5 MB with **37 126** dated lines spanning 08-10 → 08-15, and the
+  prescribed form scores **20** against `^2026-08-14` versus **0** against `^2026-08-15`. Worth
+  re-running that two-day comparison whenever this step reports 0 for the first time in a while —
+  1721z's §3 note applies directly (*a wrong detector that happens to agree with reality is the one
+  that survives review*), and a known-nonzero control day is the cheapest way to tell the two apart.
   ⛔ **This step named NO path until 2026-08-15 00:29 ICT, and that omission is the root cause of the
   `logs/infra.err` family (line 922, n=2).** §4 reads `logs/infra.log`, so a cycle told only to "check
   the bot stderr log" expands it to the sibling `logs/infra.err` — line 925 records exactly that
