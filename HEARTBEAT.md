@@ -509,6 +509,20 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   **Apply §0's n-inflation rule to this number before quoting it:** 132 is the count of **lost
   deliveries** (the operationally real figure), *not* of independent events — the 08-10 run of four in
   five slots is one event sampled 4×. Do not present 15 % as an event rate; it was not decomposed.
+  ✅ **DECOMPOSED, and it inverts the causal reading above: 132 losses = 57 INDEPENDENT EVENTS, of which
+  39 are SINGLETONS** (2026-08-14 06:56 ICT, measured — group *consecutive* sub-60 s executions of the
+  same job, no normal run between, as one event). Sizes: **39×1, 7×2, 6×3, 1×4, 1×5, 1×12, 1×13, 1×27**.
+  The outage blocks are real — `07-10 12:00→07-13 16:00` (27), `07-05→07-07` (13), `07-20→07-22` (12) —
+  but those 52 slots are only **39 % of the losses**, and 68 % of events are size 1–2, ongoing to 08-12.
+  **So: loss rate 15 %, EVENT rate ≈ 6.6 % (57/864) — quote both, never one.** Usage limits drop from
+  *probable sole cause* to *one of at least two*; the singleton drizzle has no on-disk evidence at all,
+  because `_run_prompt` discards stderr. This **strengthens** the returncode-check ask (line 478): a
+  fault recurring as 57 separate events is precisely what `ce`/`last_status` exists to surface, where one
+  long outage would have been forgivable. **Method: the n-inflation rule cuts BOTH ways.** The entry
+  above applied it as a *prior* ("surely far fewer events") instead of measuring — **deflating an n by
+  assumption is the same defect as inflating it**, and it is the fifth instance of §3 line 1505's
+  dominant failure mode. Confidence **high** on the counts, **moderate** on the adjacency proxy for
+  shared cause.
   **Consequence: the `_run_prompt` returncode check (line 478) is the HIGHEST-VALUE item in the boss
   queue, not the cheapest afterthought** — it converts 132 invisible failures into the `ce`/`last_status`
   path §1 already reads every cycle. Confidence **high** the short runs are non-deliveries (disjoint
