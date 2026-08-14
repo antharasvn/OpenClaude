@@ -636,6 +636,23 @@ call on the one thing that *does* need `ps`: your own start.
   08-13 `logs/infra.err` discard-check false negative — a grep against a path that cannot contain the
   pattern returns clean and *reads* as evidence of health.
   **Grep `/tmp/claude-telegram-bot.err`, not `logs/infra.log`, for misfires.**
+  ⛔ **Both log files are stamped in ICT; `cron/state.json` is UTC. Comparing them raw manufactures
+  an anomaly out of nothing** (2026-08-14 19:44 ICT, caught mid-cycle by 1238z). `state.json` gave
+  `cleanpro-exp-monitor` `last_run` **11:33:43+00:00**, `infra.log` showed the same job `Running` at
+  **12:33:23** — two fires an hour apart on a 2 h interval, which I chased for two calls as either an
+  off-grid double-fire or a `state.json` that had failed to record the newer run. Neither: the
+  exp-monitor grid is `10:33 / 12:33 / 14:33 / 16:33 / 18:33` **ICT**, so the `12:33` line was the
+  **05:33Z** fire from six hours earlier and the current one is `18:33:23` ICT ≡ the UTC stamp I
+  started from. Confirmed twice more — tail is `19:05:00 echo-backend-alerts` against `last_run`
+  `12:05:06Z`, and the `.err` misfires (`03:17:11`, `next run at: 04:33`) are ICT too, which is what
+  makes "inside the overnight block" the right reading of them.
+  **The hedge is the hazard: do NOT grep two candidate zones at once** (`^2026-08-14 (12|19):…`).
+  The ICT arm is correctly empty and the UTC arm matches a **six-hour-old line wearing a current-looking
+  timestamp**, so the disjunction returns stale data and reads as fresh. Pick the zone first.
+  **Free check, no doc needed: `ls -l` the log and compare its mtime to its own last line** — a round-hour
+  gap is the offset, one call. Third face of the trap at lines 451 (timezone) and 528 (`day_of_week`):
+  **a timestamp is not self-describing, and two artefacts written by the same process can keep
+  different clocks.** Confidence high (n=3 independent confirmations).
   ⚠️ **SHAPE the pattern or the Grep tool dies too — search the LITERAL and paginate; never anchor**
   (2026-08-14 07:49 ICT, n=1, measured back to back on the same 5.2 MB unrotated file).
   `^2026-08-14.*was missed by` ⇒ **`Ripgrep search timed out after 20 seconds`**, no output;
