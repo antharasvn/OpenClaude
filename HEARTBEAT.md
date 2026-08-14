@@ -1984,8 +1984,8 @@ call on the one thing that *does* need `ps`: your own start.
   ⛔ **This step named NO path until 2026-08-15 00:29 ICT, and that omission is the root cause of the
   `logs/infra.err` family (line 922, n=2).** §4 reads `logs/infra.log`, so a cycle told only to "check
   the bot stderr log" expands it to the sibling `logs/infra.err` — line 925 records exactly that
-  reasoning the first time, and 1659z repeated it seven days later while the warning sat in its
-  injected context. The path was in the file, but four lines *below* this bullet and inside a ⛔ about
+  reasoning the first time, and 1659z repeated it **~19 h later** (line 922 is dated 08-14 04:57 ICT) while that warning
+  sat in its injected context — same day's checklist, same fleet, unread at the point of use. The path was in the file, but four lines *below* this bullet and inside a ⛔ about
   the guard — i.e. discoverable only to a cycle that had already read past the step it was executing.
   **A step that describes a file in prose instead of naming it delegates the path to the reader's
   imagination, and every reader imagines the same wrong one.** Note `logs/` holds exactly one file,
