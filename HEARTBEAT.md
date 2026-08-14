@@ -338,6 +338,19 @@ danger is directional, not just size:** at +92 s the proxy says your kill is 09:
 **09:51:59** — it *manufactures* budget, and line 189 already measures self-estimates as biased
 **short**. The two errors stack toward believing you can reach a tick you cannot. Read the wrapper PID
 (line 293) once, before any timing claim.
+⛔ **"Expect it to grow" is FALSIFIED at n=4 — the bias FELL to +21 s, the lowest on record. Keep
+0923z's "variable" and delete the growth trend** (2026-08-14 10:21 ICT). Both proxies read in one
+call as before: `date` **10:21:45**, `$$` **10:21:44**, against a true wrapper start of **10:21:23**.
+Series: `date` **+50 / +59 / +92 / +22**, `$$` **+42 / +26 / +92 / +21**. The 0941z entry saw +92 s
+after +26 s and generalised to a monotone trend driven by the injected-log bundle; one cycle later it
+is back to the bottom of the range. **A growth trend and a tolerance band are the same mistake** —
+both pretend the number is predictable so you can subtract or bound it, and it is neither. The only
+safe reading is the one that needs no model: **read the wrapper PID (line 293) every cycle.**
+Note the hazard does not shrink with the bias, it only changes size: at +92 s the proxy manufactures
+92 s of budget, at +21 s it manufactures 21 s, and both stack with line 189's short-biased
+self-estimate. Generalise: **a two-point trend in a quantity whose driver you have not measured is a
+guess wearing a slope** — the underlying driver here (time-to-first-tool-call) is not something any
+cycle has instrumented, only inferred from log size.
 ✅ **Free shortcut nobody had used: your predecessor's completion is ALREADY IN YOUR PROMPT.** The
 harness line `Last heartbeat ran at: <ISO>` is the same stamp `run.sh` writes *after* `claude -p`
 exits — i.e. exactly the "completion" in `completion + 900 s + S`. Scored 2026-08-14 09:23:
