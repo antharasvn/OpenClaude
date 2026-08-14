@@ -513,7 +513,16 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
 
   ⛔ **That rule had NEVER BEEN COUNTED, and when scored it is 15 % of 864 runs on ONE job — the n=5
   above was drawn from the three rarest `prompt` jobs while the largest population sat in the same
-  file** (2026-08-14 06:35 ICT, measured). `vidnotes-alerts` is a `prompt` job firing **12×/day**.
+  file** (2026-08-14 06:35 ICT, measured). `vidnotes-alerts` is a `prompt` job firing **9×/day**.
+  ⚠️ **That read "12×/day" until 2026-08-14 08:13 ICT — the schedule is `0 7-23/2 Europe/Warsaw`, i.e.
+  hours 7/9/11/13/15/17/19/21/23 = NINE fires, and CEST = UTC+2 puts the ICT grid at
+  12/14/16/18/20/22/00/02/04.** The n=864 table below is unaffected (counted from `logs/infra.log`, not
+  derived from the rate), but a cycle computing expected fires or staleness off "12×/day" invents three
+  slots a day that do not exist and reads their absence as non-delivery. Worked example from the same
+  morning: 08-14's 00:00 and 02:00 ICT slots **were** genuinely discarded (02:53:26, `was missed by
+  0:53:26`, past the 300 s grace) while 04:00 ran clean — and the real gap is legible only once you know
+  the grid ends at 04:00, not 22:00. Resolve the grid from `cron/jobs.json` + the job's own timezone,
+  never from a fires-per-day figure in prose.
   Pairing every `Running job: X` with its `Job X completed successfully` in `logs/infra.log`:
 
   | job | n | min | median | max | **sub-60 s** |
