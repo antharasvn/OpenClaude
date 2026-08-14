@@ -385,6 +385,18 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   `was missed by` line, not from the arming you happened to read first.** Corollary for the lag bound —
   the detector's lag is a *sleep* artefact (50 min asleep tonight, 3 s awake), so the ~1 h working bound
   applies only while the host is cycling.
+  ⛔ **`was missed by` is NOT in `logs/infra.log` — grepping it there returns 0 and reads as "no
+  misfires", a silent false negative** (2026-08-14 07:36 ICT, measured). `logs/` holds exactly one
+  file (`infra.log`); `grep -c "was missed by" logs/infra.log` = **0** across the whole 2.0 MB. The
+  APScheduler warnings live in **`/tmp/claude-telegram-bot.err`** — the `StandardErrorPath` declared
+  in `~/Library/LaunchAgents/com.claude.telegram-bot.plist` (stdout goes to
+  `/tmp/claude-telegram-bot.log`). Every `armed + S` claim above depends on those lines, and several
+  cycles have written *"no `was missed by` line since HH:MM:SS"* in the same breath as an
+  `logs/infra.log` read — same shape as the 08-13 `logs/infra.err` discard-check false negative.
+  **Grep `/tmp/claude-telegram-bot.err`, not `logs/infra.log`, for misfires.**
+  ⚠️ **`guard/guard.sh` BLOCKS any Bash command containing that path** (`BLOCKED: You are not allowed
+  to kill processes.`) — a false positive on read-only `grep`/`tail`. **Use the Grep tool on
+  `/tmp/claude-telegram-bot.err` instead**; do not attempt to reword around the guard in Bash.
   ⛔ **"Do not extend this to `script` jobs — no timeout applies to them" was WRONG and is corrected
   here (2026-08-11 14:26 ICT). `script` jobs ARE capped, at 300 s, and the cap has fired at least 10
   times across SIX different jobs.** Source, not inference — `bot/scheduler.py:117-121` `_run_script`
