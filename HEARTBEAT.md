@@ -1933,6 +1933,16 @@ call on the one thing that *does* need `ps`: your own start.
 
 ### 2. Bot Health
 - Check if the Telegram bot process is running: `pgrep -f "python.*-m bot"`
+  ⚠️ **That pattern matches only by ACCIDENT of the Homebrew path — prefer `pgrep -f -- "-m bot"`**
+  (2026-08-15 02:05 ICT, n=1, observed). The real command line is
+  `/opt/homebrew/Cellar/python@3.14/…/MacOS/Python -m bot`: the invoked binary is **`Python`, capital
+  P**, so the literal `python -m bot` **cannot** match a healthy bot — the prescribed regex survives
+  purely because `python@3.14` appears lowercase *earlier in the Cellar path*. Move the bot to a
+  pyenv/system interpreter with no lowercase `python` in its path and the detector goes silent, i.e.
+  a **false service-down** with no change to the bot at all. Note the trap is *inside this checklist*:
+  the ⛔ below explains the fix with the sentence "the bot is launched as **`python -m bot`**", which
+  reads like a safe grep string and is not one — that is what this cycle pasted, and it returned
+  empty. **Match on `-m bot` (interpreter-independent); run the positive control either way.**
   ⚠️ **That pattern SELF-MATCHES the shell running it** (2026-08-09 15:49 ICT) — the command line of
   the `zsh` executing the `pgrep` contains the pattern, so it returns a phantom second PID. Confirm any
   extra PID with `ps -o pid,ppid,lstart,command -p <pid>` before reporting a duplicate bot instance.
