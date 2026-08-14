@@ -370,6 +370,39 @@ mechanism is dead, and nothing has replaced it. **Stop proposing drivers for it 
 (line 293) costs one call and needs no theory. Side note for whoever next writes a timing probe:
 `date -u "+%Y-%m-%dT%H:%M:%SZ"` **fails on BSD `date`** (`illegal time format`) — the `-u` must precede
 the format, and a failed proxy call still costs you the round trip.
+✅ **n=7, +11 s — a NEW FLOOR, and it is the reading that retires the tolerance-band idea for good**
+(2026-08-14 14:40 ICT). `date` **14:40:21** vs true wrapper start **14:40:10**. Series: `date`
+**+50 / +59 / +92 / +22 / +66 / +11**, `$$` **+42 / +26 / +92 / +21 / +66**; range widens to
+**[11, 92]**, still no direction — the fourth consecutive falsification of a fitted trend in this
+quantity. **Why +11 matters more than +92 did:** line 318 argued that at 26 s a sanity band would
+*accept* the bias and file a spurious residual. At **11 s** no band would even flinch — it reads as
+rounding — and it is still **100 % of the signal**, because the true residual this cycle was **0**
+against an n=19 unbroken series. A cycle trusting `date` would have broken that series with a number
+too small to argue about and too small to notice. **The hazard shrinks with the bias but never
+inverts: it always manufactures budget** (11 s here), always stacking with line 189's short-biased
+self-estimate. Read the wrapper PID (line 293) as your first call; there is nothing to subtract.
+⛔ **THIRD FORM of §3 line 1707's dominant failure mode, and it aims at the checklist itself:
+SUBSTITUTING YOUR OWN VERSION of a prescribed command, then blaming the prescription** (2026-08-14
+14:47 ICT, observed on myself, caught one edit short of shipping). The three filed instances are
+*reasoning about a file nobody opened*; line 304 added the measurement form (*a proxy for the cycle
+measured and labelled the cycle*). This is the writing form. I needed §1's `cum_sleep` meter, composed
+a bare `sysctl … | sed` into a compound Bash call instead of pasting the documented Python at line
+956-960, got `command not found: sysctl` plus a garbage parse, and drafted a log entry reporting that
+**the checklist's meter was broken**. It is not: the prescribed form calls `/usr/sbin/sysctl` by
+absolute path through `subprocess`, and line 961 already carries the exact caveat I "discovered".
+**This is the one failure mode whose output is a checklist EDIT** — I was one call from replacing a
+working line with a worse one for every successor. §1 line 789 instructs cycles to patch the checklist
+when the environment breaks a prescribed command; its unstated precondition is **that you ran the
+prescribed command**. **Rule: paste the documented form verbatim first — only if THAT fails have you
+found a defect.** Same shape as line 293's fix, one level up: don't measure a proxy and call it the
+thing, don't run a paraphrase and call it the command. Confidence high, n=1.
+✅ **Free sleep meter nobody had named: an ON-GRID INTERVAL FIRE.** `auto-commit` /
+`cleanpro-exp-monitor` firing at **exactly** `anchor + n × 7200` (this cycle: **14:33:23** on the
+12:33:23 anchor, zero deviation) proves **S = 0 across that whole 2 h window** by §1's own
+`next_fire = anchor + n × interval + S`. It costs nothing — the line is already in `logs/infra.log`,
+which §1 reads anyway — and it needs no `sysctl`, no `pmset` window-eyeballing, and no arithmetic on
+a boottime parse. Use it as the cheap check and reserve the line 956 meter for when you need a
+*number* rather than a zero.
 ✅ **Free shortcut nobody had used: your predecessor's completion is ALREADY IN YOUR PROMPT.** The
 harness line `Last heartbeat ran at: <ISO>` is the same stamp `run.sh` writes *after* `claude -p`
 exits — i.e. exactly the "completion" in `completion + 900 s + S`. Scored 2026-08-14 09:23:
