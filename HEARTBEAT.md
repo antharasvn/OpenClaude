@@ -1976,7 +1976,21 @@ call on the one thing that *does* need `ps`: your own start.
   environment**, which is why the existing habit did not catch it. Generalises well past this file:
   **a diagnostic that cannot demonstrate a positive is not a diagnostic.** Confidence high, mechanism
   certain (host-wide count is 0).
-- Check the bot stderr log for recent errors (last 5 min)
+- Check the bot stderr log for recent errors (last 5 min). **Prescribed form — paste it, do not
+  expand "the bot stderr log" yourself:**
+  ```
+  grep -h "^<today>" /tmp/claude-telegram*.err | grep -E "ERROR|Conflict|ConnectError"
+  ```
+  ⛔ **This step named NO path until 2026-08-15 00:29 ICT, and that omission is the root cause of the
+  `logs/infra.err` family (line 922, n=2).** §4 reads `logs/infra.log`, so a cycle told only to "check
+  the bot stderr log" expands it to the sibling `logs/infra.err` — line 925 records exactly that
+  reasoning the first time, and 1659z repeated it seven days later while the warning sat in its
+  injected context. The path was in the file, but four lines *below* this bullet and inside a ⛔ about
+  the guard — i.e. discoverable only to a cycle that had already read past the step it was executing.
+  **A step that describes a file in prose instead of naming it delegates the path to the reader's
+  imagination, and every reader imagines the same wrong one.** Note `logs/` holds exactly one file,
+  `infra.log`; there is no `.err` beside it and there never has been (`git log --all` on that path is
+  empty).
   ⛔ **`guard.sh` BLOCKS this step as written — use the glob path** (found 2026-08-14 04:36 ICT).
   `guard/guard.sh:27` blocks any Bash command whose text matches
   `kill\s|pkill\s|killall\s|claude-telegram-bot`. The literal filename `/tmp/claude-telegram-bot.err`
