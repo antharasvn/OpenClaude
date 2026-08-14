@@ -315,6 +315,25 @@ too. **Use line 293's command verbatim** (`ps -eo pid,lstart,etime,command | gre
 claude'`) and sanity-check that `etime` is roughly your elapsed cycle, not `00:00`. Same class as §3's
 dominant failure — *reasoning about a thing you had not opened* — in its measurement form: a proxy for
 the cycle was measured and labelled the cycle.
+✅ **CONFIRMED n=2 — but the bias is VARIABLE, and that makes a tolerance band useless rather than
+merely imprecise** (2026-08-14 09:23 ICT). Second reading: `-p $$` ⇒ **09:23:46** against a true start
+of **09:23:20** — same sign, **+26 s**, not 42. Full series of proxy biases now: `date` **+50 s**,
+`date` **+59 s**, `$$` **+42 s**, `$$` **+26 s**. The spread is not a `date`-vs-`ps` property — it is
+**however long the session takes to reach your first tool call**, which varies with MCP connect time,
+hook size, and injected-log volume. Two corrections to the ⛔ above, both sharpening it:
+- It says the bias is "the same magnitude" as `date`'s. **At 26 s it is not**, and that is worse, not
+  better: 26 s sits comfortably inside "within a minute of expected", so a cycle applying a sanity band
+  would have *accepted* it and filed a spurious **+27 s** residual. The bias is small enough to read as
+  jitter and large enough to be the entire signal. **No tolerance test can substitute for reading the
+  right process.**
+- **Expect it to grow.** It is dominated by session startup, and the injected daily-log bundle is
+  already ~147 KB. Never re-derive this as "about 40 s, just subtract it."
+✅ **Free shortcut nobody had used: your predecessor's completion is ALREADY IN YOUR PROMPT.** The
+harness line `Last heartbeat ran at: <ISO>` is the same stamp `run.sh` writes *after* `claude -p`
+exits — i.e. exactly the "completion" in `completion + 900 s + S`. Scored 2026-08-14 09:23:
+`02:08:19Z + 900 s + S(=0)` ⇒ 09:23:19 vs observed **09:23:20**, **residual +1 s, n=19**. So don't dig
+the predecessor's completion out of its log or the state file — read it off the prompt and spend the
+call on the one thing that *does* need `ps`: your own start.
 
 ### 1. Cron Job Health
 - Check `cron/state.json` for jobs with `consecutive_errors >= 3` or `last_status` containing ERROR
