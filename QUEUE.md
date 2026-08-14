@@ -63,6 +63,29 @@ The fleet has taken the part it can reach — compressing superseded files in pl
 ≈740 KB of injected context on 08-15 — but **a cap belongs in the hook**, and cycles are barred from
 editing `.claude/settings.json`. Boss's call.
 
+## 5. `guard/guard.sh:27` blocks the word "skill " as a process kill — one-char fix, cycles are barred
+
+**Where:** `guard/guard.sh:27`. Cycles may not edit `guard.sh` (`CLAUDE.md` §Safety), so this is yours.
+
+```bash
+if echo "$CMD" | grep -qiE "kill\s|pkill\s|killall\s|claude-telegram-bot"; then
+```
+
+`kill\s` has **no leading word boundary**, so it also matches the tail of **`skill `** / `SKILL `.
+Any Bash command containing the English word *skill* followed by whitespace is refused with
+*"BLOCKED: You are not allowed to kill processes."* — in a repo whose entire job system is `skills/`
+and whose `CLAUDE.md` tells cycles to put behaviour changes *"in that job's SKILL.md"*.
+
+Probed both sides, 2026-08-15 03:2x ICT: `ls skills/…; wc -l …SKILL.md` **allowed** (path forms are
+safe — `skills/` puts `s` after `kill`, `SKILL.md` puts `.` there); `echo "… the word skill followed
+by a space …"` **blocked**. Prose trips it, paths do not.
+
+**Patch:** `"\bkill\s|\bpkill\s|\bkillall\s|claude-telegram-bot"`. The `\b` before `kill` kills the
+`skill` match (`s`→`k` is word-char to word-char, so there is no boundary) and still matches every
+real invocation. Scheduled jobs are unaffected either way — `bot/scheduler.py` uses
+`create_subprocess_exec` with no hook; the cost is entirely to agent Bash calls.
+Evidence: `HEARTBEAT.md` §2, `memory/t0/2026-08-15/heartbeat-2019z.md`.
+
 ---
 
 *Anything resolved: delete the row, don't annotate it. This file earns its place by staying short.*

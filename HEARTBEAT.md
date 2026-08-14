@@ -1960,6 +1960,28 @@ it. Confidence high; the `find` is dispositive.
   the ⛔ below explains the fix with the sentence "the bot is launched as **`python -m bot`**", which
   reads like a safe grep string and is not one — that is what this cycle pasted, and it returned
   empty. **Match on `-m bot` (interpreter-independent); run the positive control either way.**
+  ⛔ **The SAME missing `\b`, one file over and pointing the OTHER way — `guard/guard.sh:27` blocks any
+  Bash command containing the word `skill ` and calls it a process kill** (2026-08-15 03:2x ICT, n=1
+  per side, observed by tripping it). The guard is `grep -qiE "kill\s|pkill\s|killall\s|…"`; `kill\s`
+  has no leading word boundary, so it matches the tail of **`skill `** / `SKILL `. My §1 follow-up
+  call was refused with *"BLOCKED: You are not allowed to kill processes"* because its `echo` label
+  read `=== weekly-conjecture skill ===`. Probed both sides: `ls skills/…; wc -l …SKILL.md`
+  **allowed** (path forms are safe — `skills/` puts `s` after `kill`, `SKILL.md` puts `.` there),
+  `echo "… the word skill followed by a space"` **blocked**. So *prose* trips it and *paths* do not,
+  in a repo whose job system is `skills/` and whose `CLAUDE.md` tells cycles to put behaviour changes
+  "in that job's SKILL.md". Fix is `\bkill\s|\bpkill\s|\bkillall\s`, but **cycles may not edit
+  `guard.sh`** (`CLAUDE.md` §Safety) ⇒ `QUEUE.md` row 5. Scheduled jobs are unaffected
+  (`bot/scheduler.py` uses `create_subprocess_exec`, no hook).
+  **Why it belongs next to the Homebrew entry rather than in §1:** it is the same defect — a
+  **substring test where the author meant a token test** — and it completes the general rule below.
+  That rule says a broken detector *degrades to silence, and silence is the same shape as good news.*
+  This one degrades to **noise**: it fires on the innocent. **The pair is the point — one missing `\b`
+  produced a false negative in §2's detector and a false positive in the guard, so inspecting a pattern
+  for plausibility cannot tell you which way it errs. Only probing a known-positive AND a
+  known-negative can.** Corollary for the reader of any refusal: **treat the message as the name of the
+  pattern that matched, not as a diagnosis of what you did** — §0 line 310's *"`exit 1` is not a
+  diagnosis"* one level up. When a guard refuses something that plainly is not the forbidden act,
+  suspect the pattern before rewriting the command. Confidence high; source read, both sides probed.
   ⚠️ **That pattern SELF-MATCHES the shell running it** (2026-08-09 15:49 ICT) — the command line of
   the `zsh` executing the `pgrep` contains the pattern, so it returns a phantom second PID. Confirm any
   extra PID with `ps -o pid,ppid,lstart,command -p <pid>` before reporting a duplicate bot instance.
