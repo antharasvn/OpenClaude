@@ -398,6 +398,15 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   08-13 `logs/infra.err` discard-check false negative — a grep against a path that cannot contain the
   pattern returns clean and *reads* as evidence of health.
   **Grep `/tmp/claude-telegram-bot.err`, not `logs/infra.log`, for misfires.**
+  ⚠️ **SHAPE the pattern or the Grep tool dies too — search the LITERAL and paginate; never anchor**
+  (2026-08-14 07:49 ICT, n=1, measured back to back on the same 5.2 MB unrotated file).
+  `^2026-08-14.*was missed by` ⇒ **`Ripgrep search timed out after 20 seconds`**, no output;
+  `was missed by` ⇒ **35 matches, sub-second**. Probable cause is anchor + `.*` backtracking over
+  lines that each embed the bot token (mechanism inferred, timing contrast observed). §4's own form is
+  already safe — literal first, date-filter second — so use `output_mode: content` with
+  `offset`/`head_limit` to walk to the tail. **The failure is loud, not silent** (it returns an error,
+  unlike the `logs/infra.err` case) — but a cycle late in its budget that skims "timed out" as "no
+  matches" converts it into exactly that false negative.
   ⚠️ **`guard/guard.sh` BLOCKS any Bash command containing that path** (`BLOCKED: You are not allowed
   to kill processes.`) — a false positive on read-only `grep`/`tail`. **Use the Grep tool on
   `/tmp/claude-telegram-bot.err` instead**; do not attempt to reword around the guard in Bash.
