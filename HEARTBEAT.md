@@ -532,6 +532,26 @@ call on the one thing that *does* need `ps`: your own start.
 
 ### 1. Cron Job Health
 
+> **RUN THIS FIRST — one command answers "did every job actually RUN?"**
+> ```
+> .venv/bin/python3 scripts/check_missed_fires.py
+> ```
+> Read-only; exit 1 on any miss. Prints `MISSED <job> expected <ts> (<age>) last_run=…` per job and a
+> `n/14 jobs ran at their last expected fire` line. **`last_status` cannot answer this question** — a
+> fire discarded by the 300 s `misfire_grace_time` (host asleep) leaves `OK` / `ce=0` behind it, which
+> is how `cleanpro-weekly` lost its 2026-08-11 fire and read healthy for 84 h (`QUEUE.md` #7).
+> The script asks each trigger to enumerate its own fires, so it is immune for free to **both** traps
+> below: banded schedules have no scalar period (any `age > k × period` rule warns nightly on healthy
+> jobs), and `day_of_week` is APScheduler-numbered. Nothing in it interprets a cron string.
+> *(Added 2026-08-15 06:2x ICT by 2318z. 2235z designed and measured this check and filed it in
+> `QUEUE.md`; `grep -rl get_next_fire_time` then returned **two files, both Markdown** — nothing on
+> disk executed it. **A boss-queue row is a request, not a detector.** When a row already contains a
+> working implementation, run the half that is in your own lane and leave the boss the half that needs
+> their authority — here, making `bot/` itself warn, which it cannot today because no code in `bot/`
+> ever reads `last_run` back.)*
+> ⚠️ **Detection is not recovery.** The script tells you a fire was lost; it does not rerun the job,
+> and the missing report stays missing. Say which you mean.
+
 ⛔ **NEVER compute a next-fire from a `cron/jobs.json` string — `day_of_week` is APScheduler-numbered
 (0 = MONDAY), so every `* * N` fires ONE DAY LATER than it reads** (2026-08-15 05:2x ICT, n=3 jobs,
 verified against both the installed APScheduler and every fire in `logs/infra.log`).

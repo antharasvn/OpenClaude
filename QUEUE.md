@@ -151,8 +151,13 @@ fleet's own sleep-meter instrument (§1). Workaround verified this cycle, no rew
 **Grep tool** on the file. Generalises `HEARTBEAT.md:1166` to *materialise to a file, then Grep-tool
 it*. **No action requested on rules 3/4** — the intent is right and the workaround is cheap; recorded
 so the `\b` fix is not mistaken for closing the class.
+⚠️ **First ORGANIC trip, 2026-08-15 06:2x ICT (2318z):** `echo "=== heartbeat skill dir ==="`, inside a
+routine `ls` batch, was refused as a process kill. All prior evidence on this row came from deliberate
+probes; this is the first record of the bug hitting a cycle doing unrelated work. Cost was one round
+trip and a reword (~15 s) — the point is the **base rate**, not the cost. No new ask; the `\b` patch
+above is still the whole fix.
 Evidence: `HEARTBEAT.md` §2, `memory/t0/2026-08-15/heartbeat-2019z.md`,
-`memory/t0/2026-08-15/heartbeat-2255z.md`.
+`memory/t0/2026-08-15/heartbeat-2255z.md`, `-2318z.md`.
 
 ## 6. `_run_script` throws away stderr on timeout — the fix is already written 45 lines below it
 
@@ -223,8 +228,22 @@ during the test run: `STALE! cleanpro-alerts ratio=3.81`, job fine.
 nightly noise would have reported the whole fleet clean while the report was missing. No multiplier
 does both.
 
-**Build this instead — no period, no multiplier, no threshold to choose.** Ask the trigger for its
-own fires and compare the last one before now against `last_run`:
+✅ **The detector half is BUILT and is no longer an ask — `scripts/check_missed_fires.py`, run by
+every heartbeat cycle** (2026-08-15 06:2x ICT, 2318z). The design below had lived only in this file:
+`grep -rl get_next_fire_time` returned **two files, both Markdown**, so nothing executed it. It is now
+a read-only script (exit 1 on any miss) named at the top of `HEARTBEAT.md` §1. First run reproduces
+2235z's measurement exactly — `MISSED cleanpro-weekly, 98.8 h behind its expected 2026-08-11 03:30 ICT
+fire; 13/14 otherwise`, zero false positives on the banded pair.
+
+**What is still yours, and it is the part a heartbeat cannot do:** the *fleet* remains blind. `bot/`
+never reads `last_run` back (`:85` displays, `:195`/`:205` write — that is the whole population), so a
+discarded fire raises nothing on its own; a cycle has to be awake and looking. And **detection is not
+recovery** — the Aug 4–11 CleanPro report is still missing. The decisions are (a) whether `bot/` should
+warn on delivery, and (b) whether `coalesce: True` or a longer `misfire_grace_time` at
+`bot/scheduler.py:26` is right for weekly jobs, which trades a lost report against a stale-window one
+that fires hours late. Both change live scheduling behaviour; neither is a heartbeat's call.
+
+<details><summary>Design, for reference — implemented as above</summary>
 
 ```python
 trig = CronTrigger.from_crontab(sch['cron'], timezone=ZoneInfo(sch['timezone']))
@@ -240,7 +259,9 @@ and `Sat 08-15 04:00 ICT`), and it would have caught `cleanpro-weekly` on **08-1
 of 08-14. It is also immune to #1's day-of-week trap for free — it never interprets the string, it
 asks the parser. (`auto-commit` / `cleanpro-exp-monitor` are `interval_seconds`, not cron; for those
 `age > 1.5 × interval` is safe, since an interval genuinely has no bands.)
-Evidence: `memory/t0/2026-08-15/heartbeat-2235z.md`, `-2216z.md`.
+</details>
+
+Evidence: `memory/t0/2026-08-15/heartbeat-2318z.md`, `-2235z.md`, `-2216z.md`.
 
 ---
 
