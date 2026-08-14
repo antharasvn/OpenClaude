@@ -1813,6 +1813,20 @@ call on the one thing that *does* need `ps`: your own start.
   (guard holds), `'\n'` → **char 1**, `'  \n'` → **char 3**. Only a non-empty non-JSON body, or an
   unguarded empty one, gives **char 0**; the file's sole unguarded `json.loads` is the Telegram-response
   parse at `:32`.
+  ✅ **CLOSED — the `:37` candidate is CONTAINED as of 2026-08-14 19:24 ICT; stop queuing it.** 1218z
+  wrapped `load_baselines()` in `try/except (ValueError, OSError)` falling back to a fresh default dict
+  (`scripts/cleanpro_alerts_runner.py:35-49`, `py_compile` clean). Verified read-only before touching
+  it: `load_baselines()` has exactly **one** caller (`:71`) which reads `conversion_rate_7d` and never
+  writes back, so a corrupt file now degrades to the 10.0 default the run **was already using anyway**
+  (`:77` — the key does not exist at top level, so the healthy path is byte-identical). The
+  mis-calibrated threshold at `:99` was deliberately **not** touched — that stays boss-pending.
+  **Why a heartbeat shipped this instead of queuing it a fourth time:** three cycles filed it as the
+  cheap containment that must land *before* `bot/scheduler.py:149`'s `timeout=600 → 1800`, because that
+  repair lets `cleanpro-weekly` reach its **unspecified** Step 10-12 for the first time since 08-04.
+  The containment is independent of the scheduler change, cannot alter the healthy path, and turns a
+  total 2-hourly alert outage into a logged `WARN`. **Transferable: when a queued item decomposes into
+  a boss-decision half and a strictly-defensive half, ship the defensive half now** — pairing them
+  meant neither shipped for three cycles while the exposure stayed open.
   ⚠️ **"sole" is WRONG — there is a SECOND char-0 candidate at `:37`, and the fix to that entry is to
   apply its own rule to itself** (2026-08-14 06:15 ICT). `load_baselines()` at `:35-38` does
   `json.loads(BASELINES.read_text())` guarded by `.exists()` **only** — a present-but-empty

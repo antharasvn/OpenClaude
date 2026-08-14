@@ -32,10 +32,21 @@ def send_telegram(text: str):
         return json.loads(resp.read())
 
 
-def load_baselines():
-    if BASELINES.exists():
-        return json.loads(BASELINES.read_text())
+def _default_baselines():
+    # Fresh dict per call so no caller can mutate a shared default.
     return {"conversion_rate_7d": 10.0, "new_users_7d_avg": 60, "seen_crash_issue_ids": []}
+
+
+def load_baselines():
+    # A truncated/empty baselines.json used to raise JSONDecodeError here and kill the whole
+    # 2-hourly alert run. The weekly writer has no fixed recipe (it improvises Step 10-12 from a
+    # dangling reference), so a partial write is possible on any run — fall back, don't crash.
+    if BASELINES.exists():
+        try:
+            return json.loads(BASELINES.read_text())
+        except (ValueError, OSError) as e:
+            print(f"WARN: unreadable {BASELINES} ({e}); using defaults")
+    return _default_baselines()
 
 
 def main():
