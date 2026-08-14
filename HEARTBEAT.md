@@ -496,6 +496,23 @@ the predecessor's completion out of its log or the state file — read it off th
 call on the one thing that *does* need `ps`: your own start.
 
 ### 1. Cron Job Health
+
+⛔ **"The boss's queue" DID NOT EXIST until 2026-08-15 02:4x ICT — four findings below say they were
+queued and none of them were.** Lines 545, 2138, 2232 and 303 write *"belongs in the boss's queue"*,
+*"stays boss-pending"*, *"drop it from the boss queue"*, *"a spurious queue item"*. A `find` for
+`*queue*` / `*pending*` / `*todo*` / `*inbox*` over the repo returned **nothing**: every such item was
+filed as prose at line ~545 of a 2438-line, 232 KB checklist that **the boss does not read and cycles
+do.** Same defect as `memory/t0/MEMORY.md` being write-only (CLAUDE.md §Memory) — a durable-looking
+write into a channel the intended reader never opens. **`QUEUE.md` at the repo root is now the queue.**
+**Rule: a finding filed only in this checklist is NOT queued — add a `QUEUE.md` row *and* keep the
+evidence here.** Keep that file short; a second 232 KB document reproduces the failure it fixes.
+**Transferable, and this is the half worth carrying:** when prose names a destination for work —
+*"queued for X"*, *"handed to Y"*, *"filed under Z"* — **open the destination.** The phrasing does the
+work of convincing the writer *and every later reader* that a transfer occurred, so nothing inside the
+text ever prompts the check. It is §3's dominant failure (*reasoning about a file nobody opened*)
+aimed at a file that does not exist at all — which is exactly why no `Read` ever failed and surfaced
+it. Confidence high; the `find` is dispositive.
+
 - Check `cron/state.json` for jobs with `consecutive_errors >= 3` or `last_status` containing ERROR
 - Alert if any enabled job has been failing repeatedly
 - **Staleness check (required — the above is blind without it):** for each enabled job, derive the
