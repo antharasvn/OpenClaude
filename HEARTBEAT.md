@@ -351,6 +351,25 @@ Note the hazard does not shrink with the bias, it only changes size: at +92 s th
 self-estimate. Generalise: **a two-point trend in a quantity whose driver you have not measured is a
 guess wearing a slope** — the underlying driver here (time-to-first-tool-call) is not something any
 cycle has instrumented, only inferred from log size.
+✅ **n=5 confirms "variable, no model" and kills the trend for good: +66 s, mid-range** (2026-08-14
+10:39 ICT). Both proxies read in one call again returned the **same** instant — `date` **10:40:53**,
+`$$` **10:40:53** — against a true wrapper start of **10:39:47**. Series: `date`
+**+50 / +59 / +92 / +22 / +66**, `$$` **+42 / +26 / +92 / +21 / +66**; range **[21, 92]**, no
+direction. That is two consecutive falsifications of a fitted trend (0941z's growth story, then this
+one against any reversion story 0321z might have implied). **Stop fitting anything to this quantity
+and just read the wrapper PID (line 293) as your FIRST call** — this cycle didn't, and paid a second
+tool call to correct it. Hazard direction held: +66 s of *manufactured* budget (proxy kill 10:50:53
+vs true **10:49:47**), stacking with line 189's short-biased self-estimate.
+✅ **n=6, +21 s — a SECOND reading at the floor, and it falsifies the log-size DRIVER, not just the
+trend** (2026-08-14 10:59 ICT). `$$` **10:59:50** vs true wrapper start **10:59:29**. Series:
+**+42 / +26 / +92 / +21 / +66 / +21**, range still **[21, 92]**, no direction. 0941z did not only fit a
+slope — it named a *cause* (the injected daily-log bundle, "already ~147 KB", "expect it to grow"), and
+that cause is now contradicted directly: this cycle's bundle was **larger** than the +92 s cycle's and
+the bias came in at the **floor**. So the quantity is not merely unpredictable, its one proposed
+mechanism is dead, and nothing has replaced it. **Stop proposing drivers for it too** — the cheap read
+(line 293) costs one call and needs no theory. Side note for whoever next writes a timing probe:
+`date -u "+%Y-%m-%dT%H:%M:%SZ"` **fails on BSD `date`** (`illegal time format`) — the `-u` must precede
+the format, and a failed proxy call still costs you the round trip.
 ✅ **Free shortcut nobody had used: your predecessor's completion is ALREADY IN YOUR PROMPT.** The
 harness line `Last heartbeat ran at: <ISO>` is the same stamp `run.sh` writes *after* `claude -p`
 exits — i.e. exactly the "completion" in `completion + 900 s + S`. Scored 2026-08-14 09:23:
@@ -396,6 +415,22 @@ call on the one thing that *does* need `ps`: your own start.
   margin, so `timeout=300` at :117-121 belongs in the boss's queue **alongside** the `timeout=600`→1800
   at :149, by §1 line 375's own where-do-the-successes-sit test. Falsifier, free: the **08-15 03:00**
   slot — if the host is awake through it, its wall runtime IS its monotonic runtime. Confidence high.
+- ⛔ **Resolve a job's slots from its OWN timezone before calling it stale — `vidnotes-alerts` is
+  `0 7-23/2` **Europe/Warsaw**, NOT Saigon, and a handoff burned a cycle chasing a miss that never
+  happened** (2026-08-14 10:59 ICT, observed). Warsaw is CEST = UTC+2, so the ICT slots are
+  **12 / 14 / 16 / 18 / 20 / 22 / 00 / 02 / 04** — the same shape as `cleanpro-alerts` (`0 8-22/2`
+  Saigon) shifted, which is exactly why the two get conflated. The 08-14 midnight handoff read
+  `last_run` at 00:11 ICT, saw the 22:00 fire, and filed *"the 00:00 ICT slot had NOT fired"* as an
+  open item for successors. Settled here: `last_run` **`2026-08-13T21:01:33Z` = 04:01:33 ICT**, i.e.
+  **two slots past** the one being chased. What actually happened is already in the record and is not
+  a defect: the **02:00 ICT** slot was **discarded** (`/tmp/claude-telegram-bot.err`,
+  `was missed by 0:53:26` at 02:53:26 — the sleep-cycling regime, past the 300 s grace) and **04:00
+  fired clean**. Two transferable points: (a) §1 line 371 already says *"resolve schedules from
+  `cron/jobs.json`, never from prior heartbeat prose"* — this is that rule failing in its **timezone**
+  form, which is subtler than the schedule form because the prose quoted a *correct-looking* ICT hour;
+  (b) **an alert-type job that retries every 2 h needs its `last_run` compared against the LATEST slot,
+  not the one you are curious about** — a fresh `last_run` two slots on is proof the earlier question
+  is moot, and no cycle needs to re-open it.
 - ⛔ **The 300 s `script` cap has a CONCURRENCY branch nobody has filed: 14:00 ICT is a SIX-JOB slot,
   and on 2026-08-13 five of them timed out at the same second** (2026-08-14 03:36 ICT, observed).
   `cron/jobs.json`: `echo-daily`, `mangii-daily`, `pdfai-daily`, `aividly-daily` are all
