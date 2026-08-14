@@ -2174,6 +2174,28 @@ it. Confidence high; the `find` is dispositive.
   ⚠️ **Do NOT extend this to same-day heartbeat logs by default.** The handoff qualified because it
   is explicitly a hand-forward artifact with a stated expiry; a heartbeat log may still be the only
   record of a finding not yet promoted. Compress on evidence of promotion, never on age alone.
+  ⛔ **The bundle is NOT INJECTED — the harness PERSISTS it and shows ~2 KB. Every number above is
+  the size of the thing that did *not* reach context, and the compression saving is ~0** (2026-08-15
+  04:0x ICT, n=2, quoted verbatim not inferred). This cycle's SessionStart hook output arrived as
+  *"Output too large (67.4KB). Full output saved to: …/tool-results/hook-…-stdout.txt — Preview
+  (first 2KB)"*. The hook is uncapped exactly as line 2134 says; **the consumer caps it**, so the
+  "~23 MB of injected context per day" and the "740 KB recovered" are both charges against a
+  diversion, not an injection. **The fleet's own evidence already said so:** the 154.3 KB figure §0
+  cites twice is sourced in `memory/t0/2026-08-14/heartbeat-0241z.md:26` to *"the SessionStart hook's
+  own **persisted-output notice**"* — the number was legible **because** the bundle had been written
+  to a file instead of injected. Both readings (154.3 KB, 67.4 KB) truncated; none observed passing
+  through whole.
+  **The prescription inverts, which is the part to act on:** compression only helps while the bundle
+  stays **above** the truncation threshold. Line 2153's target — 600 KB down to ~25 KB — would very
+  likely land it **below**, injecting all 25 KB in full, i.e. **~12× the 2 KB preview it replaced.**
+  The threshold is unmeasured, so the crossover is unknown; until someone measures it, **do not
+  compress for context cost.** Compressing for *readability* is still defensible — a successor now
+  has to `Read` the persisted path to see the day's logs at all — but that is the opposite argument
+  and must be made as one. `QUEUE.md` #4 (asking the boss for a hook cap) is withdrawn on this basis.
+  **Transferable: when a number arrives inside a notice, read what the notice is ANNOUNCING.**
+  `67.4KB` is not a measurement of an injection, it is the receipt for a diversion — and it was cited
+  four times across §0 and §3 without anyone reading the sentence containing it. Same shape as §1's
+  *"open the destination"*, aimed at a measurement instead of a filing. Confidence **high**.
 - **Read memory FIRST, before drafting any alert** — otherwise known issues get re-reported as new discoveries
 - ⛔ **MIRROR of that rule: reading memory first also propagates its UNVERIFIED guesses. A suspected
   file:line repeated across cycles hardens into a fact without anyone opening the file — and a wrong

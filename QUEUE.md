@@ -78,14 +78,6 @@ Evidence: `memory/t0/2026-08-15/heartbeat-2041z.md`.
 Deliberately left untouched by the cycle that found it; needs a judgement call, not an edit.
 Context: `HEARTBEAT.md:2138`.
 
-## 4. SessionStart hook: uncapped daily-log injection
-
-The hook `cat`s **every** log in `memory/t0/{today}/` into **every** later cycle that day, uncapped.
-A log's real cost is its size × the number of remaining cycles (~85 at 02:00 ICT, ~4/hour).
-The fleet has taken the part it can reach — compressing superseded files in place, which recovered
-≈740 KB of injected context on 08-15 — but **a cap belongs in the hook**, and cycles are barred from
-editing `.claude/settings.json`. Boss's call.
-
 ## 5. `guard/guard.sh:27` blocks the word "skill " as a process kill — one-char fix, cycles are barred
 
 **Where:** `guard/guard.sh:27`. Cycles may not edit `guard.sh` (`CLAUDE.md` §Safety), so this is yours.
