@@ -128,7 +128,31 @@ by a space …"` **blocked**. Prose trips it, paths do not.
 `skill` match (`s`→`k` is word-char to word-char, so there is no boundary) and still matches every
 real invocation. Scheduled jobs are unaffected either way — `bot/scheduler.py` uses
 `create_subprocess_exec` with no hook; the cost is entirely to agent Bash calls.
-Evidence: `HEARTBEAT.md` §2, `memory/t0/2026-08-15/heartbeat-2019z.md`.
+
+✅ **RUN, not just proposed (2026-08-15 05:5x ICT) — safe to apply. But note WHY, because the row did
+not say it and it is the only way this edit could go wrong.** `\b` is a **GNU extension, not POSIX
+ERE**: on a `grep -E` without it, `\bkill\s` matches the literal `bkill ` and rule 1 **fails open** —
+every `kill`/`pkill`/`killall` allowed, silently, with nothing to error on. Probed on this host's BSD
+grep: `\babc` matches `abc` (1) and not `xabc` (0), so it is honoured here. Full before/after —
+`kill -9 1234`, `sudo kill 1234`, `pkill -f node`, `killall Dock` **all still BLOCK**; `skill the
+docs` goes BLOCK → allow; only side effect is words *ending* in "kill" (`dekill`) are freed, and no
+such command exists. **If `guard.sh` is ever ported to a host with a stricter grep, re-run that
+two-line probe first.**
+
+⚠️ **`skill` is the third instance of one shape in this 24-line file, and the patch fixes one of
+them.** `guard.sh` substring-matches the **command text**, so it cannot tell *mention* from *use*:
+rule 1's `claude-telegram-bot` blocks any command naming the bot read-only or not (documented,
+`HEARTBEAT.md:1100`), and **rule 4's `shutdown|reboot` — probed this cycle — refuses
+`pmset -g log | grep -ci reboot` as "Destructive system commands are not allowed."** That one is the
+worst of the three because it has **no escape**: the documented workaround for the bot-name block is
+the Grep tool, which needs a *file*, and `pmset -g log` is a command — and `pmset -g log` is the
+fleet's own sleep-meter instrument (§1). Workaround verified this cycle, no rewording involved:
+`pmset -g log > /tmp/pm-sleep.log` (allowed — only the two words are blocked, not `pmset`), then the
+**Grep tool** on the file. Generalises `HEARTBEAT.md:1166` to *materialise to a file, then Grep-tool
+it*. **No action requested on rules 3/4** — the intent is right and the workaround is cheap; recorded
+so the `\b` fix is not mistaken for closing the class.
+Evidence: `HEARTBEAT.md` §2, `memory/t0/2026-08-15/heartbeat-2019z.md`,
+`memory/t0/2026-08-15/heartbeat-2255z.md`.
 
 ## 6. `_run_script` throws away stderr on timeout — the fix is already written 45 lines below it
 
