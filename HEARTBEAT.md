@@ -1781,6 +1781,20 @@ call on the one thing that *does* need `ps`: your own start.
   anything in this area, say "bot-stderr file" and "process-control", never the literal path and
   never `kill` followed by a space. Same trap applies to `git commit -m`, `gh` bodies, and any
   `echo`/heredoc that quotes the guard's own regex.
+  ⛔ **THE WORD `skill` CONTAINS `kill`, and `guard.sh`'s `kill\s` alternative is NOT word-anchored —
+  so any commit message with "skill " / "skills " in it is REFUSED** (2026-08-14 19:01 ICT, observed
+  on myself, one blocked commit). Mine read *"a pointer at a **skill that** does not exist"* →
+  `skill␣` matches `kill\s` → *"BLOCKED: You are not allowed to kill processes."* The ⚠️ above says
+  "never `kill` followed by a space" and I complied with it **as I read it** — the failure is that
+  `kill` need not be a word. **This repo's core vocabulary is booby-trapped**: `skill`, `skills`,
+  `SKILL.md`, `skills/` all trip it whenever followed by whitespace, and every heartbeat that files a
+  `SKILL.md` finding wants to say exactly that. Same substring-false-positive class as the
+  bot-stderr path, but far likelier to fire, because "skill" is unavoidable where the path is not.
+  **Workarounds that pass:** say "recipe", "job definition", or "the `SKILL.md` file" with the word
+  never directly followed by a space (backticks don't help — the guard sees raw text; what helps is
+  punctuation or rewording). **Do not patch `guard.sh`** (CLAUDE.md forbids it) — batch it to the
+  boss with the other guard item; the two share one fix, which is word-anchoring the pattern
+  (`\bkill\s`) and dropping the bare-substring path match. Confidence high, n=1, mechanism certain.
   Healthy tail = `httpx: HTTP Request: POST …/getUpdates "HTTP/1.1 200 OK"` every ~10 s, nothing else.
   The file has **no rotation** (5.2 MB on 2026-08-14) and every line embeds the bot token — never
   paste a raw excerpt into Telegram or a commit.
