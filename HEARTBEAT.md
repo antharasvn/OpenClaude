@@ -521,6 +521,27 @@ call on the one thing that *does* need `ps`: your own start.
   margin, so `timeout=300` at :117-121 belongs in the boss's queue **alongside** the `timeout=600`→1800
   at :149, by §1 line 375's own where-do-the-successes-sit test. Falsifier, free: the **08-15 03:00**
   slot — if the host is awake through it, its wall runtime IS its monotonic runtime. Confidence high.
+- ⛔ **APScheduler's `day_of_week` is 0 = MONDAY, so every `* * 1` weekly in `cron/jobs.json` fires
+  on a TUESDAY — and reading them as standard cron hid a DISCARDED `cleanpro-weekly` slot for four
+  days** (2026-08-14 21:26 ICT, observed; all three weeklies confirmed against their own `last_run`).
+  Standard cron is 0 = Sunday, 1 = Monday. APScheduler is 0 = Mon … 6 = Sun. Scored:
+  | job | cron in `jobs.json` | tz | reads as (std cron) | **actually fires** | proof from `last_run` |
+  |---|---|---|---|---|---|
+  | `cleanpro-weekly` | `30 3 * * 1` | Saigon | Mon 03:30 | **Tue 03:30 ICT** | ran **Tue 08-04** 03:30 |
+  | `vidnotes-weekly` | `30 7 * * 1` | Warsaw | Mon 07:30 | **Tue 12:30 ICT** | timed out **Tue 08-11** |
+  | `weekly-conjecture` | `0 8 * * 0` | New York | Sun 08:00 | **Mon 19:00 ICT** | timed out **Mon 08-10** |
+  **What it cost:** the fleet has carried *"`cleanpro-weekly` stale since 08-04, next fires 08-18"* as
+  a benign note for days. The date is right by accident; the reasoning was not, and it made a real
+  miss invisible — **the Tue 2026-08-11 03:30 slot was DISCARDED**, `/tmp/claude-telegram*.err`
+  `CleanPro Weekly … was missed by` at **03:41:47** (host asleep, past the 300 s grace; the only such
+  misfire on record for this job). `last_status` stayed `OK` and `ce` stayed `0`, so **CleanPro has
+  had no weekly report since 08-04 and will not get one until 08-18 — a two-week gap** that every
+  staleness check this week passed over. This is §1's own broken-health-signal class, missed because
+  "weekly job, last run 08-04, next 08-18" is *internally* consistent and never gets re-derived.
+  **Rules: (a) map `day_of_week` with APScheduler's convention, never standard cron's; (b) for a
+  weekly, `last_run` more than ~7 d old is not "waiting for its slot" — check the bot-stderr file for
+  a misfire on the slot it should have hit in between.** Related but distinct from the timezone trap
+  below: that one shifts the HOUR, this one shifts the DAY, and they compose.
 - ⛔ **Resolve a job's slots from its OWN timezone before calling it stale — `vidnotes-alerts` is
   `0 7-23/2` **Europe/Warsaw**, NOT Saigon, and a handoff burned a cycle chasing a miss that never
   happened** (2026-08-14 10:59 ICT, observed). Warsaw is CEST = UTC+2, so the ICT slots are
