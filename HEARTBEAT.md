@@ -290,7 +290,17 @@ loop was armed `now + 165 s` off a mis-estimated current time and expired at **1
 the slot. That is §0's biased self-estimate one level down — same error, same sign, inside a single
 Bash call. Use `target=$(date -j -f "%Y-%m-%d %H:%M:%S" "<slot>" +%s)`. Cost was 0 here only because
 the budget was real; on a tighter cycle it silently converts a live read into a missed one.
-Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
+Get cycle start from `ps -eo pid,lstart,etime,command | grep '[g]timeout 600 claude'`.
+⚠️ **And get it from `ps` ONLY — a `date` at your first tool call reads ~50 s LATE, which is enough to
+manufacture a break in the residual-0 rule above** (2026-08-14 08:26 ICT, n=1, observed). Measured this
+cycle: first `date` **08:27:17** vs `ps` `lstart` **08:26:27** for the same PID — the gap is session
+startup plus the SessionStart hook's log injection, both of which precede the first executable tool
+call. The bias has a **fixed sign** (`date` is always later), so it inflates *every* residual by that
+constant and makes `completion + 900 s + S` look like it drifts late; this cycle computed "+51 s" and
+was one step from filing a 17th-reading break in a rule with sixteen consecutive 0s. It also makes you
+believe your kill is ~50 s later than it is — safe in direction, but it stacks with line 189's finding
+that self-estimates already miss short. **One `ps` read before any timing claim; never reuse a `date`
+reading as a proxy for cycle start.**
 
 ### 1. Cron Job Health
 - Check `cron/state.json` for jobs with `consecutive_errors >= 3` or `last_status` containing ERROR
