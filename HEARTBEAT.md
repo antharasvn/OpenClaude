@@ -2085,6 +2085,21 @@ call on the one thing that *does* need `ps`: your own start.
   is enough — link the full log by path). Worked example:
   `memory/t0/2026-08-11/00-handoff-from-2026-08-10.md`.
 
+  ⛔ **Widen that to ~35 min, and NEVER delegate the handoff to a predicted successor** (2026-08-14
+  23:2xZ, 1622z). 1601z wrote *"the cycle that starts ≈23:46 ICT IS within 20 min of midnight — it
+  must write the handoff"*. The real successor started **23:22:03**, 24 min earlier, so the duty was
+  assigned to a cycle that never existed. Nothing was lost only because 1622z re-derived it.
+  **You cannot compute your successor's start time.** The interval anchors on the predecessor's
+  **completion**, not its start: your own start = the prompt's `Last heartbeat ran at` value + 900 s
+  (exact, residual 0 s, n=25 — that value *is* the predecessor's completion). So your successor
+  starts at *your completion* + 900 s, which you do not know while running; the only honest form is
+  the bound `[my start + 900 s, my start + 1500 s]`. 20 min is the wrong threshold because it was
+  derived from the start-to-start spacing; the worst case is 900 s interval + 600 s runtime = **25
+  min**, so use **35 min** for slack.
+  **General rule: never hand a deadline-bound duty to a future cycle identified by a clock time.**
+  Either do it yourself, or address the successor as "whoever runs next" and accept it may be late.
+  Duplicated work is free; a dropped handoff is silent and total.
+
 ### 4. Infra Log Anomalies
 - Read last 20 lines of `logs/infra.log`. **`logs/` contains that one file — there is no `infra.err`.**
   Misfire/discard warnings live in the bot-stderr file under `/tmp`; read it with
