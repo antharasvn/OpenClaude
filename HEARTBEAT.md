@@ -142,6 +142,30 @@ at *exactly* the cap — is **also** what an unreachable inner timeout produces,
 tell them apart on its own. **Always read the next cap outward before judging a timeout's value, and
 never treat a `grep -n timeout` hit as evidence the path is guarded: two of the three values here are
 hits and both are dead.** Confidence high (both values read from source).
+✅ **Ran that test on QUEUE #1 expecting a third inversion; got a NEGATIVE result and a better finding
+next to it — WHEN ONE BRANCH OF A FORK IS INSTRUMENTED AND ITS SIBLING IS NOT, THAT IS THE FINDING**
+(2026-08-15 05:0x ICT, both paths read in one file). `_run_prompt` spawns `claude -p` via
+`create_subprocess_exec` with **nothing nested inside** its 600 s (`bot/scheduler.py:163`) — no
+`gtimeout`, no per-request timeout — so #1's `600 → 1800` is *not* the 300/600 mistake, and the
+nested-cap test is worth running even when it clears. The payload was the comparison it forced:
+`_run_script:121-123` does `proc.kill()` and raises, while `_run_prompt:169-175` does `proc.kill()`
+**then drains stderr with a second `communicate()`**. `communicate()` never returns on the timeout
+path, so the script path destroys every byte the runner printed. **`cleanpro-daily`'s "no indication
+which query stalled" therefore has TWO independent causes, and QUEUE #2 named one** — the unreachable
+inner timeout explains why the query never self-*reports*; the missing drain explains why nothing
+*survives*. Filed as QUEUE #6. Three transferable halves:
+**(a) Diff the sibling path before theorising about a missing diagnostic.** The fix, the 10 s inner
+wait, and a comment naming this exact hazard were already in the same file, 45 lines away, written by
+whoever hardened the other path. This is §0 line 299's *"read the runner for redirects that already
+exist"* generalised: the thing you are about to request may exist **on the neighbouring branch**, not
+just upstream of you.
+**(b) A negative result on a mandated test is not a wasted test** — it cost two calls, it retired a
+live suspicion about #1, and the comparison it required produced the finding. Run the test to clear
+the hypothesis, not only to confirm it.
+**(c) When one blocked fix and one cheap fix address the same symptom, say so in the queue.** #2 edits
+a shared module behind six live jobs (why no cycle has applied it); #6 is local, diagnostics-only, and
+makes the *next* failure self-describing without touching them. A row that names a single cause
+invites a fix that leaves the symptom intact. Confidence high — both paths read from source.
 ⚠️ **When you hand a checkpoint forward, name the cycle that can actually resolve it — don't assume
 "the next one" does.** Cycles start ~15 min apart, so a tick at T+10 min of *this* cycle lands only
 ~5 min before the next cycle even starts, and can miss it too. Measured 2026-08-09: the 20:28Z cycle

@@ -59,7 +59,10 @@ the job's whole budget**, which is worse than none because it answers the grep:
 
 **The inner timeout is unreachable** — at 600 s inside a 300 s cap no query can ever time out; the
 outer kill always wins, and `run()`'s default *equals* the cap so it cannot fire in time either. The
-process dies mid-flight with no error and **no indication which query stalled**. This predicts the
+process dies mid-flight with no error and **no indication which query stalled**. ⚠️ **That is TWO
+causes, not one — fixing this timeout alone leaves the failure silent. See #6:** `bot/scheduler.py`
+also discards the script's stderr on the timeout path, so even a runner that *did* print a
+diagnostic would lose it. This predicts the
 distribution above better than "hang" does: past ~168 s nothing can interrupt a slow query before
 300 s, so runs land at ~132 s or at exactly the cap, never in the 146 s dead zone. A true wedge and
 a merely slow query are indistinguishable from outside.
@@ -117,6 +120,43 @@ by a space …"` **blocked**. Prose trips it, paths do not.
 real invocation. Scheduled jobs are unaffected either way — `bot/scheduler.py` uses
 `create_subprocess_exec` with no hook; the cost is entirely to agent Bash calls.
 Evidence: `HEARTBEAT.md` §2, `memory/t0/2026-08-15/heartbeat-2019z.md`.
+
+## 6. `_run_script` throws away stderr on timeout — the fix is already written 45 lines below it
+
+**Where:** `bot/scheduler.py:119-123`. **Blocks nothing; unblocks #2's other half.**
+
+The two job paths in this file handle an identical `asyncio.TimeoutError` differently:
+
+```python
+# _run_script :119-123          — script jobs (cleanpro-daily, all six daily runners)
+    stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=300)
+except asyncio.TimeoutError:
+    proc.kill()
+    raise TimeoutError(f"Script {job['id']} timed out after 5 min")   # ← stderr lost
+
+# _run_prompt :164-176          — prompt jobs (weekly-conjecture, vidnotes-weekly)
+except asyncio.TimeoutError:
+    proc.kill()
+    _, stderr = await asyncio.wait_for(proc.communicate(), timeout=10)  # ← drains it
+    tail = stderr.decode(errors="replace").strip()[-300:]
+```
+
+`communicate()` never returns on the timeout path, so on the script path everything the runner
+printed before the kill dies with the process. The prompt path's own comment states the hazard
+exactly: *"the only prompt-job failures that ever need diagnosing are the ones that leave no
+diagnostics at all."* That is precisely `cleanpro-daily`'s two 300 s failures (07-30, 08-13).
+
+**Patch:** apply the `:169-175` drain to `:121-123` — same 10 s inner wait, append the tail to the
+raised message. Diagnostics only: no cap changes, no job behaviour changes, no shared module.
+**Relation to #2:** independent and complementary. #2 makes a stalled `bq query` *able* to report;
+#6 makes anything it reports *survive*. #2 is the risky one (shared module, six live jobs); #6 is
+local to one function. Doing #6 first is strictly informative — the next `cleanpro-daily` timeout
+would then name the failing query without anyone having touched the daily runners.
+
+**Also checked, and it is clean:** `_run_prompt` spawns `claude -p` via `create_subprocess_exec`
+with **no nested cap** — no `gtimeout`, no inner per-request timeout inside the 600 s at `:163`. So
+the 300/600 inversion in #2 does **not** apply to #1, and #1's `600 → 1800` is not that mistake.
+Evidence: `memory/t0/2026-08-15/heartbeat-2157z.md`.
 
 ---
 
