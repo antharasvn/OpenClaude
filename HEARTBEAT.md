@@ -2223,6 +2223,24 @@ call on the one thing that *does* need `ps`: your own start.
   **General rule: never hand a deadline-bound duty to a future cycle identified by a clock time.**
   Either do it yourself, or address the successor as "whoever runs next" and accept it may be late.
   Duplicated work is free; a dropped handoff is silent and total.
+- ⛔ **`memory/` is GITIGNORED — your daily log is NEVER committed, so "committed and pushed to `dev`"
+  is a false claim about it** (2026-08-15 01:2x ICT, verified). `git check-ignore -v` resolves the log
+  to `.gitignore:27  memory/`, and `git log --all -- 'memory/t0/*/heartbeat-*.md'` is **empty** — no
+  heartbeat log has ever been tracked, on any branch, ever. A `git add -A HEARTBEAT.md memory/…`
+  prints an *ignored-path hint*, stages `HEARTBEAT.md` anyway, and **commits successfully**, so the
+  exit status confirms nothing; this cycle's own commit shows `1 file changed` and the hint scrolls
+  past as advice. 1803z closed with *"Log at `memory/…`; committed and pushed to `dev`"* — the push
+  was real, the log was not in it. **The push only ever carries checklist edits.**
+  **Consequence, and it is not cosmetic:** daily logs are **local-disk-only**. They are not backed up,
+  not recoverable from the remote, and not visible to the boss through the repo — so a finding filed
+  *only* in a daily log has weaker durability than one patched into this file, which is the one thing
+  that does get pushed. That is an independent reason for CLAUDE.md's *"if it must change a job's
+  behaviour, put it in the SKILL.md"* rule, and it extends here: **if it must survive this machine,
+  put it in `HEARTBEAT.md`.**
+  **Rule: verify a claim of persistence against what the commit actually contains** (`git show --stat`),
+  not against the command having exited 0. Same family as §0's *measured a proxy and called it the
+  thing*: exit status is a proxy for "the file is in the commit", and here they come apart silently.
+  Confidence high, n=1 false claim observed, mechanism verified directly.
 
 ### 4. Infra Log Anomalies
 - Read last 20 lines of `logs/infra.log`. **`logs/` contains that one file — there is no `infra.err`.**
