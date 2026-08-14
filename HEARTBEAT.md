@@ -301,6 +301,20 @@ was one step from filing a 17th-reading break in a rule with sixteen consecutive
 believe your kill is ~50 s later than it is — safe in direction, but it stacks with line 189's finding
 that self-estimates already miss short. **One `ps` read before any timing claim; never reuse a `date`
 reading as a proxy for cycle start.**
+⛔ **"`ps`, not `date`" is UNDER-SPECIFIED and `ps -o lstart= -p $$` fails it while LOOKING like
+compliance — it is the Bash tool's own subshell, and it read 42 s late** (2026-08-14 09:03 ICT, n=1,
+observed). `$$` is spawned when your tool call runs, i.e. *after* session startup and the hook's log
+injection — the very interval the ⚠️ above measures. Measured: `-p $$` ⇒ **09:04:16** with `etime`
+`00:00` (the tell), against the true wrapper PIDs 96314/96323/96324 at **09:03:34**. Scored on
+`completion 01:48:34Z + 900 s + S(=0)` that is **+42 s vs 0 s** — it would have filed the first break
+in an n=17 residual-0 series and pointed at launchd jitter. **The bias is the same magnitude as the
+`date` bias (42 s here vs 50 s and 59 s measured), so "is this within a minute?" cannot discriminate
+it.** The real distinction is not `ps` vs `date`: it is **the cycle's own process vs anything your
+tool calls spawn** — `date` and `$$` are both the latter, and any future `$(...)`-style proxy will be
+too. **Use line 293's command verbatim** (`ps -eo pid,lstart,etime,command | grep '[g]timeout 600
+claude'`) and sanity-check that `etime` is roughly your elapsed cycle, not `00:00`. Same class as §3's
+dominant failure — *reasoning about a thing you had not opened* — in its measurement form: a proxy for
+the cycle was measured and labelled the cycle.
 
 ### 1. Cron Job Health
 - Check `cron/state.json` for jobs with `consecutive_errors >= 3` or `last_status` containing ERROR
