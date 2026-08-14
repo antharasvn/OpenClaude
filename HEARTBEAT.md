@@ -523,6 +523,23 @@ work of convincing the writer *and every later reader* that a transfer occurred,
 text ever prompts the check. It is §3's dominant failure (*reasoning about a file nobody opened*)
 aimed at a file that does not exist at all — which is exactly why no `Read` ever failed and surfaced
 it. Confidence high; the `find` is dispositive.
+  ⛔ **The queue inherited a ROTTEN CITATION on its first day, and which rows rotted is the finding:
+  the two written with the evidence open are exact, the one BACK-FILLED from an older log points at
+  the wrong file** (2026-08-15 04:2x ICT, all three opened). Verified: #1 `bot/scheduler.py:163` =
+  `timeout=600` ✅, `:176` = the message ✅; #2 `daily_report_common.py:48` = `timeout=600` ✅.
+  **#3 said "mis-calibrated threshold at `bot/scheduler.py:99`" — that line is
+  `raise ValueError(f"Unknown job type: …")`.** The real referent is
+  `scripts/cleanpro_alerts_runner.py:99` (`conv_pct >= baseline * 0.70`); line 2217 here says only
+  *"the mis-calibrated threshold at `:99`"* inside a passage whose every other cite is that runner,
+  so the bare `:99` picked up the wrong filename when it was copied out. A boss opening
+  `scheduler.py:99` finds an unrelated `raise` and drops the row — **the queue would have failed at
+  exactly the job it was created to do.** Two rules:
+  **(a) A bare `:NN` is only safe in the paragraph that names its file. Re-qualify it the moment it
+  leaves that paragraph** — copying is where citations rot, not writing.
+  **(b) Never cite `HEARTBEAT.md:NNNN`: this file grows every cycle, so line cites decay silently.**
+  #3's own `HEARTBEAT.md:2138` now lands on §3 memory text. Cite a distinctive search string.
+  Generalises §1's *"open the destination"* one turn further: **also open the SOURCE you are copying
+  a pointer from** — a transcribed pointer is unverified until re-opened, however careful the copy.
 
 - Check `cron/state.json` for jobs with `consecutive_errors >= 3` or `last_status` containing ERROR
 - Alert if any enabled job has been failing repeatedly

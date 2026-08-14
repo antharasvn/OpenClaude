@@ -73,10 +73,27 @@ Minor, same file: `cleanpro_daily_runner.py:447,451` (heatmap + `curl`) have no 
 run *after* `send_telegram` at `:439` and so cannot cost the report.
 Evidence: `memory/t0/2026-08-15/heartbeat-2041z.md`.
 
-## 3. Mis-calibrated threshold at `bot/scheduler.py:99`
+## 3. CleanPro conversion alert is a coin flip — `scripts/cleanpro_alerts_runner.py:99`
 
-Deliberately left untouched by the cycle that found it; needs a judgement call, not an edit.
-Context: `HEARTBEAT.md:2138`.
+**Corrected 2026-08-15 04:2x ICT — this row cited `bot/scheduler.py:99`, which is
+`raise ValueError(f"Unknown job type: …")`.** Opening it would have read as a nonsense row and got
+the item dropped. The real line:
+
+```python
+baseline = float(baselines.get('conversion_rate_7d', 10.0) or 10.0)   # :98
+if paywall_shown < 10 or conv_pct >= baseline * 0.70:                 # :99  ← the 0.70
+```
+
+**Defect:** a **4-hour window** rate is compared against a **weekly cohort** baseline (10.4 %).
+Conversions lag their paywall view across the window edge, so the windowed rate sits structurally
+below the cohort rate and the 0.70 multiplier lands mid-distribution — the check fires about as
+often as not, on healthy data. Same defect as the vidnotes conversion check (2026-08-07).
+**Repair (needs a judgement call, not a one-liner):** compare the window against the *windowed*
+historical distribution — same-hour percentile or CUSUM on the daily series — or move conversion
+monitoring to the daily report entirely. The runner's own `:88-97` comment block already states
+this; nobody has picked between the options.
+Evidence: `scripts/cleanpro_alerts_runner.py:88-99`; `HEARTBEAT.md`, search `mis-calibrated
+threshold at` (the old `:2138` cite has drifted — that line is now §3 memory text).
 
 ## 5. `guard/guard.sh:27` blocks the word "skill " as a process kill — one-char fix, cycles are barred
 
