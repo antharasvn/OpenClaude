@@ -63,6 +63,18 @@
 > because effort is what you attend to and time is not.** Catching yourself writing "I'm probably at
 > T+N" *is* the trigger to re-read the meter. Confidence high on direction (2/2), moderate on ~3×
 > (n=1 quantified).
+> ✅ **n=3, ratio ~4× — the worst yet, and it confirms the MULTIPLICATIVE form directly** (2026-08-15
+> 00:0x ICT, 1659z, on itself). Six tool calls in — but those calls included reading a 2211-line
+> checklist and two multi-part `bash` batches — I was pricing the remainder against "~T+3 to 4 min".
+> `ps -o etime=` returned **`00:50`**. Ratios are now **~3× / ~3× / ~4×**, 3/3 same direction, and the
+> largest ratio came from the heaviest reading — which is exactly what a multiplicative bias predicts
+> and a constant offset cannot produce. **Cost avoided, concretely:** at the believed "T+4 min" the
+> 00:05 slot would have been marginal against a 00:09:42 kill and handed forward; at the true T+50 s
+> it was never in doubt — **4½ min of reachable budget nearly given away.** That is the
+> abandoning-reachable-work branch (line 59), the one that costs the fleet observations rather than
+> filing false ones. Put `ps -o etime= -p <pid>` **inside your routine `bash` batches** as a habit
+> rather than calling it when you feel late: the feeling is the biased signal, so it cannot be the
+> trigger.
 
 The wrapper is `gtimeout 600 claude -p "Run heartbeat: …"` (seen in `ps`), so the cycle is killed at
 T+600 s, mid-write, with no chance to save a log. This is the mechanism behind memory §249's
@@ -698,6 +710,21 @@ call on the one thing that *does* need `ps`: your own start.
   been flat for the same duration, check whether they measure the same underlying event before
   counting them as two witnesses.** Confidence high — the causal path (sleep > grace ⇒ discard) is
   already documented at line 566, and the timestamps are 105 s apart.
+  ✅ **The demoted witness has been REPLACED by a real one — a two-arm control on the SAME slot,
+  24 h apart** (2026-08-15 00:0x ICT, 1659z). Same job, same cron (`vidnotes-alerts`, `0 7-23/2`
+  Europe/Warsaw), same detector, reader position within ±10 min both nights; the only variable that
+  differed was the host regime. **08-14 00:00:** host cycling into `Maintenance Sleep` every few
+  minutes ⇒ slot **discarded**, did not run until 02:00. **08-15 00:00:** host continuously awake
+  ~20.7 h, S = 0 ⇒ **fired 00:00:00 on-grid, completed 00:01:28 clean.** Until now the mechanism
+  rested on "sleeps and discards stopped at the same time", which the ⛔ above correctly demoted to
+  one fact counted twice; an arm where the suspected cause is *absent* and the effect vanishes with it
+  is genuinely independent. Raise sleep ⇒ discard from moderate to **high, observed**.
+  **Transferable, and it is the constructive half of the rule above: when a metric has been demoted to
+  "same fact observed twice", the way back to confirmation is not more of that observation — it is
+  finding the arm where the cause is absent.** Often it arrives for free, as here, by waiting a day.
+  Corollary for readers of this slot: `last_run` lagging at T+50 s is the **job's own 88 s runtime**,
+  not a detector defect — the `Running job:` line lands at slot time, so read *that* for punctuality
+  and `completed successfully` for health.
   ⛔ **Both log files are stamped in ICT; `cron/state.json` is UTC. Comparing them raw manufactures
   an anomaly out of nothing** (2026-08-14 19:44 ICT, caught mid-cycle by 1238z). `state.json` gave
   `cleanpro-exp-monitor` `last_run` **11:33:43+00:00**, `infra.log` showed the same job `Running` at
