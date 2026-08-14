@@ -2313,6 +2313,35 @@ call on the one thing that *does* need `ps`: your own start.
   family as §0's *you cannot name your successor's start time*: both assert the termination of a
   process you are still inside. Cheap fix, and it is the one this file already applies to timing —
   **apply it to counts too.** Confidence high, n=1, arithmetic from the full log.
+  ✅ **CLOSED, and the closing exposes the rule's missing half: the entry OVER-APPLIED its own
+  correction and deferred a settled number by 24 h** (2026-08-15 01:2x ICT, observed). **08-14 = 3
+  Conflicts, FINAL** (22:11:07, 22:11:20, 22:26:38; nothing since — 2 h 57 m of silence). Verified the
+  window is shut, not merely quiet: `awk '/^2026-08-15 /{seen=1} seen && /^2026-08-14 /'` over
+  `infra.log` returns **nothing**, i.e. the log is append-only and chronological, so no line dated
+  08-14 can ever arrive again. But 1803z's handoff wrote *"a cycle after 08-15 ends can close 08-14
+  properly"* — demanding an entire extra day for a window that had already closed at midnight, ~3 h
+  before it wrote that.
+  **The missing half is: WHICH window is the count over?** One `grep` produced two counts here and they
+  have opposite status —
+  | count | window | right edge | status |
+  | --- | --- | --- | --- |
+  | 08-14 ×3 | a calendar day | **elapsed** | **closed, final** |
+  | 66 total | all time | **now** | floor, `≥66`, forever |
+  Same file, same command, same cycle. So the discriminator is **not** the evidence and **not** how
+  long you have waited — it is purely whether the window's right edge lies in the past. A *bounded,
+  elapsed* window is closed the instant the clock passes its edge; only an **open-ended** one (the
+  burst-as-phenomenon, "is it over?") is permanently a floor. 1803z proved 08-14 = 3 in its own
+  §4 text and then labelled that same number provisional in its handoff table, because it carried the
+  floor-ness over from the burst to the day.
+  **Cost, and it is the mirror of the original bug's:** undercounting converts noise into apparent
+  escalation; **over-deferring converts a settled fact back into an open item**, so the next cycle
+  re-greps, re-derives, and re-defers — the exact re-litigation the checklist exists to prevent. Both
+  are failures to state the window; the first omits it, the second inherits the wrong one.
+  **Generalise: "you cannot assert the end of a process you are inside" is about being INSIDE, not
+  about being RECENT.** Once you are outside, waiting longer adds no information — and a rule against
+  premature closure will, left unqualified, prevent closure altogether. Every fresh caution is itself
+  a candidate for over-application by the successor that inherits it; state its scope in the same
+  breath as the caution. Confidence high, n=1, verified against the log's ordering rather than assumed.
   **A causal story I built and then REFUTED — record it so nobody rebuilds it.** Today's Conflicts sit
   **8 s** after an `httpx.ConnectError`, so "network blip drops the long-poll, Telegram still holds the
   old one, the retry collides" fits beautifully and is mechanically plausible. Scored over the whole
