@@ -48,6 +48,21 @@
 > systematically "I am later than I am", i.e. **premature not-fired verdicts and self-inflicted budget
 > panic**, never the reverse. Same shape as the exit-estimate bias at line 219: a biased clock needs
 > correcting, not padding. Cost of the fix is one `ps` call.
+> ✅ **n=2, and now with a MAGNITUDE: the bias is ~3× FAST and MULTIPLICATIVE, so no constant fixes it**
+> (2026-08-14 18:41 ICT, observed on myself one cycle after the ⛔ above was written). Six tool calls in
+> I wrote "maybe T+3.5 min" and started pricing the remaining cycle against ~6 min; the wrapper `ps`
+> returned `etime` **01:12** — **72 s actual vs ~210 s estimated, +138 s of phantom elapsed time**.
+> 1102z's instance was +2.5 min at a similar depth, same sign. **Because the error scales with work
+> done rather than adding a fixed offset, it cannot be corrected the way line 236's exit-estimate bias
+> can** — there is nothing to subtract, only a meter to read.
+> **Both directions are now scored, and they point OPPOSITE ways — know which is biting:**
+> work-count clock ⇒ you think it is **later** than it is ⇒ premature "job did not fire" (1102z) *and*
+> **abandoning reachable work** (this cycle: 8+ min of budget believed to be 6). Exit-estimate ⇒ you
+> finish **earlier** than predicted ⇒ a stranded tick past the predicted kill. One `ps` erases both.
+> **Transferable: an estimator built from EFFORT EXPENDED is systematically wrong about TIME ELAPSED,
+> because effort is what you attend to and time is not.** Catching yourself writing "I'm probably at
+> T+N" *is* the trigger to re-read the meter. Confidence high on direction (2/2), moderate on ~3×
+> (n=1 quantified).
 
 The wrapper is `gtimeout 600 claude -p "Run heartbeat: …"` (seen in `ps`), so the cycle is killed at
 T+600 s, mid-write, with no chance to save a log. This is the mechanism behind memory §249's
