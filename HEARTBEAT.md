@@ -1833,6 +1833,26 @@ call on the one thing that *does* need `ps`: your own start.
   ⚠️ **That pattern SELF-MATCHES the shell running it** (2026-08-09 15:49 ICT) — the command line of
   the `zsh` executing the `pgrep` contains the pattern, so it returns a phantom second PID. Confirm any
   extra PID with `ps -o pid,ppid,lstart,command -p <pid>` before reporting a duplicate bot instance.
+  ⛔ **PASTE that pattern verbatim — a paraphrased detector returns EMPTY, and empty reads as "THE BOT
+  IS DOWN"** (2026-08-14 21:42 ICT, observed on myself, caught one call short of filing). I typed
+  `ps -eo pid,etime,command | grep '[b]ot/main.py'` from memory instead of the prescribed `pgrep`.
+  It returned nothing. The bot is launched as **`python -m bot`**, so **no healthy bot can ever match
+  `bot/main.py`** — the prescribed form returned PID **94033** one call later. This is §0 line 457's
+  substitution failure in its third and worst output form: that entry's two known outputs are a
+  **checklist edit** (the `sysctl` case) and a **mislabelled measurement** (`date`/`$$` as cycle
+  start); this one is a **false SERVICE-DOWN alert**, the highest-severity thing this checklist can
+  raise, and it would have woken the boss for a service running fine. What stopped it was an
+  unrelated line in the previous tool call — `echo-backend-alerts` completed **21:05:06**, which a
+  dead bot cannot do.
+  **The general rule, and it unifies three findings already in this file under three different
+  labels:** a broken *detector* degrades to **silence**, and silence is the same shape as good news.
+  §1 line 659 (`was missed by` grepped against `logs/infra.log`, which cannot contain it) and the
+  08-13 `logs/infra.err` discard check are the same failure wearing different names — both returned
+  clean and *read* as evidence of health. So "paste the documented form first" binds hardest exactly
+  where a healthy result is **nothing**: `grep`, `pgrep`, staleness tests, misfire counts.
+  **Cheap habit that catches all three: before believing an empty result, ask what a POSITIVE result
+  would have looked like and whether the command you actually ran could have produced one.**
+  Confidence high; n=1 for this output, n=3+ for the class.
 - Check the bot stderr log for recent errors (last 5 min)
   ⛔ **`guard.sh` BLOCKS this step as written — use the glob path** (found 2026-08-14 04:36 ICT).
   `guard/guard.sh:27` blocks any Bash command whose text matches
