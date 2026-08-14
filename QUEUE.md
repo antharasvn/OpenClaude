@@ -263,6 +263,50 @@ asks the parser. (`auto-commit` / `cleanpro-exp-monitor` are `interval_seconds`,
 
 Evidence: `memory/t0/2026-08-15/heartbeat-2318z.md`, `-2235z.md`, `-2216z.md`.
 
+## 8. The miss detector answers #7 for `cron` jobs only — `interval` jobs lose ~18 % of fires unseen
+
+**Where:** `scripts/check_missed_fires.py:60-64` (the `interval_seconds` branch).
+**Found:** 2026-08-15 06:5x ICT, from `logs/infra.log`, one cycle after the detector shipped.
+
+The two branches answer **different questions**, and only one of them is #7's question:
+
+| branch | test | asks |
+| --- | --- | --- |
+| `cron` | enumerate the trigger's own fires | **"did the last owed fire run?"** |
+| `interval_seconds` | `expected = now − 1.5 × interval` | **"am I mid-outage right now?"** |
+
+The inline comment defends the second as safe, and against *false positives* it is. The hole is
+**false negatives**: an interval job that loses a fire and resumes stamps a fresh `last_run`, so the
+check reads healthy the instant the outage closes. It catches a loss only while one is in progress.
+
+Measured since 2026-08-01, both interval jobs (`interval_seconds: 7200`):
+
+| job | fires | fires lost | rate | worst gap |
+| --- | --- | --- | --- | --- |
+| `auto-commit` | 141 | **32** | **18.5 %** | 8 h 00 m (08-13 20:33 → 08-14 04:33) |
+| `cleanpro-exp-monitor` | 141 | **32** | **18.5 %** | same |
+
+Counts and gap boundaries are **identical for both jobs to the second** ⇒ shared host-sleep cause,
+nothing job-specific. **Today's run printed `13/14 jobs ran at their last expected fire` while ~2.3
+interval fires per day were being lost** — both statements true simultaneously. That is exactly the
+`last_status: OK` blindness of #7, closed for `cron` and still open for `interval`, and it hides
+better here because interval jobs self-heal.
+
+**Impact:** `auto-commit` gaps mean up to 8 h of uncommitted work sitting on disk;
+`cleanpro-exp-monitor` gaps mean experiment monitoring blind for the same window.
+
+**Fix (small, local, read-only path):** the interval branch needs a *history*, not a threshold —
+compare consecutive `Running job: <id>` timestamps in `logs/infra.log` over a lookback and report
+gaps > `interval + grace`, instead of comparing `last_run` to `now − 1.5 × interval`. Boss's call
+because it changes what the check reports (it would print a rate, not a binary), and because the
+question of whether these losses are *acceptable* — the host sleeps, and a discarded `auto-commit`
+is recovered by the next fire — is a judgement no cycle should make alone.
+⚠️ **Do not classify the gaps as discard-vs-deferral from `g % interval`** — this cycle tried and the
+test was wrong (`14399 % 7200 = 7199`, so a 4 h gap 1 s short mislabels). The durations below are
+raw timestamp differences and stand; the split is unreported. Use §1's `armed + S` form if you want it.
+
+Evidence: `memory/t0/2026-08-15/heartbeat-2355z.md`.
+
 ---
 
 *Anything resolved: delete the row, don't annotate it. This file earns its place by staying short.*

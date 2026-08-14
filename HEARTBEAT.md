@@ -551,6 +551,23 @@ call on the one thing that *does* need `ps`: your own start.
 > ever reads `last_run` back.)*
 > ⚠️ **Detection is not recovery.** The script tells you a fire was lost; it does not rerun the job,
 > and the missing report stays missing. Say which you mean.
+> ⛔ **`n/14` covers the CRON jobs only — the `interval_seconds` branch (`:60-64`) answers a DIFFERENT
+> QUESTION and is blind to a closed outage** (2026-08-15 06:5x ICT, `QUEUE.md` #8). `cron` asks the
+> trigger *"did the last owed fire run?"*; `interval` asks `now − 1.5 × interval`, i.e. *"am I
+> mid-outage right now?"* — so an interval job that drops a fire and resumes stamps a fresh `last_run`
+> and reads healthy the moment it recovers. Measured since 08-01: `auto-commit` and
+> `cleanpro-exp-monitor` each fired **141** times and lost **32** (**18.5 %**, worst gap **8 h**),
+> counts and boundaries identical to the second ⇒ host sleep, not the jobs. **This cycle printed
+> `13/14` while ~2.3 interval fires/day were being lost — both true at once.** So: do not read a clean
+> line as "no fires lost"; read it as "no *cron* fire is owed and unrun, and no interval job is
+> mid-outage *at this instant*". Same shape as the `last_status: OK` blindness that motivated the
+> script — closed for one branch, left open for the other, and better hidden because interval jobs
+> self-heal. **Transferable: when you ship a detector, ask what each BRANCH asks — a shared summary
+> line will happily average a real test and a proxy.**
+> ⚠️ **And don't classify those gaps as discard-vs-deferral with `g % interval`** — this cycle wrote
+> that test and it is wrong (`14399 % 7200 = 7199`: a 4 h gap 1 s short reads as "drifted"). The split
+> is real and decides whether the anchor moved; measure it with §1's `armed + S`, not a modulo.
+> Line 504's paraphrase trap, in arithmetic form.
 
 ⛔ **NEVER compute a next-fire from a `cron/jobs.json` string — `day_of_week` is APScheduler-numbered
 (0 = MONDAY), so every `* * N` fires ONE DAY LATER than it reads** (2026-08-15 05:2x ICT, n=3 jobs,
