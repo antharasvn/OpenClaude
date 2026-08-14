@@ -473,6 +473,26 @@ call on the one thing that *does* need `ps`: your own start.
   same-second timeout as its own signal** — bucketing timeouts by minute is one `grep -oE` and it
   separates "a job got slow" from "the slot is oversubscribed", which no per-job field in
   `cron/state.json` can express. Confidence high, read from the full log.
+  ⛔ **The free falsifier above RAN and came back CLEAN — 6 of 6 succeeded, so the CONCURRENCY branch is
+  falsified and the destagger ask is WITHDRAWN** (2026-08-14 14:24 ICT, observed). Same six jobs, same
+  single second, same 300 s cap: `cleanpro-alerts` **10 s**, `aividly-daily` **32 s**, `pdfai-daily`
+  **33 s**, `vidnotes-alerts` **84 s**, `mangii-daily` **122 s**, `echo-daily` **156 s** — the slowest
+  of the six clears the cap by **1.92×** and four of six finish under 35 s. Contention is *present*
+  today (the collision is structural — the same six have shared this instant daily since 08-06) and
+  costs nothing, so it cannot be what killed 08-13. That is the second independent refutation, after
+  the 0535z durations argument (the light jobs would have needed ~7.7× inflation): **08-13 14:05 was
+  one shared stall, not an oversubscribed slot.** Consequence: **do not ship the `0 3` → `0/10/20/30 3`
+  destagger** — it targets a cause that does not exist, and it was sent to the boss at 03:45 ICT, so
+  the retraction is the actionable half. The other two queued asks are untouched and rest on their own
+  evidence (`timeout=600`→1800 at `:149`; the `timeout=300` 9 %-margin item at `:117-121`).
+  **Transferable: a structural collision that has run daily for a week with ONE bad day is a
+  coincidence of timing, not a cause — before proposing a scheduling fix, count the days the same
+  collision ran clean.** The 08-13 entry already listed 08-06/09/10/11/12 as zero-timeout and
+  recommended the fix anyway; the falsifier is what turned that caveat into a verdict. Honest limit:
+  one clean day proves contention is not *sufficient* (which is all the destagger assumes), not that
+  no load coupling exists. Confidence **high** on withdrawing the ask, **moderate** on no coupling at
+  all. The 08-13 stall itself remains unexplained and has no live evidence left — the `ce` counters
+  cleared at today's slot exactly as predicted.
 - ⛔ **`armed + S` must accumulate S from the MOST RECENT evaluation — every executor evaluation
   RE-ARMS every pending wait, and carrying S from an older arming predicts discards that do not happen**
   (2026-08-14 03:16 ICT, n=1 retrodicted at **−12 s**, n=1 predicted forward at **−3 s**). The 1946z
