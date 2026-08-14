@@ -532,6 +532,31 @@ call on the one thing that *does* need `ps`: your own start.
 
 ### 1. Cron Job Health
 
+⛔ **NEVER compute a next-fire from a `cron/jobs.json` string — `day_of_week` is APScheduler-numbered
+(0 = MONDAY), so every `* * N` fires ONE DAY LATER than it reads** (2026-08-15 05:2x ICT, n=3 jobs,
+verified against both the installed APScheduler and every fire in `logs/infra.log`).
+`bot/scheduler.py:42` calls `CronTrigger.from_crontab`, which passes the token through **without**
+translating Unix numbering. `0` = Monday, `1` = Tuesday. Observed: `weekly-conjecture` (`* * 0`) last
+ran **Mon** 08-10; `vidnotes-weekly` (`* * 1`) **Tue** 08-11; `cleanpro-weekly` (`* * 1`) **Tuesdays**
+07-21 / 07-28 / 08-04. Six cycles had quoted these schedules as Sunday/Monday and `QUEUE.md` #1 carried
+two wrong dates to the boss, one of them in a Telegram message ("~38 h out" — it was ~62 h).
+**Cheap correct form:** `.venv/bin/python3 -c "from apscheduler.triggers.cron import CronTrigger; …
+CronTrigger.from_crontab(spec, timezone=tz).get_next_fire_time(None, now)"` — one call, no arithmetic.
+**Transferable: a DSL that looks like a standard is a claim about the PARSER, and only the parser can
+settle it.** Nothing in a crontab-shaped string ever prompts you to ask what reads it — same family as
+§3's *reasoning about a file nobody opened*, with the unopened thing being the interpreter.
+
+⛔ **`last_status: OK` does NOT mean the job ran — and for a WEEKLY job the difference lasts a week.**
+(2026-08-15, observed on `cleanpro-weekly`.) Its `last_run` was **265.7 h** old against a 168 h period
+with `last_status: OK`, `consecutive_errors: 0`: the Tue 08-11 03:30 fire fell inside a ~63 min sleep
+hole (`infra.log` 03:02:19 → 04:05:33), and `misfire_grace_time: 300` (`bot/scheduler.py:26`, no
+`coalesce`) **discarded** it. One CleanPro report simply does not exist. **`grep -n last_run bot/*.py`
+returns writes only — nothing in the repo compares `last_run` age to the period**, so this is
+undetectable by the fleet's normal pass. **Add the age column to your §1 sweep** (`age(last_run)` vs
+declared period) — it is one `python3` block over `cron/state.json` and it is the only check that
+catches this. It is also the exact mirror of QUEUE #1 (fresh `last_run`, no report): **one field is
+being asked "did it run?" and "did it work?" and can answer neither alone.** Filed as QUEUE #7.
+
 ⛔ **"The boss's queue" DID NOT EXIST until 2026-08-15 02:4x ICT — four findings below say they were
 queued and none of them were.** Lines 545, 2138, 2232 and 303 write *"belongs in the boss's queue"*,
 *"stays boss-pending"*, *"drop it from the boss queue"*, *"a spurious queue item"*. A `find` for

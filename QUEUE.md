@@ -21,8 +21,17 @@ Only `last_status` carries it, and `consecutive_errors` resets to 0 on the next 
 
 | job | schedule | last | next fire |
 | --- | --- | --- | --- |
-| `weekly-conjecture` | `0 8 * * 0` America/New_York | `2026-08-10T12:10:00Z` (= fire + 600 s) | **Sun 2026-08-16 08:00 ET** |
-| `vidnotes-weekly` | `30 7 * * 1` Europe/Warsaw | `2026-08-11T05:40:00Z` (= fire + 600 s) | **Mon 2026-08-17 07:30 Warsaw** |
+| `weekly-conjecture` | `0 8 * * 0` America/New_York | `2026-08-10T12:10:00Z` (= fire + 600 s) | **Mon 2026-08-17 08:00 ET** (19:00 ICT) |
+| `vidnotes-weekly` | `30 7 * * 1` Europe/Warsaw | `2026-08-11T05:40:00Z` (= fire + 600 s) | **Tue 2026-08-18 07:30 Warsaw** |
+
+⚠️ **Those two dates were each one day earlier in this table until 2026-08-15 05:2x ICT, and the
+`~38 h out` figure heartbeat 2157z sent you was wrong for the same reason — see #7.** These cron
+strings are parsed by `CronTrigger.from_crontab`, and **APScheduler numbers `day_of_week` from
+0 = Monday**, not Unix cron's 0 = Sunday. So `* * 0` is Monday and `* * 1` is Tuesday. Confirmed
+against the installed APScheduler *and* against every fire in `logs/infra.log`: `weekly-conjecture`
+last ran Mon 08-10, `vidnotes-weekly` Tue 08-11, `cleanpro-weekly` Tuesdays 07-21 / 07-28 / 08-04.
+No job is misbehaving — the **strings mean one day later than they read.** Nothing to fix unless you
+want the files to say what they mean; the hazard is arithmetic done off the string.
 
 **Evidence it is a capacity limit, not a hang:** weekly-job successes climb continuously toward the
 cap (top two clear it by 72 s and 0 s) — the opposite signature to the heartbeat's own runtimes,
@@ -157,6 +166,28 @@ would then name the failing query without anyone having touched the daily runner
 with **no nested cap** — no `gtimeout`, no inner per-request timeout inside the 600 s at `:163`. So
 the 300/600 inversion in #2 does **not** apply to #1, and #1's `600 → 1800` is not that mistake.
 Evidence: `memory/t0/2026-08-15/heartbeat-2157z.md`.
+
+## 7. A weekly job can lose a fire to sleep and still read `OK` — `cleanpro-weekly` just did
+
+**Where:** `bot/scheduler.py:26` (`job_defaults={"misfire_grace_time": 300}`, no `coalesce`); the
+detection gap is that **no code in `bot/` ever reads `last_run` back** (`:85` displays it, `:195`
+and `:205` write it — that is the whole population).
+
+**Observed:** `cleanpro-weekly` `last_run` = `2026-08-03T20:37:28Z` ⇒ **265.7 h** against a 168 h
+period, with `last_status: OK` and `consecutive_errors: 0`. The missing fire is Tue 2026-08-11
+03:30 ICT; `logs/infra.log` jumps **03:02:19 → 04:05:33** (~63 min of sleep, which also delayed
+`echo-backend-alerts` to 04:05:33, 33 s late). 63 min ≫ the 300 s grace, so APScheduler **discarded**
+the fire. The CleanPro report for Aug 4–11 does not exist and nothing raised a flag; the gap will
+read 14 days when 08-18 fires.
+
+**Why it is invisible, and why it is #1's mirror:** `last_status` answers *"did the last run
+succeed?"*, never *"did it run?"* #1 is the opposite corner of the same hole — a job that stamps a
+**fresh** `last_run` while producing **no report**. One field cannot answer both questions, and
+today the fleet checks only that field. **Ask:** a staleness check (`age(last_run) > 1.5 × period`
+⇒ warn) covers both corners at once. Derive the period from `get_next_fire_time`, **not** from the
+cron string — see the #1 note above, where the string is a day off and would make a weekly check
+flap.
+Evidence: `memory/t0/2026-08-15/heartbeat-2216z.md`.
 
 ---
 
