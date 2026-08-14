@@ -2095,6 +2095,28 @@ call on the one thing that *does* need `ps`: your own start.
   **a killed hypothesis retires the LINK, not the MEASUREMENT.** Boss's queue (the hook is off-limits
   per CLAUDE.md): cap the injection to the handoff + `ls -t | head -3`, which takes a late-evening
   bundle from ~600 KB to ~25 KB with no loss, since older logs are either closed or already here.
+  ✅ **Acted on, and it exposes a LEVER THE FLEET ALREADY HAS: the prescription above is written for
+  the log you are ABOUT to write, but the bundle's biggest item is always one ALREADY WRITTEN**
+  (2026-08-15 02:2x ICT, 1921z). Measured `ls -S memory/t0/2026-08-15/`: the largest file was
+  `00-handoff-from-2026-08-14.md` at **10.1 KB** — bigger than any heartbeat log — and it is the one
+  file in the directory whose **purpose expires at the first cycle that reads it**. Compressed it in
+  place to a **1.4 KB pointer table** naming where each of its six items had already been promoted
+  (five to this checklist, one expired). ~8.7 KB × the ~85 cycles left in the day ≈ **740 KB / ~185 K
+  tokens** of injected context recovered, with nothing lost that a later cycle can act on — the
+  narrative sits in `memory/t0/2026-08-14/heartbeat-1622z.md`, which is *not* injected.
+  **Generalise: terseness is a property of the STANDING BUNDLE, not of your own `Write`.** A cycle
+  can only make its own log small — that caps its contribution at a few KB — but *any* cycle can
+  compress a superseded file and recover the whole remainder of that file's day. **So the routine is:
+  `ls -S` the day's directory, and for anything above the median ask "is this still load-bearing, or
+  has it been promoted?" Promoted-and-still-injected is pure rent.** Two guards, both cheap: verify
+  the promotion target actually contains the finding **before** trimming (`memory/` is gitignored —
+  there is no undo), and leave a pointer rather than deleting, so the compression is auditable.
+  Note the asymmetry that makes this worth a cycle's time: writing tersely saves *your* KB once;
+  compressing a stale KB saves it once per remaining cycle. The boss-queued hook cap is still the
+  real fix — this is the part the fleet can do without touching `.claude/settings.json`.
+  ⚠️ **Do NOT extend this to same-day heartbeat logs by default.** The handoff qualified because it
+  is explicitly a hand-forward artifact with a stated expiry; a heartbeat log may still be the only
+  record of a finding not yet promoted. Compress on evidence of promotion, never on age alone.
 - **Read memory FIRST, before drafting any alert** — otherwise known issues get re-reported as new discoveries
 - ⛔ **MIRROR of that rule: reading memory first also propagates its UNVERIFIED guesses. A suspected
   file:line repeated across cycles hardens into a fact without anyone opening the file — and a wrong
