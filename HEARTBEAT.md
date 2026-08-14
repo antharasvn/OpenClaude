@@ -492,6 +492,18 @@ call on the one thing that *does* need `ps`: your own start.
   A job dropped by `misfire_grace_time` never runs, never errors, and keeps `last_status: OK`
   forever — `OK` plus staleness is a *broken health signal*, not a healthy job. Resolve schedules
   from `cron/jobs.json` (per-job timezones), never from prior heartbeat prose.
+  ⛔ **Same rule run BACKWARDS, and 1601z nearly filed the false positive: an ABSENT log line at an
+  expected-looking wall-clock minute is not a missed fire either** (2026-08-14 23:01 ICT). At 23:01
+  ICT `logs/infra.log` had no `23:00` or `23:01` entry, and `cleanpro-alerts` / `vidnotes-alerts`
+  *looked* hourly from their `last_run` values (22:00:12 ICT / 17:01 Warsaw). `cron/jobs.json`
+  refutes it: both are **2-hourly step ranges** — `cleanpro-alerts` = `0 8-22/2 * * *`
+  Asia/Saigon, `vidnotes-alerts` = `0 7-23/2 * * *` Europe/Warsaw. Nothing was due.
+  Two traps stacked: **(a) two `last_run`s 2 h apart are indistinguishable from an hourly job that
+  missed one — a period cannot be inferred from an interval between observations**; **(b) a step
+  range's UPPER BOUND makes a nightly gap that reads exactly like an outage** — `8-22/2` means
+  22:00 ICT is `cleanpro-alerts`' *last* fire of the day and the next is 08:00 ICT, a 10 h silence
+  that is the schedule, not a defect. Read the cron expression **before** calling a slot missed,
+  not only when deriving the last expected fire.
   ⛔ **The MIRROR trap, sign flipped: `last_run` ADVANCES ON A TIMED-OUT `prompt` JOB, so a FRESH
   `last_run` is not evidence anything was delivered** (2026-08-11 12:43 ICT). `vidnotes-weekly` fired
   its slot at 12:30:00 and died at **12:40:00** (`Prompt job … timed out after 10 min`) — yet
