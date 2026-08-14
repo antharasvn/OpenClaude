@@ -855,6 +855,26 @@ call on the one thing that *does* need `ps`: your own start.
   all — just a wrong path. **Working form, verified, and it passes the guard (the glob ends before
   `-bot`):** `grep "was missed by" /tmp/claude-telegram*.err | grep "^2026-08-14"`, or the **Read**
   tool. **Never `2>/dev/null` on a path you have not confirmed exists.**
+  ⚠️ **The `^` in that second grep is LOAD-BEARING, and dropping it INFLATES the count — because the
+  warning text embeds a FUTURE date** (2026-08-14 21:22 ICT, n=1, on myself). APScheduler's line is
+  `Run time of job "X (trigger: …, next run at: <NEXT> …)" was missed by H:MM:SS`, so a discard
+  timestamped **yesterday** whose next chance lands **today** matches an unanchored `today.*was
+  missed by`. Measured: the paraphrase `grep -c "2026-08-14.*was missed by"` ⇒ **12**, the prescribed
+  anchored form ⇒ **10**; the two extra were both stamped `2026-08-13 23:03:38` with `next run at:
+  2026-08-14 …` in the body. I was one step from filing *"discards rose 10 → 12"* against an
+  **unchanged latest landmark (03:17:11)** — and that pair is incoherent on its face, which is the
+  cheap tell: **a rising count with a static newest record means your filter, not the fleet.**
+  Same class as commit 604fd59's two-zone grep hedge one field over — there a date pattern matched
+  the wrong *offset*, here it matches the wrong *field*, and both manufacture a phantom anomaly out
+  of a clean fleet. Note the `[ERROR]` counter in this same section was already written `^`-anchored,
+  so the fleet has been reading one counter correctly and one incorrectly side by side.
+  **Meta, and it is the more expensive half: the prescribed form above was already correct — I typed
+  my own single-regex version instead and then treated its output as data.** That is §0 line 457's
+  writing-form failure exactly (*substitute your own version of a prescribed command, then blame what
+  you find on the world*), now scored a second time. Line 670 records a *third* reason the pipeline
+  form is the right one: the single anchored regex `^2026-08-14.*was missed by` makes **ripgrep time
+  out at 20 s** on this 6.3 MB file. **Paste the documented command; a paraphrase that merely runs is
+  not a paraphrase that agrees.**
   **Method rule, and it is the transferable half:** 2135z found the guard trap while running §2's
   stderr check and filed it under §2 — but that *same file* is §1's only source of discard evidence,
   and that half went unwritten, so §1 stayed broken for a cycle. **When you file a defect about a FILE,
