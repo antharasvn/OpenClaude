@@ -2064,6 +2064,27 @@ call on the one thing that *does* need `ps`: your own start.
 - Alert if bot is down or throwing repeated errors
 
 ### 3. Memory & Reminders
+- ⛔ **Log length is a FLEET-WIDE shared resource, not a personal one: the SessionStart hook `cat`s
+  EVERY log of the current day, uncapped, into EVERY later cycle** (2026-08-15 01:4x ICT, hook source
+  read, sizes measured). `.claude/settings.json:23` is `for f in "$LOGDIR"/*.md; do … cat "$f"; done`
+  — no `tail`, no `head`, no size guard; the bundle ramps from 0 at midnight to **600–692 KB** by
+  late evening (08-14: 600 K / 76 files; 08-11: 692 K / 65). At 01:41 with only 7 files mine was
+  already **44.6 KB** and overflowed the harness's inline cap. **The cost is quadratic in the day:** a
+  log written at cycle *k* is re-injected into the ~(76 − k) cycles after it, ≈ **23 MB of injected
+  context per day** (~5.7 M tokens) spent re-reading the day's own logs. So the marginal cost of a KB
+  is not your one `Write` — it is that KB × every remaining cycle today.
+  **Consequence with teeth: context spent scales with time of day, so the most context-starved cycles
+  are the 23:0x ones — exactly where the midnight-handoff duty lives.** The day's most important
+  artifact is written by the cycle with the least room. (This retro-justifies 1622z writing the
+  handoff 38 min early for a reason it did not name.) **Prescription: write tersely, put the durable
+  version in `HEARTBEAT.md` — read once, on demand, and truncated — and do NOT restate closed findings
+  to make a log "self-contained"; self-containment is what is being charged ~70× a day.**
+  **Why this sat unremarked:** §0 cites the bundle twice (~147 KB, 154.3 KB) but only ever as a
+  *candidate driver of the time-to-first-call bias*, where line 448 correctly **falsified** it.
+  Falsifying a quantity as the driver of one effect is not evidence about its cost elsewhere —
+  **a killed hypothesis retires the LINK, not the MEASUREMENT.** Boss's queue (the hook is off-limits
+  per CLAUDE.md): cap the injection to the handoff + `ls -t | head -3`, which takes a late-evening
+  bundle from ~600 KB to ~25 KB with no loss, since older logs are either closed or already here.
 - **Read memory FIRST, before drafting any alert** — otherwise known issues get re-reported as new discoveries
 - ⛔ **MIRROR of that rule: reading memory first also propagates its UNVERIFIED guesses. A suspected
   file:line repeated across cycles hardens into a fact without anyone opening the file — and a wrong
