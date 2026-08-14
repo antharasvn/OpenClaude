@@ -32,6 +32,22 @@
 > wrapper start into the state file or an env var so it needs no discipline at all.
 > **Transferable: when a rule is violated N times in a row, ask WHEN the reader reaches it, not just
 > where it sits. Documentation cannot govern behaviour that precedes reading the documentation.**
+>
+> ⛔ **RE-RUN that same command whenever you need the CURRENT time — never estimate elapsed time from
+> how much work you have done.** The mandated first call is not just a cycle-start stamp; it is a free,
+> always-correct clock for the whole cycle, and it needs no `date` (so it never trips the ban above).
+> `etime` is your elapsed awake time directly — read it, don't derive it.
+> *(Added 2026-08-14 18:06 ICT by 1102z, which nearly filed a false §1 finding on exactly this.* At six
+> tool calls in, I judged "it must be ~18:07", found no `18:05` line in `infra.log` and no fresh
+> `last_run`, and was about to record `echo-backend-alerts` as **failing to fire on its slot**. Re-running
+> the wrapper `ps` showed `etime 01:56` ⇒ the true wall clock was **18:04:31** — the slot was still 30 s
+> in the *future*. Polled it properly: fired **18:05:00**, completed in 5 s, `OK`. *A guessed clock that
+> runs fast turns "not yet" into "broken", and a heartbeat's whole job is telling those apart.*)
+> **Note the asymmetry that makes this dangerous: work-count is a BIASED estimator of elapsed time, and
+> the bias runs fast** — tool calls feel like minutes and cost seconds. So the error mode is
+> systematically "I am later than I am", i.e. **premature not-fired verdicts and self-inflicted budget
+> panic**, never the reverse. Same shape as the exit-estimate bias at line 219: a biased clock needs
+> correcting, not padding. Cost of the fix is one `ps` call.
 
 The wrapper is `gtimeout 600 claude -p "Run heartbeat: …"` (seen in `ps`), so the cycle is killed at
 T+600 s, mid-write, with no chance to save a log. This is the mechanism behind memory §249's
