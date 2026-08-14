@@ -183,11 +183,40 @@ read 14 days when 08-18 fires.
 **Why it is invisible, and why it is #1's mirror:** `last_status` answers *"did the last run
 succeed?"*, never *"did it run?"* #1 is the opposite corner of the same hole — a job that stamps a
 **fresh** `last_run` while producing **no report**. One field cannot answer both questions, and
-today the fleet checks only that field. **Ask:** a staleness check (`age(last_run) > 1.5 × period`
-⇒ warn) covers both corners at once. Derive the period from `get_next_fire_time`, **not** from the
-cron string — see the #1 note above, where the string is a day off and would make a weekly check
-flap.
-Evidence: `memory/t0/2026-08-15/heartbeat-2216z.md`.
+today the fleet checks only that field.
+
+⚠️ **This row originally asked for `age(last_run) > 1.5 × period ⇒ warn`. Do not build that — it was
+implemented and run against all 14 jobs on 2026-08-15 05:3x ICT and it fails in BOTH directions.**
+
+*Too tight:* `cleanpro-alerts` (`0 8-22/2 * * *`) and `vidnotes-alerts` (`0 7-23/2 * * *`) are
+**banded** — they stop overnight — so they have no single period. Two consecutive fires give 2.00 h;
+the real max gap is **10.00 h** and **8.00 h**. The check warns 01:00→08:00 ICT *every night* for
+`cleanpro-alerts` (29 % of the clock) and 5 h/night for `vidnotes-alerts`, on healthy jobs. It fired
+during the test run: `STALE! cleanpro-alerts ratio=3.81`, job fine.
+
+*Too loose:* the one true positive, `cleanpro-weekly`, reads **ratio 1.58** — it crossed 1.5 only
+**84 h after** the missed fire, and clears the threshold by 5 %. Raising to `2 ×` to silence the
+nightly noise would have reported the whole fleet clean while the report was missing. No multiplier
+does both.
+
+**Build this instead — no period, no multiplier, no threshold to choose.** Ask the trigger for its
+own fires and compare the last one before now against `last_run`:
+
+```python
+trig = CronTrigger.from_crontab(sch['cron'], timezone=ZoneInfo(sch['timezone']))
+t, prev = now - timedelta(days=16), None
+while (n := trig.get_next_fire_time(t, t + timedelta(seconds=1))) and n < now:
+    prev, t = n, n
+missed = last_run is None or last_run < prev - timedelta(seconds=60)
+```
+
+Measured against all 12 cron jobs: **11 ok, 1 MISSED — `cleanpro-weekly`, 167.9 h behind its last
+expected fire.** Zero false positives on the banded pair (correctly resolved to `Fri 08-14 22:00 ICT`
+and `Sat 08-15 04:00 ICT`), and it would have caught `cleanpro-weekly` on **08-11 at 03:35** instead
+of 08-14. It is also immune to #1's day-of-week trap for free — it never interprets the string, it
+asks the parser. (`auto-commit` / `cleanpro-exp-monitor` are `interval_seconds`, not cron; for those
+`age > 1.5 × interval` is safe, since an interval genuinely has no bands.)
+Evidence: `memory/t0/2026-08-15/heartbeat-2235z.md`, `-2216z.md`.
 
 ---
 
