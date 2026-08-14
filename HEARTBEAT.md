@@ -390,9 +390,13 @@ Get cycle start from `ps -eo pid,etime,command | grep '[g]timeout 600 claude'`.
   file (`infra.log`); `grep -c "was missed by" logs/infra.log` = **0** across the whole 2.0 MB. The
   APScheduler warnings live in **`/tmp/claude-telegram-bot.err`** — the `StandardErrorPath` declared
   in `~/Library/LaunchAgents/com.claude.telegram-bot.plist` (stdout goes to
-  `/tmp/claude-telegram-bot.log`). Every `armed + S` claim above depends on those lines, and several
-  cycles have written *"no `was missed by` line since HH:MM:SS"* in the same breath as an
-  `logs/infra.log` read — same shape as the 08-13 `logs/infra.err` discard-check false negative.
+  `/tmp/claude-telegram-bot.log`). Every `armed + S` claim above depends on those lines, yet **no step of
+  this checklist has ever named the file that holds them** — so this is prophylactic, not a scored
+  failure: 0009z's *"no `was missed by` line since 03:17:11"* is **confirmed correct** here (the last
+  misfire in the entire file is `2026-08-14 03:17:11`, Echo Backend Alerts), i.e. that cycle found
+  the right file without the checklist telling it to, and the next one may not. Same shape as the
+  08-13 `logs/infra.err` discard-check false negative — a grep against a path that cannot contain the
+  pattern returns clean and *reads* as evidence of health.
   **Grep `/tmp/claude-telegram-bot.err`, not `logs/infra.log`, for misfires.**
   ⚠️ **`guard/guard.sh` BLOCKS any Bash command containing that path** (`BLOCKED: You are not allowed
   to kill processes.`) — a false positive on read-only `grep`/`tail`. **Use the Grep tool on
