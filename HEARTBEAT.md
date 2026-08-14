@@ -3,6 +3,23 @@
 ## Every Check (runs every 15 min)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
+
+> **FIRST ACTION OF EVERY CYCLE — do this before any other tool call, before any timing claim:**
+> ```
+> ps -eo pid,lstart,etime,command | grep '[g]timeout 600 claude'
+> ```
+> That `lstart` is your cycle start; your kill is `lstart + 600 s`. Sanity-check that `etime` is
+> roughly your elapsed cycle, **not `00:00`**.
+> ⛔ **Do NOT use `date`, and do NOT use `ps -o lstart= -p $$`.** Both timestamp *your first tool
+> call*, not the cycle — they return the same instant as each other and read **+10 s to +92 s late**,
+> which silently *manufactures* budget you do not have. There is nothing to subtract and no
+> tolerance band that works; the bias is variable with no known driver. Reasoning at lines 294–383.
+>
+> *(Added 2026-08-14 16:53 ICT after **four consecutive cycles** — 0852z, 0909z, 0926z, 0949z — made
+> exactly this mistake while the correct form sat 300 lines below their first tool call. If you are
+> about to defer a checklist fix to the boss, re-read line 215 first: you are probably allowed to
+> make it yourself.)*
+
 The wrapper is `gtimeout 600 claude -p "Run heartbeat: …"` (seen in `ps`), so the cycle is killed at
 T+600 s, mid-write, with no chance to save a log. This is the mechanism behind memory §249's
 `exit 124` — that entry records the symptom as fixed but never names the cap.
