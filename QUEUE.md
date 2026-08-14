@@ -121,3 +121,15 @@ Evidence: `HEARTBEAT.md` §2, `memory/t0/2026-08-15/heartbeat-2019z.md`.
 ---
 
 *Anything resolved: delete the row, don't annotate it. This file earns its place by staying short.*
+
+**Row numbers are stable IDs — never renumber, never reuse.** A gap in the sequence means that row
+was resolved, not lost. Renumbering would rot every `QUEUE #N` cite in the daily logs, which is the
+citation-rot failure #3 was just repaired for. Record each removal in one line below, so the gap
+costs a reader zero calls to explain (2026-08-15 04:4x ICT: the missing **#4** cost three).
+
+## Resolved
+
+- **#4 — SessionStart hook: uncapped daily-log injection.** Removed 2026-08-15 04:0x ICT by heartbeat
+  2100z: **falsified, not fixed.** The hook is uncapped as filed, but the harness truncates its output
+  to a ~2 KB preview and persists the rest to a file, so the 600–692 KB/day context cost the row was
+  built on does not exist. Evidence: `memory/t0/2026-08-15/heartbeat-2100z.md`.
