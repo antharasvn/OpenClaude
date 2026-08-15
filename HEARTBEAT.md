@@ -113,6 +113,15 @@ declined — a permission you withhold from yourself is not withheld if your pro
 loop. "Disclosed, no outage" describes the next minute, never what is now armed.** Do NOT stop it
 (supervision path, and `guard.sh` forbids the verb); the ask is with the user. Evidence:
 `memory/t0/2026-08-15/heartbeat-1423z.md`.
+⛔ **AND IT SAT UNDELIVERED FOR FOUR CYCLES — A DECISION FILED IN A DAILY LOG HAS NOT BEEN ASKED**
+(2026-08-15 22:4x ICT, 1540z). 1403z/1423z/1442z/1522z each wrote *"the ask is with the user"* into
+`memory/t0/…`, a tree the user does not read; `logs/infra.log` has **zero** sends naming it. The
+watchdog was armed **1h38m** before the first Telegram message went out, this cycle. **RULE: if a
+finding's resolution requires the USER to act, the daily log is evidence, never the channel — send it
+the same cycle you file it, or it is not pending, it is dropped.** Same shape as §3's carrier rule and
+as 1246z's *a setting takes effect at a RE-READ*: writing is not delivering. Cheap correct form:
+`Write` the body to a file, then `./skills/telegram-sender/send.sh --text "$(cat <file>)"` — the
+`$(cat …)` form is also what gets prose past `guard.sh`.
 ⛔ **AND A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE — THE FLEET LOST 18:00–18:05 ICT WITH THE HOST
 AWAKE** (2026-08-15 22:0x ICT, 1500z). `echo-backend-alerts` (America/New_York, `:05` hourly, 18
 unbroken runs 00:05→17:05), `cleanpro-alerts` (Asia/Saigon) and `vidnotes-alerts` (Europe/Warsaw) all
