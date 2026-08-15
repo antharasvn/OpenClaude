@@ -14,11 +14,21 @@ no commit records the crossing — the first cycle to hit it was the first to `R
 headroom restored.** All four targets 0152z named are now archived — §C the n=5…n=16 residual series,
 §D the n=1…n=7 proxy-bias series, §E the n=13 runtime table, §F the `exit 1` failure population.
 **Every imperative was rewritten INLINE and none was moved**; only measurements crossed over.
-⚠️ **2.3 KB is ~1.3 cycles of growth at the measured ~1.8 KB/cycle, so this is a reprieve, not a fix.**
-The next cycle that writes here should assume it owes another pass. Remaining targets, in order:
-§3's injection measurements, then §0's handoff/exit-estimate chain (that one is genuinely hard — it
-reads as narrative but has hard imperatives buried mid-paragraph, which is why 0152z and this cycle
-both left it). ⛔ **The method that made this pass safe, and the only way to do the hard block:
+✅ **SECOND PASS DONE 2026-08-15 09:4x ICT (0236z): 248,070 → 238,465 bytes, ONE block, 9.6 KB — four
+times what the previous pass recovered from four blocks.** §3's log-compression/injection thread
+(131 lines) is now `HEARTBEAT-ARCHIVE.md` §G; ~30 lines of surviving imperatives stayed inline.
+⛔ **The reason one block beat four: PICK A RETIRED THREAD, NOT A LONG ONE.** 0214z's four targets
+were live findings whose evidence had to be split from their prescriptions line by line; this one was
+already dead at its entry point, so the whole argument was residue and only the transferables came
+back. **Read the ✅/⛔ markers for a thread whose conclusion has been RETRACTED before you measure
+which block is biggest — a retired thread is nearly all archive by construction.**
+✅ **And it closes a loop: 0034z and 0113z both measured that MARKING a retraction fails (the reader
+enters above the mark, or jumps to a bold action label below it). Deleting the corpse to the archive
+is the form of rule (a) that cannot fail that way** — there is no stale prescription left to reach.
+So compaction and correctness-of-record are the same operation here, not competing ones.
+⚠️ **~11.5 KB of headroom to the 250 KB rule ≈ 6 cycles at ~1.8 KB/cycle.** Remaining target when it
+runs out: §0's handoff/exit-estimate chain (genuinely hard — it reads as narrative but has hard
+imperatives buried mid-paragraph, which is why 0152z and 0214z both left it). ⛔ **The method that made this pass safe, and the only way to do the hard block:
 extract each block's IMPERATIVES into a fresh bulleted rewrite FIRST, then move the residue.** Do not
 move a block and hope the summary caught everything. When you are over, do not delete a finding —
 **move the EVIDENCE to `HEARTBEAT-ARCHIVE.md` and leave the IMPERATIVE inline.** §A and §B there are
@@ -2138,144 +2148,51 @@ it. Confidence high; the `find` is dispositive.
 
 ### 3. Memory & Reminders
 
-> ⛔ **READ FIRST — the log-compression thread that opens this section is RETIRED at line 2320.
+> ⛔ **READ FIRST — the log-compression thread that opened this section is RETIRED, and as of
+> 2026-08-15 09:4x ICT (0236z) its evidence is gone from here entirely: `HEARTBEAT-ARCHIVE.md` §G.
 > Do not `ls -S` today's log dir and compress anything for context cost.** The bundle is *persisted,
 > not injected*; the saving is ~0 and compressing below the truncation threshold makes it **worse**.
 > *(Pointer added 2026-08-15 07:4x ICT by 0034z, which ran the `ls -S` and was one call from
-> compressing before it reached the retraction. See the ⛔ at the end of this thread for why the
-> ordering — not the content — is what cost the calls.)*
+> compressing before it reached the retraction — the ordering, not the content, cost those calls.
+> 0236z closed the gap the only way that fully works: it deleted the corpse instead of marking it,
+> which is rule (a) below taken to its conclusion. Note this pointer originally read "RETIRED at
+> line 2320" — a `HEARTBEAT.md:NNNN` self-cite, exactly what §1 forbids, and it had already rotted
+> before the archival moved it.)*
 
-- ⛔ **Log length is a FLEET-WIDE shared resource, not a personal one: the SessionStart hook `cat`s
-  EVERY log of the current day, uncapped, into EVERY later cycle** (2026-08-15 01:4x ICT, hook source
-  read, sizes measured). `.claude/settings.json:23` is `for f in "$LOGDIR"/*.md; do … cat "$f"; done`
-  — no `tail`, no `head`, no size guard; the bundle ramps from 0 at midnight to **600–692 KB** by
-  late evening (08-14: 600 K / 76 files; 08-11: 692 K / 65). At 01:41 with only 7 files mine was
-  already **44.6 KB** and overflowed the harness's inline cap. **The cost is quadratic in the day:** a
-  log written at cycle *k* is re-injected into the ~(76 − k) cycles after it, ≈ **23 MB of injected
-  context per day** (~5.7 M tokens) spent re-reading the day's own logs. So the marginal cost of a KB
-  is not your one `Write` — it is that KB × every remaining cycle today.
-  **Consequence with teeth: context spent scales with time of day, so the most context-starved cycles
-  are the 23:0x ones — exactly where the midnight-handoff duty lives.** The day's most important
-  artifact is written by the cycle with the least room. (This retro-justifies 1622z writing the
-  handoff 38 min early for a reason it did not name.) **Prescription: write tersely, put the durable
-  version in `HEARTBEAT.md` — read once, on demand, and truncated — and do NOT restate closed findings
-  to make a log "self-contained"; self-containment is what is being charged ~70× a day.**
-  **Why this sat unremarked:** §0 cites the bundle twice (~147 KB, 154.3 KB) but only ever as a
-  *candidate driver of the time-to-first-call bias*, where line 448 correctly **falsified** it.
-  Falsifying a quantity as the driver of one effect is not evidence about its cost elsewhere —
-  **a killed hypothesis retires the LINK, not the MEASUREMENT.** Boss's queue (the hook is off-limits
-  per CLAUDE.md): cap the injection to the handoff + `ls -t | head -3`, which takes a late-evening
-  bundle from ~600 KB to ~25 KB with no loss, since older logs are either closed or already here.
-  ✅ **Acted on, and it exposes a LEVER THE FLEET ALREADY HAS: the prescription above is written for
-  the log you are ABOUT to write, but the bundle's biggest item is always one ALREADY WRITTEN**
-  (2026-08-15 02:2x ICT, 1921z). Measured `ls -S memory/t0/2026-08-15/`: the largest file was
-  `00-handoff-from-2026-08-14.md` at **10.1 KB** — bigger than any heartbeat log — and it is the one
-  file in the directory whose **purpose expires at the first cycle that reads it**. Compressed it in
-  place to a **1.4 KB pointer table** naming where each of its six items had already been promoted
-  (five to this checklist, one expired). ~8.7 KB × the ~85 cycles left in the day ≈ **740 KB / ~185 K
-  tokens** of injected context recovered, with nothing lost that a later cycle can act on — the
-  narrative sits in `memory/t0/2026-08-14/heartbeat-1622z.md`, which is *not* injected.
-  **Generalise: terseness is a property of the STANDING BUNDLE, not of your own `Write`.** A cycle
-  can only make its own log small — that caps its contribution at a few KB — but *any* cycle can
-  compress a superseded file and recover the whole remainder of that file's day. **So the routine is:
-  `ls -S` the day's directory, and for anything above the median ask "is this still load-bearing, or
-  has it been promoted?" Promoted-and-still-injected is pure rent.** Two guards, both cheap: verify
-  the promotion target actually contains the finding **before** trimming (`memory/` is gitignored —
-  there is no undo), and leave a pointer rather than deleting, so the compression is auditable.
-  Note the asymmetry that makes this worth a cycle's time: writing tersely saves *your* KB once;
-  compressing a stale KB saves it once per remaining cycle. The boss-queued hook cap is still the
-  real fix — this is the part the fleet can do without touching `.claude/settings.json`.
-  ⚠️ **Do NOT extend this to same-day heartbeat logs by default.** The handoff qualified because it
-  is explicitly a hand-forward artifact with a stated expiry; a heartbeat log may still be the only
-  record of a finding not yet promoted. Compress on evidence of promotion, never on age alone.
-  ⛔ **The bundle is NOT INJECTED — the harness PERSISTS it and shows ~2 KB. Every number above is
-  the size of the thing that did *not* reach context, and the compression saving is ~0** (2026-08-15
-  04:0x ICT, n=2, quoted verbatim not inferred). This cycle's SessionStart hook output arrived as
-  *"Output too large (67.4KB). Full output saved to: …/tool-results/hook-…-stdout.txt — Preview
-  (first 2KB)"*. The hook is uncapped exactly as line 2134 says; **the consumer caps it**, so the
-  "~23 MB of injected context per day" and the "740 KB recovered" are both charges against a
-  diversion, not an injection. **The fleet's own evidence already said so:** the 154.3 KB figure §0
-  cites twice is sourced in `memory/t0/2026-08-14/heartbeat-0241z.md:26` to *"the SessionStart hook's
-  own **persisted-output notice**"* — the number was legible **because** the bundle had been written
-  to a file instead of injected. Both readings (154.3 KB, 67.4 KB) truncated; none observed passing
-  through whole.
-  **The prescription inverts, which is the part to act on:** compression only helps while the bundle
-  stays **above** the truncation threshold. Line 2153's target — 600 KB down to ~25 KB — would very
-  likely land it **below**, injecting all 25 KB in full, i.e. **~12× the 2 KB preview it replaced.**
-  The threshold is unmeasured, so the crossover is unknown; until someone measures it, **do not
-  compress for context cost.** Compressing for *readability* is still defensible — a successor now
-  has to `Read` the persisted path to see the day's logs at all — but that is the opposite argument
-  and must be made as one. `QUEUE.md` #4 (asking the boss for a hook cap) is withdrawn on this basis.
-  **Transferable: when a number arrives inside a notice, read what the notice is ANNOUNCING.**
-  `67.4KB` is not a measurement of an injection, it is the receipt for a diversion — and it was cited
-  four times across §0 and §3 without anyone reading the sentence containing it. Same shape as §1's
-  *"open the destination"*, aimed at a measurement instead of a filing. Confidence **high**.
-  ⛔ **That retraction is CORRECT and still FAILED to stop me, because a REFINEMENT sits between the
-  prescription and its death — and a refinement is positive evidence that the thing it refines is
-  alive** (2026-08-15 07:4x ICT, n=1, observed on myself, caught one call short of acting). Reading
-  §3 top-down I hit the routine at the ✅ above — *"the routine is: `ls -S` the day's directory …
-  Promoted-and-still-injected is pure rent"* — ran it (27 files, 172 KB, ~66 cycles left in the day),
-  and was pricing which log to compress. The next thing I read was the ⚠️ *"Do NOT extend this to
-  same-day heartbeat logs **by default** … compress on evidence of promotion, never on age alone"*,
-  which **narrows the scope of a live rule**. Nobody writes a scope limit for a dead rule, so it
-  reads as confirmation, and I went looking for the promotion evidence it asked for. Only the block
-  after that kills the whole thread. **Ordering, not content: the retraction was two blocks late and
-  the intervening block pointed the wrong way.** This is §0 line 25's finding — *documentation cannot
-  govern behaviour that precedes reading the documentation* — one level in: it cannot govern a
-  decision made **earlier in the same document** either. §0 solved its version by moving the
-  imperative into the `claude -p` prompt, the only text preceding the first tool call; the analogue
-  here is the section head, the only text preceding the thread. Pointer added there.
-  **Two transferable halves:**
-  **(a) When you retire a thread, the marker goes where the READER ENTERS, not where the ARGUMENT
-  ENDS.** Appending the correction is chronologically honest and operationally useless — the fleet
-  files corrections in the order they are discovered, which is exactly the order that puts every
-  superseded prescription *first*. Check the entry path, not the entry.
-  **(b) A refinement between a claim and its retraction is an ACTIVE hazard, not neutral filler** —
-  it does not merely fail to warn, it supplies fresh evidence of life, so the reader who would have
-  hesitated at a stale-looking rule proceeds instead. When killing a thread, re-read what sits above
-  the kill and neutralise any scope-limits, caveats, or worked examples that now argue for the corpse.
-  Cost here was ~2 calls and no damage (`memory/` has no undo, so the damage branch was real).
-  Confidence **high** — the reading order is reproducible from the file.
-  ⚠️ **(a) IS NECESSARY BUT NOT SUFFICIENT, and the counterexample was written by the very next cycle,
-  in the other file.** (2026-08-15 08:1x ICT, 0113z, found by reading `QUEUE.md` #6 as a boss would.)
-  0053z refuted #6's prescription by measurement and did exactly what (a) asks: it **rewrote the row's
-  opening** with *"Do not apply the old patch"* plus the correct structural replacement. But 30 lines
-  down, the row's original **`**Patch:**` line still stood, unmarked** — and `QUEUE.md` is not read
-  top-down. Every row in it is navigated by its bolded actionable label (`**Patch:**`, `**The actual
-  ask**`), which is precisely what a boss triaging a queue scans for. **The retraction was at the
-  entry point and the corpse was at the ACTION point, so a reader taking the file's own shortcut hits
-  the dead patch and never sees the retraction at all.** Struck it in place with a pointer up to the
-  live block; also annotated the `# ← drains it` code comment in the same row, which asserts as fact
-  the thing 0053z measured as `b''`.
-  **Sharpen (a) to: the marker goes where the reader ENTERS *and* at every ACTIONABLE LABEL the
-  document teaches readers to jump to.** In prose the two coincide; in an operational document —
-  a queue, a runbook, a checklist with `> RUN THIS FIRST` blocks — they diverge, and the action point
-  is the more dangerous of the two because reaching it means someone is about to *do* something.
-  **Test before you consider a retraction landed: search your own retracted row for every bold label,
-  imperative, and code comment, and ask what each one alone would tell someone who read nothing else.**
-  Note this is (b) at higher severity rather than a new class: a stale `**Patch:**` doesn't merely
-  argue for the corpse, it *is* the corpse wearing the label the reader was told to trust.
-  Cost of finding it: 0 extra calls (it surfaced while reading the queue for pending work); cost of
-  missing it: the exact no-op 0053z spent a patch and a revert to prevent. Confidence **high**.
-  ✅ **Applied it OUTWARD instead of to another document, and it paid: a standing refrain seven cycles
-  old was never checked against the code it describes** (2026-08-15 08:3x ICT, 0131z, both facts read
-  from source). Every cycle since 2235z has written *"detection ≠ recovery — the CleanPro Aug 4–11
-  report still does not exist"* — a sentence that quietly implies recovery is pending. It is not:
-  `cron/jobs.json` makes `cleanpro-weekly` a `prompt` job on `skills/cleanpro-weekly/SKILL.md`, and
-  that skill computes its window as **pure date arithmetic off today** (`:10-14`,
-  `START_DATE=date -v-7d` … `WEEK_LABEL=date -v-1d +%Y-W%V`), reading `last_run` **nowhere**. The
-  08-19 fire will query **Aug 12–18**; no fire of this job will ever produce the lost week. `QUEUE.md`
-  #7 amended at both its entry point and its action label.
-  **The transferable half is the conjecture that died on the way.** I had a clean compounding story —
-  #7's lost fire *feeds* #1's 600 s cap, because the next run would carry a **two-week** window
-  against a cap this job clears by only 152 s (its last real run: fire + **448 s** = 75 % of cap,
-  itself a counterexample to #1's "every weekly `prompt` job times out"). The mechanism does not
-  exist. **A causal chain between two queue rows is a hypothesis about a mechanism neither row
-  states — open the mechanism before filing the chain**, or the queue ends up carrying a failure the
-  code cannot produce, and the row it implicates gets argued partly from a phantom. Same family as
-  §0 line 527, one level out: there the error is running a paraphrase of a prescribed command; here it
-  is reasoning about a job from its **schedule row** instead of its **implementation**. A schedule
-  says when it fires; only the skill says what it asks for. Confidence **high**, cost 2 calls.
+- ⛔ **RETIRED THREAD — the log-compression argument that used to fill this bullet is dead. Do not
+  compress daily logs for context cost.** The SessionStart hook `cat`s every same-day log uncapped
+  (`.claude/settings.json:23`), but **the consumer truncates it**: the harness persists the bundle to
+  a file and shows a ~2 KB preview. So every KB-per-day figure the thread was built on charges a
+  *diversion*, not an injection, and compressing below the (unmeasured) truncation threshold would
+  inject the whole compressed bundle in full — worse than the preview it replaced. Compressing for
+  **readability** is a different and still-defensible argument; make it as one. Evidence, the full
+  measurement series, and the three narratives this bullet used to carry: `HEARTBEAT-ARCHIVE.md` §G.
+  **Guards that survive, for any compression you do decide to make:** `memory/` is gitignored, so
+  there is no undo — verify the promotion target actually contains the finding **before** trimming,
+  and leave a pointer rather than deleting.
+  ⛔ **Still in force, and the reason this bullet keeps its remaining lines — three rules about
+  RETIRING a finding, each measured on this fleet:**
+  **(a) When you retire a thread, the marker goes where the reader ENTERS *and* at every ACTIONABLE
+  LABEL the document teaches readers to jump to.** In prose the two coincide; in an operational
+  document — a queue, a runbook, a `> RUN THIS FIRST` block — they diverge, and the action point is
+  the more dangerous, because reaching it means someone is about to *do* something. **Test before you
+  consider a retraction landed: search your own retracted row for every bold label, imperative, and
+  code comment, and ask what each alone would tell someone who read nothing else.** (Measured twice:
+  0034z was one call from acting on a prescription retired two blocks below it; 0113z found `QUEUE.md`
+  #6's dead `**Patch:**` label standing 30 lines under its own retraction.)
+  **(b) A refinement between a claim and its retraction is an ACTIVE hazard, not neutral filler** — a
+  scope limit, caveat, or worked example is positive evidence that the rule it narrows is alive, so it
+  does not merely fail to warn, it argues for the corpse. **When retiring a thread, re-read what sits
+  ABOVE the mark and neutralise anything that now recommends it.**
+  **(c) A causal chain between two queue rows is a hypothesis about a mechanism neither row states —
+  open the mechanism before filing the chain.** A schedule row says when a job fires; only its
+  implementation says what it asks for. (0131z's compounding story linking #7's lost fire to #1's
+  600 s cap did not exist: `skills/cleanpro-weekly/SKILL.md:10-14` computes its window off *today* and
+  reads `last_run` nowhere.)
+  **Transferable, and the one that would have prevented the whole thread: when a number arrives inside
+  a NOTICE, read what the notice is ANNOUNCING.** `67.4KB` was never a measurement of an injection —
+  it is the receipt for a diversion, and it was cited four times across §0 and §3 without anyone
+  reading the sentence containing it.
 - **Read memory FIRST, before drafting any alert** — otherwise known issues get re-reported as new discoveries
 - ⛔ **MIRROR of that rule: reading memory first also propagates its UNVERIFIED guesses. A suspected
   file:line repeated across cycles hardens into a fact without anyone opening the file — and a wrong
