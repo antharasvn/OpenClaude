@@ -391,7 +391,27 @@ leave no daily LOG.** Two distinct modes, n=24 total:
 | usage-limit refusal | 20 (really **n=2 events**) | seconds | `You've hit your weekly/session limit` | yes |
 | **API stream death** | **3** | 4 m 22 s / 5 m 43 s / 7 m 03 s | `API Error: … mid-response` | **3 for 3** |
 | gtimeout SIGTERM | 1 | — | exit 143 (gtimeout's own return is **124**, not 143) | yes |
+| **DNS / network outage** | **1** | seconds | `API Error: Can't reach the API server … (ENOTFOUND)` | yes |
 
+⛔ **FOURTH MODE, AND IT IS DIAGNOSED OUTSIDE THE HEARTBEAT ENTIRELY — `logs/infra.log` IS A FREE,
+ALWAYS-ON, TIMESTAMPED NETWORK-OUTAGE METER** (2026-08-15 15:0x ICT, 0803z, on my own predecessor).
+The 07:26:30Z cycle died in seconds printing `Can't reach the API server … (ENOTFOUND)` — not a usage
+limit, not `mid-response`, not the cap. The bot's Telegram poller was failing `httpx.ConnectError:
+nodename nor servname provided` from **14:25:19 to 14:36:29 ICT**, a 670 s window that BRACKETS the
+dead cycle's start. **So when a cycle dies short or logless, grep `ConnectError` in `logs/infra.log`
+and bound the window before theorising** — it is an independent process on the same host, so it
+witnesses the outage even when the cycle that died could not.
+⛔ **BUT BOUND IT BY FIRST/LAST TIMESTAMP, NEVER BY LINE COUNT — the count measures the RETRY
+SCHEDULE, not the outage.** Today's 670 s window emitted 8 lines in its first minute and 1–2/min
+after: that is httpx backoff, so a longer outage can log fewer lines than a short one. The file's
+**6,784** timestamped hits since 04-12 are **307 distinct windows** (median **175 s**, max 11,668 s),
+not 6,784 incidents. Same family as §1's band-edge and aggregate-count traps: a derived quantity whose
+denominator is set by the instrument, not the event.
+⚠️ **And read the base rate before queuing a fix: 307 outages, exactly ONE heartbeat death.** ENOTFOUND
+appears once in the whole of `/tmp/claude-heartbeat.log`. Network outages are routine here (~2.4/day);
+what is rare is a cycle *starting* inside one. **This is a collision, not a regression — do not file it,
+and do not add a retry.** The transferable is the inverse of the usual one: when a novel-looking failure
+turns out to sample a common background event, the finding is the base rate, not the failure.
 ⛔ **RULE: `exit 1` IS NOT A DIAGNOSIS — read the line immediately ABOVE `Timed out or failed`; it names
 the mechanism. Use runtime only as the sanity check**, because a 4 m 22 s API death sits at the median of
 the success band and is indistinguishable from a success on runtime alone (it does separate API death from
