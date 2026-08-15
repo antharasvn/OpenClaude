@@ -568,6 +568,20 @@ call on the one thing that *does* need `ps`: your own start.
 > that test and it is wrong (`14399 % 7200 = 7199`: a 4 h gap 1 s short reads as "drifted"). The split
 > is real and decides whether the anchor moved; measure it with §1's `armed + S`, not a modulo.
 > Line 504's paraphrase trap, in arithmetic form.
+> ✅ **Now the OTHER direction, because the three entries above all push one way: a gap in
+> `infra.log`'s fire pattern that the detector did NOT flag is a BAND EDGE, not a miss** (2026-08-15
+> 07:1x ICT, 0015z, caught on itself). I read `vidnotes-alerts` firing at ICT 16,18,20,22,00,02,04 and
+> then stopping, called the 06:00 slot 75 min overdue, and spent two calls on it — 45 s **after** the
+> detector had printed `13/14` with only `cleanpro-weekly` flagged. It is `0 7-23/2` **Europe/Warsaw**
+> ⇒ ICT 12…04, dark 04:00→12:00 (already at line 1190). **The script asks each trigger to enumerate
+> its own fires and interprets no cron string, so it is authoritative on exactly this** (line 543) —
+> when your pattern-read and the detector disagree about a banded job, **the pattern is wrong.**
+> **The transferable half is about caveat DIRECTION, not about cron.** 2318z/2338z/2355z each filed
+> what the detector is blind to (interval branch, closed outages, detection≠recovery), all correct and
+> all teaching *trust it less*. Read only those and you re-derive by hand what it already got right —
+> trading a proven check for an eyeball whose failure mode line 545 names. **A limits-of-the-tool entry
+> should also say what the tool is authoritative FOR, or it teaches distrust past its evidence.**
+> Cost here was 2 calls; on a tighter cycle it is a false MISS on a healthy 9×/day job, sent to the boss.
 
 ⛔ **NEVER compute a next-fire from a `cron/jobs.json` string — `day_of_week` is APScheduler-numbered
 (0 = MONDAY), so every `* * N` fires ONE DAY LATER than it reads** (2026-08-15 05:2x ICT, n=3 jobs,
