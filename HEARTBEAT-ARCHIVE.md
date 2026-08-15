@@ -773,3 +773,169 @@ sleep independent of the display — which is why S stayed 0 across the release.
 batches: **~40 min** (00:25→01:05, covered the 01:05 slot clean), **≥26 min** (01:26→01:52, still up
 at probe), **≥55 min** (02:49:13→03:44:26, still up at probe; new max measured 03:44). Spread
 26→55+ min ⇒ no characteristic length. (Extended to ≈65 min in §L above.)
+
+## §M — The sleep-onset POSITIVE-branch prediction/scoring series (§2), archived 2026-08-15 12:5x ICT by 0548z
+
+Retired thread: n≥5 scored predictions of a sleep-onset INSTANT (+258 s, +412 s, no-onset, no-onset, then −075 to −265 s — both directions), plus the instrument-precondition work that came out of it. Every surviving imperative was rewritten inline in `HEARTBEAT.md` §2 before this move; what follows is evidence only.
+
+  ✅ **First scoring of that rule — INCONCLUSIVE, as designed, and it yields two refinements**
+  (2026-08-09 06:40 ICT). The 06:21 cycle predicted display sleep 06:28:31 / system sleep ~06:29:31
+  from a 06:18:31 tickle. Neither happened: meter flat at **34510.3** from 06:21:57 through 06:39:58,
+  no `getUpdates` gap. Cause is datable, not speculative — at 06:40:40 `UserIsActive` age was
+  **00:06:17**, i.e. HID re-tickled at **06:34:23**. Re-tickle ⇒ inconclusive. Two fixes:
+  1. **Don't compute `last_tickle + 10 min` — read the release time off the assertion.** The
+     `UserIsActive` row prints `Timeout will fire in N secs`; that N *is* the countdown remainder.
+     It also confirms the 600 s length arithmetically at n=2 probes: 06:22:20 → age 229 s + 370 s
+     remaining = 599; 06:40:40 → 377 s + 223 s = 600. Matches `displaysleep 10` exactly.
+  2. ⛔ **The chain has an unstated precondition: no OTHER idle-sleep hold may be up.** "Display
+     sleeps → powerd's hold falls → system sleep within ~1 min" is only valid when powerd's is the
+     lone hold. At 06:40:40 `grok-1.0.0-macos-aarch64` (pid **88960**) again held
+     `NoIdleSleepAssertion` "grok: agent turn in progress" — a *different pid* from the 13250 seen at
+     05:42, so grok re-arms this hold **per agent turn**, and it blocks idle sleep independently of
+     the display. Before predicting sleep onset, check `PreventUserIdleSystemSleep` /
+     `NoIdleSleepAssertion` for non-powerd owners; if any is up, the onset is **unpredictable** (§1's
+     unbounded-holder rule), regardless of what the `UserIsActive` timer says.
+  ✅ **Chain CONFIRMED, and refinement #2 is now quantified — a non-powerd hold POSTPONES onset, it
+  does not cancel it** (2026-08-09 07:29 ICT, n=1, first sleep after ~9.5 h awake). Predicted from
+  the 06:40:40 probe: display timeout **06:44:23** (age 377 s + 223 s remaining), `sleep 1` ⇒ system
+  sleep **~06:45:23**. Observed onset **06:49:41–06:49:51** (last `getUpdates` before a 1018 s gap).
+  Residual **+258 s**. An HID re-tickle is **excluded arithmetically, not assumed**: a tickle at
+  06:38:41 would fit the observed onset but contradicts the 06:40:40 age reading (6:17 ⇒ 06:34:23),
+  and any tickle after 06:40:40 pushes onset to ≥ 06:51:40, later than observed. The only surviving
+  candidate is the hold refinement #2 named — grok pid 88960 `NoIdleSleepAssertion`, absent by
+  07:31:21. **So predict onset as `max(display_timeout + 60 s, the other hold's release)`.** Practical
+  consequence: a cycle that sees a fresh full-600 s `UserIsActive` tickle can assert sleep is
+  **excluded** for ~11 min and safely watch a tick in that window — that is a real scheduling
+  primitive, and it is the *negative* direction (proving sleep can't happen) that is reliable, since
+  the positive direction still depends on an unbounded holder.
+  ✅ **Exclusion primitive now n=2; the positive direction scored INCONCLUSIVE a second time**
+  (2026-08-09 08:10 ICT). From the 07:31:21 full-600 s tickle: predicted display timeout 07:41:21,
+  system sleep ~07:42:21; observed onset **07:49:13**, residual **+412 s**. With no intermediate
+  probe an HID re-tickle cannot be excluded arithmetically, so it is inconclusive — but sleep *was*
+  excluded through 07:42:21 as promised. **Take a probe mid-window if you want the positive branch
+  to be scoreable at all**; without one, only the exclusion half survives. `runningboardd`'s
+  `osservice<…CFNetwork.StorageDB>` hold falls under the bluetoothd rule below — age 00:00:00, not blocking.
+  ✅ **n=3 INCONCLUSIVE — but the postponement is ATTRIBUTED for the first time, via a new free test:
+  powerd's hold age is a display-on stopwatch** (2026-08-09 08:49 ICT). Predicted from the 08:29:16
+  probe: display timeout 08:39:10, system sleep ~08:40:10. Observed: **no sleep at all** — meter flat
+  at **38390.7** across 08:29:37 / 08:47:37 / 08:49:34, and no `getUpdates` gap since 08:28:34.
+  The n=2 case had to be filed as unattributable ("no intermediate probe exists, so an HID re-tickle
+  cannot be excluded"). **That gap is now closable retroactively, with no intermediate probe:**
+  powerd's `PreventUserIdleSystemSleep` "Prevent sleep while display is on" is created when the
+  display turns on and released when it sleeps, so **its age is how long the display has been on.**
+  Here it read `00:18:02` @ 08:48:08 and `00:19:28` @ 08:49:34 — both resolving to creation
+  **08:30:06**, same assertion id `0x000179aa000187c4`, i.e. one continuous hold. **19.5 min of
+  display-on against a 600 s `displaysleep` countdown, with `PreventUserIdleDisplaySleep` = 0 at both
+  probes, means the countdown was re-armed by HID — proof, not inference.** Live confirmation in the
+  same probe: the `UserIsActive` row kept its id `0x0001797200098727` while its device flipped
+  `Logi K580 Keyboard` (age 4 s, 596 secs left) → `Logi M650 L` (age 0 s, 600 secs left).
+  **So: read powerd's hold age on ANY later cycle; `age > 600 s` retroactively proves a re-tickle and
+  converts an unexplained no-onset from "unattributable" to "inconclusive, cause identified."**
+  ⚠️ Two caveats, both measured here: (a) **compare assertion IDs, not just ages** — the previous
+  cycle read powerd at age 00:00:06 @ 08:29:16 (creation 08:29:10), a *different* hold from the
+  08:30:06 one, so powerd churns its hold briefly around wake and the stopwatch resets with it;
+  (b) the alternative to a re-tickle is a transient `PreventUserIdleDisplaySleep` holder (the AnyDesk
+  case above) that has since released — a single probe cannot separate the two, but both are
+  postponements, so the *inconclusive* verdict is unchanged either way. Confidence moderate, n=1.
+  ✅ **Caveat (b) IS separable when you have repeated probes — first clean split 2026-08-09 09:44 ICT.**
+  powerd's hold `[0x000179aa000187c4]` ran one continuous 75 min (creation 08:30:06, same id at the
+  08:48 / 08:49 / 09:08 / 09:26 / 09:45 probes). AnyDesk (pid 42666) re-created its
+  `PreventUserIdleDisplaySleep` at **09:32:46** — *strictly inside* that window — so the segment splits:
+  **08:30:06 → 09:32:46 had `PreventUserIdleDisplaySleep` observed 0 at three separate probes**, which
+  excludes the transient-holder branch by direct observation and makes that segment **re-tickle,
+  proved**; only from 09:32:46 is a holder responsible. **Generalise: sample the assertion COUNT every
+  cycle, not just powerd's age** — a count of 0 at a probe retroactively rules out the holder branch for
+  the span up to it, converting "inconclusive, cause identified" into an attributed re-tickle.
+  ⛔ **powerd's stopwatch is a DISPLAY-on stopwatch, not an HID stopwatch — "age > 600 s ⇒ re-tickle
+  proved" is FALSE whenever a display holder is up, and here is the counterexample** (2026-08-11 07:09
+  ICT, first time caveat (b) actually bit). The rule's proof step is valid only on the branch where
+  `PreventUserIdleDisplaySleep` = **0** over the span; 2351z published it with the count at **1**
+  (Chrome's Video Wake Lock) and was falsified within 18 min. Measured: the `UserIsActive` id
+  **churned** — `0x000109fe00098b4c` (last tickle 06:42:40, due to release 06:52:40) →
+  `0x00012385000991d9` (creation **06:59:57**), i.e. **≈7 min of `UserIsActive` = 0, HID demonstrably
+  idle** — while powerd's `0x000109fa00018adc` ticked straight through it, unchanged since 05:08:52
+  (age 02:00:16 at that probe). A second churn followed inside the same cycle:
+  → `0x000126c30009927d` (creation **07:12:21**), a further **2 min 24 s** idle. **Rank the
+  instruments: `UserIsActive` id > count > stopwatch.** An id CHANGE is positive evidence of a ≥600 s
+  HID-idle gap; the stopwatch is corroboration only, and only where the count is 0. This does not
+  weaken the id test — the 05:37 and 05:56 ICT entries stand — it strips the *third* instrument of the
+  proof role they lent it.
+  ✅ **First measured length for the Chrome media class: ≈39–42 min** (same probe pair). The triple
+  released in (07:09:09, 07:12:21] against a first-observed creation of 06:30:00 — a lower bound,
+  since that is the first *observed* id of a churning set. Band across holder types is now
+  `dasd` 26 / 40 / 55+ / ≈65, grok ≈40, **Chrome ≈40 min** — no characteristic length, and it does
+  **not** cluster by class, so §1's unbounded-holder rule still governs all of them. Keep session
+  length and id length apart: this session ran ≈40 min while each of its ids lived ≈12.7 min.
+  ✅ **Cheaper and hole-free instrument — the `UserIsActive` ASSERTION ID is itself the re-tickle
+  proof** (2026-08-09 15:27 ICT, n=1). The row carries `Timeout will fire in N secs
+  Action=TimeoutActionRelease`, so the assertion **releases at its own 600 s timeout**. Therefore
+  **the same id observed at two probes more than 600 s apart proves the countdown was re-armed** — HID
+  activity by construction, no inference. Measured: id `0x0001a36700099a6e` at 15:09:06 (age 0, 600
+  secs left), 15:28:13 (age 0, 600), 15:30:22 (age 2, **598**) — 1276 s on one id, across the 08:08Z
+  cycle's predicted ~15:20:06 onset, which did not happen (meter flat 44789.7 → 44789.8, no
+  `getUpdates` gap). This closes caveat (b) above: a transient `PreventUserIdleDisplaySleep` holder
+  keeps the display on **without** re-arming `UserIsActive`, so it yields id churn/release — a
+  *different* observable, not a confounded one.
+  ✅ **First span where the count test was blind THROUGHOUT and the id test carried it alone**
+  (2026-08-11 05:37 ICT). `PreventUserIdleDisplaySleep` read **1** at *both* probes (AnyDesk
+  `0x00010aba00058be1`, creation 05:12:04), so the 09:44 ICT count rule could rule out nothing — the
+  16:12 case at least had the holder arrive mid-span. Both remaining instruments agreed:
+  `UserIsActive` id `0x000109fe00098b4c` unchanged 05:17:20 → 05:37:20 = **1200 s = 2.0×** its own
+  600 s `TimeoutActionRelease`, and powerd's stopwatch `0x000109fa00018adc` at age **00:28:28**
+  (creation 05:08:52, same id) = 1708 s of display-on against a 600 s countdown. **Re-tickle proved by
+  construction.** Operational rule: when anyone is remoted in, the count test is unavailable for the
+  whole session — **read the `UserIsActive` id, not the count.**
+  ✅ **Mirror image of that span, 19 min later — the count test came back and AGREED** (2026-08-11
+  05:56 ICT). AnyDesk's `0x00010aba00058be1` released, so `PreventUserIdleDisplaySleep` read **0**,
+  and all three instruments returned the same verdict on one probe: `UserIsActive` id
+  `0x000109fe00098b4c` **unchanged since 05:17:20 = 2328 s = 3.9×** its 600 s `TimeoutActionRelease`;
+  powerd's stopwatch `0x000109fa00018adc` age **00:47:16** (creation 05:08:52, same id) = 2836 s of
+  display-on against a 600 s countdown; count **0**, excluding the transient-holder branch outright.
+  The pair of cycles is a natural experiment — **the id test returns the same answer with a display
+  holder up for the whole span and with none up** — which promotes it from "the one that still works"
+  to the default. Record the `UserIsActive` id every probe; treat the count as corroboration.
+  ✅ **Both DIRECTIONS of the id test are now scored inside 20 min, and the count agreed each time it
+  was available** (2026-08-11 07:31 ICT). 0008z scored the **churn** branch with the count blind (1,
+  Chrome's Video Wake Lock) and the stopwatch saying the opposite; this cycle scored the **persist**
+  branch with the count **0 at both ends**: id `0x000126c30009927d` unchanged 07:12:21 → 07:31:01 =
+  **1120 s = 1.87×** its own 600 s `TimeoutActionRelease` ⇒ re-tickle proved by construction, count 0
+  excluding the transient-holder branch, and powerd's stopwatch (`0x000109fa00018adc`, creation
+  05:08:52, age 02:22:09) on its *valid* branch for once and agreeing. Churn ⇒ ≥600 s HID idle;
+  persist across >600 s ⇒ re-tickle. **Both directions, one field, one row.**
+  ⛔ **The PERSIST branch is FALSIFIED without an `S = 0` precondition — `TimeoutActionRelease` counts
+  down on MONOTONIC time and freezes during sleep, so a persisted id bounds AWAKE time, never wall
+  time** (2026-08-11 08:13 ICT). Measured: id `0x000126c30009927d` unchanged **07:12:21 → 08:13:34 =
+  3673 s = 6.1×** its own 600 s timeout — which the rule above reads as "re-tickle proved by
+  construction, HID active throughout" — while the meter says **S = 1394.1 s** (3739.2 @ 07:31:54 →
+  5133.3 @ 08:13:05) and powerd's display-on hold **churned** (`0x000109fa00018adc` creation 05:08:52 →
+  `0x00012e5e0001955d` creation **08:07:22**), i.e. the display went dark and came back. The id test
+  said HID was active; the display had slept. No sub-span of *continuous awake* time need reach 600 s —
+  ~1480 s awake pre-onset, six ~20 s dark-wake slivers, then a tickle at the 08:06:53 wake resets it —
+  so the assertion never released. **Churn branch is unaffected** (id changes ⇒ ≥600 s HID idle, still
+  positive evidence). **Persist branch is valid only across a span with S = 0**; with S > 0 it can read
+  exactly backwards. Every prior confirmation (05:37 / 05:56 / 07:31 ICT) was measured inside an S = 0
+  window — the same pattern that hid the missing `+ S` in §0's `completion + 900 s` rule. Ranking, all
+  three instruments now carrying a precondition of the same kind:
+  **id (S = 0 over the span) > count (0 over the span) > powerd stopwatch (count 0 over the span);
+  with S > 0 all three are blind and only the meter + `getUpdates` gaps say anything.** When two
+  instruments disagree, the one with an unmet precondition is the wrong one. **Record the meter delta
+  alongside every `UserIsActive` id reading — a bare id is no longer a conclusion.**
+  ⚠️ **The sleep-onset chain's positive branch has now erred in BOTH directions — stop calling it
+  "overshoots"** (same cycle). 0030z predicted, from tickle 07:29:57: display timeout 07:39:57, system
+  sleep **≈07:40:57**. Observed onset is bounded by the `getUpdates` cadence to **(07:36:32, 07:39:42)**
+  — sleep began at or before the predicted *display* timeout — residual **−75 to −265 s** against a
+  prior series of **+258 / +412 / no-onset / no-onset**. Nothing can make system sleep precede the
+  display countdown on the powerd chain, so the surviving candidates are a display sleep that did not
+  come from the idle countdown (manual sleep, lock, hot corner, screensaver, lid) — unmodelled and
+  undecidable from disk. Also note 0030z's scoring table enumerated three cells and the observed one was
+  the **fourth — id unchanged AND onset** — which the old rule called impossible; that is why this is a
+  falsification and not a fifth inconclusive. Enumerate all four cells when scoring the chain.
+  🆕 **A no-onset is only EXCUSABLE while some unbounded holder is up — when they all clear, the
+  positive branch becomes falsifiable, so take that observation** (2026-08-11 07:31 ICT). The positive
+  direction has scored +258 s / +412 s / no-onset / no-onset and has never landed, each time excused by
+  a holder or a re-tickle. At 07:31:01 powerd's display-on hold was the **sole** idle-sleep assertion —
+  no `dasd`, no grok, no AnyDesk, and Chrome's media triple released — leaving §1's unbounded-holder
+  rule nothing to point at. Score such a window with the id test: id **changed** + onset ⇒ chain
+  **confirmed**; id **unchanged** + no onset ⇒ inconclusive, cause proved; id **changed** + **no onset**
+  ⇒ **genuine falsification**, unreachable in every prior case. Set the observation up before the
+  confounders return — they are unbounded in arrival as well as release.
