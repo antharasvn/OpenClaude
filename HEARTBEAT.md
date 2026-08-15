@@ -2408,6 +2408,22 @@ it. Confidence high; the `find` is dispositive.
   were 08-13 23:03:38 lines. Same family as §1 line 512 (a warning that *names* a future slot is not
   evidence about that slot). The false positives are guaranteed to sit adjacent to the real ones, so
   the inflated count looks plausible. **Anchor every date-scoped grep with `^`.**
+  ⛔ **AND `awk '$0 >= "<date>"'` IS THE SAME DEFECT UNANCHORED — IT ADMITS STALE TRACEBACK LINES AND
+  IT SELECTS FOR THE ALARMING ONES** (2026-08-15 22:2x ICT, 1522z, on my own first error scan). That
+  filter returned a `SchedulerNotRunningError` from **2026-07-27** and a BigQuery `ServerNotFoundError`
+  from **2026-08-03** as though they were live 22:0x incidents. `logs/infra.log` is 25,611 lines of
+  which **2,056 (8 %) carry no timestamp** — Python traceback continuations — and `awk` compares the
+  whole line, so a keyless record is judged on its first character: **200 of them pass any 2026-dated
+  filter** because a letter sorts above `2`. **The leak is not random and that is why it survives:**
+  indented frames (`  File …`) start with a space, sort BELOW `2`, and are correctly dropped, so the
+  output stays plausibly short — what gets through is exactly the column-0 exception headers
+  (`Traceback`, `RuntimeError`, `telegram.error.…`, `apscheduler.…`), i.e. the highest-alarm text in
+  the file. **Bias is one-signed: false alarms, never misses.** Correct form — anchor on the timestamp,
+  then classify: `grep -E "^2026-08-15 (19|20|21|22):" logs/infra.log | grep -iE "\[ERROR\]|error|fail"`
+  (truth for that window: empty). **RULE: a range filter is valid only if EVERY line of a record
+  carries the range key — on a multi-line-record log, ask which lines your filter can even see before
+  believing it.** To date a survivor, walk back to the nearest preceding timestamp; never trust its
+  position in the pipe. Evidence: `memory/t0/2026-08-15/heartbeat-1522z.md`.
   ⚠️ **And hand forward the LANDMARK, not the count.** Seven cycles carried "10 discards today" without
   the command that produced it; the first cycle to grep differently got a false *change* signal off a
   day with no new discards. The **latest discard timestamp** (03:17:11 here) matched instantly under
