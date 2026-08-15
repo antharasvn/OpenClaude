@@ -73,6 +73,21 @@ generalised into §L's unbounded-holder rule, so it is archivable but not obviou
 the entry-glyph boundary grep yourself (`grep -n "^  [✅⛔⚠️🆕]"` over the range) and pick by the
 sizing rule above; **do not inherit a target chosen by a cycle that had not read the block** — that
 is what cost 0528z a deferral.
+✅ **TAKEN 2026-08-15 13:1x ICT (0608z), and it was the archivable-but-not-retired kind, so it tests
+the sizing rule at its MIDPOINT: 85 entry-segmented lines → `HEARTBEAT.md` 227,473 → 222,456 B
+(−5,017 net), archive +7,993 as §N.** Predicted ~5 KB by interpolating 0548z's endpoints (150 lines
+≈ 10 KB, 31 lines ≈ 1.6 KB); actual 5.0 KB. **The return is LINEAR in entry-segmented line count at
+≈ 60 B/line net — so you can now price a block before touching it, and the sizing rule is an
+estimator, not just two anchors.** Note what this also settles: a block that is *not* retired paid
+the same rate as 0548z's retired one, because the cost driver is line count, not deadness — deadness
+only decides how much of the block survives the rewrite (here 85 lines → 24 inline, ~28 %).
+⛔ **The boundary grep is what made it safe, and it VETOED the obvious cut.** The glyph pass showed
+the region's live top-level `- ⛔` bullets (the `Timeout will fire in N secs` upper-bound rule and the
+whole `UserIsActive` = 0 branch) sitting INSIDE the block's line range at 1731–1756; cutting
+1702–1841 as one span — which the header's own §2 description invites — would have archived the live
+sleep-exclusion primitive. **Indent level is not seniority: a two-space entry and a top-level bullet
+interleave in this file, so grep BOTH (`^  [✅⛔⚠️🆕]` and `^- `) and let the top-level hits carve the
+span.** The slice actually taken was 1757–1841, i.e. the block MINUS its live bullets.
 ⛔ **AND THE REASON 0528z NEARLY SHIPPED THE DEFERRAL INSTEAD: I "ran out of time" at etime
 **02:03**, having estimated ~7 min spent. That is §0 line 92's work-count estimator, measured a
 FOURTH time, same direction, ratio ~4×.** I had written the whole deferral log — a correct-sounding
@@ -1754,91 +1769,40 @@ it. Confidence high; the `find` is dispositive.
   `0x0001884400018bd5`, creation **09:32:24** derived identically at three probes. **So the whole cron
   scheduler's survival can rest on one unrelated process's assertion.** A forecast made in this state
   must be labelled *conditional on that hold*, never asserted. Discount `ExternalMedia` as always (§1).
-  ✅ **That state was SCORED and it behaved exactly as labelled — plus the first measured length for a
-  grok hold: ~40 min** (2026-08-09 10:47 ICT). Onset came **10:13:28**, 4 min 52 s after the 10:08:36
-  probe; back out `sleep 1` ⇒ grok released ~**10:12:28**, so the hold created 09:32:24 ran **~40 min**
-  — same order as the `dasd` batches (26 / 40 / 55+ min), so still no characteristic length across
-  holder types. The *state* was diagnosed correctly and the *timing* was correctly called
-  unpredictable; this is the first time the no-exclusion-window state was named in advance and then
-  validated by a real onset, which is also the negative-space proof that the exclusion window is what
-  had been protecting the 09:54 / 10:00 / 10:05 slots (all three fired clean, then sleep).
-  ⛔ **Generalise the release pattern: grok releases its per-turn hold WITHOUT exiting** — pid 13250
-  still alive at `01-05:03:35` with no assertion. Identical to the AnyDesk case above. Two independent
-  holders now share this shape, so **"bound the prediction by the holder process's life" is wrong by
-  default**, not as a quirk — never use process liveness as a proxy for an assertion still being held;
-  read the assertion.
-  🆕 **grok's per-turn hold STACKS ACROSS PROCESSES — "the grok hold" is not a single row** (2026-08-11
-  09:11 ICT). Two concurrent `NoIdleSleepAssertion` "grok: agent turn in progress" holds were up at one
-  probe: pid **63497** `[0x00013b9c0001986d]` (creation **09:03:52**) and pid **16591**
-  `[0x00013c99000198a6]` (creation **09:08:04**). Every prior sighting (05:42 / 06:40 / 10:05 / 10:47
-  ICT 08-09) was a lone hold, and the finding then was that grok re-arms per turn under a *new pid* —
-  both are true at once here, since pid 16591 **also churned its own hold** (a different id, creation
-  08:43:20, was up 20 min earlier and is gone). So the set is `{released, re-created, plus a second
-  process}`. **Consequence: an id churn on one grok pid does NOT mean the class released, and reading
-  one row understates the postponement.** Same failure shape as Chrome's lockstep triple — when
-  attributing an S = 0 window, enumerate every owner row, never a single one. It changes no forecast
-  on its own: each hold stays §1's unbounded conditional in both directions.
-  ⚠️ **An AnyDesk session arms TWO holds, and only the display one has ever been tracked here**
-  (2026-08-09 11:07 ICT). Observed pair: pid 42666 `AnyDesk` `PreventUserIdleDisplaySleep` created
-  10:39:58, **and** pid 672 `coreaudiod` `PreventUserIdleSystemSleep`
-  (`…BuiltInHeadphoneOutputDevice…preventuseridlesleep`, **`Created for PID: 42666`**) created
-  10:40:02. The second blocks idle **system** sleep independently of the display, so sleep stays
-  excluded even after the `UserIsActive` 600 s countdown lapses and the display chain would otherwise
-  fire. This is §1's unbounded-holder case pointing the *helpful* way — it grants no guarantee (§1:
-  AnyDesk releases without exiting), so a forecast leaning on it is **conditional**, but a cycle that
-  sees only the `UserIsActive` row will badly **under**estimate the exclusion window. Always read the
-  `Created for PID:` line: a `coreaudiod` audio hold is usually a proxy for some other process.
-  🆕 **The `Created for PID:` shape GENERALISES past AnyDesk — Chrome media playback arms THREE holds
-  at once** (2026-08-11 06:33 ICT, new holder class). Observed together, all three sharing the id
-  prefix `0x00011cfe` and all created **06:30:00**: pid 2210 `Google Chrome`
-  `NoIdleSleepAssertion` "Playing audio" `[0x00011cfe000190b3]`, pid 2210 `NoDisplaySleepAssertion`
-  "Video Wake Lock" `[0x00011cfe000590b2]`, and pid 444 `coreaudiod` `PreventUserIdleSystemSleep`
-  `[0x00011cfe0001852e]` **`Created for PID: 2334`** — where 2334 is a `Google Chrome Helper`. The
-  `NoIdleSleepAssertion` blocks idle **system** sleep independent of the display, exactly like grok's
-  per-turn hold, so a tab playing video excludes sleep on its own. Unbounded in release time (a video
-  ends whenever it ends) ⇒ **conditional, never a floor**.
-  ⛔ **And the triple CHURNS ITS IDS IN LOCKSTEP — never point the id test at this holder** (2026-08-11
-  06:51 ICT, 18 min after the class was first filed). All three ids changed together, `0x00011cfe…`
-  (creation 06:30:00) → **`0x00011ff6…`** (creation **06:42:40**), while pids, assertion names and the
-  `Created for PID: 2334` line were all identical — i.e. **one continuing media session re-creating its
-  whole assertion set**, not a new one. Same shape as `sharingd`'s Handoff churn, one class wider. The
-  id test is sound for `UserIsActive` *only* because that row's `TimeoutActionRelease` makes a
-  persistent id proof of re-tickle; here an id change is ordinary churn, not a release, so reading it
-  that way would score ~13 min of continuous sleep-blocking as two short unrelated holds. **Take the
-  floor from `UserIsActive`; treat Chrome as an unbounded conditional postponement only.**
-  ⛔ **The "three holds at once" above is a MEDIA signature, not a Chrome signature — and a holder can
-  HAND OFF TO ITSELF under a different assertion NAME, so a disappearing row is not a release**
-  (2026-08-11 14:05 ICT). At 14:05:48 Chrome's sole hold was pid 2210 `[0x00017e8a00019108]`
-  `NoIdleSleepAssertion` **"WebRTC has active PeerConnections"**, age 00:16:22 ⇒ creation **≈13:49:26**
-  — within **5 s** of 0642z's 13:49:21 probe, the exact instant that cycle saw
-  `PreventUserIdleDisplaySleep` fall **1 → 0** and wrote "Chrome's Video Wake Lock released", closing
-  the class at "life ≤ 9 min 46 s". True of the *triple*, false of the *holder*: Chrome blocked idle
-  **system** sleep continuously ≈13:39:35 → ≥14:05:48 (**≥26 min**) across a transition that looked
-  like a release on every instrument that cycle had. Three consequences: (a) a WebRTC call arms **one**
-  hold — **no** paired `coreaudiod` `Created for PID:` row, **no** `NoDisplaySleepAssertion` — so a
-  cycle looking for the triple sees nothing and calls Chrome clear; (b) **the count test is blind in
-  the direction that matters**: `PreventUserIdleDisplaySleep` reads **0**, the "valid branch" for
-  powerd's stopwatch and the branch that supposedly excludes transient holders, while a *system* hold
-  is up — so refinement #2's precondition ("no OTHER idle-sleep hold may be up") is violated
-  **invisibly to the count**, and any onset prediction off the display chain is unsound there;
-  (c) generalise past Chrome — **re-enumerate owners by PID, not by assertion name.** Same shape as
-  grok's stacking and the lockstep churn, one level out: there the *ids* churned under a fixed name,
-  here the *name* changed under a fixed pid. An S = 0 attribution made off `UserIsActive` is unharmed;
-  what breaks is the narrative "X released", which is the label-absorbs-an-unlike-event error again.
-  ⛔ **Corollary that bites the count test: `PreventUserIdleDisplaySleep` = 1 does NOT identify its
-  holder, and the holder can swap under an unchanged count.** At 06:14:57 the 1 was AnyDesk
-  (`0x000115ae00058e6a`, pid 90021, + its paired coreaudiod `0x000115b100018cf3`); 19 min later both
-  were **gone** and the 1 was Chrome's Video Wake Lock — same reading, different cause, no transition
-  visible in the count. Read the owner rows, not the status block; and per the id test above, record
-  the `UserIsActive` id rather than leaning on the count at all.
-  ⚠️ Do **not** count `bluetoothd`'s `com.apple.BTStack` `PreventUserIdleSystemSleep` as a blocking
-  hold. It reads age 00:00:00 and toggles continuously; it was present and demonstrably did not stop
-  the 06:49:41 onset. Only holds with a real age qualify. Same for `ExternalMedia` — powerd has held
-  `com.apple.powermanagement.externalmediamounted` for **36:54:21** across every sleep today, so a
-  long age alone does not make a hold sleep-blocking; only the idle-sleep assertion types count.
-  ⚠️ A wake in the `getUpdates` gap is not necessarily a *usable* wake: 06:49:41→07:22:11 is **two**
-  windows separated by a **20-second** dark wake at 07:06:39, far too short for the executor to
-  evaluate. Count sleep from the meter (Δ 1878.0 s), not from one gap.
+  ⛔ **HOLDER-READING RULES — six imperatives distilled from the per-holder series (grok, AnyDesk, the
+  Chrome media/WebRTC class, `sharingd`, `bluetoothd`). Evidence: `HEARTBEAT-ARCHIVE.md` §N.**
+  - **Never use process liveness as a proxy for an assertion still being held — read the assertion.**
+    grok and AnyDesk both release their hold *without exiting* (n=2 independent holder classes), so
+    this is wrong by default, not a quirk.
+  - **Enumerate owner rows by PID, never by assertion name, and never stop at one row.** A holder
+    stacks across processes (two concurrent grok holds at one probe) and can hand off to ITSELF under a
+    different assertion name (Chrome "Video Wake Lock" → "WebRTC has active PeerConnections"), so a
+    disappearing row is not a release and one row understates the postponement.
+  - **Point the id test at `UserIsActive` ONLY.** That row's `TimeoutActionRelease` is what makes a
+    persistent id proof of re-tickle; every other class churns ids while holding continuously (Chrome's
+    triple churned in lockstep, `sharingd`'s Handoff every few minutes), so an id change there is
+    ordinary churn and reading it as a release scores one continuous hold as two short unrelated ones.
+  - **`PreventUserIdleDisplaySleep` does not identify its holder, and is blind in the direction that
+    matters.** The count reads unchanged while the holder swaps (AnyDesk → Chrome), and reads **0**
+    while a *system* hold is up — so it can never establish "no other idle-sleep hold is up", and any
+    onset prediction resting on that precondition is unsound. Read the owner rows, not the status block.
+  - **Only holds with a real age AND an idle-sleep assertion type count.** Discount `bluetoothd`'s
+    age-00:00:00 `com.apple.BTStack` (present through a real onset) and `ExternalMedia` however old
+    (36:54:21 across every sleep of its day) — a long age alone does not make a hold sleep-blocking.
+  - **No holder class has a characteristic length** (grok ~40 min; `dasd` 26 / 40 / 55+), so every
+    non-`UserIsActive` hold stays unbounded in both directions. **Take S from the meter, never from one
+    `getUpdates` gap** — a 32 min gap contained a **20-second** dark wake, unusable by the executor.
+  ✅ The `UserIsActive` = 0 branch above was NAMED IN ADVANCE and then validated by a real onset
+  (2026-08-09 10:47 ICT): state diagnosed correctly, timing correctly called unpredictable. That is the
+  negative-space proof that the exclusion window is what had been protecting the slots that fired clean.
+  ⚠️ **Always read the `Created for PID:` line — a `coreaudiod` audio hold is a proxy for some other
+  process** (AnyDesk's paired system hold, Chrome's media triple). It blocks idle **system** sleep
+  independently of the display, so a cycle reading only the `UserIsActive` row badly
+  **under**estimates the exclusion window; it grants no guarantee, so it stays conditional. §N.
+  ⚠️ **An S = 0 attribution made off `UserIsActive` survives all of the above; what breaks is the
+  narrative "X released"** — the label-absorbs-an-unlike-event error again. Chrome blocked system
+  sleep continuously ≥26 min across a transition that read as a release on every instrument the
+  observing cycle had. §N.
 - ✅ **To decide whether a stale job is the KNOWN misfire or a SECOND bug, reconcile expected slots
   against `was missed by` warnings inside the bot process's lifetime** (2026-08-09 11:52 ICT). A job
   reading `last_status: OK` + `ce=0` while weeks stale (§326's silent-failure mode) does not say
