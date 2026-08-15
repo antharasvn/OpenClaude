@@ -386,7 +386,29 @@ check than a fresh spike would be. It does change the framing: nothing recent ca
 recent will end it. ⛔ **Do not score the current partial day** — a per-day × 12 count renders
 2026-08-15 at 10:15 ICT as `5 fired, lost 7` when all 5 due fires ran; the first day in the log takes
 the mirror artifact. Drop both boundary buckets.
-Evidence: `memory/t0/2026-08-15/heartbeat-2355z.md`, `heartbeat-0314z.md`.
+⛔ **SLEEP IS NOT THE ONLY CAUSE — A FIRE WAS LOST TODAY WITH THE SCHEDULER DEMONSTRABLY AWAKE**
+(2026-08-15 16:1x ICT, 0917z). The 14:33:23 ICT fire of **both** interval jobs never happened, and the
+process logged `httpx.ConnectError` at **14:33:08 and 14:33:41** — 15 s either side of the fire
+instant — then ran `echo-backend-alerts` normally at 15:05. Not sleep, not a dead process, not the
+15:20:44 reboot. The fire sits inside the **DNS outage 14:25:19 → 14:36:29** that 0803z had already
+bounded for a different casualty. Whole-population test on `auto-commit` (04-13 → now, grid rebuilt
+per scheduler epoch so restarts re-anchor):
+
+| | n | `ConnectError` within ±5 min |
+| --- | --- | --- |
+| **lost** fires | 349 | **39 (11 %)** |
+| **successful** fires | 1194 | **17 (1.4 %)** |
+
+**8× enrichment ⇒ network outages are a real second mechanism, explaining ~1 loss in 9.** Sleep still
+owns the rest. This does not change the ask (the interval branch still needs a *history*), but it
+does mean **a history check must report the cause split, not just a rate** — the two mechanisms want
+different responses, and only one of them is "the host was off". Mechanism unproven: both jobs share
+one event loop with the poller and `misfire_grace_time: 300` discards anything > 5 min late.
+⚠️ **Expected-MISSED window, so nobody re-investigates:** the reboot re-anchored both jobs to
+`15:21:46 + 7200` = **17:21:46 ICT**, while `last_run` stays 12:33:23 — the detector alarms on this
+pair until then. General form: a restart at `last_run + t` alarms for `t − 0.5 × interval` and cannot
+clear before `restart + interval`.
+Evidence: `memory/t0/2026-08-15/heartbeat-2355z.md`, `heartbeat-0314z.md`, `heartbeat-0917z.md`.
 
 ---
 
