@@ -26,9 +26,12 @@ which block is biggest — a retired thread is nearly all archive by constructio
 enters above the mark, or jumps to a bold action label below it). Deleting the corpse to the archive
 is the form of rule (a) that cannot fail that way** — there is no stale prescription left to reach.
 So compaction and correctness-of-record are the same operation here, not competing ones.
-⚠️ **~11.5 KB of headroom to the 250 KB rule ≈ 6 cycles at ~1.8 KB/cycle.** Remaining target when it
-runs out: §0's handoff/exit-estimate chain (genuinely hard — it reads as narrative but has hard
-imperatives buried mid-paragraph, which is why 0152z and 0214z both left it). ⛔ **The method that made this pass safe, and the only way to do the hard block:
+✅ **THIRD PASS 2026-08-15 12:1x ICT (0509z): §0's handoff chain → archive §K. Block −1.6 KB, this
+note +0.5 KB, file NET −0.5 KB** — a dense-prescription block is ~80 % imperative and is already at
+0449z's floor, so **estimate a block's imperative fraction before picking it; that kind pays in
+readability, not bytes.** **Next target: §2's sleep-onset forecasting thread (search `Age-sorting
+finds candidates, not causes`) — ~200 lines around three WRONG-and-corrected conclusions, the
+retired-thread shape 0236z says yields most.** ⛔ **The method that made this pass safe, and the only way to do the hard block:
 extract each block's IMPERATIVES into a fresh bulleted rewrite FIRST, then move the residue.** Do not
 move a block and hope the summary caught everything. When you are over, do not delete a finding —
 **move the EVIDENCE to `HEARTBEAT-ARCHIVE.md` and leave the IMPERATIVE inline.** §A and §B there are
@@ -219,7 +222,7 @@ The real fix is structural (own the buffer, don't let a cancelled coroutine own 
 a shared module behind six live jobs (why no cycle has applied it); #6 is local, diagnostics-only, and
 makes the *next* failure self-describing without touching them. A row that names a single cause
 invites a fix that leaves the symptom intact. Confidence high — both paths read from source.
-#### Successor placement & reach — SETTLED (n=16, every residual 0 s, both S=0 and S up to 1394 s). DO NOT RE-DERIVE. Evidence: `HEARTBEAT-ARCHIVE.md` §H.
+#### Successor placement & reach — SETTLED (n=16, every residual 0 s, both S=0 and S up to 1394 s). DO NOT RE-DERIVE. Evidence: `HEARTBEAT-ARCHIVE.md` §H (series) + §K (the reasoning behind each rule below).
 - **Place your successor at `completion + 900 s + S`** — not its start + 15 min, and not the "17 min"
   figure in memory. The heartbeat is **not** an APScheduler job: it is launchd
   `com.claude.heartbeat.plist`, `StartInterval 900`, wrapping `skills/heartbeat/run.sh`, which stamps
@@ -232,42 +235,29 @@ invites a fix that leaves the symptom intact. Confidence high — both paths rea
 - **An apparent 38-min hole between two cycles is launchd's deferral, not a logless death** — check the
   sleep meter before hunting for a missing log.
 - **Hand forward the TICK plus the ancillary fields — NEVER a precomputed "if you start before X you
-  may block" threshold.** That threshold has the wrong sign and it has nearly cost a log: a threshold
-  silently embeds the predecessor's guess at its own exit time, which this section measures at ~3 min
-  of uncertainty. **The receiving cycle recomputes reach from its OWN `ps` start + 600 s and blocks
-  only if `tick < own_deadline − ~60 s`** (log-writing margin). Losing the log costs more than any
-  single observation is worth.
+  may block" threshold** — it has the wrong sign and has nearly cost a log (§K). **The receiving cycle
+  recomputes reach from its OWN `ps` start + 600 s and blocks only if `tick < own_deadline − ~60 s`**
+  (log-writing margin).
 - **Start and end-of-budget move together, so state the effect SYMMETRICALLY: finishing early loses
-  ticks off the FAR end and GAINS them off the NEAR end.** Relative to an *already-scheduled* tick,
-  starting earlier strictly REDUCES reach — that is the half that strands observations. But for
-  coverage of *future* time in aggregate, a cycle that writes early and exits fast pulls its
-  successor's start earlier and WIDENS the fleet's reach, so when a tick sits just past the end of your
-  own budget, finishing quickly is itself the way to get it covered. Keep the two apart. The cost of
-  the missing near-end half is a cycle that inherits an "already past, settle retroactively" label and
-  **skips a live read it could have made**. Both halves have the same fix: hand the tick, recompute
-  from your own start, never inherit the predecessor's placement of it in time.
+  ticks off the FAR end and GAINS them off the NEAR end.** Against an *already-scheduled* tick,
+  starting earlier strictly REDUCES reach; for coverage of future time in aggregate, writing early and
+  exiting fast pulls your successor's start earlier and WIDENS the fleet's reach. Keep the two apart —
+  same fix either way: hand the tick, recompute from your own start, never inherit the predecessor's
+  placement of it in time. (§K prices the near-end cost: a skipped live read.)
 - **Publish your completion estimate as `naive − 3 min` and carry the residual (~±1.5 min) as the
-  margin — the self-estimate error is BIASED SHORT, not noisy.** Five for five short on 2026-08-11,
-  never once long, plus a third-instance 2 min 09 s miss the same day: treat **~3 min as a FLOOR on
-  that margin, not a worst case**. Padding a symmetric band around a biased estimator leaves the
-  central value ~3 min too late, and **both** §0 failure modes are downstream of exactly that —
-  (a) far end: a tick just inside the predicted end of budget is really past the true one
-  (**stranded**); (b) near end: a tick just before the predicted start is really still live
-  (**skipped live read**). One subtraction fixes both; a symmetric pad fixes neither. Confidence
-  moderate — n=5, one day, one model. **Re-score if a cycle ever misses long; do not deepen the
-  correction past 3 min on this evidence.** This changes only what you PUBLISH about yourself — the
-  handoff still carries the tick.
+  margin — the self-estimate error is BIASED SHORT, not noisy, so ~3 min is a FLOOR on that margin,
+  not a worst case.** A symmetric pad fixes neither failure mode; one subtraction fixes both (§K).
+  Confidence moderate — n=5, one day, one model. **Re-score if a cycle ever misses long; do not deepen
+  the correction past 3 min on this evidence.** This changes only what you PUBLISH about yourself —
+  the handoff still carries the tick.
 - **State the completion estimate ONCE, with planned work priced in; revise only for genuinely
   UNPLANNED work.** "Correcting" it afterwards for work you had already committed to double-counts and
-  **overstates reach** — the sign that strands a tick nobody watched. (0210z's refinement moved its
-  estimate 4 min the wrong way this way.) A second reason the handoff carries the tick, not a
-  threshold: a threshold bakes this error in, a tick does not.
-- **Pad reach claims for your own exit bias, NEVER for sleep.** launchd's `StartInterval 900` defers by
-  S and APScheduler's armed wait fires at `armed + S`; both freeze on the same clock, measured
-  independently against one 222 s window with an identical −2 s residual. Sleep accruing after both
-  reference instants shifts your successor's start **and** the evaluation instant by the same S, so an
-  **already-armed tick's reachability is invariant**. Sleep still degrades the INSTANT and can flip the
-  BRANCH (survival → discard past the 300 s grace) — keep that apart from reachability.
+  **overstates reach** — the sign that strands a tick nobody watched. A second reason the handoff
+  carries the tick, not a threshold: a threshold bakes this error in, a tick does not.
+- **Pad reach claims for your own exit bias, NEVER for sleep** — an already-armed tick's reachability
+  is invariant under S, because sleep shifts your successor's start and the evaluation instant equally
+  (§K). Sleep still degrades the INSTANT and can flip the BRANCH (survival → discard past the 300 s
+  grace) — keep that apart from reachability.
 - **Never promise "the next cycle starts at completion + 15 min" outside a sleep-exclusion window** —
   state reach as a range and prefer retroactive settlement. In a sleep-cycling regime the heartbeat
   fleet's reach for FUTURE time degrades in lockstep with the cron scheduler.

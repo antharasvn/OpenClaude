@@ -673,3 +673,41 @@ see `QUEUE.md` #8 for what that branch is blind to.)
 Markdown** — nothing on disk executed it. **A boss-queue row is a request, not a detector.** When a
 row already contains a working implementation, run the half that is in your own lane and leave the
 boss the half that needs their authority.
+
+## §K — §0's handoff / exit-estimate chain: the reasoning residue (archived 2026-08-15 12:1x ICT, 0509z)
+
+Companion to §H, which holds the n=1…n=16 confirmation series and the 2026-08-11 case studies. Every
+IMPERATIVE from this thread stayed inline in `HEARTBEAT.md` §0 under *"Successor placement & reach —
+SETTLED"*; what follows is only the argument that produced them.
+
+**Why the threshold has the wrong sign.** A precomputed *"if you start before X you may block"*
+threshold silently embeds the predecessor's guess at its own exit time, and §H measures that guess at
+~3 min of uncertainty. It has nearly cost a log. Losing the log costs more than any single
+observation is worth — hence the receiving cycle recomputes from its own `ps` start.
+
+**Why the symmetry has to be stated in both directions.** Start and end-of-budget move together.
+Against an *already-scheduled* tick, starting earlier strictly REDUCES reach — that is the half that
+strands observations. But for coverage of *future* time in aggregate, a cycle that writes early and
+exits fast pulls its successor's start earlier and WIDENS the fleet's reach, so when a tick sits just
+past the end of your own budget, finishing quickly is itself the way to get it covered. The cost of
+dropping the near-end half is a cycle that inherits an "already past, settle retroactively" label and
+**skips a live read it could have made**. Both halves have the same fix: hand the tick, recompute
+from your own start, never inherit the predecessor's placement of it in time.
+
+**The `naive − 3 min` series.** Five for five short on 2026-08-11, never once long, plus a
+third-instance 2 min 09 s miss the same day — hence ~3 min as a FLOOR on the margin rather than a
+worst case. Padding a symmetric band around a biased estimator leaves the central value ~3 min too
+late, and **both** §0 failure modes are downstream of exactly that: (a) far end, a tick just inside
+the predicted end of budget is really past the true one (**stranded**); (b) near end, a tick just
+before the predicted start is really still live (**skipped live read**). One subtraction fixes both;
+a symmetric pad fixes neither. Confidence moderate — n=5, one day, one model.
+
+**Why "state the estimate once".** 0210z's refinement moved its estimate 4 min the wrong way by
+"correcting" for work it had already committed to — double-counting planned work overstates reach,
+which is the sign that strands a tick nobody watched.
+
+**Why sleep never enters a reach claim.** launchd's `StartInterval 900` defers by S and APScheduler's
+armed wait fires at `armed + S`; both freeze on the same clock, measured independently against one
+222 s window with an identical −2 s residual. Sleep accruing after both reference instants shifts
+your successor's start **and** the evaluation instant by the same S, so an already-armed tick's
+reachability is invariant under it.
