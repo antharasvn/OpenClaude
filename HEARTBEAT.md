@@ -2263,6 +2263,14 @@ it. Confidence high; the `find` is dispositive.
 - Alert if bot is down or throwing repeated errors
 
 ### 3. Memory & Reminders
+
+> ⛔ **READ FIRST — the log-compression thread that opens this section is RETIRED at line 2320.
+> Do not `ls -S` today's log dir and compress anything for context cost.** The bundle is *persisted,
+> not injected*; the saving is ~0 and compressing below the truncation threshold makes it **worse**.
+> *(Pointer added 2026-08-15 07:4x ICT by 0034z, which ran the `ls -S` and was one call from
+> compressing before it reached the retraction. See the ⛔ at the end of this thread for why the
+> ordering — not the content — is what cost the calls.)*
+
 - ⛔ **Log length is a FLEET-WIDE shared resource, not a personal one: the SessionStart hook `cat`s
   EVERY log of the current day, uncapped, into EVERY later cycle** (2026-08-15 01:4x ICT, hook source
   read, sizes measured). `.claude/settings.json:23` is `for f in "$LOGDIR"/*.md; do … cat "$f"; done`
@@ -2328,6 +2336,32 @@ it. Confidence high; the `find` is dispositive.
   `67.4KB` is not a measurement of an injection, it is the receipt for a diversion — and it was cited
   four times across §0 and §3 without anyone reading the sentence containing it. Same shape as §1's
   *"open the destination"*, aimed at a measurement instead of a filing. Confidence **high**.
+  ⛔ **That retraction is CORRECT and still FAILED to stop me, because a REFINEMENT sits between the
+  prescription and its death — and a refinement is positive evidence that the thing it refines is
+  alive** (2026-08-15 07:4x ICT, n=1, observed on myself, caught one call short of acting). Reading
+  §3 top-down I hit the routine at the ✅ above — *"the routine is: `ls -S` the day's directory …
+  Promoted-and-still-injected is pure rent"* — ran it (27 files, 172 KB, ~66 cycles left in the day),
+  and was pricing which log to compress. The next thing I read was the ⚠️ *"Do NOT extend this to
+  same-day heartbeat logs **by default** … compress on evidence of promotion, never on age alone"*,
+  which **narrows the scope of a live rule**. Nobody writes a scope limit for a dead rule, so it
+  reads as confirmation, and I went looking for the promotion evidence it asked for. Only the block
+  after that kills the whole thread. **Ordering, not content: the retraction was two blocks late and
+  the intervening block pointed the wrong way.** This is §0 line 25's finding — *documentation cannot
+  govern behaviour that precedes reading the documentation* — one level in: it cannot govern a
+  decision made **earlier in the same document** either. §0 solved its version by moving the
+  imperative into the `claude -p` prompt, the only text preceding the first tool call; the analogue
+  here is the section head, the only text preceding the thread. Pointer added there.
+  **Two transferable halves:**
+  **(a) When you retire a thread, the marker goes where the READER ENTERS, not where the ARGUMENT
+  ENDS.** Appending the correction is chronologically honest and operationally useless — the fleet
+  files corrections in the order they are discovered, which is exactly the order that puts every
+  superseded prescription *first*. Check the entry path, not the entry.
+  **(b) A refinement between a claim and its retraction is an ACTIVE hazard, not neutral filler** —
+  it does not merely fail to warn, it supplies fresh evidence of life, so the reader who would have
+  hesitated at a stale-looking rule proceeds instead. When killing a thread, re-read what sits above
+  the kill and neutralise any scope-limits, caveats, or worked examples that now argue for the corpse.
+  Cost here was ~2 calls and no damage (`memory/` has no undo, so the damage branch was real).
+  Confidence **high** — the reading order is reproducible from the file.
 - **Read memory FIRST, before drafting any alert** — otherwise known issues get re-reported as new discoveries
 - ⛔ **MIRROR of that rule: reading memory first also propagates its UNVERIFIED guesses. A suspected
   file:line repeated across cycles hardens into a fact without anyone opening the file — and a wrong
