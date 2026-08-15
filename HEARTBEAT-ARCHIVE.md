@@ -1540,3 +1540,99 @@ one Grep to locate the anchor line and one `Edit`, and **it needs no rewording**
 point: #5 also records that rewording a finding to appease a broken matcher corrupts the record.
 Cheap correct form: `Grep -n "<last distinctive line>"` → `Read` a few lines around it → `Edit` that
 line to itself-plus-your-block. Confidence high — observed, and the retry via `Edit` succeeded.
+
+## §U — the floor-probe N term (60 s refuted to 5 s) and the arming-set/evaluation-instant case studies (§1, archived 2026-08-16 1833z)
+
+  ⛔ **A floor probe's REACH is `probe + N + 60 s`, where `N` is the `Timeout will fire in N secs`
+  value READ OFF the `UserIsActive` row — it is NOT a constant, and this rule existed only in daily
+  logs until 2026-08-11 12:24 ICT, where it drifted to three different values in one handoff chain.**
+  The 60 s is `sleep 1` from `pmset -g custom` (one **minute**). Since `0 ≤ N ≤ 600`, one probe reaches
+  somewhere in `[probe + 60 s, probe + 660 s]` — a 10-minute spread, so **neither bound may be
+  pre-committed when deciding which cycle can upgrade a tick.** What the chain carried: 0441z stated
+  `probe + ~601 s` (= `600 + 1`, i.e. `sleep 1` misread as one *second*) while its own worked example
+  measured `11:49:25 → onset ≥ 12:00:25` = **probe + 660**; 0500z then inherited the 601 and used
+  **three** constants in one section — `+601` (quoted), `+600` (a reach claim), and `+65` (the
+  worst-case-N form, in the sentence naming which cycle could upgrade the tick). **Live cost:** it put
+  the upgrade of the 13:05:00 tick two cycles out when the correct arithmetic put it one — a probe at
+  12:56 with a fresh N reaches 13:07:00. Planning on the max **overstates** reach (§0's sign that
+  strands ticks); planning on the min **understates** it and wastes an upgrade. Both errors have now
+  occurred inside a single handoff. **Read N and compute; never quote a constant.** Corollary for the
+  handoff: state the probe *condition* (`you need P + N ≥ tick − 60 s`), not a probe *time*.
+  ⛔ **The `+ 60 s` trailing term above is WRONG — the measured value is ~5 s, so the rule is
+  `probe + N + 5 s` and every floor built on 60 s OVERSTATES its exclusion window by up to 55 s**
+  (2026-08-11 16:05 ICT, from `memory/t0/MEMORY.md:502`, **n=38** measured 08-01→08-07). The 12:24 ⛔
+  above correctly caught `sleep 1` being misread as one *second* and raised the term 1 → 60 — but
+  `pmset -g custom` is a **setting**, and MEMORY.md:502 is the **measurement of what that setting
+  actually does**. It does not do a minute: the `sleep` idle timer **cannot run while the display is
+  on**, because powerd holds `PreventUserIdleSystemSleep` "Prevent sleep while display is on"
+  (verified to the second — assertion age 01:16:25 at 21:10:08 ICT vs display-on 19:53:43). The two
+  terms are therefore **sequential, not alternative**: the `UserIsActive` timeout fires → display goes
+  off → onset follows by **median 6 s, min 5 s** (37/38 initiating sleeps). A floor takes the
+  **minimum**, so the term is **5 s**. The fix imported an unmeasured premise in the same edit that
+  fixed a parse — check memory for a measurement before promoting a config value into arithmetic.
+  **Scope of the exposure, and why this tightens rather than alarms:** only **35/69** display-off
+  events led to sleep at all (34 never slept, incl. dark-but-awake windows of 316/292/236 min) — a
+  `NoIdleSleepAssertion`/`PreventUserIdleSystemSleep` holder blocks it about half the time, and
+  `max(floor, holder release)` (the 07:29 rule) already covers that branch. So a call made under a
+  live holder is unaffected. **What breaks is the bare-floor call at a sub-minute margin** — e.g. the
+  09:49 ICT upgrade that cleared its tick by **22 s** on `+60`; on the corrected term it does **not**
+  clear, and should have been left conditional. Recompute any inherited floor before relying on it.
+  Confidence high on the correction, moderate on 5 s vs 6 s — do not shave it below 5 s.
+  ✅ **n=16 (2026-08-10 14:00:00 ICT, residual 0 s) — the widest survival call yet: SIX jobs in one
+  slot, all five ancillary fields hit, published two cycles ahead by 06:28Z and settled by a third
+  cycle that never saw the tick.** It also answered a standing diagnostic for free: `cleanpro-alerts`
+  and the four `*-daily` are all `script` jobs and all fired clean at S = 0, so the `cleanpro-daily` /
+  `vidnotes-daily` staleness is **purely the `CLOCK_MONOTONIC` misfire mechanism, not a second bug in
+  the `script`-job path**. Generalise: when standing staleness is unexplained, forecast a slot that
+  exercises the *same job type* and let the survival call rule out the second-bug branch.
+  Confirmed n=16; residuals +6 / −15 / +9 / −6 / ~0 / ~0 / +0.7 / −0.4 / 0 / 0 / +0.1 / −0.5 / −0.7 / 0 / 0 / 0 s. The n=10 case
+  (2026-08-09 07:36:18, predicted 07:36:18 from armed 07:05:00 + S=1878.0 s across TWO sleep
+  windows) also called the exact warning text — one job, `Echo Backend Alerts`, `next run at:
+  2026-08-08 21:05:00 EDT`. It is the first tick *blocked on* rather than handed forward, because
+  the sleep-exclusion primitive above proved no sleep could intervene. Use that pairing: a fresh
+  full-600 s `UserIsActive` tickle turns an `armed + S` forecast into a deterministic in-cycle
+  observation, provided the tick also clears §0's awake-time budget. Derive the arming set from
+  `cron/jobs.json` (every job, all timezones) plus the `next run at:` field in the `was missed by`
+  warnings. The n=7 case (2026-08-09 03:16:47, predicted 03:16:47.7) was written **two cycles ahead**
+  of the tick and named the exact pair of jobs the warning would carry — the model is now precise
+  enough to pre-announce which slots die, so state that prediction in the handoff every cycle.
+  ⚠️ The 20:08Z cycle derived the arming set correctly for the tick it was watching and then, one
+  paragraph later, forecast the *next* arming from cron expressions alone — missing the interval pair
+  at 03:54:17 and calling 04:00:00. **Interval jobs have no cron expression; re-read them from
+  `cron/jobs.json` every time you forecast an arming, not just the first time.**
+  ⛔ **Same error with the operands SWAPPED, so state the rule symmetrically** (2026-08-11 08:33 ICT).
+  0112z closed with "next arming after 08:23:14 is the **09:13:34** interval pair" — it remembered the
+  interval family and forgot the cron family: `Echo Backend Alerts` (`5 * * * *` America/New_York) is
+  due **09:05:00 ICT**, earlier, so `min(next_run_time)` is 09:05:00 and the pair never sets the wake.
+  **Enumerate BOTH families from `cron/jobs.json` and take the min — neither family is the default.**
+  ⚠️ **A job also hides behind a TIMEZONE conversion, not just behind its family — convert every job's
+  next slot to one clock before counting how many share it** (2026-08-11 11:21 ICT). 0402z called
+  12:00:00 ICT a **two**-job slot (`CleanPro Alerts` 08-22/2 Saigon + `VidNotes Alerts` 7-23/2 Warsaw)
+  and missed **`VidNotes Daily`** (`0 7 * * *` Europe/Warsaw = CEST ⇒ 07:00 CEST = **12:00:00 ICT**, the
+  same instant) — a **three**-job slot. Harmless there because the arming was set by an earlier tick,
+  but it is §1's 04:05:33 ⛔ in embryo: an unnamed job rides in on the call and gets scored against a
+  forecast that never listed it. Build the pending-slot table in ICT from `cron/jobs.json` every time.
+  ⛔ **The `next run at:` field in a `was missed by` warning is the trigger's NEXT slot AFTER
+  rescheduling — i.e. `missed_slot + one interval`, NOT the slot that died** (2026-08-11 08:33 ICT).
+  This is the first ancillary field ever called wrong in a settled forecast: 0112z applied the rule
+  correctly to `CleanPro Alerts` (missed 08:00 +07 → printed **10:00 +07**, a 2 h step) and then, in
+  the same table, printed the *missed slot itself* for `Echo Backend Alerts` (`21:05 EDT` vs observed
+  **22:05 EDT**). The warnings were never inconsistent — check them: 08-09 07:36:18 (missed 20:05 EDT →
+  21:05), 08-09 09:20:19 (22:05 → 23:05), 08-11 05:11:01 (18:05 → 19:05), 08-11 08:23:14 (21:05 →
+  22:05). **When pre-announcing warning text, print `missed_slot + interval` in the JOB'S OWN timezone,
+  for every row — this is the field a later cycle uses to identify which slot died.**
+  ⛔ **ONE evaluation splits its pending slots at the 300 s grace boundary — a discard at slot T does
+  NOT imply a discard at slot T+δ** (falsification 2026-08-11 04:05:33, the first *unconditional*
+  forecast ever scored wrong here). The 2051z cycle called both the 04:00:00 `vidnotes-alerts` and the
+  04:05:00 `echo-backend-alerts` slots unconditional DISCARDs because the host was in a ~10 % duty-cycle
+  sleep-cycling regime. A single evaluation at **04:05:33** handled both: 04:00:00 was **5:33** late
+  (> 300 s `misfire_grace_time`) → discarded, 04:05:00 was **33 s** late → **fired clean** (completed
+  04:05:42, `last_run` advanced). `armed + S` was never at fault — it was never consulted; gap-derived
+  S = 385 − 50 overhead = 335 s off the 03:41:47 arming predicts **04:05:35** vs observed 04:05:33
+  (**+2 s**). The cycle's *own* stated estimate ("≥ 500 s accrues") puts the evaluation at ≈04:08:20,
+  where the 04:05 slot is 200 s late and **still survives** — so the call contradicted its own numbers.
+  **Method: compute the evaluation instant ONCE, then test every pending slot against it
+  independently — a later slot dies only if `evaluation − slot > 300 s`, i.e. only if
+  `evaluation > T + δ + 300 s`.** A regime label ("cycling", "S = 0", "no exclusion window") selects the
+  *input* to the model; it is never a substitute for running it. Enumerate the pending slots from
+  `cron/jobs.json` before forecasting, or a survivor gets swept up in a neighbour's discard.
