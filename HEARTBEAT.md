@@ -246,6 +246,27 @@ not be read; page 1 is the only part of this file a default `Read` delivers.** T
 boundary: the boundary is line ~551, and compaction moves it. Confidence high (four probes in this
 cycle's transcript). Evidence: `memory/t0/2026-08-16/heartbeat-1755z.md`.
 
+⛔ **THE RESTART HAZARD FOUR CYCLES HANDED FORWARD IS VOID: ITS GAIN SET IS EMPTY, AND THE "COST" IS
+THE INTENDED EFFECT** (2026-08-16 01:1x ICT, 1814z). 1227z/1246z/1330z/1345z each re-filed *"a
+restart drops 11 live jobs"*; 1345z priced only that side. Measured both: the loaded set is
+`7e774dd:cron/jobs.json` (last change **07-12**, and **488 commits** span the gap to 08-15 without
+touching it — the fleet auto-commits, so **a commit-gap in an auto-committing repo is POSITIVE
+evidence of no change**, where prior cycles inferred a lower bound of 5 from which ids had fired).
+It has **all 14 enabled**. Against today's config: **drops 11, gains 0** — all three ids the config
+enables are already loaded and already ran on 08-15. The edit is a pure *disable*, so the 11 stopping
+and the edit taking effect **are the same event**. **RULE: compute an action's GAIN SET before
+handing its cost forward — a cost with no benefit beside it means either the action is pointless or
+the cost you named is the point.** 1345z's own *price BOTH branches*, one level up: it priced two
+costs and called them two branches. Actuator unchanged (`restart.sh` is a no-op, 1403z;
+`safe-restart.sh` unsanctioned) — the ask is with the user and was SENT this cycle.
+Evidence: `memory/t0/2026-08-16/heartbeat-1814z.md`.
+
+⛔ **CHECK THE SCHEDULE STRIDE BEFORE FILING A MISSED SLOT — `vidnotes-alerts` AND `cleanpro-alerts`
+ARE EVERY-2-HOURS, NOT HOURLY** (same cycle). `0 7-23/2` Europe/Warsaw and `0 8-22/2` Asia/Saigon.
+Warsaw = ICT−5 in August ⇒ vidnotes lands on even ICT hours; Saigon = host local ⇒ cleanpro runs
+08–22 ICT only, so a cleanpro-free 00:00 ICT is **correct, not a hole**. The odd-hour "gaps" in
+`infra.log` are the stride. Only `echo-backend-alerts` (`5 * * * *`) is truly hourly.
+
 ## Every Check (runs every 15 min)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
