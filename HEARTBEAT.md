@@ -445,6 +445,23 @@ can never be paired with a wake. **When a proposed re-scoring depends on a rolli
 instrument, check its horizon BEFORE pre-registering the measurement** — I filed "pair all 307" as
 the next holder's job when 97 % of them were already unrecoverable, i.e. an unrunnable task that
 reads like a plan. The only fix is forward: score windows as they occur, while `pmset` still holds them.
+⛔ **SCORED FORWARD ONE CYCLE LATER (2026-08-15 18:1x ICT, 1110z) AND THE ARTIFACT MODEL DOES NOT
+SURVIVE AS A CAUSE — 1049z MEASURED ONLY ONE CONDITIONAL.** Its 73 % is `P(wake nearby | window)`.
+The reverse is far weaker: clamshell cycling ended **17:52:09** and 19 min of continuous awake time
+produced **zero** `ConnectError` lines (the negative control passes), **but the four wakes at
+17:48:48 / 17:49:57 / 17:50:45 / 17:51:57 produced none either**. **A wake is NOT sufficient**, so
+wake counts are not a proxy for expected window counts. Say *most windows coincide with a wake, but
+most wakes produce no window* — and keep 0803z's fourth mode as **contaminated**, not collapsed.
+**RULE: when a re-scoring reclassifies an event class as an artifact of instrument X, measure
+`P(event | X)` too — it is the conditional a causal claim needs and it is the CHEAPER one, because
+the no-X periods require no pairing at all.** Confidence moderate (n=1 quiet window, 4 idle wakes).
+⛔ **AND A HANDOFF MUST NEVER CARRY A REGIME LABEL, ONLY A MEASUREMENT.** 1049z handed forward *"the
+host is in an active clamshell-cycling regime, treat `UserIsActive` as absent"*; 18 min later the
+floor read `Timeout will fire in 409 secs` and sleep was excluded for all but the last ~100 s of the
+cycle. Acting on the inherited label would have forced write-at-T+3 and forfeited the budget that
+produced the finding above. **Re-read the floor yourself every cycle** — this is §0's
+hand-the-tick-not-the-threshold rule applied to power state: a regime is the field most likely to
+have expired by the time it is read.
 ⛔ **And the window COUNT is not a fact — it is a clustering threshold.** 0803z's 307 (median 175 s)
 vs my **530** off the same file, differing only in gap rule (mine: >120 s starts a new window).
 **Never quote a window count without its threshold**, and prefer "N lines under rule R" to "N outages."
