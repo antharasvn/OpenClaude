@@ -1201,3 +1201,101 @@ Retired: the count is closed, the causal story is refuted, and the surviving imp
   base rate of the ANTECEDENT.** Adjacency in a 25-line tail plus a plausible mechanism is not
   evidence; the question is *how often does the cause occur WITHOUT the effect*. Six thousand times,
   here. Confidence high — computed over 6829 events, not read from a window.
+
+## §Q — §1's `armed + S` cron-slot prediction-scoring series, n=9 → n=15 (archived 2026-08-15 14:1x ICT, 0707z)
+
+The model itself (`next_fire = armed + S`, S from the clock-skew meter) is settled and stays inline at
+§1; what follows is the per-tick scoring evidence that established it. Nine surviving imperatives were
+rewritten inline at the same anchor. Residuals: n=9 **0 s**, n=11 **+0.1 s**, n=12 **−0.5 s**, n=13
+**−0.7 s**, n=14 **0 s**, n=15 **0 s**.
+
+  ✅ **The model's POSITIVE branch is now confirmed too — it predicts survivals, not just deaths**
+  (2026-08-09 05:05 ICT, n=9). Every prior confirmation predicted a *discard*; this one predicted a
+  **clean fire** and got it. Armed at 04:21:36 for `echo-backend-alerts` 05:05:00 ICT, S = 0 s of
+  accrued sleep (meter flat at 34510.2–34510.3 across 04:45:05 → 05:05:31), predicted a clean fire
+  with **no** warning written — observed `Running job: echo-backend-alerts` at **05:05:00**, completed
+  05:05:07, `was missed by` unchanged at 42 with its latest stamp still 04:21:36. Residual **0 s**.
+  So a handoff may now assert *"this slot will survive"*, and it is **cheaper to resolve than a
+  discard**: a clean fire leaves durable evidence (`Running job:` in `logs/infra.log` + a fresh
+  `last_run` in `cron/state.json`), so **any** later cycle can settle it retroactively — no blocking
+  watch, and no §0 budget arithmetic about which cycle can reach the tick. Prefer forecasting the
+  survival branch for exactly this reason.
+  ⚠️ **Compute S from the METER, not from summed `getUpdates` gaps** (n=11, 2026-08-09 08:12 ICT).
+  Same tick scored twice: meter S = 1082.9 → predicted 08:12:19.9 vs observed **08:12:20**, residual
+  **+0.1 s**; summed gaps (323 + 755 = 1078) → 08:12:15, residual +5 s. The gaps miss short naps —
+  the meter rose **16.5 s in 64 s of wall** with no poll gap over 45 s that same cycle — and they
+  also carry wake overhead. Poll gaps date an onset; only the meter measures S.
+  ⛔ **The gap error is NOT consistently negative — don't treat summed gaps as a safe lower bound**
+  (2026-08-09 11:52 ICT). The n=11 wording above ("miss short naps") reads as if gaps undercount; over
+  **three** windows they **overcounted by 76.9 s**: gaps 324 + 323 + 974 = **1621 s** against a meter Δ
+  of 41197.5 − 39653.4 = **1544.1 s**, ≈ 25.6 s of wake overhead per window. The two error sources
+  trade places — missed naps pull negative, per-window wake overhead pulls positive — so the sign
+  depends on how many windows you sum. n=2 in each direction. Never substitute gaps for the meter in
+  either direction.
+  ✅ **Corollary — use the gaps to ORDER a nap against the arming, which turns a range for S into a
+  point** (2026-08-09 09:06 ICT). That same 16.5 s nap sat between two meter readings (37471.2 @
+  08:12:02, 37487.7 @ 08:13:06) straddling the 08:12:20 evaluation, so the 08:47 cycle had to publish
+  **S ∈ [903.0, 919.5]**. The poll cadence dates it: 10–11 s throughout except **08:12:18 → 08:12:42
+  (24 s)**. It counts toward S because **a process cannot write a log line at a wall time the host
+  slept through** — APScheduler stamped 08:12:20, so the nap starts ≥ 08:12:20 ⇒ meter at arming =
+  37471.2 ⇒ **S = 919.5 s**. Cadence at 08:12:07/08:12:18 rules out sleep before it. Generalise: when
+  the meter brackets an arming, find the gap, then order it against the arming by any timestamped log
+  line — the nap counts only if it falls *after*.
+  ✅ **That corollary is now SCORED and it DISCRIMINATED** (2026-08-09 09:25 ICT, n=12, residual
+  **−0.5 s**). The two orderings gave different predictions — nap-after ⇒ S = 919.5 ⇒ **09:20:19.5**,
+  nap-before ⇒ S = 903.0 ⇒ 09:20:03 — and the observed evaluation was **09:20:19**. The forecast also
+  called every field of the warning in advance: one job, `Echo Backend Alerts`, `next run at:
+  2026-08-08 23:05:00 EDT`, `missed by 0:15:19` (observed `0:15:19.555906`), count 47 → 48. So a
+  bracketing meter no longer forces you to publish a range for S — order the nap and publish a point.
+  ⚠️ **Never let a survival forecast extend past the exclusion window that justifies it.** The
+  07:29 cycle's forecast of clean fires at 07:54:17 and 08:00:00 was **falsified** — its
+  sleep-exclusion primitive expired 07:42:21 and onset came 07:49:13, killing four slots. Forecasting
+  the survival branch is still right (§1 above), but past the exclusion window it is *conditional*,
+  and must be labelled so. A survival forecast whose reach exceeds its guarantee is a guess.
+  ✅ **A falsified CONDITIONAL timestamp is not a falsified model — re-score it with the true S**
+  (2026-08-09 11:52 ICT, **n=13**, residual **−0.7 s**). The 11:05:00 slot was published as
+  unconditional-discard + conditional-instant 11:26:02.6. The discard was right (and called the job and
+  the count, 48 → 49); the instant was **out by +1543 s** because three sleep windows intervened. Meter
+  at arming 38390.8, at evaluation 41197.5 ⇒ S = **2806.7** ⇒ `11:05:00 + 2806.7 = 11:51:46.7` vs
+  observed **11:51:46**. This is the labelling paying off: publish the discard unconditionally and the
+  instant conditionally, and a blown instant costs nothing. Always re-derive S from the meter before
+  recording a miss as a falsification.
+  ✅ **The retroactive-settlement dividend is now DEMONSTRATED, not just argued** (2026-08-09 15:08
+  ICT, **n=14**, residual **0 s**). The 07:50 cycle published an unconditional survival call for
+  `echo-backend-alerts` 15:05:00 with four ancillary fields and a kill at 15:00:12 — it could not reach
+  its own tick. The next cycle settled all five in two greps off durable evidence: fire at **15:05:00**,
+  no warning, count stayed **52**, stamp stayed **14:04:52**, `last_run` `2026-08-09T08:05:06.793400Z`.
+  No blocking watch, no §0 arithmetic about which cycle can reach the tick. **Publish the ancillary
+  fields (count, latest stamp, `last_run`) with every survival call** — they are what makes it settleable
+  by a cycle that never saw the instant. Note the fatal window there was only 2 min 45 s wide *and*
+  required a >5 min nap inside it; a survival call is cheap to make confidently once the exclusion
+  window covers most of the arming interval.
+  ⛔ **`last_run` in `cron/state.json` is written on job COMPLETION, not on fire — do not score it
+  inside ~35 s of the slot** (2026-08-09 15:55 ICT). At the n=15 settlement the 15:54:33 probe read
+  `cleanpro-exp-monitor.last_run` still at the *previous* slot and it was nearly recorded as a failed
+  field; `logs/infra.log` showed `Job auto-commit completed successfully` 15:54:20 (3 s) and
+  `Job cleanpro-exp-monitor completed successfully` 15:54:38 (**21 s**), and each `last_run` matched its
+  *completion*. That is inside §1's `script`-job runtime band. **Settle the fire
+  instant from `Running job:` in `logs/infra.log`, which is stamped at the fire; treat `last_run` as
+  corroboration only, or probe ≥ 180 s after the slot** (was "≥ 40 s" until 2026-08-11 01:15 ICT —
+  raised because the real band reaches 77–101 s, see the band correction above; 40 s false-alarms).
+  ✅ **n=15 (2026-08-09 15:54:17, residual 0 s) — the SECOND tick blocked on rather than handed
+  forward, and it cost almost nothing.** A fresh full-600 s `UserIsActive` tickle at 15:48:16 excluded
+  sleep through ~15:59:16, covering the whole remaining arming interval, so the survival call was
+  *unconditional* and resolvable in-cycle: write the log first, then wait ~3 min, then two greps.
+  All five fields hit (both jobs at 15:54:17, count stayed 52, stamp stayed 14:04:52, both `last_run`s
+  advanced). **Prefer this pairing — exclusion primitive + survival forecast — over a handoff whenever
+  the tick clears §0's awake-time budget.**
+  ✅ **New use of the primitive: a LATER cycle can upgrade a predecessor's CONDITIONAL survival call to
+  UNCONDITIONAL by re-reading the floor — no blocking watch, and it works on ticks nobody can reach**
+  (2026-08-11 09:49 ICT). 0230z published `CleanPro Alerts` 10:00:00 as conditional-on-S=0: its floor
+  reached only 09:39:00 against a 46 min arming interval. At 09:49:29 the `UserIsActive` row read age
+  **00:00:07**, `Timeout will fire in 593 secs` ⇒ display timeout 09:59:22, `sleep 1` ⇒ onset
+  **≥ 10:00:22** — **22 s past the tick** — so S = 0 through the slot is now *arithmetic*, not a
+  regime guess, and the call goes unconditional while still being settled retroactively by a third
+  cycle. **Why a margin that thin is still sound: the floor is MONOTONE — every HID event re-arms the
+  600 s countdown, so activity can only push onset later, and `max(floor, holder release)` (the 07:29
+  rule) can only add.** The sole falsifying branch is a *deliberate* sleep (lid close /
+  Ctrl-Shift-Power), which no cycle has yet observed. **Generalise: re-read the floor against every
+  inherited conditional call — a tick you cannot reach is often one you can still de-risk**, and this
+  is strictly cheaper than the n=15 pairing because it needs neither reach nor a blocking wait.
