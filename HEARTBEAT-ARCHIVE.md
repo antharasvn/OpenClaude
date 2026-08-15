@@ -1072,3 +1072,59 @@ long age alone does not make a hold sleep-blocking.
 ⚠️ A wake in the `getUpdates` gap is not necessarily a *usable* wake: 06:49:41→07:22:11 is **two**
 windows separated by a **20-second** dark wake at 07:06:39, far too short for the executor to evaluate
 (meter Δ 1878.0 s).
+
+## §O — The 14:00 ICT six-job CONCURRENCY hypothesis (§1): proposed, escalated, falsified, ask withdrawn (archived 2026-08-15 13:3x ICT by 0628z)
+
+Retired thread. The concurrency branch was refuted twice (durations argument 0535z, then the 08-14
+falsifier below) and the destagger ask it produced was withdrawn before shipping. The surviving
+imperatives are inline in §1; everything here is evidence for how the hypothesis was built and killed.
+
+- ⛔ **The 300 s `script` cap has a CONCURRENCY branch nobody has filed: 14:00 ICT is a SIX-JOB slot,
+  and on 2026-08-13 five of them timed out at the same second** (2026-08-14 03:36 ICT, observed).
+  `cron/jobs.json`: `echo-daily`, `mangii-daily`, `pdfai-daily`, `aividly-daily` are all
+  `0 3 * * * America/New_York`; `cleanpro-alerts` (`0 8-22/2` Saigon) and `vidnotes-alerts` share the
+  same instant ⇒ **14:00 ICT**. On 08-13 all six launched inside 3 s and infra.log shows
+  **`14:05:04` ERROR × 5** — `aividly-daily`, `cleanpro-alerts`, `echo-daily`, `mangii-daily`,
+  `pdfai-daily`, every one *"timed out after 5 min"*. **Not the §1 monotonic artefact:** S = 0
+  across 14:00→14:05 (nearest sleep 14:19:49→14:23:31, recorded by the 1437z cycle), so 304 s wall
+  **is** 304 s awake. **And the slot is not new — the same six-job pile-up fired at the identical
+  instant on 08-06 / 08-09 / 08-10 / 08-11 / 08-12 with ZERO timeouts**
+  (`grep -E "^2026-08-(0[6-9]|1[0-4]) 14:0[0-9]" logs/infra.log`), so the collision is structural and
+  long-standing while the failure is new to 08-13. That is the signature of a **load-dependent** cap,
+  not a per-job workload problem — which matters because §1's where-do-the-successes-sit test is a
+  *per-job* test and cannot see it: each of these five jobs looks comfortable in isolation.
+  **Why this stayed invisible:** `cleanpro-alerts` retries every 2 h, so its 16:00 success reset `ce`
+  to 0 and presented the event as a one-job blip; the other four are *daily*, so their `ce=1` survives
+  only until the next 14:00 ICT slot, which **erases the only record that 08-13's Echo / Mangii /
+  PDFAI / AIVidly reports were never delivered.** This is §1's `ce`-resets-to-0 blindness on a 24 h
+  period instead of a weekly one.
+  Non-delivery was **inferred, not observed** — those four runners write no `reports/*/daily` tree
+  (only `cleanpro` and `vidnotes` do), so there is no disk artefact; the evidence is that
+  `scripts/echo_daily_runner.py` calls `send_telegram(report)` at **line 407** of a `main()` spanning
+  318–435, i.e. delivery is the last step and a 300 s SIGKILL precedes it.
+  **Cheapest fix looked like destaggering, not raising the cap** — four of the five share one cron
+  expression, so `0 3` / `10 3` / `20 3` / `30 3` is a single `cron/jobs.json` edit; raising
+  `timeout=300` at `bot/scheduler.py:117-121` would let six concurrent BigQuery jobs run longer against
+  each other instead. Sent to the boss 03:45 ICT alongside the `timeout=600`→1800 at `:149`.
+  **Free falsifier, today: the 14:00 ICT slot.** Clear ⇒ load-dependent, not deterministic.
+  ✅ **Scored against the full history in the same cycle, and it is an ESCALATION, not a one-off — five
+  simultaneous timeouts is 2.5× the previous all-time maximum.** Every `timed out after 5 min` in
+  `logs/infra.log`, bucketed by minute, tops out at **2** before this (`2026-08-04 12:05`); the rest are
+  singletons. **08-13 14:05 = 5.** Per-job history explains why no cycle had a prior: `pdfai-daily` and
+  `aividly-daily` had **never timed out at all**, `mangii-daily` once (05-07 14:05), `echo-daily` twice
+  (05-07 14:05, 07-15 14:18). Note **three of those four priors are the 14:00 slot**, and 05-07 was
+  already a *pair* (echo + mangii) at 14:05 — so the slot has been the system's pressure point since
+  May, and the series over it reads **2 → 1 → 5**.
+  ⛔ **The free falsifier above RAN and came back CLEAN — 6 of 6 succeeded, so the CONCURRENCY branch is
+  falsified and the destagger ask is WITHDRAWN** (2026-08-14 14:24 ICT, observed). Same six jobs, same
+  single second, same 300 s cap: `cleanpro-alerts` **10 s**, `aividly-daily` **32 s**, `pdfai-daily`
+  **33 s**, `vidnotes-alerts` **84 s**, `mangii-daily` **122 s**, `echo-daily` **156 s** — the slowest
+  of the six clears the cap by **1.92×** and four of six finish under 35 s. Contention is *present*
+  today (the collision is structural — the same six have shared this instant daily since 08-06) and
+  costs nothing, so it cannot be what killed 08-13. That is the second independent refutation, after
+  the 0535z durations argument (the light jobs would have needed ~7.7× inflation): **08-13 14:05 was
+  one shared stall, not an oversubscribed slot.** Honest limit: one clean day proves contention is not
+  *sufficient* (which is all the destagger assumes), not that no load coupling exists. Confidence
+  **high** on withdrawing the ask, **moderate** on no coupling at all. The 08-13 stall itself remains
+  unexplained and has no live evidence left — the `ce` counters cleared at the next slot exactly as
+  predicted.

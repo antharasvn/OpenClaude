@@ -88,6 +88,24 @@ whole `UserIsActive` = 0 branch) sitting INSIDE the block's line range at 1731�
 sleep-exclusion primitive. **Indent level is not seniority: a two-space entry and a top-level bullet
 interleave in this file, so grep BOTH (`^  [✅⛔⚠️🆕]` and `^- `) and let the top-level hits carve the
 span.** The slice actually taken was 1757–1841, i.e. the block MINUS its live bullets.
+✅ **ESTIMATOR CONFIRMED OUT-OF-SECTION AND PRE-REGISTERED, 2026-08-15 13:3x ICT (0628z): §1's 14:00
+ICT six-job concurrency thread, 62 lines → archive §O. Predicted 62 × 60 B ≈ 3,720 B BEFORE cutting;
+actual `HEARTBEAT.md` 223,966 → 220,223 = −3,743 (0.6 % error), archive +5,115.** 0608z's ≈60 B/line
+was fitted on §2 alone; it now holds on a §1 block of a different shape, so **price any block in this
+file at ~60 B/line net and treat the number as a plan, not a postmortem.**
+⛔ **AND THE CHEAP WAY TO FIND THE BLOCK IS A KEYWORD GREP, NOT A READ.** Every prior pass hunted
+targets by reading §2 or by eye. One call —
+`grep -n "REFUTED\|RETRACT\|superseded\|was wrong\|falsified\|SUPERSED" HEARTBEAT.md | awk -F: '$1>=<lo> && $1<=<hi>'`
+— returned the retraction vocabulary with line numbers, and the one hit reading *"the ask is
+WITHDRAWN"* was a whole retired hypothesis nobody had touched. **Sequence, and it is now the standard
+one: (1) keyword-grep for retraction vocabulary to FIND the thread, (2) `grep -n "^- "` to BOUND it at
+the enclosing top-level bullet, (3) price it at 60 B/line, (4) extract imperatives, then move the
+residue.** Step 2 is what proved 730–791 safe here — the next top-level bullet was 792, so the whole
+span was one dead argument with no live sibling inside. 0236z said to *read* the markers for a retired
+thread; mechanising that read as a grep is what made it a two-minute job instead of a whole-cycle one.
+⚠️ Note what the rewrite kept, because it is the non-obvious half: a **withdrawn** ask has to stay
+inline as a live NEGATIVE prescription (*do not ship the destagger*), or the next cycle re-derives the
+refuted fix from the same slot data. Archiving a retraction silently un-retracts it.
 ⛔ **AND THE REASON 0528z NEARLY SHIPPED THE DEFERRAL INSTEAD: I "ran out of time" at etime
 **02:03**, having estimated ~7 min spent. That is §0 line 92's work-count estimator, measured a
 FOURTH time, same direction, ratio ~4×.** I had written the whole deferral log — a correct-sounding
@@ -727,68 +745,30 @@ it. Confidence high; the `find` is dispositive.
   already printed it — same class as §0 line 406 (your predecessor's completion is already in your
   prompt) and §0 line 399 (the on-grid fire is a free sleep meter). **Prefer the scheduler's own
   statement of its schedule over any re-derivation of it.**
-- ⛔ **The 300 s `script` cap has a CONCURRENCY branch nobody has filed: 14:00 ICT is a SIX-JOB slot,
-  and on 2026-08-13 five of them timed out at the same second** (2026-08-14 03:36 ICT, observed).
-  `cron/jobs.json`: `echo-daily`, `mangii-daily`, `pdfai-daily`, `aividly-daily` are all
-  `0 3 * * * America/New_York`; `cleanpro-alerts` (`0 8-22/2` Saigon) and `vidnotes-alerts` share the
-  same instant ⇒ **14:00 ICT**. On 08-13 all six launched inside 3 s and infra.log shows
-  **`14:05:04` ERROR × 5** — `aividly-daily`, `cleanpro-alerts`, `echo-daily`, `mangii-daily`,
-  `pdfai-daily`, every one *"timed out after 5 min"*. **Not the §1 monotonic artefact above:** S = 0
-  across 14:00→14:05 (nearest sleep 14:19:49→14:23:31, recorded by the 1437z cycle), so 304 s wall
-  **is** 304 s awake. **And the slot is not new — the same six-job pile-up fired at the identical
-  instant on 08-06 / 08-09 / 08-10 / 08-11 / 08-12 with ZERO timeouts**
-  (`grep -E "^2026-08-(0[6-9]|1[0-4]) 14:0[0-9]" logs/infra.log`), so the collision is structural and
-  long-standing while the failure is new to 08-13. That is the signature of a **load-dependent** cap,
-  not a per-job workload problem — which matters because §1's where-do-the-successes-sit test is a
-  *per-job* test and cannot see it: each of these five jobs looks comfortable in isolation.
-  **Why this stayed invisible, and why you must look TODAY:** `cleanpro-alerts` retries every 2 h, so
-  its 16:00 success reset `ce` to 0 and presented the event as a one-job blip; the other four are
-  *daily*, so their `ce=1` survives only until the next 14:00 ICT slot, which **erases the only record
-  that 08-13's Echo / Mangii / PDFAI / AIVidly reports were never delivered.** This is §1's
-  `ce`-resets-to-0 blindness on a 24 h period instead of a weekly one.
-  Non-delivery is **inferred, not observed** — those four runners write no `reports/*/daily` tree (only
-  `cleanpro` and `vidnotes` do), so there is no disk artefact; the evidence is that
-  `scripts/echo_daily_runner.py` calls `send_telegram(report)` at **line 407** of a `main()` spanning
-  318–435, i.e. delivery is the last step and a 300 s SIGKILL precedes it.
-  **Cheapest fix is destaggering, not raising the cap** — four of the five share one cron expression,
-  so `0 3` / `10 3` / `20 3` / `30 3` is a single `cron/jobs.json` edit and removes the contention;
-  raising `timeout=300` at `bot/scheduler.py:117-121` would let six concurrent BigQuery jobs run longer
-  against each other instead. **Boss's call**, sent 03:45 ICT — queues alongside the `timeout=600`→1800
-  at :149 and the `timeout=300` margin item: three related asks, one restart.
-  **Free falsifier, today: the 14:00 ICT slot.** Clear ⇒ load-dependent, not deterministic. Either way
-  **read `logs/infra.log` at ~14:05 ICT and write the outcome down before the counters clear.**
-  ✅ **Scored against the full history in the same cycle, and it is an ESCALATION, not a one-off — five
-  simultaneous timeouts is 2.5× the previous all-time maximum.** Every `timed out after 5 min` in
-  `logs/infra.log`, bucketed by minute, tops out at **2** before this (`2026-08-04 12:05`); the rest are
-  singletons. **08-13 14:05 = 5.** Per-job history explains why no cycle had a prior: `pdfai-daily` and
-  `aividly-daily` had **never timed out at all**, `mangii-daily` once (05-07 14:05), `echo-daily` twice
-  (05-07 14:05, 07-15 14:18). Note **three of those four priors are the 14:00 slot**, and 05-07 was
-  already a *pair* (echo + mangii) at 14:05 — so the slot has been the system's pressure point since
-  May, and the series over it reads **2 → 1 → 5**. Two consequences: (a) the destagger ask is not
-  speculative tidying, it targets the one slot with the entire failure history; (b) **treat a multi-job
-  same-second timeout as its own signal** — bucketing timeouts by minute is one `grep -oE` and it
-  separates "a job got slow" from "the slot is oversubscribed", which no per-job field in
-  `cron/state.json` can express. Confidence high, read from the full log.
-  ⛔ **The free falsifier above RAN and came back CLEAN — 6 of 6 succeeded, so the CONCURRENCY branch is
-  falsified and the destagger ask is WITHDRAWN** (2026-08-14 14:24 ICT, observed). Same six jobs, same
-  single second, same 300 s cap: `cleanpro-alerts` **10 s**, `aividly-daily` **32 s**, `pdfai-daily`
-  **33 s**, `vidnotes-alerts` **84 s**, `mangii-daily` **122 s**, `echo-daily` **156 s** — the slowest
-  of the six clears the cap by **1.92×** and four of six finish under 35 s. Contention is *present*
-  today (the collision is structural — the same six have shared this instant daily since 08-06) and
-  costs nothing, so it cannot be what killed 08-13. That is the second independent refutation, after
-  the 0535z durations argument (the light jobs would have needed ~7.7× inflation): **08-13 14:05 was
-  one shared stall, not an oversubscribed slot.** Consequence: **do not ship the `0 3` → `0/10/20/30 3`
-  destagger** — it targets a cause that does not exist, and it was sent to the boss at 03:45 ICT, so
-  the retraction is the actionable half. The other two queued asks are untouched and rest on their own
-  evidence (`timeout=600`→1800 at `:149`; the `timeout=300` 9 %-margin item at `:117-121`).
-  **Transferable: a structural collision that has run daily for a week with ONE bad day is a
-  coincidence of timing, not a cause — before proposing a scheduling fix, count the days the same
-  collision ran clean.** The 08-13 entry already listed 08-06/09/10/11/12 as zero-timeout and
-  recommended the fix anyway; the falsifier is what turned that caveat into a verdict. Honest limit:
-  one clean day proves contention is not *sufficient* (which is all the destagger assumes), not that
-  no load coupling exists. Confidence **high** on withdrawing the ask, **moderate** on no coupling at
-  all. The 08-13 stall itself remains unexplained and has no live evidence left — the `ce` counters
-  cleared at today's slot exactly as predicted.
+- ⛔ **A MULTI-JOB SAME-SECOND TIMEOUT IS ITS OWN SIGNAL — bucket every `timed out after N min` in
+  `logs/infra.log` BY MINUTE (one `grep -oE`) before diagnosing any single job.** No per-job field in
+  `cron/state.json` can express *the slot is oversubscribed* as against *a job got slow*. **14:00 ICT
+  is a SIX-JOB slot** (`echo-daily`, `mangii-daily`, `pdfai-daily`, `aividly-daily` all
+  `0 3 * * * America/New_York`, plus `cleanpro-alerts` `0 8-22/2` Saigon and `vidnotes-alerts`) and it
+  carries essentially the fleet's entire 300 s-timeout history since May — so it is the first bucket
+  to check, and the last one to blame.
+  ⛔ **THE CONCURRENCY EXPLANATION FOR 08-13 IS FALSIFIED AND THE DESTAGGER ASK IS WITHDRAWN: do NOT
+  ship `0 3` → `0/10/20/30 3`.** Refuted twice — the 0535z durations argument (the light jobs would
+  have needed ~7.7× inflation) and the 08-14 falsifier (same six jobs, same second, **6 of 6
+  succeeded**, slowest 156 s = 52 % of cap). 08-13 14:05 was **one shared stall**, not an
+  oversubscribed slot; it remains unexplained and has no live evidence left. Evidence: archive **§O**.
+  ⛔ **A structural collision that has run daily for a week with ONE bad day is a coincidence of
+  timing, not a cause — count the days the same collision ran CLEAN before proposing a scheduling
+  fix.** The original entry listed five zero-timeout days as a caveat *and recommended the fix anyway*;
+  only running the falsifier turned that caveat into a verdict.
+  ⛔ **NAME A FREE FALSIFIER WHEN YOU FILE A LOAD HYPOTHESIS, AND RUN IT.** A recurring slot re-runs
+  your experiment daily at zero cost — the whole refutation above was one `grep` at the next 14:05.
+  ⛔ **A DAILY job's `ce` survives only until its next slot, so 24 h erases the only record that a
+  report was never delivered — read the log and write the outcome down BEFORE the counters clear.**
+  (§1's `ce`-resets-to-0 blindness on a 24 h period instead of a weekly one; a 2 h-retry job like
+  `cleanpro-alerts` erases it within the same afternoon.) Four of the six runners write **no**
+  `reports/*/daily` tree, so non-delivery there is never observed, only inferred: delivery is the LAST
+  step of `main()` (`scripts/echo_daily_runner.py:407` of 318–435) and the 300 s SIGKILL precedes it.
 - ⛔ **`armed + S` must accumulate S from the MOST RECENT evaluation — every executor evaluation
   RE-ARMS every pending wait, and carrying S from an older arming predicts discards that do not happen**
   (2026-08-14 03:16 ICT, n=1 retrodicted at **−12 s**, n=1 predicted forward at **−3 s**). The 1946z
