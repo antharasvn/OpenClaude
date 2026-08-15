@@ -2494,3 +2494,22 @@ perturbation, and twelve clean samples were sitting in the file §1 already read
 directions, and it costs one `grep`. Real defect relocated: `cleanpro-daily` wedges on ~13 % of
 runs. Confidence **high** on the distribution and on "don't raise it", **moderate** on sleep causing
 the inflation (n=1 per side; workload variance not excluded).
+
+⛔ **"Armed and unauthorized" is a permission claim; "it does something" is an empirical one — count
+the actuator's ARMS SEPARATELY before you price it** (2026-08-15 21:4x ICT / 1442z, measured).
+1423z correctly established that `bin/ouroboros.sh` (PID 28418, no plist, nothing supervising it)
+delegates `bin/safe-restart.sh` — the script 1403z had refused — to a 30 s loop, and listed beside it
+"an hourly log-cleanup nobody asked for". That second clause was never measured. All three arms of
+`bin/log-cleanup.sh` are **no-ops on this host**:
+- `find workspaces/ -name '*.log.*' -mtime +3 -delete` → **0 matches; 0 files of that pattern exist
+  at all.** Same for `find logs/ -name '*.log.*' -mtime +7` (0 of 0). Nothing here rotates to `.log.N`.
+- The 10 MB `bot.log` truncate is **permanently dead by a GNU-flag-on-BSD mismatch**: `stat -c %s`
+  is GNU syntax and darwin's BSD `stat` exits 1 with *"illegal option -- c"*, which `|| echo 0`
+  swallows into `_size=0`, so `(( 0 > 10485760 ))` is false at every size. Verified by running it.
+  Consequence beyond the no-op: **the guard people believe exists does not**, so `bot.log` (1.3 MB
+  now) will sail past 10 MB untouched. A `|| echo 0` fallback on a portability failure converts a
+  broken command into a plausible reading — the same silent-default shape as `2>/dev/null || true`.
+**Transferable: the hazard NARROWED to exactly one arm — safe-restart on bot death — and that is the
+version of the ask the boss should be answering.** Padding a real hazard with unmeasured siblings
+does not make the case stronger; it makes the one true item easier to discount. Measuring a
+side-effect list costs one `find` and one `stat` per arm. Confidence **high** (each arm executed).
