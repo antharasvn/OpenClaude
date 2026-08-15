@@ -939,3 +939,39 @@ Retired thread: n≥5 scored predictions of a sleep-onset INSTANT (+258 s, +412 
   **confirmed**; id **unchanged** + no onset ⇒ inconclusive, cause proved; id **changed** + **no onset**
   ⇒ **genuine falsification**, unreachable in every prior case. Set the observation up before the
   confounders return — they are unbounded in arrival as well as release.
+
+## §M.2 — The `InternalPreventDisplaySleep` / 300 s-fuse sub-thread (§2), archived 2026-08-15 12:5x ICT by 0548z
+
+Four entries, one correction, n=4 on the 300 s constant. The whole operational content is three lines, now inline in `HEARTBEAT.md` §2; what follows is the probe evidence.
+
+  ⚠️ **Don't mistake `InternalPreventDisplaySleep` / `com.apple.powermanagement.delayDisplayOff` for
+  the display countdown** (first seen 2026-08-09 09:26 ICT). powerd holds it with its own short fuse —
+  observed age 00:04:39, `Timeout will fire in 21 secs Action=TimeoutActionTurnOff` — in the *same*
+  probe where the `UserIsActive` row read **569 secs left**. The countdown remainder still comes off
+  the `UserIsActive` row only.
+  ✅ **The "21 s vs 569 s" is arithmetic, not a paradox — it is a 300 s re-armed fuse** (2026-08-09
+  09:44 ICT, n=2). Age + remaining sums to the same constant at both probes: 09:26:29 id
+  `0x000184bd00108c65` 279 s + 21 s = **300**; 09:45:31 id `0x00018abe00108c65` 106 s + 193 s = **299**.
+  Different ids ⇒ powerd churns the hold, as it does around wake. So it is a second, *shorter* clock
+  running alongside the 600 s `displaysleep` countdown, and the two probes merely caught it at
+  different phases. Still unexplained: why a 300 s `TimeoutActionTurnOff` exists alongside the 600 s
+  one and never fires — it is evidently re-armed by the same HID events. Confidence moderate, n=2.
+  ✅ **Resolved — it fires fine; earlier probes just always had HID re-arming it** (2026-08-09 10:08
+  ICT, n=3 on the constant: 10:05:42 id `0x00018f6500108c65`, 173 s + 126 s = **299**). That probe was
+  the first with `UserIsActive` = **0**, so nothing was left to re-arm it: predicted expiry 10:07:48,
+  and at two independent probes (10:08:24, 10:08:36) the hold was **gone**, meter flat at 38390.8
+  across it. Bounded to (10:05:42, 10:08:24] — consistent with 10:07:48, not resolved to the second.
+  **Its expiry turns the display off and does NOT touch system sleep**, so it is never the thing that
+  kills a slot. ⚠️ **Gotcha: `pmset` prints the `InternalPreventDisplaySleep` status row only while the
+  hold is up — when it expires the row leaves the block entirely rather than reading 0.** A cycle
+  grepping for `InternalPreventDisplaySleep *0` finds nothing and cannot distinguish "expired" from
+  "never sampled"; test for the row's *presence*.
+  ⛔ **"Its expiry turns the display off" is too strong — the `TimeoutActionTurnOff` is GATED on
+  `PreventUserIdleDisplaySleep` = 0** (2026-08-09 11:09 ICT, n=1). Probed at 11:07:39: id
+  `0x0001985a00108c65`, age 293 s, **7 secs** remaining ⇒ due ~11:07:46. At 11:09:23 a **different**
+  id `0x000199f700108c65`, creation 11:08:58 (25 s + 274 s = 299 — the 300 s constant now n=4). Across
+  that span powerd's display-on hold kept **one unchanged id**, so the display never turned off, and
+  AnyDesk's `PreventUserIdleDisplaySleep` was up throughout. The 10:08 case fired visibly precisely
+  because that count was **0** there. Caveat: a 72 s hole (11:07:46 → 11:08:58) has no probe, so
+  "reached 0" vs "released early" is unseparable — but no display-off occurred on either branch.
+  Operationally unchanged: still never touches system sleep, so still never kills a slot.

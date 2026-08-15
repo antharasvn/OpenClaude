@@ -61,9 +61,18 @@ headers.** 0528z's boundary test returned "no internal boundary in 300+ lines" b
 ✅/⛔/⚠️/🆕 entries, and a topic shift (prediction-scoring → per-holder caveats) sits cleanly between
 two of them. **Grep the marker glyphs at the block's own indent before declaring a block unsplittable
 — a boundary that a top-level-bullet grep cannot see is still a boundary.**
-✅ **NEXT SLICE:** the `InternalPreventDisplaySleep` / 300 s-fuse sub-thread (search
-`delayDisplayOff`) — ~30 lines, four entries, one correction, and its whole conclusion is a single
-line: that fuse never touches system sleep, so it can never cost a slot.
+✅ **FOURTH SLICE, SAME CYCLE: the `InternalPreventDisplaySleep` / 300 s-fuse sub-thread (31 lines)
+is archive §M.2. 228,247 → 226,625 B — only −1.6 KB**, and that is 0509z's floor confirmed rather
+than a bad pass: a 31-line block whose four entries reduce to three imperatives is ~40 % imperative,
+so it pays in readability, not bytes. **Use the two numbers as a sizing rule: a retired thread of
+150+ entry-segmented lines returns ~10 KB; a 30-line one returns ~1.5 KB. Below ~50 lines, take the
+slice only if the block is actively misleading, not to reclaim space.**
+⛔ **NO NAMED NEXT TARGET, deliberately — the remaining §2 bulk is per-holder observation
+(`sharingd`, grok's stacking per-turn holds, the Chrome media class) whose imperatives are already
+generalised into §L's unbounded-holder rule, so it is archivable but not obviously retired.** Run
+the entry-glyph boundary grep yourself (`grep -n "^  [✅⛔⚠️🆕]"` over the range) and pick by the
+sizing rule above; **do not inherit a target chosen by a cycle that had not read the block** — that
+is what cost 0528z a deferral.
 ⛔ **AND THE REASON 0528z NEARLY SHIPPED THE DEFERRAL INSTEAD: I "ran out of time" at etime
 **02:03**, having estimated ~7 min spent. That is §0 line 92's work-count estimator, measured a
 FOURTH time, same direction, ratio ~4×.** I had written the whole deferral log — a correct-sounding
@@ -1708,37 +1717,17 @@ it. Confidence high; the `find` is dispositive.
   paired `coreaudiod` `Created for PID: 42666`), so 13:14:45 → 15:57:31 stays re-tickle-**proved** while
   the segment after it is merely inconclusive. The id test kept working across that transition; the
   count test did not.
-  ⚠️ **Don't mistake `InternalPreventDisplaySleep` / `com.apple.powermanagement.delayDisplayOff` for
-  the display countdown** (first seen 2026-08-09 09:26 ICT). powerd holds it with its own short fuse —
-  observed age 00:04:39, `Timeout will fire in 21 secs Action=TimeoutActionTurnOff` — in the *same*
-  probe where the `UserIsActive` row read **569 secs left**. The countdown remainder still comes off
-  the `UserIsActive` row only.
-  ✅ **The "21 s vs 569 s" is arithmetic, not a paradox — it is a 300 s re-armed fuse** (2026-08-09
-  09:44 ICT, n=2). Age + remaining sums to the same constant at both probes: 09:26:29 id
-  `0x000184bd00108c65` 279 s + 21 s = **300**; 09:45:31 id `0x00018abe00108c65` 106 s + 193 s = **299**.
-  Different ids ⇒ powerd churns the hold, as it does around wake. So it is a second, *shorter* clock
-  running alongside the 600 s `displaysleep` countdown, and the two probes merely caught it at
-  different phases. Still unexplained: why a 300 s `TimeoutActionTurnOff` exists alongside the 600 s
-  one and never fires — it is evidently re-armed by the same HID events. Confidence moderate, n=2.
-  ✅ **Resolved — it fires fine; earlier probes just always had HID re-arming it** (2026-08-09 10:08
-  ICT, n=3 on the constant: 10:05:42 id `0x00018f6500108c65`, 173 s + 126 s = **299**). That probe was
-  the first with `UserIsActive` = **0**, so nothing was left to re-arm it: predicted expiry 10:07:48,
-  and at two independent probes (10:08:24, 10:08:36) the hold was **gone**, meter flat at 38390.8
-  across it. Bounded to (10:05:42, 10:08:24] — consistent with 10:07:48, not resolved to the second.
-  **Its expiry turns the display off and does NOT touch system sleep**, so it is never the thing that
-  kills a slot. ⚠️ **Gotcha: `pmset` prints the `InternalPreventDisplaySleep` status row only while the
-  hold is up — when it expires the row leaves the block entirely rather than reading 0.** A cycle
-  grepping for `InternalPreventDisplaySleep *0` finds nothing and cannot distinguish "expired" from
-  "never sampled"; test for the row's *presence*.
-  ⛔ **"Its expiry turns the display off" is too strong — the `TimeoutActionTurnOff` is GATED on
-  `PreventUserIdleDisplaySleep` = 0** (2026-08-09 11:09 ICT, n=1). Probed at 11:07:39: id
-  `0x0001985a00108c65`, age 293 s, **7 secs** remaining ⇒ due ~11:07:46. At 11:09:23 a **different**
-  id `0x000199f700108c65`, creation 11:08:58 (25 s + 274 s = 299 — the 300 s constant now n=4). Across
-  that span powerd's display-on hold kept **one unchanged id**, so the display never turned off, and
-  AnyDesk's `PreventUserIdleDisplaySleep` was up throughout. The 10:08 case fired visibly precisely
-  because that count was **0** there. Caveat: a 72 s hole (11:07:46 → 11:08:58) has no probe, so
-  "reached 0" vs "released early" is unseparable — but no display-off occurred on either branch.
-  Operationally unchanged: still never touches system sleep, so still never kills a slot.
+  ⛔ **`InternalPreventDisplaySleep` / `com.apple.powermanagement.delayDisplayOff` is a SECOND,
+  SHORTER powerd clock — a 300 s re-armed fuse (age + remaining = 300, n=4) — and it is NOT the
+  display countdown. The countdown remainder comes off the `UserIsActive` row only**, which is why
+  one probe can read `21 secs` on this fuse and `569 secs` on `UserIsActive` with no contradiction.
+  Its `TimeoutActionTurnOff` is gated on `PreventUserIdleDisplaySleep` = 0, and **its expiry never
+  touches system sleep — so it can never cost a slot.** Evidence: `HEARTBEAT-ARCHIVE.md` §M.2.
+  ⚠️ **Gotcha with a transferable in it: `pmset` prints this status row only WHILE the hold is up —
+  on expiry the row leaves the block rather than reading 0.** A cycle grepping
+  `InternalPreventDisplaySleep *0` matches nothing and cannot tell "expired" from "never sampled".
+  **Test for a status row's PRESENCE whenever absence is one of its states** — a value-grep silently
+  collapses "gone" and "not looked at" into the same empty result, and empty reads as benign.
 - ⛔ **`Timeout will fire in N secs` on a NON-`UserIsActive` holder is an UPPER bound on that hold's
   life — it is the WRONG DIRECTION for a sleep-exclusion window, never build a floor from it**
   (2026-08-11 02:50 ICT). Some `PreventUserIdleSystemSleep` owners carry a real absolute countdown
