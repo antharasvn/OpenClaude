@@ -568,20 +568,35 @@ call on the one thing that *does* need `ps`: your own start.
 > that test and it is wrong (`14399 % 7200 = 7199`: a 4 h gap 1 s short reads as "drifted"). The split
 > is real and decides whether the anchor moved; measure it with §1's `armed + S`, not a modulo.
 > Line 504's paraphrase trap, in arithmetic form.
-> ✅ **Now the OTHER direction, because the three entries above all push one way: a gap in
-> `infra.log`'s fire pattern that the detector did NOT flag is a BAND EDGE, not a miss** (2026-08-15
-> 07:1x ICT, 0015z, caught on itself). I read `vidnotes-alerts` firing at ICT 16,18,20,22,00,02,04 and
-> then stopping, called the 06:00 slot 75 min overdue, and spent two calls on it — 45 s **after** the
-> detector had printed `13/14` with only `cleanpro-weekly` flagged. It is `0 7-23/2` **Europe/Warsaw**
-> ⇒ ICT 12…04, dark 04:00→12:00 (already at line 1190). **The script asks each trigger to enumerate
-> its own fires and interprets no cron string, so it is authoritative on exactly this** (line 543) —
-> when your pattern-read and the detector disagree about a banded job, **the pattern is wrong.**
-> **The transferable half is about caveat DIRECTION, not about cron.** 2318z/2338z/2355z each filed
-> what the detector is blind to (interval branch, closed outages, detection≠recovery), all correct and
-> all teaching *trust it less*. Read only those and you re-derive by hand what it already got right —
-> trading a proven check for an eyeball whose failure mode line 545 names. **A limits-of-the-tool entry
-> should also say what the tool is authoritative FOR, or it teaches distrust past its evidence.**
-> Cost here was 2 calls; on a tighter cycle it is a false MISS on a healthy 9×/day job, sent to the boss.
+> ⛔ **THE SAME FALSE `MISSED` WAS BUILT TWICE ON THE SAME JOB 80 MINUTES APART — because the cycle
+> that solved it committed only the OTHER half of its log** (2026-08-15 07:1x ICT, 0015z; predecessor
+> 2255z at 05:5x). Both cycles read `vidnotes-alerts` firing at ICT …00,02,04, saw nothing after, and
+> called the 06:00 slot overdue. It is `0 7-23/2` **Europe/Warsaw** ⇒ ICT 12:00…04:00, **dark
+> 04:00→12:00** — an 8 h hole indistinguishable from a dead job when read from the ICT side. Nothing
+> was ever due. 2255z diagnosed it exactly and wrote the transferable — *"an observed cadence is a
+> sample of a schedule, never the schedule; three evenly-spaced fires cannot distinguish `*/2` from the
+> tail of a band, and a band's edge is exactly where the sample runs out."*
+> **Then `git show` for that commit: `QUEUE.md | 26 +-`, one file.** The regex half became QUEUE #5;
+> the band-edge half stayed in `memory/t0/2026-08-15/heartbeat-2255z.md` and reached no successor.
+> **The delivery mechanism was not the failure — I HAD that log.** The SessionStart hook `cat`s every
+> same-day log into every later cycle (§3 line 2251), so 2255z's finding was injected verbatim into my
+> context before my first tool call, inside a **172 KB / 27-file** bundle. I still rebuilt the error
+> from scratch. **So §3's quadratic-injection finding has a second cost nobody had priced: the bundle
+> is not merely expensive, it is expensive AND unread — past some size, injection stops being
+> propagation.** CLAUDE.md's memory rule (*a finding that must change a job's behaviour goes in that
+> job's `SKILL.md`, not only in memory*) was written for the write-only `memory/t0/MEMORY.md` channel;
+> this is the same defect one channel over, in the one channel believed to work because it is
+> **same-day and automatic**. Automatic delivery bought nothing.
+> **Rule: a finding that must change a CYCLE's behaviour belongs in `HEARTBEAT.md` §1 — the daily log
+> is the evidence, never the carrier. Before you commit, check that the commit touches the file the
+> next cycle READS**; 2255z's touched only the boss's file, so the boss got the half needing authority
+> and the fleet got nothing for the half that was purely its own.
+> Secondary, still worth having: **a gap the detector did NOT flag is a band edge, not a miss.** It
+> enumerates each trigger's own fires and interprets no cron string (line 543), so on banded schedules
+> it beats a pattern-read — it had printed `13/14` 45 s before I started chasing this. Note 2318z /
+> 2338z / 2355z each filed what it is *blind* to, all correct, all teaching *trust it less*; read only
+> those and you hand-derive what it already got right. **A limits-of-the-tool entry should also say
+> what the tool is authoritative FOR.** Confidence high — both cycles' logs and the commit read directly.
 
 ⛔ **NEVER compute a next-fire from a `cron/jobs.json` string — `day_of_week` is APScheduler-numbered
 (0 = MONDAY), so every `* * N` fires ONE DAY LATER than it reads** (2026-08-15 05:2x ICT, n=3 jobs,
