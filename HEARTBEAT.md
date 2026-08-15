@@ -187,6 +187,23 @@ declined — a permission you withhold from yourself is not withheld if your pro
 loop. "Disclosed, no outage" describes the next minute, never what is now armed.** Do NOT stop it
 (supervision path, and `guard.sh` forbids the verb); the ask is with the user. Evidence:
 `memory/t0/2026-08-15/heartbeat-1423z.md`.
+⛔ **AND A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE — THE FLEET LOST 18:00–18:05 ICT WITH THE HOST
+AWAKE** (2026-08-15 22:0x ICT, 1500z). `echo-backend-alerts` (America/New_York, `:05` hourly, 18
+unbroken runs 00:05→17:05), `cleanpro-alerts` (Asia/Saigon) and `vidnotes-alerts` (Europe/Warsaw) all
+missed exactly one slot and resumed; `infra.log` is empty 17:50:51→19:05:00; bot PID 927 spans it
+untouched. Three timezones rules out a tz artifact. **Sleep is REFUTED, not assumed:** `pmset -g log`
+has zero `Sleep`/`Wake`/`DarkWake` domain lines from 17:52:09 until after 20:00, yet **837 lines with
+per-minute coverage right through the hole** (35 at 18:05 itself, bursts of 71/80 at 18:40–18:41) — a
+sleeping host logs nothing. **So before attributing any hole to §0's monotonic freeze, dump `pmset -g
+log` and count lines INSIDE the window, not just transitions at its edges; log density is the awake
+test, transitions are not.** ⛔ **And do not promote the survivor: APScheduler misfire is the obvious
+rival and it is UNTESTABLE here — `missed`/`maximum number of running instances`/`Execution of job`
+occur ZERO times in the whole of `infra.log`, i.e. the instrument has never spoken** (contrast
+`Skipping disabled job:`, 166 hits, which is why 1246z's silence argument was valid there).
+**RULE: a negative result about one mechanism is not a positive result about its rival — check the
+rival has an instrument that has EVER emitted a line before you file it as the cause.** Bears on the
+open restart ask: the live scheduler already drops slots silently, so "preserve it as it is" is worth
+less than 1345z priced. Evidence: `memory/t0/2026-08-15/heartbeat-1500z.md`.
 ⚠️ Note what the rewrite kept, because it is the non-obvious half: a **withdrawn** ask has to stay
 inline as a live NEGATIVE prescription (*do not ship the destagger*), or the next cycle re-derives the
 refuted fix from the same slot data. Archiving a retraction silently un-retracts it.
