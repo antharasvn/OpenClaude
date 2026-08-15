@@ -317,6 +317,19 @@ by the test's own criterion, so `QUEUE.md` #1's `600 → 1800` is now backed on 
 with 60× the traffic buries the one failing most of its runs. Same shape as §1/QUEUE #8 (*a shared
 summary line averages a real test and a proxy*), one level over. **Ask what defines your population
 before you plot it: sharing `_run_prompt` and sharing a workload are different facts.**
+⛔ **AND A JOB ID IS NOT A WORKLOAD EITHER — PROMPT JOBS RUN `grok -p`, NOT `claude -p`, AND NOTHING
+RECORDS WHICH** (2026-08-15 20:0x ICT, 1305z). `_run_prompt` picks its binary from `get_agent_cli()`
+(`bot/scheduler.py:143`): grok ⇒ `grok -p … --permission-mode bypassPermissions`, else
+`claude -p … --allowedTools`. `AGENT_CLI` defaults to **`grok`** (`bot/config.py:33,126`) and
+`set_agent_cli()` mutates it as a **runtime global** when chat switches CLI, **with no log line**.
+**(1) To find a live prompt job, match the PARENT (`ppid` = the bot) or
+`grep -iE '[c]laude -p|[g]rok -p'` — never `claude -p` alone; it is a 100 % false negative today and
+it nearly made me file a healthy `vidnotes-alerts` run as a childless death.** **(2) Every
+prompt-job runtime verdict above (n=882, the weeklies' capacity branch, QUEUE #1's `600 → 1800`)
+pools two CLIs with different sandboxes, and the split is UNRECOVERABLE retroactively — no run is
+labelled with its runner.** The fix is one line (log `argv[0]` before spawning) and it is the only
+thing that makes the series measurable again: **score forward, do not re-plot the past.** Same shape
+as 1049z's `pmset` retention trap. Evidence: `memory/t0/2026-08-15/heartbeat-1305z.md`.
 ⚠️ Same series: `vidnotes-alerts` shows a **2797 s "success" under a 600 s cap** — §0's monotonic freeze,
 so these wall durations are sleep-contaminated. Exact-600 hits are S=0 windows by construction and the
 verdict holds, but **never quote a max off this series without asking whether the host slept through it**.
