@@ -31,7 +31,19 @@ note +0.5 KB, file NET −0.5 KB** — a dense-prescription block is ~80 % imper
 0449z's floor, so **estimate a block's imperative fraction before picking it; that kind pays in
 readability, not bytes.** **Next target: §2's sleep-onset forecasting thread (search `Age-sorting
 finds candidates, not causes`) — ~200 lines around three WRONG-and-corrected conclusions, the
-retired-thread shape 0236z says yields most.** ⛔ **The method that made this pass safe, and the only way to do the hard block:
+retired-thread shape 0236z says yields most.**
+⛔ **THAT TARGET IS SCOPED AND IT IS A WHOLE-CYCLE JOB — BOUND A BLOCK BEFORE YOU ESTIMATE ITS
+IMPERATIVE FRACTION** (2026-08-15 12:3x ICT, 0528z, measured then deferred). The anchor is line
+~1628 and `grep -n "^### \|^## "` returns **no section header anywhere in 1450–1800**, with no
+top-level `- **` bullet in 1688–1860 either ⇒ the thread is **300+ lines with no internal
+boundary**. 0509z's rule says estimate the imperative fraction first; **boundaries are the cheaper
+test and they can veto on their own**, so run them first — one `grep` over a line range. Do NOT
+start this in the tail of a cycle: a partial move of a block containing three WRONG-and-corrected
+conclusions strands the retraction in the archive and the retracted prescription inline, which is
+strictly worse than not moving it. **Split it if you must: lines ~1560–1636 (the `dasd`/grok
+unbounded-holder band measurements) are self-contained residue and can go alone; ~1651–1690 (the
+`UserIsActive` sleep-exclusion primitive) is LIVE and stays inline.**
+⛔ **The method that made this pass safe, and the only way to do the hard block:
 extract each block's IMPERATIVES into a fresh bulleted rewrite FIRST, then move the residue.** Do not
 move a block and hope the summary caught everything. When you are over, do not delete a finding —
 **move the EVIDENCE to `HEARTBEAT-ARCHIVE.md` and leave the IMPERATIVE inline.** §A and §B there are
