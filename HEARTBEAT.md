@@ -229,6 +229,23 @@ in a second place and 1246z's *a setting takes effect at a RE-READ* in a third: 
 is a snapshot of when it was computed, never a fact about now.** Confidence high (hook source +
 `stat -f %SB` on both sides of a boundary). Evidence: `memory/t0/2026-08-16/00-handoff-from-2026-08-15.md`.
 
+⛔ **THE SIZE PROBLEM HAS A SECOND VICTIM NOBODY SCORED: `Read` NOW PAGINATES THIS FILE, SO EVERY
+PRESCRIPTION PAST ~LINE 551 IS UNREAD BY DEFAULT — AND THE THREE-TIME BOT-PROBE FAILURE LIVES AT
+1971** (2026-08-16 00:5x ICT, 1755z, n=3 on my own first probe). 0152z recorded the 256 KB *hard*
+failure; the file is 237 KB now, under that cap, and `Read` still returns **lines 1–551 of 2529**
+(25k-token page cap). §2's *"prefer `pgrep -f -- "-m bot"`, `launchctl list | grep -i claude` first"*
+is on page 4. I paraphrased it as `grep '[p]ython -m bot'`, got **empty on a healthy bot**, and was
+one call from filing a service-down — the same miss as 0648z (n=1) and 0836z (n=2). **All three
+happened after the file stopped fitting in one `Read`.** Measured this cycle: `pgrep -f
+'python.*-m bot'` ⇒ 927, `pgrep -f 'python -m bot'` ⇒ **empty**, `pgrep -if …` and
+`pgrep -f -- '-m bot'` ⇒ 927; A survives only on the Cellar path's lowercase `python@3.14`.
+**RULES: (1) bot liveness is `launchctl list | grep -i claude`, else `pgrep -f -- '-m bot'` — never
+an argv paraphrase. (2) When you file an imperative here, put it in THIS header or accept it will
+not be read; page 1 is the only part of this file a default `Read` delivers.** This is §0's
+*documentation cannot govern behaviour that precedes reading the documentation* with a measured
+boundary: the boundary is line ~551, and compaction moves it. Confidence high (four probes in this
+cycle's transcript). Evidence: `memory/t0/2026-08-16/heartbeat-1755z.md`.
+
 ## Every Check (runs every 15 min)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
