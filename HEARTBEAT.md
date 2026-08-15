@@ -29,9 +29,11 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   silently un-retracts it.
 - **Measure after BOTH halves plus this note**, and **keep the note to the imperative** — the
   narrative belongs in the daily log, which nothing re-`cat`s into `HEARTBEAT.md`.
-⛔ **AND EVERY PASS SILENTLY FALSIFIES THIS FILE'S OWN CROSS-REFERENCES — ALL 47 `line NNN` POINTERS
+⛔ **AND EVERY PASS SILENTLY FALSIFIES THIS FILE'S OWN CROSS-REFERENCES — ALL 56 `line NNN` POINTERS
 ARE NOW WRONG, AND EACH ONE LANDS ON REAL, UNRELATED PROSE** (2026-08-15 23:0x ICT, 1559z; 8 of 8
-sampled wrong, 0 right). Measured offsets, ref → true: `line 504`→97 (−407), `§3 line 2251`→2123
+sampled wrong, 0 right). *(56 from `grep -o … | wc -l`; `grep -c` said 47 because **`-c` counts
+matching LINES, never occurrences** — the same instrument-sets-the-denominator trap as §0's
+`ConnectError` window counts, and it undercounted by 19 % in the one call I nearly filed from.)* Measured offsets, ref → true: `line 504`→97 (−407), `§3 line 2251`→2123
 (−128), `line 542`→710 (+168), `line 543`→687 (+144), `§0 line 92`→~262 (+170), `line 215`→466 (+251),
 `line 143`→368 (+225). **Both signs, spread 658 lines ⇒ no constant recovers them** — each was written
 at a different file state, and in-section growth (~2.3 KB/cycle) and deletion (1540z took 93 lines off
