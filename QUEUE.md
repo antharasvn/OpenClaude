@@ -359,6 +359,17 @@ is recovered by the next fire — is a judgement no cycle should make alone.
 test was wrong (`14399 % 7200 = 7199`, so a 4 h gap 1 s short mislabels). The durations below are
 raw timestamp differences and stand; the split is unreported. Use §1's `armed + S` form if you want it.
 
+⛔ **EVERY RATE BELOW IS BIASED UP: A BOT RESTART RE-ANCHORS BOTH INTERVAL JOBS, AND THE HOST REBOOTED
+TODAY AT 15:20:44 ICT** (2026-08-15 15:5x ICT, 0856z; `kern.boottime` + `uptime` + `ps -o lstart= -p 1`).
+`interval` triggers anchor on scheduler start, so today's 15:21:46 start moved both jobs off the
+`:33:23` grid onto **17:21:46**. `logs/infra.log` has **6 `Cron scheduler started` events since 08-01**
+(98 all-time). If the counts below used a rolling grid, ~6 of the 32 are re-anchor artifacts; if they
+used a fixed anchor, every fire after each restart reads as missed and the bias is far larger. The
+method is not recorded, so **recompute with restart timestamps as grid resets before quoting any of
+these numbers.** This is the second common-mode cause found in one day (0836z: the two jobs share a
+process, so identical boundaries prove a shared cause, never sleep). Evidence:
+`memory/t0/2026-08-15/heartbeat-0856z.md`.
+
 ⚠️ **The 18.5 % is a FOUR-MONTH BASELINE, not a new regime — `since 08-01` selected for nothing**
 (re-measured 2026-08-15 10:1x ICT over all 1192 `auto-commit` fires, whole days only):
 

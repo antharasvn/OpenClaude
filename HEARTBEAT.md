@@ -423,6 +423,30 @@ appears once in the whole of `/tmp/claude-heartbeat.log`. Network outages are ro
 what is rare is a cycle *starting* inside one. **This is a collision, not a regression — do not file it,
 and do not add a retry.** The transferable is the inverse of the usual one: when a novel-looking failure
 turns out to sample a common background event, the finding is the base rate, not the failure.
+⛔ **FIFTH MODE, AND IT IS NOT A DEATH AT ALL — THE HOST REBOOTED. READ `kern.boottime` BEFORE HUNTING
+FOR A CRASH OF ANY LONG-LIVED SERVICE** (2026-08-15 15:5x ICT, 0856z, closing 0836z's open item).
+`/usr/sbin/sysctl -n kern.boottime` = **15:20:44**, `uptime` 39 min, `ps -o lstart= -p 1` 15:20:45 —
+three independent reads. Everything 0836z catalogued as a silent bot death is the ordinary signature
+of a boot (no closing line in `infra.log`, `State file not found`, both interval jobs re-anchored, no
+crash report), and it also explains the **missing heartbeat cycle at 15:18:44** that nothing was
+looking for. **The free tell is the PID: numbers only go DOWN across a boot** — heartbeat 25586 at
+15:03, bot **927** at 15:21. A service back with a PID two orders of magnitude below its predecessor
+did not restart; its PID space did. **Order instruments by what they can rule OUT, not by how close
+they sit to the suspect** — `DiagnosticReports`, the service's own stdout, and a 1.18 M-line
+`launchd` log all answer *"did this process crash?"*, which is the wrong question the moment the host
+is younger than the gap.
+⛔ **AND A REBOOT RE-ANCHORS EVERY `interval_seconds` JOB, SO §1/QUEUE #8's LOSS RATE IS BIASED UP.**
+Today's restart moved `auto-commit`/`cleanpro-exp-monitor` off the `:33:23` grid onto
+`15:21:46 + 7200` = **17:21:46**. `logs/infra.log` holds **6 `Cron scheduler started` events since
+08-01**: ~6 of the 32 "lost" fires are re-anchor artifacts if the count used a rolling grid, and far
+more if it used a fixed anchor (after a restart every later fire reads as missed). **Do not quote
+18.5 % until it is recomputed with restart timestamps as grid resets** — direction known (up), size
+not. Same shape as "ask how many independent EVENTS an n contains", applied to the denominator.
+⛔ **QUEUE #5's SEVENTH FORM, AND IT NOW COSTS A DIAGNOSIS RATHER THAN A REPORT:** `guard.sh` refused
+a **read-only** `log show --predicate 'eventMessage CONTAINS "Previous s——n cause"'`. The guarded
+token is the name of the macOS log field recording *why the machine went down*, i.e. the matcher
+blocks the most direct instrument for the exact event class this fleet exists to notice. The
+`Write`-then-`"$(cat file)"` escape still applies; `kern.boottime` made it unnecessary here.
 ⛔ **RULE: `exit 1` IS NOT A DIAGNOSIS — read the line immediately ABOVE `Timed out or failed`; it names
 the mechanism. Use runtime only as the sanity check**, because a 4 m 22 s API death sits at the median of
 the success band and is indistinguishable from a success on runtime alone (it does separate API death from
