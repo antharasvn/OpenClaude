@@ -176,6 +176,17 @@ supervisor (`bash bin/ouroboros.sh`, PID 28418, 21:04:47) beside launchd's KeepA
 match its detector against the live process's real `argv`.** Four cycles reasoned about this
 restart's consequences; none read the four lines that make it a no-op. Evidence:
 `memory/t0/2026-08-15/heartbeat-1403z.md`.
+⛔ **AND THE REFUSED ACTUATOR IS NOW ARMED BY THE SIDE EFFECT OF REFUSING IT — `bin/ouroboros.sh`
+PID 28418 CALLS `bin/safe-restart.sh` EVERY 30 s ON BOT DEATH** (2026-08-15 21:2x ICT, 1423z).
+1403z disclosed that watchdog as "a second supervisor beside launchd's KeepAlive"; it is not a
+second one — `launchctl list` has no ouroboros entry and no plist in `~/Library/LaunchAgents/`
+references it, so it is unsupervised and unique. `bin/ouroboros.sh:20-37` runs the exact script
+CLAUDE.md does not sanction, plus an hourly `log-cleanup.sh`. Quiet today only because launchd
+reports PID 927 alive. **RULE: price the PROBE's side effects as strictly as the branch you
+declined — a permission you withhold from yourself is not withheld if your probe delegates it to a
+loop. "Disclosed, no outage" describes the next minute, never what is now armed.** Do NOT stop it
+(supervision path, and `guard.sh` forbids the verb); the ask is with the user. Evidence:
+`memory/t0/2026-08-15/heartbeat-1423z.md`.
 ⚠️ Note what the rewrite kept, because it is the non-obvious half: a **withdrawn** ask has to stay
 inline as a live NEGATIVE prescription (*do not ship the destagger*), or the next cycle re-derives the
 refuted fix from the same slot data. Archiving a retraction silently un-retracts it.
