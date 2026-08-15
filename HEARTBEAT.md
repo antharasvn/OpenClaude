@@ -540,6 +540,29 @@ thing, don't run a paraphrase and call it the command. Confidence high, n=1.
 which §1 reads anyway — and it needs no `sysctl`, no `pmset` window-eyeballing, and no arithmetic on
 a boottime parse. Use it as the cheap check and reserve the line 956 meter for when you need a
 *number* rather than a zero.
+✅ **SCORED AGAIN POST-REBOOT, residual 0 s (2026-08-15 17:2x ICT, 1015z): `15:21:46 + 7200` predicted
+17:21:46, both `auto-commit` and `cleanpro-exp-monitor` fired at 17:21:46 to the second** ⇒ S = 0
+across that 2 h window, free. This also scores 0954z's re-anchor mechanism directly, so the
+`check_missed_fires.py` suppression patch now rests on a measurement, not an assertion.
+⛔ **AND THE SUPPRESSION RACE IS REAL AND WIDER THAN FILED — ITS WIDTH IS THE JOB'S OWN RUNTIME, NOT
+A CONSTANT ~15 s.** Observed live 8 s into the fire: the detector printed `MISSED cleanpro-exp-monitor
+… (3.0h ago)` at 17:21:54 and `13/14` clean at 17:22:19, because the guard opens at `started + iv`
+while the job is still executing. `auto-commit` ran **4 s**, `cleanpro-exp-monitor` **19 s** — same
+anchor, ~5× the exposure. Window is `[started + iv, started + iv + job_duration)`, so a weekly prompt
+job near its 600 s cap carries a **ten-minute** false-positive gap, not fifteen seconds.
+**Cheap discriminator, costs one call: a MISSED row whose `expected` is within one job-duration of
+`now` is suspect — re-run the detector before believing it.** That is what separated the real
+`cleanpro-weekly` miss (109.9 h, QUEUE #7) from this self-clearing artifact (3.0 h).
+⛔ **A POLL CONDITION OVER AN APPEND-ONLY LOG MUST BE ANCHORED IN BOTH DATE AND POSITION** (same
+cycle, self-inflicted, caught only by luck). `grep -q "17:21:" logs/infra.log` as a wait condition
+**returned instantly at 17:16:55**, five minutes before the event — `logs/infra.log` runs since 04-12,
+so an earlier day's 17:21 satisfied it before the loop began. Trusting it would have filed *"the
+re-anchored fire did not happen"* — a false negative manufactured by the instrument, aimed at the
+exact claim under test, contradicting a correct patch shipped one cycle earlier. Correct form:
+`tail -5 logs/infra.log | grep -q "2026-08-15 17:2"` — `tail` bounds position, the full date bounds
+history, and **either alone still matches something old**. Same family as the proxy-measurement trap
+above: I measured *a* 17:21 and labelled it *this* 17:21. **Print the current time in every poll's
+output** — that is the only reason this cost nothing instead of a wrong finding.
 ✅ **Free shortcut nobody had used: your predecessor's completion is ALREADY IN YOUR PROMPT.** The
 harness line `Last heartbeat ran at: <ISO>` is the same stamp `run.sh` writes *after* `claude -p`
 exits — i.e. exactly the "completion" in `completion + 900 s + S`. Scored 2026-08-14 09:23:
