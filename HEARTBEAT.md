@@ -131,6 +131,17 @@ REGIME (§0), so any restore gate must be MECHANICAL (`enabled > 0` ⇒ restore 
 is **not cleanly separable: ~1723–1890 is the power-assertion material §0 leans on, live with every
 job off**, cron resuming ~1900. Cron-only span 630–~1722 (~1,093 lines) is a whole-cycle job.
 **Bounds, not a licence: 0628z forbids inheriting a target from a cycle that has not READ the block.**
+⛔ **"0 OF 14 JOBS ARE ENABLED" IS A FACT ABOUT A FILE, NOT ABOUT THE RUNNING SYSTEM, AND THE §1
+ARCHIVE IT LICENSES IS VETOED — §1 IS FULLY LIVE** (2026-08-15 19:3x ICT, 1227z). `cron/jobs.json`
+has all 14 `enabled: false` since **17:50 ICT**, but `bot/scheduler.py:36` reads that flag **only
+inside `start()`**, and the live scheduler logged `Cron scheduler started with 14 jobs` at
+**15:21:46** — two hours EARLIER, so the edit has never been loaded. Since it landed, `logs/infra.log`
+has run `echo-backend-alerts` (19:05), `auto-commit` and `cleanpro-exp-monitor` (19:21:46), and the
+file contains **zero** `Skipping disabled job` lines, ever. **The restore gate must read the PROCESS,
+not the config: `grep "Cron scheduler started with" logs/infra.log | tail -1` against `cron/jobs.json`'s
+mtime — a config newer than the last scheduler start is a WISH, not a regime.** Transferable, and it is
+§0's hand-the-tick-not-a-threshold rule in a second place: **a setting takes effect at a RE-READ, so
+every "X is off" claim needs the timestamp of the last load beside it or it is unfalsifiable.**
 ⚠️ Note what the rewrite kept, because it is the non-obvious half: a **withdrawn** ask has to stay
 inline as a live NEGATIVE prescription (*do not ship the destagger*), or the next cycle re-derives the
 refuted fix from the same slot data. Archiving a retraction silently un-retracts it.
