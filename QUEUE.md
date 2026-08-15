@@ -159,9 +159,45 @@ above is still the whole fix.
 Evidence: `HEARTBEAT.md` §2, `memory/t0/2026-08-15/heartbeat-2019z.md`,
 `memory/t0/2026-08-15/heartbeat-2255z.md`, `-2318z.md`.
 
-## 6. `_run_script` throws away stderr on timeout — the fix is already written 45 lines below it
+## 6. `_run_script` throws away stderr on timeout — and so does `_run_prompt`'s "fix"
 
-**Where:** `bot/scheduler.py:119-123`. **Blocks nothing; unblocks #2's other half.**
+⛔ **REWRITTEN 2026-08-15 08:0x ICT by heartbeat 0053z. This row used to read *"the fix is already
+written 45 lines below it"* and prescribe copying `_run_prompt:165-177` onto `_run_script:121-123`.
+I applied that patch, tested it against the real function, and it recovers `b''`. Reverted.
+The reference implementation is itself dead code.** Do not apply the old patch.
+
+**Measured** (real subprocess, only the outer 300 s budget shrunk to 2 s; child writes to stderr and
+flushes before the cap): after `proc.kill()`, a second `communicate()` returns `b''`, and reading
+`proc.stderr` directly returns `b''`. **Mechanism, from the traceback:** `communicate()` →
+`_read_stream` → `StreamReader.read()` with no limit accumulates into a **local list**;
+`wait_for`'s cancellation discards that local *and* the bytes are already out of the pipe. Nothing
+survives to drain.
+
+**Consequence beyond this row: `_run_prompt:165-177` has never recovered a byte in production.** Its
+comment describes its own failure. Corroboration: the 1122z API-death diagnosis had to be read out
+of `/tmp/claude-heartbeat.log`, never out of a scheduler error message.
+
+**The correct patch — structural, wants review, applies to BOTH paths:** own the buffer instead of
+letting a cancelled coroutine own it.
+
+```python
+buf = bytearray()
+async def _drain(stream):
+    while chunk := await stream.read(4096):
+        buf.extend(chunk)
+drainer = asyncio.create_task(_drain(proc.stderr))
+try:
+    await asyncio.wait_for(proc.wait(), timeout=300)
+except asyncio.TimeoutError:
+    proc.kill()
+    drainer.cancel()
+    raise TimeoutError(f"Script {job['id']} timed out after 5 min: {bytes(buf).decode(errors='replace')[-300:]}")
+```
+
+`buf` survives because it is *your* object. Note this replaces `communicate()`, so the success path
+needs the same treatment for stdout — that is the review-worthy part, not the drain itself.
+
+**Where:** `bot/scheduler.py:119-123` (and `:162-177`). **Blocks nothing; unblocks #2's other half.**
 
 The two job paths in this file handle an identical `asyncio.TimeoutError` differently:
 

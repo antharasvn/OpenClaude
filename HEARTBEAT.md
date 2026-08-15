@@ -162,6 +162,29 @@ just upstream of you.
 **(b) A negative result on a mandated test is not a wasted test** — it cost two calls, it retired a
 live suspicion about #1, and the comparison it required produced the finding. Run the test to clear
 the hypothesis, not only to confirm it.
+⛔ **(a) IS HALF WRONG, and the half it is missing cost the next cycle a shipped no-op: a REFERENCE
+IMPLEMENTATION IS A CLAIM, NOT EVIDENCE — the hardened-looking sibling is the one nobody ever
+tested** (2026-08-15 08:0x ICT, 0053z, measured then reverted). Acting on (a), I copied
+`_run_prompt:165-177`'s kill-then-`communicate()` drain onto `_run_script:121-123` — the patch this
+very entry filed as `QUEUE.md` #6 — then tested it against the real function with only the outer
+300 s budget shrunk to 2 s. **It recovers `b''`.** Reading `proc.stderr` directly after the kill:
+also `b''`. Mechanism straight out of the traceback: `communicate()` → `_read_stream` →
+`StreamReader.read()` with no limit accumulates into a **local list**, and `wait_for`'s cancellation
+discards it — the bytes are already out of the pipe and gone. **So the production drain 45 lines
+below has never recovered a byte**, and its comment (*"the only prompt-job failures that ever need
+diagnosing are the ones that leave no diagnostics at all"*) describes itself. Corroboration was
+already on file and unread as such: 1122z's API-death cause came out of `/tmp/claude-heartbeat.log`,
+never out of a scheduler error message.
+**(a) is still right that the sibling is where to LOOK. It is wrong that finding code there ends the
+search.** This is line 143's *"never treat a `grep -n timeout` hit as evidence the path is guarded"*
+one level up — same file, same shape: two of three timeouts here are dead, and now the one drain is
+dead too. **Corollary with teeth: code on a FAILURE-ONLY path has no natural test traffic, so its
+age and its polish are evidence of nothing.** It survives every review by looking deliberate.
+**Rule: before copying a sibling implementation, exercise the sibling.** Cost here was one patch and
+one revert; the cost of not doing it was a second `grep`-answering no-op stacked on #2's unreachable
+inner timeout, in the same file, aimed at the same symptom — which would have read as *fixed*.
+The real fix is structural (own the buffer, don't let a cancelled coroutine own it); sketch in
+`QUEUE.md` #6, which 0053z rewrote in place. Confidence **high** — measured, not inferred.
 **(c) When one blocked fix and one cheap fix address the same symptom, say so in the queue.** #2 edits
 a shared module behind six live jobs (why no cycle has applied it); #6 is local, diagnostics-only, and
 makes the *next* failure self-describing without touching them. A row that names a single cause
