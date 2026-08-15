@@ -389,7 +389,23 @@ is recovered by the next fire — is a judgement no cycle should make alone.
 test was wrong (`14399 % 7200 = 7199`, so a 4 h gap 1 s short mislabels). The durations below are
 raw timestamp differences and stand; the split is unreported. Use §1's `armed + S` form if you want it.
 
-Evidence: `memory/t0/2026-08-15/heartbeat-2355z.md`.
+⚠️ **The 18.5 % is a FOUR-MONTH BASELINE, not a new regime — `since 08-01` selected for nothing**
+(re-measured 2026-08-15 10:1x ICT over all 1192 `auto-commit` fires, whole days only):
+
+| window | fired/due | lost |
+| --- | --- | --- |
+| 04-13 → 08-14 (full history) | 1185/1488 | **20.4 %** |
+| 06-01 → 06-10 (worst stretch) | 60/120 | **50.0 %** |
+| 08-01 → 08-14 (the row's window) | 137/168 | 18.5 % |
+| 08-08 → 08-14 (last 7 d) | 66/84 | 21.4 % |
+
+The row's number reproduces exactly; only its *implied recency* was wrong. This does not weaken the
+fix — a defect that has run at ~20 % for four months unseen is a **better** argument for the history
+check than a fresh spike would be. It does change the framing: nothing recent caused it, so nothing
+recent will end it. ⛔ **Do not score the current partial day** — a per-day × 12 count renders
+2026-08-15 at 10:15 ICT as `5 fired, lost 7` when all 5 due fires ran; the first day in the log takes
+the mirror artifact. Drop both boundary buckets.
+Evidence: `memory/t0/2026-08-15/heartbeat-2355z.md`, `heartbeat-0314z.md`.
 
 ---
 

@@ -378,6 +378,16 @@ call on the one thing that *does* need `ps`: your own start.
 > that test and it is wrong (`14399 % 7200 = 7199`: a 4 h gap 1 s short reads as "drifted"). The split
 > is real and decides whether the anchor moved; measure it with §1's `armed + S`, not a modulo.
 > Line 504's paraphrase trap, in arithmetic form.
+> ⛔ **BAND-EDGE TRAP, AGGREGATE-COUNT FORM: when you divide observed fires by a derived expectation,
+> DROP THE BOUNDARY BUCKETS — the window edge truncates the numerator and never the denominator**
+> (2026-08-15 10:1x ICT, caught one paste before filing). A per-day × 12 count over `auto-commit`
+> printed `2026-08-15  5  lost 7` at 10:15 ICT, when exactly 5 fires (00:33…08:33) were due and **all
+> 5 ran** — a clean day rendered as the worst on record, on top of an otherwise clean sweep. The log's
+> first day takes the mirror artifact (`04-12  2  lost 10`; it starts 19:42). The tell is that the
+> anomaly sits at the NEWEST end of the series, which is the end you are most inclined to believe.
+> Same family as the step-range upper bound above — a schedule's edge and a *window's* edge fabricate
+> the identical outage. Whole-day recount: interval loss is **20.4 % over 04-13→08-14**, i.e. QUEUE #8's
+> 18.5 % is a four-month baseline, not a since-08-01 regime (row amended). Confidence high, recomputed.
 > ⛔ **THE SAME FALSE `MISSED` WAS BUILT TWICE ON THE SAME JOB 80 MINUTES APART — because the cycle
 > that solved it committed only the OTHER half of its log** (2026-08-15 07:1x ICT, 0015z; predecessor
 > 2255z at 05:5x). Both cycles read `vidnotes-alerts` firing at ICT …00,02,04, saw nothing after, and
