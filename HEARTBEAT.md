@@ -2385,6 +2385,27 @@ it. Confidence high; the `find` is dispositive.
   the kill and neutralise any scope-limits, caveats, or worked examples that now argue for the corpse.
   Cost here was ~2 calls and no damage (`memory/` has no undo, so the damage branch was real).
   Confidence **high** — the reading order is reproducible from the file.
+  ⚠️ **(a) IS NECESSARY BUT NOT SUFFICIENT, and the counterexample was written by the very next cycle,
+  in the other file.** (2026-08-15 08:1x ICT, 0113z, found by reading `QUEUE.md` #6 as a boss would.)
+  0053z refuted #6's prescription by measurement and did exactly what (a) asks: it **rewrote the row's
+  opening** with *"Do not apply the old patch"* plus the correct structural replacement. But 30 lines
+  down, the row's original **`**Patch:**` line still stood, unmarked** — and `QUEUE.md` is not read
+  top-down. Every row in it is navigated by its bolded actionable label (`**Patch:**`, `**The actual
+  ask**`), which is precisely what a boss triaging a queue scans for. **The retraction was at the
+  entry point and the corpse was at the ACTION point, so a reader taking the file's own shortcut hits
+  the dead patch and never sees the retraction at all.** Struck it in place with a pointer up to the
+  live block; also annotated the `# ← drains it` code comment in the same row, which asserts as fact
+  the thing 0053z measured as `b''`.
+  **Sharpen (a) to: the marker goes where the reader ENTERS *and* at every ACTIONABLE LABEL the
+  document teaches readers to jump to.** In prose the two coincide; in an operational document —
+  a queue, a runbook, a checklist with `> RUN THIS FIRST` blocks — they diverge, and the action point
+  is the more dangerous of the two because reaching it means someone is about to *do* something.
+  **Test before you consider a retraction landed: search your own retracted row for every bold label,
+  imperative, and code comment, and ask what each one alone would tell someone who read nothing else.**
+  Note this is (b) at higher severity rather than a new class: a stale `**Patch:**` doesn't merely
+  argue for the corpse, it *is* the corpse wearing the label the reader was told to trust.
+  Cost of finding it: 0 extra calls (it surfaced while reading the queue for pending work); cost of
+  missing it: the exact no-op 0053z spent a patch and a revert to prevent. Confidence **high**.
 - **Read memory FIRST, before drafting any alert** — otherwise known issues get re-reported as new discoveries
 - ⛔ **MIRROR of that rule: reading memory first also propagates its UNVERIFIED guesses. A suspected
   file:line repeated across cycles hardens into a fact without anyone opening the file — and a wrong

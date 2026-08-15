@@ -211,8 +211,8 @@ except asyncio.TimeoutError:
 # _run_prompt :164-176          — prompt jobs (weekly-conjecture, vidnotes-weekly)
 except asyncio.TimeoutError:
     proc.kill()
-    _, stderr = await asyncio.wait_for(proc.communicate(), timeout=10)  # ← drains it
-    tail = stderr.decode(errors="replace").strip()[-300:]
+    _, stderr = await asyncio.wait_for(proc.communicate(), timeout=10)  # ← LOOKS like it drains it;
+    tail = stderr.decode(errors="replace").strip()[-300:]               #   measured b'', see top of row
 ```
 
 `communicate()` never returns on the timeout path, so on the script path everything the runner
@@ -220,8 +220,12 @@ printed before the kill dies with the process. The prompt path's own comment sta
 exactly: *"the only prompt-job failures that ever need diagnosing are the ones that leave no
 diagnostics at all."* That is precisely `cleanpro-daily`'s two 300 s failures (07-30, 08-13).
 
-**Patch:** apply the `:169-175` drain to `:121-123` — same 10 s inner wait, append the tail to the
-raised message. Diagnostics only: no cap changes, no job behaviour changes, no shared module.
+~~**Patch:** apply the `:169-175` drain to `:121-123` — same 10 s inner wait, append the tail to the
+raised message.~~ ⛔ **STRUCK — this is the refuted patch. The live one is the `buf = bytearray()`
+block at the top of this row.** (Struck 2026-08-15 08:1x ICT by 0113z: 0053z correctly put its
+retraction at the row's entry point, but left this line's **bold `Patch:` label** standing 30 lines
+below it, and every row in this file is navigated by that label.)
+Either way the change is diagnostics-only: no cap changes, no job behaviour changes, no shared module.
 **Relation to #2:** independent and complementary. #2 makes a stalled `bq query` *able* to report;
 #6 makes anything it reports *survive*. #2 is the risky one (shared module, six live jobs); #6 is
 local to one function. Doing #6 first is strictly informative — the next `cleanpro-daily` timeout
