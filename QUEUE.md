@@ -246,8 +246,21 @@ and `:205` write it — that is the whole population).
 period, with `last_status: OK` and `consecutive_errors: 0`. The missing fire is Tue 2026-08-11
 03:30 ICT; `logs/infra.log` jumps **03:02:19 → 04:05:33** (~63 min of sleep, which also delayed
 `echo-backend-alerts` to 04:05:33, 33 s late). 63 min ≫ the 300 s grace, so APScheduler **discarded**
-the fire. The CleanPro report for Aug 4–11 does not exist and nothing raised a flag; the gap will
-read 14 days when 08-18 fires.
+the fire. The CleanPro report for Aug 4–11 does not exist and nothing raised a flag.
+
+⛔ **The "the gap will read 14 days when 08-18 fires" clause that stood here was wrong twice, and the
+second error is the one with teeth** (2026-08-15 08:3x ICT, 0131z, read from source). Date: the next
+fire is **Tue 2026-08-19** (APScheduler `day_of_week` 0 = Monday — see #1's ⚠️). Substance: **there
+is no widening gap and no catch-up.** `skills/cleanpro-weekly/SKILL.md:10-14` computes its window as
+pure date arithmetic off *today* — `END_DATE=date -v-1d`, `START_DATE=date -v-7d`, prior week
+`-v-14d`/`-v-8d`, `WEEK_LABEL=date -v-1d +%Y-W%V` — and **nothing in it reads `last_run`**. So the
+08-19 fire queries **Aug 12–18**, same size as any other week, and **the Aug 4–11 report cannot be
+produced by rerunning the job at any time.** Recovery means running the queries with explicit dates
+and sidestepping `weekly-${WEEK_LABEL}.lock` (`SKILL.md:23`, label also derived from today) — a
+manual backfill delivering into `-5201056067`, i.e. your call.
+Ancillary, and it cuts against #1: `cleanpro-weekly`'s last real run took **448 s** (`last_run`
+`2026-08-03T20:37:28Z` vs its 03:30 ICT fire) — **75 % of the 600 s cap, not a timeout.** #1's "every
+weekly `prompt` job times out at exactly fire + 600 s" has a counterexample in its own family.
 
 **Why it is invisible, and why it is #1's mirror:** `last_status` answers *"did the last run
 succeed?"*, never *"did it run?"* #1 is the opposite corner of the same hole — a job that stamps a
@@ -278,7 +291,8 @@ fire; 13/14 otherwise`, zero false positives on the banded pair.
 **What is still yours, and it is the part a heartbeat cannot do:** the *fleet* remains blind. `bot/`
 never reads `last_run` back (`:85` displays, `:195`/`:205` write — that is the whole population), so a
 discarded fire raises nothing on its own; a cycle has to be awake and looking. And **detection is not
-recovery** — the Aug 4–11 CleanPro report is still missing. The decisions are (a) whether `bot/` should
+recovery** — the Aug 4–11 CleanPro report is still missing, and per the ⛔ above **no future fire of
+this job will ever produce it**; only a hand-run with explicit dates can. The decisions are (a) whether `bot/` should
 warn on delivery, and (b) whether `coalesce: True` or a longer `misfire_grace_time` at
 `bot/scheduler.py:26` is right for weekly jobs, which trades a lost report against a stale-window one
 that fires hours late. Both change live scheduling behaviour; neither is a heartbeat's call.

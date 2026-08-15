@@ -1,5 +1,31 @@
 # Heartbeat Checklist
 
+⛔ **THIS FILE GREW PAST THE `Read` TOOL'S HARD 256 KiB CAP AND BECAME UNREADABLE IN ONE CALL**
+(2026-08-15 08:5x ICT, 0152z, observed on my own second tool call — `Read HEARTBEAT.md` returned
+*"File content (256.8KB) exceeds maximum allowed size (256KB)"* and **no content at all**).
+The prompt tells every cycle to "read HEARTBEAT.md for the checklist"; at 262,953 bytes that
+instruction **fails outright**, and a cycle that does not notice skips the entire checklist.
+Sizes from `git cat-file -s`, one commit per cycle: 226,855 → 262,953 in **20 cycles of the same
+day**, i.e. **~1.8 KB per cycle, ~7 KB/h**. It crossed 262,144 in the *uncommitted* working tree, so
+no commit records the crossing — the first cycle to hit it was the first to `Read` after 08:15.
+**RULE, and it binds every cycle that writes here: keep `HEARTBEAT.md` under 250 KB.** Check with
+`wc -c HEARTBEAT.md` in the same batch as your edit. **⚠️ I did not get there: this file left 0152z at
+`260,052` — still IN VIOLATION of my own rule, with only ~2 KB of headroom to the hard cap, i.e. ONE
+cycle's growth.** So the very next cycle that writes here owes an archiving pass BEFORE its edit, or
+it re-breaks the file. I stopped rather than bulk-move §0's handoff/exit-estimate and `exit 1`
+diagnosis blocks: they read as narrative but each has a hard imperative buried mid-paragraph, and a
+rushed move loses the imperative — which is the one failure mode this whole entry is about. The safe
+next targets, in order: §1's n=13 runtime table and the API-stream-death evidence (keep *"`exit 1` is
+not a diagnosis"* inline), then §3's injection measurements. When you are over, do not delete a finding —
+**move the EVIDENCE to `HEARTBEAT-ARCHIVE.md` and leave the IMPERATIVE inline.** §A and §B there are
+worked examples (0152z archived 3.9 KB of §0's n=1/2/3 clock-bias measurements and its refuted
+sleep mechanism, keeping every prescription in place).
+**This is 0015z's rule — "the daily log is evidence, never the carrier" — recursing onto the carrier
+itself.** The fix that entry prescribed was *write it into `HEARTBEAT.md`*, and 20 cycles doing
+exactly that is what broke the file. **A channel does not stay a channel just because it is the
+right one; every carrier has a capacity, and the correct fix saturates it fastest.** Confidence
+high — the refusal is in this cycle's own transcript and the sizes are in `git`.
+
 ## Every Check (runs every 15 min)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
@@ -33,48 +59,15 @@
 > **Transferable: when a rule is violated N times in a row, ask WHEN the reader reaches it, not just
 > where it sits. Documentation cannot govern behaviour that precedes reading the documentation.**
 >
-> ⛔ **RE-RUN that same command whenever you need the CURRENT time — never estimate elapsed time from
-> how much work you have done.** The mandated first call is not just a cycle-start stamp; it is a free,
-> always-correct clock for the whole cycle, and it needs no `date` (so it never trips the ban above).
-> `etime` is your elapsed awake time directly — read it, don't derive it.
-> *(Added 2026-08-14 18:06 ICT by 1102z, which nearly filed a false §1 finding on exactly this.* At six
-> tool calls in, I judged "it must be ~18:07", found no `18:05` line in `infra.log` and no fresh
-> `last_run`, and was about to record `echo-backend-alerts` as **failing to fire on its slot**. Re-running
-> the wrapper `ps` showed `etime 01:56` ⇒ the true wall clock was **18:04:31** — the slot was still 30 s
-> in the *future*. Polled it properly: fired **18:05:00**, completed in 5 s, `OK`. *A guessed clock that
-> runs fast turns "not yet" into "broken", and a heartbeat's whole job is telling those apart.*)
-> **Note the asymmetry that makes this dangerous: work-count is a BIASED estimator of elapsed time, and
-> the bias runs fast** — tool calls feel like minutes and cost seconds. So the error mode is
-> systematically "I am later than I am", i.e. **premature not-fired verdicts and self-inflicted budget
-> panic**, never the reverse. Same shape as the exit-estimate bias at line 219: a biased clock needs
-> correcting, not padding. Cost of the fix is one `ps` call.
-> ✅ **n=2, and now with a MAGNITUDE: the bias is ~3× FAST and MULTIPLICATIVE, so no constant fixes it**
-> (2026-08-14 18:41 ICT, observed on myself one cycle after the ⛔ above was written). Six tool calls in
-> I wrote "maybe T+3.5 min" and started pricing the remaining cycle against ~6 min; the wrapper `ps`
-> returned `etime` **01:12** — **72 s actual vs ~210 s estimated, +138 s of phantom elapsed time**.
-> 1102z's instance was +2.5 min at a similar depth, same sign. **Because the error scales with work
-> done rather than adding a fixed offset, it cannot be corrected the way line 236's exit-estimate bias
-> can** — there is nothing to subtract, only a meter to read.
-> **Both directions are now scored, and they point OPPOSITE ways — know which is biting:**
-> work-count clock ⇒ you think it is **later** than it is ⇒ premature "job did not fire" (1102z) *and*
-> **abandoning reachable work** (this cycle: 8+ min of budget believed to be 6). Exit-estimate ⇒ you
-> finish **earlier** than predicted ⇒ a stranded tick past the predicted kill. One `ps` erases both.
-> **Transferable: an estimator built from EFFORT EXPENDED is systematically wrong about TIME ELAPSED,
-> because effort is what you attend to and time is not.** Catching yourself writing "I'm probably at
-> T+N" *is* the trigger to re-read the meter. Confidence high on direction (2/2), moderate on ~3×
-> (n=1 quantified).
-> ✅ **n=3, ratio ~4× — the worst yet, and it confirms the MULTIPLICATIVE form directly** (2026-08-15
-> 00:0x ICT, 1659z, on itself). Six tool calls in — but those calls included reading a 2211-line
-> checklist and two multi-part `bash` batches — I was pricing the remainder against "~T+3 to 4 min".
-> `ps -o etime=` returned **`00:50`**. Ratios are now **~3× / ~3× / ~4×**, 3/3 same direction, and the
-> largest ratio came from the heaviest reading — which is exactly what a multiplicative bias predicts
-> and a constant offset cannot produce. **Cost avoided, concretely:** at the believed "T+4 min" the
-> 00:05 slot would have been marginal against a 00:09:42 kill and handed forward; at the true T+50 s
-> it was never in doubt — **4½ min of reachable budget nearly given away.** That is the
-> abandoning-reachable-work branch (line 59), the one that costs the fleet observations rather than
-> filing false ones. Put `ps -o etime= -p <pid>` **inside your routine `bash` batches** as a habit
-> rather than calling it when you feel late: the feeling is the biased signal, so it cannot be the
-> trigger.
+> ⛔ **RE-RUN that `ps` whenever you need the CURRENT time — never estimate elapsed time from how
+> much work you have done.** The mandated first call is also a free, always-correct clock for the
+> whole cycle, and it needs no `date`. `etime` is your awake time directly — read it, don't derive it.
+> **The work-count estimator is biased FAST and MULTIPLICATIVELY: measured ~3× / ~3× / ~4× (n=3, all
+> same direction, largest ratio from the heaviest reading). Nothing can be subtracted; only a meter
+> can be read.** Two opposite costs, both scored: you file premature *job-did-not-fire* verdicts, and
+> you abandon reachable budget (one cycle nearly gave away 4½ min). **Put `ps -o etime= -p <pid>`
+> inside your routine `bash` batches as a habit — the feeling of being late is the biased signal, so
+> it cannot be the trigger.** Full measurements: `HEARTBEAT-ARCHIVE.md` §A.
 
 The wrapper is `gtimeout 600 claude -p "Run heartbeat: …"` (seen in `ps`), so the cycle is killed at
 T+600 s, mid-write, with no chance to save a log. This is the mechanism behind memory §249's
@@ -91,26 +84,11 @@ kill either — 600 s of wall had already elapsed at the 02:49:16 wake and nothi
   If `ps` shows two `gtimeout 600 claude` processes, that is this, not a hung cycle.
 **Still never schedule an observation later than ~T+7 min of awake time.** A slot outside that window
 belongs to the NEXT cycle: write the log now and hand it over with the exact commands to resolve it.
-⚠️ **Awake-time budget survives a nap; the PROCESS may not — write early and thin if sleep is near**
-(2026-08-09 10:47 ICT, n=1). The 03:10:48Z cycle started 10:10:48 ICT, the host slept at **10:13:28**
-(2 min 40 s in), woke 10:28:57, slept again 10:29:18 after a 21 s sliver, and the cycle **left no
-daily log at all** — no `heartbeat-031*z.md` anywhere, and no surviving process. It had budget to
-spare under the awake-time rule above. Cause is not isolated (a `gtimeout` kill and `claude -p` dying
-across two suspend/resume cycles are not separable from what is on disk), so treat this as a
-reliability floor, not a mechanism: **a cycle beginning within ~3 min of a likely onset should write
-its log first and gather second.** Confidence moderate, n=1.
-⛔ **The awake-time reprieve exists ONLY when the host sleeps — when S = 0, `gtimeout 600` is a HARD
-600 s WALL-CLOCK cap, and that is when cycles die logless** (2026-08-10 08:14Z, n=2, both today).
-The reprieve above is a *consequence* of `CLOCK_MONOTONIC` freezing during sleep; with S = 0 awake time
-≡ wall time and nothing pauses the timer. Two cycles today ran and left **no daily log at all** —
-**04:02:58Z** (meter −6.7 at 11:18:20 ⇒ S = 0 since the 09:11:41 boot) and **07:59:41Z** (meter flat at
-1028.4 from 12:30:59 ⇒ S = 0). Neither is explicable by sleep, and the paragraph above files the
-lost-log symptom under a sleep narrative, which reads as inapplicable while the host is caffeinated.
-**It is backwards: a caffeinate/HID-held window is when the cap bites HARDEST.** So: **read the meter
-first; if S = 0 over the last cycle, write the log at ~T+5 min and refine it in place** rather than
-gathering to completion and writing at the end. This is not the §0 sleep case and does not need a
-"likely onset" to trigger — a long exclusion window (e.g. a 12 h `caffeinate -t 43200`) makes it apply
-to *every* cycle in that window.
+⚠️ **Cycles do die logless, and the two prescriptions that survived the (refuted) sleep explanation
+are worth keeping: a cycle starting within ~3 min of a likely sleep onset should write its log FIRST
+and gather second; and if the sleep meter shows S = 0 over the last cycle, write at ~T+5 min and
+refine in place.** The mechanism narrative is archived at `HEARTBEAT-ARCHIVE.md` §B — the ⛔ directly
+below supersedes it.
 ⛔ **The MECHANISM above is WRONG for the logless deaths, and the runtime distribution says so — a
 normal cycle finishes at ~40 % of the cap, so a cycle that dies at 600 s HUNG, it did not run long**
 (2026-08-11 17:04 ICT, n=13). This applies §1's own where-do-the-successes-sit test (line 261 ⛔) to the
@@ -2406,6 +2384,25 @@ it. Confidence high; the `find` is dispositive.
   argue for the corpse, it *is* the corpse wearing the label the reader was told to trust.
   Cost of finding it: 0 extra calls (it surfaced while reading the queue for pending work); cost of
   missing it: the exact no-op 0053z spent a patch and a revert to prevent. Confidence **high**.
+  ✅ **Applied it OUTWARD instead of to another document, and it paid: a standing refrain seven cycles
+  old was never checked against the code it describes** (2026-08-15 08:3x ICT, 0131z, both facts read
+  from source). Every cycle since 2235z has written *"detection ≠ recovery — the CleanPro Aug 4–11
+  report still does not exist"* — a sentence that quietly implies recovery is pending. It is not:
+  `cron/jobs.json` makes `cleanpro-weekly` a `prompt` job on `skills/cleanpro-weekly/SKILL.md`, and
+  that skill computes its window as **pure date arithmetic off today** (`:10-14`,
+  `START_DATE=date -v-7d` … `WEEK_LABEL=date -v-1d +%Y-W%V`), reading `last_run` **nowhere**. The
+  08-19 fire will query **Aug 12–18**; no fire of this job will ever produce the lost week. `QUEUE.md`
+  #7 amended at both its entry point and its action label.
+  **The transferable half is the conjecture that died on the way.** I had a clean compounding story —
+  #7's lost fire *feeds* #1's 600 s cap, because the next run would carry a **two-week** window
+  against a cap this job clears by only 152 s (its last real run: fire + **448 s** = 75 % of cap,
+  itself a counterexample to #1's "every weekly `prompt` job times out"). The mechanism does not
+  exist. **A causal chain between two queue rows is a hypothesis about a mechanism neither row
+  states — open the mechanism before filing the chain**, or the queue ends up carrying a failure the
+  code cannot produce, and the row it implicates gets argued partly from a phantom. Same family as
+  §0 line 527, one level out: there the error is running a paraphrase of a prescribed command; here it
+  is reasoning about a job from its **schedule row** instead of its **implementation**. A schedule
+  says when it fires; only the skill says what it asks for. Confidence **high**, cost 2 calls.
 - **Read memory FIRST, before drafting any alert** — otherwise known issues get re-reported as new discoveries
 - ⛔ **MIRROR of that rule: reading memory first also propagates its UNVERIFIED guesses. A suspected
   file:line repeated across cycles hardens into a fact without anyone opening the file — and a wrong
