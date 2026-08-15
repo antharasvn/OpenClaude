@@ -546,6 +546,25 @@ call on the one thing that *does* need `ps`: your own start.
 > script — closed for one branch, left open for the other, and better hidden because interval jobs
 > self-heal. **Transferable: when you ship a detector, ask what each BRANCH asks — a shared summary
 > line will happily average a real test and a proxy.**
+> ⛔ **THE `⇒ host sleep` ON LINE 542 IS UNDERDETERMINED AND MUST NOT BE QUOTED AS A CAUSE — IDENTICAL
+> BOUNDARIES PROVE A SHARED CAUSE, NEVER THAT THE CAUSE IS SLEEP** (2026-08-15 15:4x ICT, 0836z,
+> counterexample measured). Both interval jobs live in ONE scheduler process, so they cannot disagree:
+> every process-level event — network outage, event-loop stall, bot restart — produces counts and
+> boundaries identical to the second, exactly like sleep. **Counterexample: `auto-commit`'s 14:33:23
+> fire today has no `Running job:` line, while the process was demonstrably ALIVE across the due
+> instant** (`httpx.ConnectError` at 14:33:08 and 14:33:41) **and the host AWAKE** (first
+> maintenance-sleep entry 14:37:34, after the miss). It fell inside 0803z's 14:25:19–14:36:29
+> `ConnectError` window. So at least one of the 32 losses is not sleep, and the 18.5 % is a mixture.
+> **To attribute an interval gap to sleep, use §1's meter or an on-grid fire on the FAR side of the
+> gap — never the agreement of two jobs that share a process.** Generalises past this file: two
+> detectors downstream of one component are one detector, and their agreement carries no information
+> about which component failed.
+> ⚠️ **A bot restart RE-ANCHORS both interval jobs to `start + interval`, so the anchor is evidence of
+> the last restart, not of the schedule.** Today's `:33:23` anchor dates to the 2026-08-13 12:33:21
+> restart; the 2026-08-15 15:21:46 restart moved both to **17:21:46 ICT**. Read `grep "Bot starting"
+> logs/infra.log` before calling an off-grid interval fire drift. (Free corollary, and it is §0's
+> on-grid meter applied: 00:33:23→12:33:23 ran seven fires with **zero** deviation ⇒ S = 0 across the
+> whole 12 h, at no cost.)
 > ⚠️ **And don't classify those gaps as discard-vs-deferral with `g % interval`** — this cycle wrote
 > that test and it is wrong (`14399 % 7200 = 7199`: a 4 h gap 1 s short reads as "drifted"). The split
 > is real and decides whether the anchor moved; measure it with §1's `armed + S`, not a modulo.
@@ -1801,6 +1820,19 @@ it. Confidence high; the `find` is dispositive.
   the ⛔ below explains the fix with the sentence "the bot is launched as **`python -m bot`**", which
   reads like a safe grep string and is not one — that is what this cycle pasted, and it returned
   empty. **Match on `-m bot` (interpreter-independent); run the positive control either way.**
+  ✅ **CHEAPER AND ARGV-FREE, USE IT FIRST: `launchctl list | grep -i claude`** (2026-08-15 15:4x ICT,
+  0836z). Returns the live PID for `com.claude.telegram-bot` (plus `heartbeat` and `daily-brief`) with
+  no pattern to get wrong, and the PID feeds `ps -o lstart -p <pid>` directly to date the process. I
+  reached it only after paraphrasing the prescription **again** — `grep '[p]ython -m bot'` returned
+  nothing on a healthy bot, n=2 for this exact trap, so treat the argv route as the fallback.
+  ⛔ **A BOT DEATH CAN BE COMPLETELY TRACELESS — DO NOT LOOK FOR A SHUTDOWN LINE, LOOK FOR THE START
+  LINE.** Same cycle: `logs/infra.log` runs `15:05:04 Job echo-backend-alerts completed` → `15:21:43
+  Bot starting` with **nothing** between, no crash report in `~/Library/DiagnosticReports`, and
+  `/tmp/claude-telegram-bot.log` **0 bytes** (the bot logs to `infra.log`, so stdout has never carried
+  anything — there is no evidence to recover there, and its emptiness is not a symptom). launchd
+  `KeepAlive` had already revived it. **Tell a revival from a graceful `./bin/restart.sh` by the two
+  `State file not found:` lines** — `.restart-state.json` / `.active-streams.json` are written by the
+  restart path, so their absence on the way up means the process died on its own.
   ⛔ **The SAME missing `\b`, one file over and pointing the OTHER way — `guard/guard.sh:27` blocks any
   Bash command containing the word `skill ` and calls it a process kill** (2026-08-15 03:2x ICT, n=1
   per side, observed by tripping it). The guard is `grep -qiE "kill\s|pkill\s|killall\s|…"`; `kill\s`
