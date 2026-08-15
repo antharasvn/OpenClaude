@@ -39,81 +39,45 @@ which cluster at ~40 % of their cap. `HEARTBEAT.md` §1 lines 798–875.
 **Note:** this reasoning applies to `:163` only. The identical-looking `gtimeout 600` on the
 heartbeat itself is the *hang* branch — raising **that** cap would only let each hang burn longer.
 
-## 2. `cleanpro-daily` HANGS on ~13 % of runs — and the cap is *not* the problem
+## 2. `cleanpro-daily` fails ~7 % of runs — the 300 s cap explains only 3 of the 7
 
-**Where:** `scripts/cleanpro_daily_runner.py` (cap at `bot/scheduler.py:120` — **leave it at 300**).
-**Superseded** the previous "9 % margin, currently passing" framing, which was built on a single
-sleep-contaminated sample. Settled 2026-08-15 03:0x ICT by catching the live 03:00 run (**138 s**,
-S = 0) and then reading the whole population out of `logs/infra.log`:
+**ASK — do #6 first, then decide this one.** Set `scripts/daily_report_common.py:48` from
+`timeout=600` to **`timeout=120`**: strictly below the outer 300 s cap, leaving room to catch the
+raise, name the failing SQL, and still finish inside the budget. Not a heartbeat's call because it is
+a **shared module behind six live daily runners** (`cleanpro`, `echo`, `mangii`, `pdfai`, `aividly`,
+`vidnotes`), first firing 03:00 ICT.
 
-| successes (s) | 136, 121, 125, 112, 127, 122, 137, 154, 118, 139, 138, 138 → **median ≈132, max 154** |
-| --- | --- |
-| failures | **2, both at exactly 300 s** (07-30, 08-13), `timed out after 5 min` |
-
-Successes sit at **44–51 % of the cap** with a **146 s dead zone** below it; nothing has ever
-finished in 155–299 s. By the fleet's own successes-vs-cap test (`HEARTBEAT.md` §0 line 116) that is
-the **hang** signature, not capacity — so **raising 300 would recover nothing and let each hang burn
-longer**. The prior 273 s figure was the 08-14 run, the one the host slept 734 s inside
-(`Dark Wake Thermal Emergency`); it is 2× the median and the only reading near the cap.
-
-**ANSWERED 2026-08-15 03:4x ICT — and the guess in this row was wrong.** It read *"network I/O with
-no per-request timeout is the obvious candidate."* There **is** a per-request timeout; it is **twice
-the job's whole budget**, which is worse than none because it answers the grep:
+**Why it is an ask at all — a 600 s inner timeout inside a 300 s outer cap is unreachable:**
 
 | layer | value | source |
 | --- | --- | --- |
 | scheduler kills the script | **300 s** | `bot/scheduler.py:120` |
 | every `bq query` is allowed | **600 s** | `scripts/daily_report_common.py:48` |
-| generic `run()` default | **300 s** | `scripts/daily_report_common.py:31` |
+| generic `run()` default | **300 s** (= the cap, so also too late) | `scripts/daily_report_common.py:31` |
 
-**The inner timeout is unreachable** — at 600 s inside a 300 s cap no query can ever time out; the
-outer kill always wins, and `run()`'s default *equals* the cap so it cannot fire in time either. The
-process dies mid-flight with no error and **no indication which query stalled**. ⚠️ **That is TWO
-causes, not one — fixing this timeout alone leaves the failure silent. See #6:** `bot/scheduler.py`
-also discards the script's stderr on the timeout path, so even a runner that *did* print a
-diagnostic would lose it. This predicts the
-distribution above better than "hang" does: past ~168 s nothing can interrupt a slow query before
-300 s, so runs land at ~132 s or at exactly the cap, never in the 146 s dead zone. A true wedge and
-a merely slow query are indistinguishable from outside.
+No query can ever time out; the outer kill always wins and the process dies with no error and no name
+for the stalled query. Both values are grep hits and both are dead.
 
-⛔ **AMENDED 2026-08-15 10:3x ICT (0333z) — THE DISTRIBUTION ABOVE WAS A 12-RUN WINDOW. THE FULL
-SERIES IS n=101 (04-13→08-15) AND IT BREAKS BOTH THE "DEAD ZONE" AND THE "HANG" READING.**
+**Why to hold it — the failure population says the stall may not be in BigQuery at all.** Full series
+from `logs/infra.log`, n=101 (04-13→08-15): 94 successes span **91–200 s**; the 7 failures are
+**bimodal — 4 fast `exit 1` (3/130/153/156 s) plus 3 cap-kill timeouts (300/301/300)**. The 4 fast
+ones carry full stderr, and **three of them name `oauth2.googleapis.com` token acquisition, never a
+query** — `NameResolutionError … Failed to resolve` (05-12), and twice
+`ConnectTimeoutError … (connect timeout=120)` (07-21, 07-22). With that 120 s connect timeout and
+urllib3 retries, one timed-out connect ≈ the observed 153/156 s and a second retry lands past 300 s,
+i.e. the cap-kill band. If that is right the stalling call is **auth, not `bq query`**, and the edit
+above touches nothing. Confidence moderate-high: the 120 s value and the host are quoted from the log;
+the cap-kill attribution is inferred, because the stderr drain is dead (#6).
 
-| | this row said | actual, n=101 |
-| --- | --- | --- |
-| successes | 12 runs, median 132, max 154 | **94 runs, median ~115, range 91–200 s** |
-| 155–299 s band | "nothing has ever finished here" | **populated — 157 s (05-06), 174 s (07-18), 200 s (07-20)** |
-| failures | 2, both at exactly 300 s | **7, and BIMODAL: 4 fast exit-1 (3/130/153/156 s) + 3 cap kills (300/301/300; 06-05 was missed)** |
+**Free falsifier, and it orders the work:** apply #6's structural drain first, then read the next
+300 s failure. Names `oauth2.googleapis.com` ⇒ this row is the wrong file and should be closed. Names
+a `bq query` ⇒ apply the ask above. #6 is local and diagnostics-only; this one is the risky edit —
+so the cheap fix decides the expensive one.
 
-There is no dead zone, so the argument that "past ~168 s nothing can interrupt a slow query" has no
-distribution to explain. **The cap accounts for 3 of 7 failures; the fix in this row addresses only
-those 3.**
-
-✅ **And the 4 fast failures are self-describing — `_run_script` loses stderr only on the TIMEOUT path
-(#6 is narrower than filed). Three of the four name `oauth2.googleapis.com` token acquisition, never a
-query:** `NameResolutionError … Failed to resolve` (05-12, 3 s), and twice
-`ConnectTimeoutError … (connect timeout=120)` (07-21, 07-22).
-
-⚠️ **New hypothesis, and it points the fix at a different subsystem: the fast failures and the cap
-kills may be ONE cause at different retry counts.** With `connect timeout=120` and urllib3 retries,
-one timed-out connect + overhead ≈ **153/156 s — exactly the two observed fast failures** — and a
-second retry lands past **300 s**, i.e. the cap kills. If so the stalling call is **auth token
-acquisition, not `bq query`**, and the `timeout=120` change below would not touch it.
-Confidence **moderate-high** — the 120 s value and the host are quoted from `logs/infra.log`; the
-cap-kill attribution is inferred from runtime arithmetic, because the drain is dead (#6).
-**Free falsifier, and it orders the work: apply #6's structural drain FIRST, then read the next 300 s
-kill. Names `oauth2.googleapis.com` ⇒ this is settled and the ask below is the wrong file. Names a
-`bq query` ⇒ the original diagnosis stands.** #6 is local and diagnostics-only; the ask below edits a
-shared module behind six live jobs — so the cheap one is now also the one that decides the expensive one.
-
-**The actual ask (one line, but not a heartbeat's call) — hold it until the falsifier above resolves:** set `daily_report_common.py:48` to
-`timeout=120` — strictly below the outer cap, leaving room to catch the raise, report the failing
-SQL, and still finish inside 300. **It is a shared module behind six live jobs** (`cleanpro`, `echo`,
-`mangii`, `pdfai`, `aividly`, `vidnotes` daily runners), first firing 03:00 ICT, which is why no
-cycle has applied it. `cleanpro` merely surfaced it first — it makes the heaviest queries.
 Minor, same file: `cleanpro_daily_runner.py:447,451` (heatmap + `curl`) have no timeout at all, but
 run *after* `send_telegram` at `:439` and so cannot cost the report.
-Evidence: `memory/t0/2026-08-15/heartbeat-2041z.md`.
+Evidence: `memory/t0/2026-08-15/heartbeat-2041z.md`, `-0333z.md`; superseded 12-run "hang"
+distribution and its dead-zone argument archived at `HEARTBEAT-ARCHIVE.md` §I.
 
 ## 3. CleanPro conversion alert is a coin flip — `scripts/cleanpro_alerts_runner.py:99`
 
@@ -280,12 +244,7 @@ printed before the kill dies with the process. The prompt path's own comment sta
 exactly: *"the only prompt-job failures that ever need diagnosing are the ones that leave no
 diagnostics at all."* That is precisely `cleanpro-daily`'s two 300 s failures (07-30, 08-13).
 
-~~**Patch:** apply the `:169-175` drain to `:121-123` — same 10 s inner wait, append the tail to the
-raised message.~~ ⛔ **STRUCK — this is the refuted patch. The live one is the `buf = bytearray()`
-block at the top of this row.** (Struck 2026-08-15 08:1x ICT by 0113z: 0053z correctly put its
-retraction at the row's entry point, but left this line's **bold `Patch:` label** standing 30 lines
-below it, and every row in this file is navigated by that label.)
-Either way the change is diagnostics-only: no cap changes, no job behaviour changes, no shared module.
+The change is diagnostics-only: no cap changes, no job behaviour changes, no shared module.
 **Relation to #2:** independent and complementary. #2 makes a stalled `bq query` *able* to report;
 #6 makes anything it reports *survive*. #2 is the risky one (shared module, six live jobs); #6 is
 local to one function. Doing #6 first is strictly informative — the next `cleanpro-daily` timeout

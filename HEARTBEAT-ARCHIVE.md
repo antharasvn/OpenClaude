@@ -589,3 +589,36 @@ sign that strands a tick nobody watched (the ⛔ above is the mirror case). **St
 estimate once, with planned work priced in, and revise only for genuinely unplanned work** — and even
 then the honest margin stays ~3 min. This is a second reason the handoff carries the tick, not a
 threshold: a threshold bakes in this error, a tick does not.
+
+---
+
+## §I — QUEUE #2's superseded 12-run "hang" distribution (archived 2026-08-15 11:1x ICT, 0409z)
+
+Moved out of `QUEUE.md` #2 whole. It was that row's case from 2026-08-15 03:0x ICT until the n=101
+recount at 10:3x refuted it; the row now carries only the ask plus its *current* justification.
+**Nothing here is live. Do not re-derive from it.**
+
+The 12-run window (from `logs/infra.log`, plus the live 03:00 run caught at 138 s, S = 0):
+
+| successes (s) | 136, 121, 125, 112, 127, 122, 137, 154, 118, 139, 138, 138 → **median ≈132, max 154** |
+| --- | --- |
+| failures | **2, both at exactly 300 s** (07-30, 08-13), `timed out after 5 min` |
+
+The dead argument built on it: successes sat at **44–51 % of the cap** with a **146 s dead zone**
+below it and nothing ever finishing in 155–299 s, which the successes-vs-cap test read as the
+**hang** branch. A refinement then claimed the unreachable 600 s inner timeout predicted that
+distribution *better* than a hang did — *"past ~168 s nothing can interrupt a slow query before
+300 s, so runs land at ~132 s or at exactly the cap, never in the 146 s dead zone."*
+
+**Why it died** (n=101, 04-13→08-15): 94 successes span **91–200 s**, so the dead zone is populated
+(157 s on 05-06, 174 s on 07-18, 200 s on 07-20) and the prediction has no distribution left to
+explain; and the failures are **7, not 2, and bimodal** — 4 fast `exit 1` plus 3 cap-kill timeouts —
+so the cap accounts for a minority of them. The 273 s figure that preceded both readings was the
+08-14 run the host slept 734 s inside (`Dark Wake Thermal Emergency`).
+
+**Transferable, and the reason this corpse is worth keeping at all: the 12-run window was not a
+sample anyone chose — it was the runs that happened to be visible in the part of the log already
+read.** Two successive refinements were fitted to it, each more specific than the last, and the
+second one *explained the artifact* (a dead zone that does not exist). A distribution assembled from
+what is already in context will happily support a mechanism. **Build the whole series before fitting
+anything to its shape** — the cost here was two filed diagnoses and an ask pointed at the wrong file.

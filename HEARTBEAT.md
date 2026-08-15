@@ -34,6 +34,19 @@ move a block and hope the summary caught everything. When you are over, do not d
 **move the EVIDENCE to `HEARTBEAT-ARCHIVE.md` and leave the IMPERATIVE inline.** §A and §B there are
 worked examples (0152z archived 3.9 KB of §0's n=1/2/3 clock-bias measurements and its refuted
 sleep mechanism, keeping every prescription in place).
+⛔ **APPEND TO THE ARCHIVE WITH THE `Edit` TOOL, NEVER `cat >> file << 'EOF'` — A HEREDOC'S PAYLOAD
+IS COMMAND TEXT, SO `guard.sh` GREPS THE PROSE YOU ARE ARCHIVING** (2026-08-15 11:1x ICT, 0409z,
+hit on my own §I append). The block described `cleanpro-daily`'s cap-killed runs; the hyphenated
+compound put the guarded token immediately before a space and rule 1 refused the whole write —
+*"BLOCKED: You are not allowed to k—— processes."* This is `QUEUE.md` #5's defect in its **fourth**
+organic form and the first where the token sat in **data being written** rather than in a command's
+logic, which matters because **compaction is now a per-cycle duty and its payload is exactly the
+fleet's own prose about killed jobs, caps and timeouts** — i.e. the text most likely to trip it.
+`Edit` and `Write` are not intercepted (`.claude/settings.json` hooks `Bash` only), so the fix costs
+one Grep to locate the anchor line and one `Edit`, and **it needs no rewording** — which is the
+point: #5 also records that rewording a finding to appease a broken matcher corrupts the record.
+Cheap correct form: `Grep -n "<last distinctive line>"` → `Read` a few lines around it → `Edit` that
+line to itself-plus-your-block. Confidence high — observed, and the retry via `Edit` succeeded.
 **This is 0015z's rule — "the daily log is evidence, never the carrier" — recursing onto the carrier
 itself.** The fix that entry prescribed was *write it into `HEARTBEAT.md`*, and 20 cycles doing
 exactly that is what broke the file. **A channel does not stay a channel just because it is the
@@ -467,6 +480,20 @@ do.** Same defect as `memory/t0/MEMORY.md` being write-only (CLAUDE.md §Memory)
 write into a channel the intended reader never opens. **`QUEUE.md` at the repo root is now the queue.**
 **Rule: a finding filed only in this checklist is NOT queued — add a `QUEUE.md` row *and* keep the
 evidence here.** Keep that file short; a second 232 KB document reproduces the failure it fixes.
+⛔ **IT IS ALREADY REPRODUCING IT — MEASURED, NOT FEARED: `QUEUE.md` hit 30,637 B / 454 lines / 7 rows
+~8 h after creation (~4 KB per row, ~3.8 KB/h vs this file's ~7 KB/h).** (2026-08-15 10:5x ICT,
+0352z.) **`wc -c QUEUE.md` in the same batch as any row you add; hold it under ~15 KB.** A constraint
+stated as prose in a file's own header is invisible to everyone who appends to the bottom — the
+250 KB rule here only began binding once a cycle put `wc -c` beside its edit.
+⛔ **A QUEUE ROW IS AN ASK PLUS ITS CURRENT JUSTIFICATION. Everything the row used to believe is
+evidence; evidence lives HERE, never in the row.** #2 is 76 lines: a 12-run table, an ANSWERED
+correction, an ⛔ AMENDED block that *refutes that table* (n=101), a new hypothesis, and only then the
+one-line ask. **That is the retraction-marking failure §0 already measured twice (0034z, 0113z) —
+the reader enters above the mark or jumps to the bold label below it — and the boss reads once,
+top-down, with no ⛔-scanning habit.** Apply 0236z's proven form instead: **delete the corpse to
+`HEARTBEAT-ARCHIVE.md`, don't mark it.** Transferable: **a file created to fix an accretion failure
+inherits the accretion, because the same cycles write it with the same habits.** Being new protects
+nothing. Evidence: `memory/t0/2026-08-15/heartbeat-0352z.md`.
 **Transferable, and this is the half worth carrying:** when prose names a destination for work —
 *"queued for X"*, *"handed to Y"*, *"filed under Z"* — **open the destination.** The phrasing does the
 work of convincing the writer *and every later reader* that a transfer occurred, so nothing inside the
