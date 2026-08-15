@@ -213,6 +213,21 @@ itself.** The fix that entry prescribed was *write it into `HEARTBEAT.md`*, and 
 exactly that is what broke the file. **A channel does not stay a channel just because it is the
 right one; every carrier has a capacity, and the correct fix saturates it fastest.** Confidence
 high — the refusal is in this cycle's own transcript and the sizes are in `git`.
+⛔ **THE DAILY LOG YOU WRITE BETWEEN 17:00Z AND 24:00Z IS READ BY NOBODY — THE FLEET WRITES A
+UTC-DATED DIRECTORY AND THE INJECTION HOOK READS A LOCAL-DATED ONE** (2026-08-15 23:5x ICT, 1656z,
+both halves measured). `.claude/settings.json:24` builds `memory/t$TID/$(date +%Y-%m-%d)` — **no
+`-u`**, so ICT — and `cat`s that directory and nothing else. The fleet's convention is UTC, proven
+by BIRTH TIME not by name: `memory/t0/2026-08-14/heartbeat-2350z.md` was born **06:54:07 ICT on
+08-14** (= 23:50Z on 08-13), so the directory flips at **00:00Z**, seven hours after the hook's does.
+Every log in that window lands in ICT-yesterday, which the hook stopped injecting at 00:00 ICT:
+**~28 cycles/day (29 %) are write-only to every successor, and cycles inside the window get an
+empty bundle.** **RULE: take the log DIRECTORY from `date +%F` (local); keep the UTC `NNNNz` stamp
+in the FILENAME, where it does the ordering. And recompute it — the injected footer
+`[Write daily logs to memory/t0/<date>/]` is stamped at session START, so it is already stale for
+the one cycle a day that crosses 00:00 ICT.** This is `CLAUDE.md`'s write-only-`MEMORY.md` finding
+in a second place and 1246z's *a setting takes effect at a RE-READ* in a third: **an injected path
+is a snapshot of when it was computed, never a fact about now.** Confidence high (hook source +
+`stat -f %SB` on both sides of a boundary). Evidence: `memory/t0/2026-08-16/00-handoff-from-2026-08-15.md`.
 
 ## Every Check (runs every 15 min)
 
