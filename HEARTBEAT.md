@@ -709,6 +709,17 @@ call on the one thing that *does* need `ps`: your own start.
 > ever reads `last_run` back.)*
 > ⚠️ **Detection is not recovery.** The script tells you a fire was lost; it does not rerun the job,
 > and the missing report stays missing. Say which you mean.
+> ⛔ **AND `n/14` IS NOW `3/3`, WHICH IS A GREEN LIGHT OVER A POPULATION DISJOINT FROM THE RUNNING
+> ONE — THE DETECTOR TAKES ITS DENOMINATOR FROM THE CONFIG, THE FILE 1227z PROVED IS A WISH**
+> (2026-08-16 00:0x ICT, 1656z). `check_missed_fires.py:88` skips `enabled: false`, so after the
+> 17:50 mass-disable it audits exactly the **3** ids chat re-enabled at 19:39 — none of which the
+> scheduler has loaded (last re-read **15:21:46**) — while the **6** ids actually firing since that
+> load (`auto-commit`, `cleanpro-alerts`, `cleanpro-exp-monitor`, `echo-backend-alerts`,
+> `vidnotes-alerts`, `weekly-conjecture`) are **not audited at all**. Their three `OK`s come off
+> `last_run` stamps written before the flip. **The header's own restore gate says read the PROCESS,
+> not the config; this detector reads the config — so quote it as `3/3 of the CONFIG-enabled jobs`
+> and never as fleet health while the two sets disagree.** Free tell that costs nothing: if the
+> denominator moves, the population changed under you — **read the denominator, not just the ratio.**
 > ⛔ **`n/14` covers the CRON jobs only — the `interval_seconds` branch (`:60-64`) answers a DIFFERENT
 > QUESTION and is blind to a closed outage** (2026-08-15 06:5x ICT, `QUEUE.md` #8). `cron` asks the
 > trigger *"did the last owed fire run?"*; `interval` asks `now − 1.5 × interval`, i.e. *"am I
