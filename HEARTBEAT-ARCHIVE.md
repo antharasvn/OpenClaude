@@ -622,3 +622,54 @@ read.** Two successive refinements were fitted to it, each more specific than th
 second one *explained the artifact* (a dead zone that does not exist). A distribution assembled from
 what is already in context will happily support a mechanism. **Build the whole series before fitting
 anything to its shape** — the cost here was two filed diagnoses and an ask pointed at the wrong file.
+
+## §J — QUEUE #7's retired detector thread: the refuted `1.5 × period` ratio check and the shipped design (archived 2026-08-15 11:5x ICT, 0449z)
+
+`QUEUE.md` #7 had grown to ~80 lines around an ask that is now **two sentences**. Everything below is
+retired by construction — the detector it argues about **shipped** as `scripts/check_missed_fires.py`
+on 2026-08-15 06:2x ICT (2318z) and is named at the top of `HEARTBEAT.md` §1, which every cycle runs.
+Per 0236z's method: pick the thread whose conclusion is already settled, not the longest block.
+
+**The refuted ask — `age(last_run) > 1.5 × period ⇒ warn`. DO NOT BUILD IT.** Implemented and run
+against all 14 jobs on 2026-08-15 05:3x ICT; it fails in **both** directions at once, so no
+multiplier exists that works:
+
+*Too tight:* `cleanpro-alerts` (`0 8-22/2 * * *`) and `vidnotes-alerts` (`0 7-23/2 * * *`) are
+**banded** — they stop overnight — so they have no single period. Two consecutive fires give 2.00 h;
+the real max gap is **10.00 h** and **8.00 h**. The check warns 01:00→08:00 ICT *every night* for
+`cleanpro-alerts` (29 % of the clock) and 5 h/night for `vidnotes-alerts`, on healthy jobs. It fired
+during the test run: `STALE! cleanpro-alerts ratio=3.81`, job fine.
+
+*Too loose:* the one true positive, `cleanpro-weekly`, reads **ratio 1.58** — it crossed 1.5 only
+**84 h after** the missed fire, and clears the threshold by 5 %. Raising to `2 ×` to silence the
+nightly noise would have reported the whole fleet clean while the report was missing.
+
+**Transferable, and it is why this is worth keeping as a corpse:** a scalar-period staleness rule is
+the obvious detector for "did it run?", and it is unbuildable on banded schedules. The replacement
+works because it asks the **trigger** to enumerate its own fires and interprets no cron string —
+which also makes it immune for free to #1's APScheduler `day_of_week` trap. **When a threshold has to
+straddle two populations with different natural periods, stop tuning the constant and change what the
+check asks.**
+
+**The shipped design, for reference** (this is what `check_missed_fires.py` implements):
+
+```python
+trig = CronTrigger.from_crontab(sch['cron'], timezone=ZoneInfo(sch['timezone']))
+t, prev = now - timedelta(days=16), None
+while (n := trig.get_next_fire_time(t, t + timedelta(seconds=1))) and n < now:
+    prev, t = n, n
+missed = last_run is None or last_run < prev - timedelta(seconds=60)
+```
+
+Measured against all 12 cron jobs at design time: **11 ok, 1 MISSED — `cleanpro-weekly`, 167.9 h
+behind its last expected fire.** Zero false positives on the banded pair (correctly resolved to
+`Fri 08-14 22:00 ICT` and `Sat 08-15 04:00 ICT`), and it would have caught `cleanpro-weekly` on
+**08-11 at 03:35** instead of 08-14. (`auto-commit` / `cleanpro-exp-monitor` are `interval_seconds`,
+not cron; for those `age > 1.5 × interval` is safe, since an interval genuinely has no bands — but
+see `QUEUE.md` #8 for what that branch is blind to.)
+
+**The gap between design and ship, kept because it is the reusable half:** this design lived only in
+`QUEUE.md` for one cycle, and `grep -rl get_next_fire_time` then returned **two files, both
+Markdown** — nothing on disk executed it. **A boss-queue row is a request, not a detector.** When a
+row already contains a working implementation, run the half that is in your own lane and leave the
+boss the half that needs their authority.

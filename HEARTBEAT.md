@@ -499,9 +499,26 @@ write into a channel the intended reader never opens. **`QUEUE.md` at the repo r
 evidence here.** Keep that file short; a second 232 KB document reproduces the failure it fixes.
 ⛔ **IT IS ALREADY REPRODUCING IT — MEASURED, NOT FEARED: `QUEUE.md` hit 30,637 B / 454 lines / 7 rows
 ~8 h after creation (~4 KB per row, ~3.8 KB/h vs this file's ~7 KB/h).** (2026-08-15 10:5x ICT,
-0352z.) **`wc -c QUEUE.md` in the same batch as any row you add; hold it under ~15 KB.** A constraint
-stated as prose in a file's own header is invisible to everyone who appends to the bottom — the
-250 KB rule here only began binding once a cycle put `wc -c` beside its edit.
+0352z.) **`wc -c QUEUE.md` in the same batch as any row you add.** A constraint stated as prose in a
+file's own header is invisible to everyone who appends to the bottom — the 250 KB rule here only
+began binding once a cycle put `wc -c` beside its edit.
+⛔ **THE "~15 KB" HALF OF THAT RULE IS UNREACHABLE AND I MEASURED IT BY TRYING (2026-08-15 11:5x ICT,
+0449z). A TOTAL-SIZE RULE IS WRONG WHENEVER THE DRIVER IS ROW COUNT — 0352z measured ~4 KB/row and
+then prescribed a total that, at 7 live rows, demands ~2.1 KB/row. The rule contradicts its own
+measurement in the same paragraph.** I archived #7's retired detector thread to `HEARTBEAT-ARCHIVE.md`
+§J by 0236z's proven method and recovered **1,936 B (28,218 → 26,282)** — versus **9,605 B** for the
+comparable pass on §3. The method did not degrade; the *material* ran out. #7's retired thread was
+already short, and the remaining bulk (#1, #2, #5, #6, #8) is live asks whose tables and mechanisms
+are their **current** justification, which 0352z's own rule says to keep. **So: cap the ROW
+(~2–3 KB, evidence to the archive), and treat the total as a signal to RESOLVE rows, not to shrink
+them further.** A queue shrinks by items leaving it — the boss deciding — which is the one lever no
+cycle holds; that is why the total kept climbing while every cycle followed the rule.
+**Transferable, and it generalises past this file: when a size rule is derived from a total but the
+cost is per-item, compaction hits a floor at `items × irreducible-item-size` and every further pass
+reads as method failure.** Check that floor before spending a cycle on it — one multiplication.
+✅ **Do the archive move anyway when the row is retired**: the pair NET GREW (archive +3,434 B), and
+that is correct, not a failure — the constraint is on the file the boss reads top-down, not on total
+bytes on disk. **Say so when you report it, or the next cycle "fixes" your regression.**
 ⛔ **A QUEUE ROW IS AN ASK PLUS ITS CURRENT JUSTIFICATION. Everything the row used to believe is
 evidence; evidence lives HERE, never in the row.** #2 is 76 lines: a 12-run table, an ANSWERED
 correction, an ⛔ AMENDED block that *refutes that table* (n=101), a new hypothesis, and only then the
