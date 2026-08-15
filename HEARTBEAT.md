@@ -162,6 +162,20 @@ are daily (`cleanpro-daily` 03:00 Saigon, `vidnotes-daily` 07:00 Warsaw, `echo-d
 no enabled run can be missed in the window, and the 11 dropped are exactly the ones the user turned off.
 **Price BOTH branches before handing a hazard forward** — §0's hand-the-tick-not-a-threshold rule for
 risk: hand the successor the measurement, never your unresolved verdict.
+⛔ **AND THE PRICED BRANCH WAS NEVER AVAILABLE — `./bin/restart.sh` CANNOT RESTART THIS BOT, SO
+1345z's DECISION IS VOID, NOT DEFERRED** (2026-08-15 21:0x ICT, 1403z; I ran it, and PID **927
+`…/Python -m bot`, started 15:21:26, survived it untouched**). `restart.sh`'s systemd path needs
+`systemctl` (absent on macOS) ⇒ always falls to `stop.sh`, which contains **no `launchctl`** and
+whose three fallbacks all miss: the pidfiles do not exist, and the orphan pattern is
+`pgrep -f "python3.*telegram-bot.py"` against a process named `python -m bot` — the
+detector-paraphrase trap, in production stop code. It then prints *"All processes stopped."*
+having stopped nothing. **`bin/safe-restart.sh` is the one that uses `launchctl`, and CLAUDE.md
+does not sanction it — ask, do not run it.** Side effect disclosed: `start.sh` spawned a second
+supervisor (`bash bin/ouroboros.sh`, PID 28418, 21:04:47) beside launchd's KeepAlive; no outage.
+**RULE: price the ACTUATOR before you price the branches — read the script you intend to run and
+match its detector against the live process's real `argv`.** Four cycles reasoned about this
+restart's consequences; none read the four lines that make it a no-op. Evidence:
+`memory/t0/2026-08-15/heartbeat-1403z.md`.
 ⚠️ Note what the rewrite kept, because it is the non-obvious half: a **withdrawn** ask has to stay
 inline as a live NEGATIVE prescription (*do not ship the destagger*), or the next cycle re-derives the
 refuted fix from the same slot data. Archiving a retraction silently un-retracts it.
