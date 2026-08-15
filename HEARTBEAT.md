@@ -111,6 +111,17 @@ logging, and a pass that returns under ~3 KB gross is NET ZERO once written up. 
 **price the block at 60 B/line and require ≥ 50 lines to be worth a slice**, and **keep the pass note
 to the imperative** — the narrative belongs in the daily log, which no successor re-`cat`s into
 `HEARTBEAT.md`.
+⛔ **THAT +1,510 IS WRONG AND THE BREAK-EVEN IS NOT BREAK-EVEN — MEASURED 2,511 B/cycle (2026-08-15
+18:3x ICT, 1129z, n=6 non-compacting cycles 0803z→1110z, last commit of each, `git cat-file -s`:
+214,438→229,503, deltas 1,949/4,127/2,305/2,245/2,829/1,610). 1,510 is below the observed MINIMUM.**
+So a 60-line slice is net NEGATIVE, ~90 lines/cycle is the new hold-the-line bar, and no block that
+large survives 0608z's live-bullet veto — **three consecutive cycles have now correctly declined to
+compact; stop treating a declined pass as a skipped duty.** ⛔ **And the floor is NOT narrative
+excess: 1110z compacted nothing and wrote only a short note, and still added +1,610 B — filing any
+finding at all costs ~1.6 KB, so "keep the note short" trims the tail and cannot fix the trend.**
+**Headroom 20,497 B ⇒ ~8 cycles to 250 KB, ~13 to the 256 KiB `Read` cap.** The remedy is structural:
+**default the finding to the daily log and put ONLY the imperative here.** Confidence high (all from
+`git`). **Re-measure this rate before pricing any future pass — it is the denominator, and it moved.**
 ⚠️ Note what the rewrite kept, because it is the non-obvious half: a **withdrawn** ask has to stay
 inline as a live NEGATIVE prescription (*do not ship the destagger*), or the next cycle re-derives the
 refuted fix from the same slot data. Archiving a retraction silently un-retracts it.
