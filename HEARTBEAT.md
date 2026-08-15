@@ -112,6 +112,21 @@ cap and clearing it is the **capacity** branch (raise it). Measured on this hear
 max 5 m 18 s against 600 s — hang branch, so `timeout=600 → 1800` is right for `bot/scheduler.py` prompt
 jobs and **wrong here**. The n=13 series and the weekly-job comparison are archived at
 `HEARTBEAT-ARCHIVE.md` §E.
+⛔ **RUN THE TEST ON BOTH POPULATIONS — IT ASKS WHERE THE SUCCESSES SIT AND NEVER ASKS WHETHER THE
+FAILURES ARE ALL AT THE CAP. IF THEY ARE NOT, THE CAP EXPLAINS A MINORITY OF THEM AND A CAP-SHAPED FIX
+LEAVES THE REST UNTOUCHED.** (2026-08-15 10:3x ICT, 0333z, `cleanpro-daily`, **n=101 runs** built from
+`logs/infra.log`, 04-13→08-15.) 94 successes span **91–200 s** of a 300 s cap; the 7 failures are
+**bimodal — 4 fast exit-1 (3 / 130 / 153 / 156 s) and only 3 cap kills (300 / 301 / 300 s)**. QUEUE #2's
+"successes at 44–51 %, a 146 s dead zone, failures at *exactly* the cap" was a small-window artifact: the
+dead zone is populated (130…200 s all occur) and most failures are nowhere near the cap.
+**Cheap correct form — build the whole series, don't sample it:** pair each `Running job: <name>` against
+the next `completed successfully` / `failed` line in `logs/infra.log` and print start, duration, verdict.
+✅ **Corollary that paid immediately: the 4 fast failures CARRY FULL STDERR, so `_run_script` destroys
+diagnostics only on the TIMEOUT path** (0053z's finding, correct but over-scoped). Three of those four
+name `oauth2.googleapis.com` token acquisition — `NameResolutionError`, and twice
+`ConnectTimeoutError … (connect timeout=120)` — never a query. **So read the failure MESSAGES before
+accepting any filed diagnosis of a job's failure mode**; the population that self-describes is free
+evidence and QUEUE #2 was written without it.
 ⚠️ **The test's CONCLUSION here was wrong — see the ⛔ below: the logless deaths are usage limits and API
 stream deaths, not hangs.** A runtime distribution can prove a cap is **not** the constraint; it can never
 say what **is**. Keep the test, distrust its positive story. The write-early prescription survives all
@@ -525,6 +540,15 @@ it. Confidence high; the `find` is dispositive.
   margin, so `timeout=300` at :117-121 belongs in the boss's queue **alongside** the `timeout=600`→1800
   at :149, by §1 line 375's own where-do-the-successes-sit test. Falsifier, free: the **08-15 03:00**
   slot — if the host is awake through it, its wall runtime IS its monotonic runtime. Confidence high.
+  ✅ **FALSIFIER RESOLVED, AND THE ALARM IT RAISED WAS AN OUTLIER: 08-15 03:00:00 → 03:02:18 = 138 s
+  with S = 0** (2026-08-15 10:3x ICT, 0333z; host awake, no sleep event in the window). Against the
+  n=101 series above (median ~115 s, range 91–200 s), **08-14's 273 s awake is ~2× the norm and the
+  "9 % margin" is a property of that sleep window, not of the job.** So `timeout=300` at :117-121 is
+  **not** capacity-constrained and does not belong next to #1 — dropped from the queue on that basis.
+  ⛔ **Transferable, and it is the reason the whole finding exists: a falsifier names ONE observation;
+  the log you open to get it holds the POPULATION. Take the population.** One extra call turned a
+  confirmatory data point into the refutation of two filed claims. A single point can only agree with
+  whichever story you brought.
 - ⛔ **APScheduler's `day_of_week` is 0 = MONDAY, so every `* * 1` weekly in `cron/jobs.json` fires
   on a TUESDAY — and reading them as standard cron hid a DISCARDED `cleanpro-weekly` slot for four
   days** (2026-08-14 21:26 ICT, observed; all three weeklies confirmed against their own `last_run`).

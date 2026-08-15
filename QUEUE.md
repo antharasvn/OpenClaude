@@ -76,7 +76,37 @@ distribution above better than "hang" does: past ~168 s nothing can interrupt a 
 300 s, so runs land at ~132 s or at exactly the cap, never in the 146 s dead zone. A true wedge and
 a merely slow query are indistinguishable from outside.
 
-**The actual ask (one line, but not a heartbeat's call):** set `daily_report_common.py:48` to
+⛔ **AMENDED 2026-08-15 10:3x ICT (0333z) — THE DISTRIBUTION ABOVE WAS A 12-RUN WINDOW. THE FULL
+SERIES IS n=101 (04-13→08-15) AND IT BREAKS BOTH THE "DEAD ZONE" AND THE "HANG" READING.**
+
+| | this row said | actual, n=101 |
+| --- | --- | --- |
+| successes | 12 runs, median 132, max 154 | **94 runs, median ~115, range 91–200 s** |
+| 155–299 s band | "nothing has ever finished here" | **populated — 157 s (05-06), 174 s (07-18), 200 s (07-20)** |
+| failures | 2, both at exactly 300 s | **7, and BIMODAL: 4 fast exit-1 (3/130/153/156 s) + 3 cap kills (300/301/300; 06-05 was missed)** |
+
+There is no dead zone, so the argument that "past ~168 s nothing can interrupt a slow query" has no
+distribution to explain. **The cap accounts for 3 of 7 failures; the fix in this row addresses only
+those 3.**
+
+✅ **And the 4 fast failures are self-describing — `_run_script` loses stderr only on the TIMEOUT path
+(#6 is narrower than filed). Three of the four name `oauth2.googleapis.com` token acquisition, never a
+query:** `NameResolutionError … Failed to resolve` (05-12, 3 s), and twice
+`ConnectTimeoutError … (connect timeout=120)` (07-21, 07-22).
+
+⚠️ **New hypothesis, and it points the fix at a different subsystem: the fast failures and the cap
+kills may be ONE cause at different retry counts.** With `connect timeout=120` and urllib3 retries,
+one timed-out connect + overhead ≈ **153/156 s — exactly the two observed fast failures** — and a
+second retry lands past **300 s**, i.e. the cap kills. If so the stalling call is **auth token
+acquisition, not `bq query`**, and the `timeout=120` change below would not touch it.
+Confidence **moderate-high** — the 120 s value and the host are quoted from `logs/infra.log`; the
+cap-kill attribution is inferred from runtime arithmetic, because the drain is dead (#6).
+**Free falsifier, and it orders the work: apply #6's structural drain FIRST, then read the next 300 s
+kill. Names `oauth2.googleapis.com` ⇒ this is settled and the ask below is the wrong file. Names a
+`bq query` ⇒ the original diagnosis stands.** #6 is local and diagnostics-only; the ask below edits a
+shared module behind six live jobs — so the cheap one is now also the one that decides the expensive one.
+
+**The actual ask (one line, but not a heartbeat's call) — hold it until the falsifier above resolves:** set `daily_report_common.py:48` to
 `timeout=120` — strictly below the outer cap, leaving room to catch the raise, report the failing
 SQL, and still finish inside 300. **It is a shared module behind six live jobs** (`cleanpro`, `echo`,
 `mangii`, `pdfai`, `aividly`, `vidnotes` daily runners), first firing 03:00 ICT, which is why no
