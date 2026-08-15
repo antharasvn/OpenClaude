@@ -43,10 +43,11 @@ conclusions strands the retraction in the archive and the retracted prescription
 strictly worse than not moving it. **The split is the answer, and 0528z took the first slice** — the
 `dasd`/grok unbounded-holder band measurements are now archive **§L**, replaced inline by three
 imperatives (never schedule against a release; track the id not the pid; a hold ending near a wake
-is left-bounded only). ✅ **REMAINING SLICES, in order:** the AnyDesk/powerd *root-hold* correction
-and the "a `dasd` hold is short-lived" retraction (search `Age-sorting finds candidates`) — retired,
-nearly all residue; then the n=1/2/3 sleep-onset **prediction scoring** series (search `INCONCLUSIVE,
-as designed`). ⛔ **The `UserIsActive` 600 s sleep-EXCLUSION primitive is LIVE — it is §0's licence to
+is left-bounded only), **and the second slice in the same cycle** — the AnyDesk/powerd root-hold
+correction and the "`dasd` is short-lived" retraction are now **§L.2**, replaced by the three-rule
+age-sorting block. Two slices, `HEARTBEAT.md` **241,805 → 239,323 B** while the archive absorbed
+4.8 KB. ✅ **NEXT SLICE:** the n=1/2/3 sleep-onset **prediction-scoring** series (search
+`INCONCLUSIVE, as designed`) — same retired shape, keep only the scored primitive. ⛔ **The `UserIsActive` 600 s sleep-EXCLUSION primitive is LIVE — it is §0's licence to
 spend budget on a live read — and stays inline whatever else moves.**
 ⛔ **AND THE REASON 0528z NEARLY SHIPPED THE DEFERRAL INSTEAD: I "ran out of time" at etime
 **02:03**, having estimated ~7 min spent. That is §0 line 92's work-count estimator, measured a
@@ -1611,31 +1612,19 @@ it. Confidence high; the `find` is dispositive.
   display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
   a `dasd` hold is *sizeable but unbounded*, a display hold is not. And per memory §504, check the
   listed owner: a heartbeat's own `caffeinate` is not host health.
-  ⚠️ **`powerd`'s "Prevent sleep while display is on" is usually NOT the root hold — sort by age to
-  find the real one** (2026-08-09 05:23 ICT). That cycle read four concurrent holds; powerd's was the
-  oldest-looking at 37:14, but `AnyDesk` (pid 42666) had held `PreventUserIdleDisplaySleep` for 27:14
-  and `coreaudiod` a matching audio hold for 27:10 **created for pid 42666**. Display-on is the
-  *effect* of the remote session, so powerd is downstream. This matters for forecasting: a powerd
-  hold looks open-ended, but here every hold falls the moment the boss closes AnyDesk, and sleep
-  becomes possible within minutes. **Attribute S = 0 to the root owner and bound your prediction by
-  that process's life, not by powerd's.**
-  ⛔ **That AnyDesk conclusion was WRONG and is corrected here (2026-08-09 05:42 ICT, 19 min later).**
-  At the next probe `PreventUserIdleDisplaySleep` was **0** — the AnyDesk and `coreaudiod` rows gone —
-  yet **powerd's hold survived and had aged to 55:52**, older than AnyDesk's ever was. A hold that
-  outlives the thing it is supposedly downstream of is not downstream of it. Worse, **AnyDesk released
-  without exiting** (pid 42666 still alive at `01-08:33:59`), so "bound the prediction by that
-  process's life" fails in *both* directions. The real root at that probe was a third process:
-  pid 13250 `grok-1.0.0-macos-aarch64`, `NoIdleSleepAssertion` named "grok: agent turn in progress",
-  which blocks idle sleep independent of the display — that is why S stayed 0 across the release.
-  **Age-sorting finds candidates, not causes.** Confirm a root hold by seeing it outlive another
-  hold's release, and treat any unbounded holder (a multi-minute "agent turn in progress", a `dasd`
-  batch) as unpredictable in release time — never schedule against it in either direction.
-  ⛔ **"a dasd hold is short-lived" was WRONG and is corrected here (2026-08-09 01:52 ICT).** Three
-  measured batches ran **~40 min** (00:25→01:05, covered the 01:05 slot clean), **≥26 min**
-  (01:26→01:52, still up at probe), and **≥55 min** (02:49:13→03:44:26, still up at probe — new max,
-  measured 2026-08-09 03:44 ICT). The spread 26→55+ min shows no characteristic length. Age the holds
-  in `pmset -g assertions` and treat the release time as *unpredictable*, not imminent — you cannot
-  schedule against it in either direction.
+  ⛔ **AGE-SORTING FINDS CANDIDATES, NOT CAUSES — never name a root hold from the assertion list
+  alone.** Two prescriptions were built on age-sorting and BOTH were refuted within the hour
+  (`HEARTBEAT-ARCHIVE.md` §L.2): "powerd is downstream of the display-on holder" died when powerd's
+  hold **outlived** the holder it was supposedly downstream of, and "bound your prediction by that
+  process's life" died because the holder **released without exiting**. The real root was a third
+  process nobody had ranked. Three rules survive:
+  **(a) Confirm a root hold only by seeing it OUTLIVE another hold's release** — outliving is the
+  test; being oldest is not.
+  **(b) Never bound a prediction by an owner process's LIFE.** A process releases its assertion and
+  keeps running; liveness and holding are independent facts (see §L).
+  **(c) A `dasd` batch is NOT short-lived** (measured 26 / 40 / 55+ min, later ≈65) — age the holds
+  in `pmset -g assertions`, treat every release time as unpredictable rather than imminent, and never
+  schedule against one in either direction.
 - **Read `pmset -g custom` too — assertions say WHAT holds the host awake, the timers say FOR HOW
   LONG** (added 2026-08-09 06:21 ICT; never read by any prior cycle). Measured on this host:
   `displaysleep 10`, `sleep 1`, identical on AC and Battery. So powerd's "Prevent sleep while display

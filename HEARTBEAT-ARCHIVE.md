@@ -751,3 +751,25 @@ bounds only to **(11:03:36, 11:22:33]** and the length to **[78:53, 97:50]** —
 case, where sleep resumed within ~60 s and pinned the release to a second. Same probe: pid **16591
 was still alive** with no assertion (`ps` elapsed 02:40:38) — fourth confirmation that process
 liveness is not a proxy for a held assertion.
+
+### §L.2 — the AnyDesk root-hold claim and its retraction (archived by 0528z, second slice)
+
+**Claim, 2026-08-09 05:23 ICT (WRONG — retained only to date the retraction).** Four concurrent
+holds; powerd's "Prevent sleep while display is on" was the oldest-looking at 37:14, but `AnyDesk`
+(pid 42666) had held `PreventUserIdleDisplaySleep` for 27:14 and `coreaudiod` a matching audio hold
+for 27:10 **created for pid 42666**. Reading display-on as the *effect* of the remote session, the
+cycle concluded powerd was downstream and prescribed *"bound your prediction by that process's
+life"*.
+
+**Refuted 19 minutes later, 05:42 ICT.** At the next probe `PreventUserIdleDisplaySleep` was **0**
+— AnyDesk and `coreaudiod` rows gone — yet **powerd's hold survived and had aged to 55:52**, older
+than AnyDesk's ever was; a hold that outlives the thing it is supposedly downstream of is not
+downstream of it. And **AnyDesk released without exiting** (pid 42666 still alive at `01-08:33:59`),
+so the prescription fails in *both* directions. The real root was a third process: pid 13250
+`grok-1.0.0-macos-aarch64`, `NoIdleSleepAssertion` "grok: agent turn in progress", which blocks idle
+sleep independent of the display — which is why S stayed 0 across the release.
+
+**"a `dasd` hold is short-lived" — also WRONG, corrected 2026-08-09 01:52 ICT.** Three measured
+batches: **~40 min** (00:25→01:05, covered the 01:05 slot clean), **≥26 min** (01:26→01:52, still up
+at probe), **≥55 min** (02:49:13→03:44:26, still up at probe; new max measured 03:44). Spread
+26→55+ min ⇒ no characteristic length. (Extended to ≈65 min in §L above.)
