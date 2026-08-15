@@ -29,6 +29,20 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   silently un-retracts it.
 - **Measure after BOTH halves plus this note**, and **keep the note to the imperative** — the
   narrative belongs in the daily log, which nothing re-`cat`s into `HEARTBEAT.md`.
+⛔ **AND EVERY PASS SILENTLY FALSIFIES THIS FILE'S OWN CROSS-REFERENCES — ALL 47 `line NNN` POINTERS
+ARE NOW WRONG, AND EACH ONE LANDS ON REAL, UNRELATED PROSE** (2026-08-15 23:0x ICT, 1559z; 8 of 8
+sampled wrong, 0 right). Measured offsets, ref → true: `line 504`→97 (−407), `§3 line 2251`→2123
+(−128), `line 542`→710 (+168), `line 543`→687 (+144), `§0 line 92`→~262 (+170), `line 215`→466 (+251),
+`line 143`→368 (+225). **Both signs, spread 658 lines ⇒ no constant recovers them** — each was written
+at a different file state, and in-section growth (~2.3 KB/cycle) and deletion (1540z took 93 lines off
+the very top, shifting every pointer in the file at once) push opposite ways. A *dangling* pointer
+would be safe; these all resolve, so following one yields a confident wrong citation — the failure
+mode that launders a fabrication into the record. **RULE: cite by `§N` plus a distinctive quoted
+phrase, NEVER by line number.** `sed`'s move preserves text, so a phrase survives every pass and a
+number survives none; `§N` references are unaffected and stay cheap. **Treat every existing
+`line NNN` here as VOID — re-find the claim by `grep` before relying on it, and do NOT repair the
+numbers: they rot again on the next pass.** The compaction duty that keeps this file readable is the
+same duty that corrupts its citations, and nine passes have repaired none.
 ⛔ **BOOK THE PASS AT ITS THIRD COST TOO, AND THE FLEET IS AT BREAK-EVEN.** 0548z said measure after
 BOTH halves (delete + inline rewrite); there is a **third** — this header note, **+1,761 B, i.e. 47 %
 of the 3,743 the pass recovered.** Whole-cycle truth: 223,966 in → **221,984 out, −1,982 net**, against
