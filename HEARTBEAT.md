@@ -733,6 +733,19 @@ call on the one thing that *does* need `ps`: your own start.
 > evidence of nothing.** Impact of these two was nil (both jobs' next run overlaps the missed
 > window), so do NOT escalate on the count. Fix is `:88` (audit loaded, not enabled) — belongs to the
 > user's open restart/config ask, not to a cycle. Evidence: `memory/t0/2026-08-16/heartbeat-1717z.md`.
+> ✅ **FIXED THIS CYCLE, AND 1717z's DEFERRAL WAS THE ERROR — A READ-ONLY AUDIT SCRIPT IS NOT THE SAME
+> CLASS AS A SERVICE RESTART** (2026-08-16 00:4x ICT, 1735z). Three cycles routed this to the user's
+> ask because it sits *near* the restart; the restart is blocked because it stops a live process,
+> while `check_missed_fires.py` reads three files and prints. **Classify a proposed change by what it
+> MUTATES, never by which open question it is adjacent to** — adjacency inherited a veto across a
+> category boundary and cost three cycles of false green. Shipped: the `enabled` skip is now gated on
+> `cron/jobs.json` mtime ≤ last `Cron scheduler started` (the header's own restore gate, mechanical);
+> when they disagree it prints a WARN naming both timestamps and audits all 14. `pytest` 5/5, live
+> run now **13/14** — and the one it surfaces is `cleanpro-weekly`, expected **2026-08-11 03:30 ICT**,
+> `last_run` **08-04**, i.e. the very miss this script's own docstring was written about, still
+> unrepaired at **117 h** (next fire 08-18 03:30 ICT; detection is not recovery). **The two 18:0x
+> drops do NOT appear and should not — the detector asks only about the LAST owed fire, and both jobs
+> have fired since.**
 > ⛔ **`n/14` covers the CRON jobs only — the `interval_seconds` branch (`:60-64`) answers a DIFFERENT
 > QUESTION and is blind to a closed outage** (2026-08-15 06:5x ICT, `QUEUE.md` #8). `cron` asks the
 > trigger *"did the last owed fire run?"*; `interval` asks `now − 1.5 × interval`, i.e. *"am I

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Did every enabled cron job actually RUN at its last expected fire?
+"""Did every LOADED cron job actually RUN at its last expected fire?
+
+"Loaded", not "enabled": `enabled` only takes effect at a scheduler start, so when cron/jobs.json
+is newer than the last `Cron scheduler started` line the flags are ignored and every job is
+audited (with a WARN naming both timestamps).
 
 `last_status` answers "did the last run succeed?", never "did it run?" — a fire discarded by
 APScheduler's 300 s `misfire_grace_time` (host asleep) leaves `last_status: OK` and
@@ -83,9 +87,31 @@ def main() -> int:
 
     started = last_scheduler_start()
 
+    # `enabled` is a fact about the FILE, not about the running scheduler: bot/scheduler.py:36
+    # reads that flag only inside start(). If cron/jobs.json has been edited since the last load,
+    # its flags have never reached the live scheduler, and honouring them audits the ids that are
+    # NOT running while skipping the ids that are — i.e. the blind spot is anti-correlated with
+    # where misses can occur, and the script reports green over jobs that never fire.
+    # Measured 2026-08-15: 3/3 green while the only two real misses (echo-backend-alerts 18:05,
+    # vidnotes-alerts 18:00) sat in the skipped set.
+    cfg_mtime = datetime.fromtimestamp(
+        (ROOT / "cron" / "jobs.json").stat().st_mtime, datetime.now().astimezone().tzinfo
+    )
+    if started is None:
+        flags_loaded = False
+        print("WARN  no `Cron scheduler started` line in logs/infra.log — cannot tell which jobs "
+              "the running scheduler loaded; auditing every job in cron/jobs.json.")
+    elif cfg_mtime > started:
+        flags_loaded = False
+        print(f"WARN  cron/jobs.json edited {cfg_mtime:%Y-%m-%d %H:%M:%S}, after the last scheduler "
+              f"start {started:%Y-%m-%d %H:%M:%S} — its `enabled` flags are a wish, not the loaded "
+              f"state; auditing every job in cron/jobs.json.")
+    else:
+        flags_loaded = True
+
     missed, checked = [], 0
     for job in jobs:
-        if not job.get("enabled", True):
+        if flags_loaded and not job.get("enabled", True):
             continue
         jid = job["id"]
         sched = job.get("schedule", {})
