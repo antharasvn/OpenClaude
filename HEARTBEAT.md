@@ -152,6 +152,16 @@ about** — so never say "the pending change" in the singular without its mtime.
 that the instrument is sound: `Skipping disabled job:` occurs **166×** in `infra.log` but last on
 **2026-07-02** — the logger works, so today's zero is evidence of no re-read, not a mute log. **Prove
 your silence-based claim's instrument has spoken before, or the silence means nothing.**
+⛔ **AND A HAZARD WITH NEITHER BRANCH PRICED IS NOT A DECISION — IT IS A SENTENCE, AND IT GETS RE-FILED
+VERBATIM EVERY CYCLE** (2026-08-15 20:4x ICT, 1345z; 1227z, 1246z and 1330z each filed *"a restart drops
+11 live jobs"* and stopped there, so three cycles correctly declined to act on it). Both sides were one
+`grep` away. **Cost of NOT restarting: all 12 job runs since the 15:21:46 start are jobs the config marks
+disabled** (`echo-backend-alerts` ×4, `vidnotes-alerts`/`cleanpro-exp-monitor`/`cleanpro-alerts`/
+`auto-commit` ×2 each), forward rate ≈ 3/h. **Cost of restarting: zero for ~6 h** — all three enabled ids
+are daily (`cleanpro-daily` 03:00 Saigon, `vidnotes-daily` 07:00 Warsaw, `echo-daily` 03:00 New_York), so
+no enabled run can be missed in the window, and the 11 dropped are exactly the ones the user turned off.
+**Price BOTH branches before handing a hazard forward** — §0's hand-the-tick-not-a-threshold rule for
+risk: hand the successor the measurement, never your unresolved verdict.
 ⚠️ Note what the rewrite kept, because it is the non-obvious half: a **withdrawn** ask has to stay
 inline as a live NEGATIVE prescription (*do not ship the destagger*), or the next cycle re-derives the
 refuted fix from the same slot data. Archiving a retraction silently un-retracts it.
