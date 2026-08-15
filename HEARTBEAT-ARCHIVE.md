@@ -711,3 +711,43 @@ armed wait fires at `armed + S`; both freeze on the same clock, measured indepen
 222 s window with an identical −2 s residual. Sleep accruing after both reference instants shifts
 your successor's start **and** the evaluation instant by the same S, so an already-armed tick's
 reachability is invariant under it.
+
+## §L — Unbounded-holder band measurements (§2), archived 2026-08-15 12:3x ICT by 0528z
+
+Every imperative these paragraphs carried was rewritten inline in `HEARTBEAT.md` §2 before the move
+(0509z's method). What follows is the evidence only; nothing here should be acted on directly.
+
+**`dasd` `BackgroundTask`, hold `0x0000fa48000b862c` — full length ≈64 min 58 s.** At 2026-08-11
+04:52 ICT it was the **only** assertion on the host: `PreventUserIdleSystemSleep`, `UserIsActive`,
+`PreventUserIdleDisplaySleep` and `PreventSystemSleep` all read **0**; every transient row the prior
+cycle had seen (`runningboardd` WhatsApp `FinishTask`, `dasd` `ApplePushServiceTask`) was gone; only
+powerd's always-discounted `ExternalMedia` remained — and the host had still gone **56 min with
+S = 0**, which forecloses the "some *other* hold was really responsible" reading. Gone by the
+05:17:20 probe; sleep onset came **05:01:51** (`getUpdates` gap), so backing out `sleep 1` puts
+release at ≈**05:00:51** against creation 03:55:53. Bounded certainly to (04:52:58, ~05:00:51] ⇒
+**≥57:05 certain, ≈65 min by the sleep-1 chain**. Sleep resumed within ~60 s of release. Class band:
+**26 / 40 / 55+ / 57+ / ≈65 min** — no characteristic length.
+
+**grok `NoIdleSleepAssertion` "grok: agent turn in progress" — ≥ 78 min 53 s, breaking the ≈65 min
+ceiling** (2026-08-11 11:03 ICT). `pid 16591(grok)` `[0x0001452f00019b64]`, **one id across five
+consecutive cycles** — ages 04:46 / 24:04 / 42:46 / 60:18 / **78:53** ⇒ creation 09:44:43, single
+pid, no stacking — held S = 0 for **2 h 50 min** with the display off and `UserIsActive` **0**
+throughout (no HID for ≈65 min). Four cycles in a row each called its then-current age notable and
+predicted nothing; each was right that it was not a release signal. Class bands: `dasd`
+26 / 40 / 55+ / ≈65, Chrome media ≈40, **grok ≈40 / ≤22:34 / [45:37, 64:55] / ≥78:53**. The bands do
+not cluster by class and the maximum keeps moving.
+
+**A pid is not a hold identity** (2026-08-11 14:46 ICT). The pid churn above (16591 / 63497 / 86967)
+was incidental — grok restarting between turns — and 0723z read it as "the per-turn re-arm under a
+fresh pid, n=4". Measured against a fixed pid: **pid 86967** held `[0x0001858d00019338]` (creation
+14:19:21) at 14:26:50 and `[0x00018bb10001964f]` (creation **14:45:33**) at 14:46:35 — **same pid,
+two different holds**, with a gap between them. A cycle joining on pid reads one continuous
+≥27-minute hold where there were two short ones.
+
+**Left-bounded-only case** (2026-08-11 11:21 ICT). That same grok hold `[0x0001452f00019b64]` was
+gone by 11:22:33, but the meter stayed flat at 5133.3 throughout, because HID returned at
+**11:10:10** and held the host awake across the release. No onset to back `sleep 1` out of ⇒ release
+bounds only to **(11:03:36, 11:22:33]** and the length to **[78:53, 97:50]** — versus the `dasd`
+case, where sleep resumed within ~60 s and pinned the release to a second. Same probe: pid **16591
+was still alive** with no assertion (`ps` elapsed 02:40:38) — fourth confirmation that process
+liveness is not a proxy for a held assertion.
