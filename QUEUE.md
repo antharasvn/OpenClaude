@@ -359,16 +359,38 @@ is recovered by the next fire — is a judgement no cycle should make alone.
 test was wrong (`14399 % 7200 = 7199`, so a 4 h gap 1 s short mislabels). The durations below are
 raw timestamp differences and stand; the split is unreported. Use §1's `armed + S` form if you want it.
 
-⛔ **EVERY RATE BELOW IS BIASED UP: A BOT RESTART RE-ANCHORS BOTH INTERVAL JOBS, AND THE HOST REBOOTED
-TODAY AT 15:20:44 ICT** (2026-08-15 15:5x ICT, 0856z; `kern.boottime` + `uptime` + `ps -o lstart= -p 1`).
-`interval` triggers anchor on scheduler start, so today's 15:21:46 start moved both jobs off the
-`:33:23` grid onto **17:21:46**. `logs/infra.log` has **6 `Cron scheduler started` events since 08-01**
-(98 all-time). If the counts below used a rolling grid, ~6 of the 32 are re-anchor artifacts; if they
-used a fixed anchor, every fire after each restart reads as missed and the bias is far larger. The
-method is not recorded, so **recompute with restart timestamps as grid resets before quoting any of
-these numbers.** This is the second common-mode cause found in one day (0836z: the two jobs share a
-process, so identical boundaries prove a shared cause, never sleep). Evidence:
-`memory/t0/2026-08-15/heartbeat-0856z.md`.
+⛔ **A BOT RESTART RE-ANCHORS BOTH INTERVAL JOBS, AND THE HOST REBOOTED TODAY AT 15:20:44 ICT**
+(2026-08-15 15:5x ICT, 0856z; `kern.boottime` + `uptime` + `ps -o lstart= -p 1`). `interval` triggers
+anchor on scheduler start, so today's 15:21:46 start moved both jobs off the `:33:23` grid onto
+**17:21:46**. `logs/infra.log` has **6 `Cron scheduler started` events since 08-01** (98 all-time —
+that census is confirmed correct; note the line is logged **twice per start**, uniformly since
+2026-04-12, so `grep -c` returns 196 and you must `sort -u` the timestamps).
+
+⛔ **THIS ROW USED TO SAY "EVERY RATE BELOW IS BIASED UP … direction known (up), size not". THE SIGN
+IS REFUTED — THE CORRECTION RAISES THE RATE** (2026-08-15 16:3x ICT, 0935z, both grids computed over
+the same window). `auto-commit`, 04-13 → 08-14 whole days only, `misfire_grace_time` 300 s as the
+match tolerance:
+
+| grid | due | fired | lost | loss |
+| --- | --- | --- | --- | --- |
+| **A** fixed anchor, restarts ignored | 1488 | 16 | 1472 | **98.9 %** |
+| **B** per-epoch re-anchor (what APScheduler does) | 1476 | 1121 | 355 | **24.1 %** |
+| — the 20.4 % quoted below for this window | 1488 | 1185 | 303 | 20.4 % |
+
+**B is the correct method and reads +3.7 pp ABOVE the quoted figure.** Both guessed branches were
+also wrong about the method actually used: a fixed anchor yields **98.9 %**, nowhere near 20.4 %, so
+the prior numbers came from a grid rolling off *observed* fires — and that is the undercount
+mechanism, because **a grid anchored on the fires that HAPPENED cannot count consecutive losses**;
+each observed fire silently re-defines where the next was due. So the rates below are biased **down**,
+and the ask is strengthened, not weakened.
+⚠️ **Two instrument caveats, both worth more than they look.** (a) A per-epoch grid must start at
+**k=1** — `IntervalTrigger` first fires at `start + interval` (this row's own `15:21:46 + 7200`), and
+emitting a slot *at* each restart adds 98 phantom losses and returns 28.6 % instead of 24.1 %.
+(b) **64 of 1185 observed fires (5.4 %) match no slot in grid B**, so the reconstruction is imperfect —
+likely sleep-deferred fires landing at `anchor + n·interval + S` outside the 300 s tolerance. **Take
+the direction and the mechanism as settled; treat 24.1 % as an upper-ish estimate, not a final number.**
+Confidence high on the sign, moderate on the value. Evidence:
+`memory/t0/2026-08-15/heartbeat-0935z.md`, `-0856z.md`.
 
 ⚠️ **The 18.5 % is a FOUR-MONTH BASELINE, not a new regime — `since 08-01` selected for nothing**
 (re-measured 2026-08-15 10:1x ICT over all 1192 `auto-commit` fires, whole days only):
