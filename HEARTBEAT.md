@@ -720,6 +720,19 @@ call on the one thing that *does* need `ps`: your own start.
 > not the config; this detector reads the config — so quote it as `3/3 of the CONFIG-enabled jobs`
 > and never as fleet health while the two sets disagree.** Free tell that costs nothing: if the
 > denominator moves, the population changed under you — **read the denominator, not just the ratio.**
+> ⛔ **AND THE BLIND SPOT IS ANTI-CORRELATED WITH THE MISSES, WHICH IS STRICTLY WORSE THAN NO
+> DETECTOR** (2026-08-16 00:2x ICT, 1717z). Audited all 14 LOADED jobs by hand: exactly two fires
+> were lost since the 15:21:46 load — `echo-backend-alerts` 18:05 and `vidnotes-alerts` 18:00, both
+> inside a **74-min `infra.log` silence, 17:50:51 → 19:05:00**, preceded by `httpx.ConnectError`
+> ×13 (17:38–17:47) and a `powerd` darkwake at 17:32 ⇒ host sleep, the settled §1 mechanism, nothing
+> new. **New: both are `enabled: false`, so the detector CANNOT see them — and that is structural,
+> not luck. The disabled set is the set still running, therefore the only set that can miss; the
+> enabled set has never loaded, therefore can never miss.** A detector whose blind spot tracks the
+> failure launders silence into a green light. **RULE: before trusting any monitor, check whether its
+> exclusion rule and its failure population are the same predicate — if so, its all-clear is
+> evidence of nothing.** Impact of these two was nil (both jobs' next run overlaps the missed
+> window), so do NOT escalate on the count. Fix is `:88` (audit loaded, not enabled) — belongs to the
+> user's open restart/config ask, not to a cycle. Evidence: `memory/t0/2026-08-16/heartbeat-1717z.md`.
 > ⛔ **`n/14` covers the CRON jobs only — the `interval_seconds` branch (`:60-64`) answers a DIFFERENT
 > QUESTION and is blind to a closed outage** (2026-08-15 06:5x ICT, `QUEUE.md` #8). `cron` asks the
 > trigger *"did the last owed fire run?"*; `interval` asks `now − 1.5 × interval`, i.e. *"am I
