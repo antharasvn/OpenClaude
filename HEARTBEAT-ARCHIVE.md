@@ -1299,3 +1299,83 @@ rewritten inline at the same anchor. Residuals: n=9 **0 s**, n=11 **+0.1 s**, n=
   Ctrl-Shift-Power), which no cycle has yet observed. **Generalise: re-read the floor against every
   inherited conditional call — a tick you cannot reach is often one you can still de-risk**, and this
   is strictly cheaper than the n=15 pairing because it needs neither reach nor a blocking wait.
+
+## §R. `script`-job runtime bands and the wall-vs-monotonic clock correction (§1, archived 2026-08-15 12:1xZ)
+
+Superseded band figures (7–31 s, 77–101 s, 40 s probe, 120 s probe) and the evidence behind the
+wall-clock/monotonic-cap correction. Live imperatives stayed inline in `HEARTBEAT.md` §1.
+
+- **Runtime and log-presence are only comparable WITHIN a job type** (near-alarm 2026-08-08 09:48Z).
+  `cron/jobs.json` gives each job a `type`: `script` jobs run a Python file (`cleanpro-alerts` →
+  `scripts/cleanpro_alerts_runner.py`, `cleanpro-exp-monitor`) and finish in **seconds to ~2 min** while
+  writing **no** daily log; `prompt` jobs spawn `claude -p` (`vidnotes-alerts`) and take **minutes** and do
+  write one. Comparing the two reads as "the fast job exits early and reports a false green" — it
+  doesn't. Check `type` in `cron/jobs.json` before treating a short duration or a missing log as a fault.
+  ⛔ **"`script` jobs finish in 7–31 s" was WRONG and is corrected here (2026-08-11 01:15 ICT).** That
+  band was an aggregate over two jobs with very different distributions, and the `probe ≥ 40 s` rule
+  derived from it (§1's `last_run` ⛔ below) sits **inside** the real spread. Measured
+  `cleanpro-exp-monitor` completions off `logs/infra.log`, 2026-08-10: 15 / 50 / **77** / 23 / 33 / 19 /
+  20 / 36 / 19 s — median ~23 s, prior max 77 s — and the 2026-08-11 01:13:34 run completed at 01:15:36,
+  a new max of **122 s** (`ce=0`, `last_status: OK`, no `[ERROR]`). ⛔ **That parenthesis originally
+  ended "…, no timeout applies to `script` jobs" — false, see the 300 s correction above. The 122 s
+  run was at 41 % of a HARD 300 s cap, not in open space**, and `cleanpro-exp-monitor` is the job that
+  has hit that cap four times. New maxima measured 2026-08-11 14:00:00: `echo-daily` **2 m 08 s** and
+  `mangii-daily` **2 m 15 s** — both above the 122 s figure, both ~43 % of the cap. Consequence for
+  the 180 s probe rule below: it now sits between the observed max and the kill, so **a `script` job
+  still stale at `slot + 300 s` is not "running long", it is dead.**
+  ⛔ **That last sentence is FALSE across a sleep window, and the reason generalises to EVERY runtime
+  figure in this checklist: `logs/infra.log` durations are WALL clock, the scheduler's caps are
+  MONOTONIC (awake) time, and the two have been compared directly for months** (2026-08-11 20:17 ICT,
+  observed). `asyncio.wait_for` runs on the asyncio event-loop clock = `time.monotonic()`, which on
+  Darwin **does not advance while the host is asleep** — the same freeze this file already establishes
+  for APScheduler's `Event.wait` (line 436) and launchd's `StartInterval` (line 90). Every runtime band
+  quoted in §0/§1 is two infra.log timestamps subtracted, i.e. wall. Nobody had noticed they are
+  different clocks. **Observed: 13 `script`-job runs completed successfully with a wall duration ABOVE
+  their own 300 s cap**, across 6 jobs and 4 months — `echo-daily` **22:34**, `mangii-daily` **22:40**,
+  `vidnotes-daily` **18:45**, `cleanpro-exp-monitor` **15:40**, `echo-backend-alerts` **9:34**, and
+  decisively **`auto-commit` at 15:27 against a median of 0:01 and p90 0:02 over n=1151** — concurrent
+  to the second with `cleanpro-exp-monitor`'s 15:40. A one-second `git` job cannot run fifteen minutes,
+  and two unrelated scripts do not slow down together by the same amount; `echo-daily` + `mangii-daily`
+  repeat the pattern on 07-05 and 07-17 (same fire instant, both ≈22 min). That is a host-wide time
+  jump, and it is the only reading under which these runs survive a 300 s cap. **Consequences:**
+  (a) a `script` job whose wall duration exceeds 300 s is **not** a broken cap or a false green — do not
+  alert on it; (b) `auto-commit` was alive and un-stamped **15 min** past its slot, so **read the meter
+  before declaring a job dead at `slot + 300 s`** — both that rule and the 180 s probe are wall-clock
+  rules pointed at a monotonic cap; (c) the 16:40 weekly ledger below compares wall-clock successes to
+  a monotonic cap, so its "median ≈ 6 m 45 s" is **inflated** by any sleep those runs spanned — a second
+  bias, **opposite in sign** to the censoring bias that entry already names, and neither was known when
+  "1800 s puts the cap at ~2.7× the median" was written; (d) **the capacity diagnosis still survives for
+  the timeouts**, by that ledger's own evidence — all 16 stamped at exactly `fire + 600 s` wall, and
+  under a monotonic cap a sleep-spanning timeout would stamp `fire + 600 + S`, so **S ≈ 0 across all 16**
+  and they genuinely burned 600 s of awake time. The `timeout=600 → 1800` ask stands; only its *sizing*
+  argument softens, and it should be reported that way rather than as weakened.
+  **Method rule: before comparing a measured duration to a timeout, check both are in the same clock.**
+  This host has two, they diverge by hours per day, and every *other* cross-clock comparison in §0/§1 was
+  already known to matter — it was simply never applied to the job runtimes themselves. Confidence
+  **high** (the co-occurrence plus a 1 s job at 15:27 admits no other reading).
+  The 180 s figure above is deliberately clear of that: a 120 s rule would *itself* have false-alarmed on
+  this very run, which is why the threshold is set well outside the observed tail, not at it. Its partner
+  `auto-commit` really does finish in 3–5 s, which is what made the aggregate look tight.
+  ⚠️ **The same trap one level down: never quote a `script` job's runtime as a POINT estimate from one
+  prior fire** (2026-08-11 06:14 ICT). The n=17 survival call predicted `echo-backend-alerts` would
+  complete "≈06:05:09 (prior runs 9 s)" and it completed **06:05:03** — 3 s. Same job, same day:
+  04:05:33→04:05:42 (**9 s**), 02:05:0x (**~5 s**), 06:05:00→06:05:03 (**3 s**). Every *instant* field
+  of the call hit at residual 0 s; only the duration guess missed, and it missed **short**, which is
+  the direction that makes a `last_run` probe look stale. Predict the fire instant, not the completion.
+  **Never treat the two interval-pair jobs as one population, and probe `last_run` ≥ 180 s after the
+  slot** — a cycle using 40 s would have read the stale `last_run` as a missed slot and alerted on a job
+  that fired exactly on time. Settling the fire off `Running job:` avoids the trap entirely; prefer it.
+  ⛔ **That bolded threshold read `≥ 120 s` until 2026-08-11 12:05 ICT, contradicting BOTH its own
+  justifying paragraph nine lines above ("a 120 s rule would *itself* have false-alarmed on this very
+  run", of the 122 s `cleanpro-exp-monitor` fire) and the `≥ 180 s` at §1's `last_run` ⛔ below.** One
+  cycle (01:15 ICT) raised the rule from 40 s and wrote the new figure as 180 in one place and 120 in
+  the other; nothing scored it in between, so the checklist carried two thresholds for one probe for
+  ~11 h. **Corroborated live and from a THIRD job the same day: `vidnotes-daily` (a `script` job never
+  before timed) fired 12:00:00 and completed 12:01:59 — 119 s**, i.e. a 120 s probe clears the stale
+  `last_run` by **1 second**. The band is therefore not a two-job artefact: `auto-commit` 3–5 s,
+  `cleanpro-exp-monitor` median ~23 s / max 122 s, `vidnotes-daily` **119 s**. **180 s is the rule;
+  do not lower it, and do not read the surviving "77–101 s" or "7–31 s" bands as current.**
+  ⚠️ **`cron/state.json` is keyed by the job SLUG; `cron/jobs.json` and the `was missed by` warning text
+  use the DISPLAY NAME** (2026-08-11 11:05 ICT). `state.json` has `echo-backend-alerts`, the other two
+  say `Echo Backend Alerts`. A settle script that joins on the name a warning printed throws `KeyError`
+  and costs a probe. Join on the slug.
