@@ -423,6 +423,24 @@ appears once in the whole of `/tmp/claude-heartbeat.log`. Network outages are ro
 what is rare is a cycle *starting* inside one. **This is a collision, not a regression — do not file it,
 and do not add a retry.** The transferable is the inverse of the usual one: when a novel-looking failure
 turns out to sample a common background event, the finding is the base rate, not the failure.
+⛔ **AND THAT BASE RATE IS NOT A NETWORK RATE — `infra.log`'s `ConnectError` WINDOWS TRACK **WAKES**,
+SO THE FOURTH MODE LIKELY COLLAPSES INTO THE SLEEP MODE** (2026-08-15 17:5x ICT, 1049z). This
+cycle's window ran 17:38:14→17:47:43; against `pmset -g log` the host was in a closed-lid
+`'Clamshell Sleep'` regime bouncing sleep→DarkWake every 10–45 s, and **every burst starts within
+~10 s of a `Wake` line** (17:38:04→17:38:14; 17:47:06→17:47:13) while the one 387 s silence is
+exactly the one 360 s sleep. The poller retries before the network stack reattaches. **Do not quote
+"307 outages / ~2.4 per day" as a network base rate** — it is an upper bound of unknown wake
+content, and here the instrument manufactured the EVENTS, not merely their denominator.
+**Before calling any `ConnectError` window an outage, dump `pmset -g log` to a file and Grep the
+same minutes for `Wake`; first line within ~15 s of a wake ⇒ artifact.** (Dump-then-Grep-tool
+because `guard.sh` refuses the `pmset` predicate spellings — QUEUE #5 again.) This **removes** a
+death mode rather than adding one, and strengthens write-early's stated reason. Confidence high for
+this window (3 bursts, 3 wakes, one matching gap), moderate for the population — **next holder:
+pair all 307 window-starts against the nearest preceding `Wake` and report the fraction inside 15 s.**
+⚠️ Same cycle, free: the "missing" 17:39 cycle was launchd deferral, `cum_sleep` **620 s** all of it
+after the S=0-proving 17:21:46 fire, against 607 s implied by `completion + 900 + S` — **residual
+13 s**. **The free discriminator is the start line: a deferral leaves NO `Starting` line in
+`/tmp/claude-heartbeat.log`, a death leaves one with no completion.** Check that first.
 ⛔ **FIFTH MODE, AND IT IS NOT A DEATH AT ALL — THE HOST REBOOTED. READ `kern.boottime` BEFORE HUNTING
 FOR A CRASH OF ANY LONG-LIVED SERVICE** (2026-08-15 15:5x ICT, 0856z, closing 0836z's open item).
 `/usr/sbin/sysctl -n kern.boottime` = **15:20:44**, `uptime` 39 min, `ps -o lstart= -p 1` 15:20:45 —

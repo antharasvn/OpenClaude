@@ -3,7 +3,7 @@
     {
       "id": "echo-daily",
       "name": "Echo Daily",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"cron": "0 3 * * *", "timezone": "America/New_York"},
       "type": "script",
       "script": "scripts/echo_daily_runner.py",
@@ -12,7 +12,7 @@
     {
       "id": "vidnotes-daily",
       "name": "VidNotes Daily",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"cron": "0 7 * * *", "timezone": "Europe/Warsaw"},
       "type": "script",
       "script": "scripts/vidnotes_daily_runner.py",
@@ -21,7 +21,7 @@
     {
       "id": "vidnotes-weekly",
       "name": "VidNotes Weekly",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"cron": "30 7 * * 1", "timezone": "Europe/Warsaw"},
       "type": "prompt",
       "skill": "skills/vidnotes-weekly/SKILL.md",
@@ -30,7 +30,7 @@
     {
       "id": "vidnotes-alerts",
       "name": "VidNotes Alerts",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"cron": "0 7-23/2 * * *", "timezone": "Europe/Warsaw"},
       "type": "prompt",
       "skill": "skills/vidnotes-alerts/SKILL.md",
@@ -39,7 +39,7 @@
     {
       "id": "cleanpro-daily",
       "name": "CleanPro Daily",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"cron": "0 3 * * *", "timezone": "Asia/Saigon"},
       "type": "script",
       "script": "scripts/cleanpro_daily_runner.py",
@@ -48,7 +48,7 @@
     {
       "id": "cleanpro-weekly",
       "name": "CleanPro Weekly",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"cron": "30 3 * * 1", "timezone": "Asia/Saigon"},
       "type": "prompt",
       "skill": "skills/cleanpro-weekly/SKILL.md",
@@ -57,7 +57,7 @@
     {
       "id": "cleanpro-alerts",
       "name": "CleanPro Alerts",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"cron": "0 8-22/2 * * *", "timezone": "Asia/Saigon"},
       "type": "script",
       "script": "scripts/cleanpro_alerts_runner.py",
@@ -66,7 +66,7 @@
     {
       "id": "cleanpro-exp-monitor",
       "name": "CleanPro Experiment Monitor",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"interval_seconds": 7200},
       "type": "script",
       "script": "scripts/cleanpro_experiment_monitor.py",
@@ -75,7 +75,7 @@
     {
       "id": "mangii-daily",
       "name": "Mangii Daily",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"cron": "0 3 * * *", "timezone": "America/New_York"},
       "type": "script",
       "script": "scripts/mangii_daily_runner.py",
@@ -84,7 +84,7 @@
     {
       "id": "echo-backend-alerts",
       "name": "Echo Backend Alerts",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"cron": "5 * * * *", "timezone": "America/New_York"},
       "type": "script",
       "script": "scripts/echo_alerts_runner.py",
@@ -93,7 +93,7 @@
     {
       "id": "weekly-conjecture",
       "name": "Weekly Conjecture Cycle",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"cron": "0 8 * * 0", "timezone": "America/New_York"},
       "type": "prompt",
       "skill": "skills/weekly-conjecture-cycle/SKILL.md",
@@ -102,7 +102,7 @@
     {
       "id": "auto-commit",
       "name": "Auto-Commit Safety Net",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"interval_seconds": 7200},
       "type": "script",
       "script": "scripts/auto_commit.py",
@@ -111,7 +111,7 @@
     {
       "id": "pdfai-daily",
       "name": "PDFAI Daily",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"cron": "0 3 * * *", "timezone": "America/New_York"},
       "type": "script",
       "script": "scripts/pdfai_daily_runner.py",
@@ -120,7 +120,7 @@
     {
       "id": "aividly-daily",
       "name": "AIVidly Daily",
-      "enabled": true,
+      "enabled": false,
       "schedule": {"cron": "0 3 * * *", "timezone": "America/New_York"},
       "type": "script",
       "script": "scripts/aividly_daily_runner.py",
