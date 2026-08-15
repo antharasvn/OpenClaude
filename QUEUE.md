@@ -33,11 +33,24 @@ last ran Mon 08-10, `vidnotes-weekly` Tue 08-11, `cleanpro-weekly` Tuesdays 07-2
 No job is misbehaving — the **strings mean one day later than they read.** Nothing to fix unless you
 want the files to say what they mean; the hazard is arithmetic done off the string.
 
-**Evidence it is a capacity limit, not a hang:** weekly-job successes climb continuously toward the
-cap (top two clear it by 72 s and 0 s) — the opposite signature to the heartbeat's own runtimes,
-which cluster at ~40 % of their cap. `HEARTBEAT.md` §1 lines 798–875.
-**Note:** this reasoning applies to `:163` only. The identical-looking `gtimeout 600` on the
-heartbeat itself is the *hang* branch — raising **that** cap would only let each hang burn longer.
+**Evidence it is a capacity limit, not a hang — now the full population, not the top two**
+(2026-08-15 11:3x ICT, every `Running job:`/`Job … completed|failed` pair in `logs/infra.log`):
+
+| job | n | successes | median ok | **max ok** | cap-kills |
+| --- | --- | --- | --- | --- | --- |
+| `vidnotes-weekly` | 14 | 5 | 354 s | **528 s = 88 % of cap** | **9 (64 %)** |
+| `weekly-conjecture` | 12 | 7 | 370 s | **540 s = 90 %** | 5 (42 %) |
+| `cleanpro-weekly` | 14 | 12 | 335 s | 449 s = 75 % | 2 (14 %) |
+
+Successes climb continuously toward the cap and clear it — the capacity signature. **`vidnotes-weekly`
+has failed 9 runs in 14; `ce=1` only because a single success resets the counter.** 1800 s leaves the
+observed max ~3.3× of headroom.
+**Note:** this applies to `:163` only, and *only to the weekly jobs behind it.* `vidnotes-alerts` runs
+through the same line — n=882, median **92 s**, 1 % cap-kills — so the prompt tier **pooled** reads as
+the hang branch and hides all of the above; judge the cap per job. The identical-looking `gtimeout 600`
+on the heartbeat itself is genuinely the hang branch — raising **that** would only let each hang burn
+longer. Evidence: `memory/t0/2026-08-15/heartbeat-0429z.md`; `HEARTBEAT.md`, search
+`ONLY VALID ON A HOMOGENEOUS POPULATION`.
 
 ## 2. `cleanpro-daily` fails ~7 % of runs — the 300 s cap explains only 3 of the 7
 

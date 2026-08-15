@@ -125,6 +125,23 @@ cap and clearing it is the **capacity** branch (raise it). Measured on this hear
 max 5 m 18 s against 600 s — hang branch, so `timeout=600 → 1800` is right for `bot/scheduler.py` prompt
 jobs and **wrong here**. The n=13 series and the weekly-job comparison are archived at
 `HEARTBEAT-ARCHIVE.md` §E.
+⛔ **THE TEST IS ONLY VALID ON A HOMOGENEOUS POPULATION — RUN IT PER JOB, NEVER PER CAP. A CAP IS NOT A
+WORKLOAD.** (2026-08-15 11:3x ICT, 0429z, whole of `logs/infra.log`.) The "right for prompt jobs" half
+above was asserted from *this heartbeat's* distribution and never measured on them; measured now, it is
+backwards. `vidnotes-alerts` n=882: median **92 s**, 9 cap-kills (**1 %**). `vidnotes-weekly` n=14: max
+success **528 s = 88 % of cap**, **9 failures in 14 (64 %)**. `weekly-conjecture` n=12: max ok 540 s
+(90 %), 42 %. `cleanpro-weekly` n=14: 449 s (75 %), 14 %. The three weeklies are the **capacity** branch
+by the test's own criterion, so `QUEUE.md` #1's `600 → 1800` is now backed on the population it edits.
+**Pooled, the same numbers read as the hang branch** — ~2 % cap-kills on a 92 s median — because a job
+with 60× the traffic buries the one failing most of its runs. Same shape as §1/QUEUE #8 (*a shared
+summary line averages a real test and a proxy*), one level over. **Ask what defines your population
+before you plot it: sharing `_run_prompt` and sharing a workload are different facts.**
+⚠️ Same series: `vidnotes-alerts` shows a **2797 s "success" under a 600 s cap** — §0's monotonic freeze,
+so these wall durations are sleep-contaminated. Exact-600 hits are S=0 windows by construction and the
+verdict holds, but **never quote a max off this series without asking whether the host slept through it**.
+Cheap correct form: pair `Running job: <name>` against the next `Job <name> completed/failed`, **and note
+the log writes `Running job:` with a colon and `Job <name> …` without one — one regex for both needs
+`(Running job:|Job)`, or you silently match nothing and get n=0 for every job** (cost me one call).
 ⛔ **RUN THE TEST ON BOTH POPULATIONS — IT ASKS WHERE THE SUCCESSES SIT AND NEVER ASKS WHETHER THE
 FAILURES ARE ALL AT THE CAP. IF THEY ARE NOT, THE CAP EXPLAINS A MINORITY OF THEM AND A CAP-SHAPED FIX
 LEAVES THE REST UNTOUCHED.** (2026-08-15 10:3x ICT, 0333z, `cleanpro-daily`, **n=101 runs** built from
