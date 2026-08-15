@@ -411,6 +411,18 @@ Confidence high on the sign, moderate on the value. Evidence:
 | 08-01 → 08-14 (the row's window) | 137/168 | 18.5 % |
 | 08-08 → 08-14 (last 7 d) | 66/84 | 21.4 % |
 
+⛔ **EVERY NUMBER IN THAT TABLE IS BIASED UP AND NONE OF THEM SHOULD BE QUOTED AS-IS — the
+denominator is a FIXED GRID and a bot restart RE-ANCHORS every `interval_seconds` job onto a new
+one** (`HEARTBEAT.md` §0, 0856z; carried into the queue 1129z because the row is what gets acted on).
+Worked example from today: the 15:20:44 reboot moved `auto-commit` / `cleanpro-exp-monitor` off the
+`:33:23` grid onto `15:21:46 + 7200` = `17:21:46`, and that re-anchored fire landed on the second
+(1015z, residual 0 s) — a *success* that a fixed-grid count scores as a miss, plus a miss at every
+later grid slot. `logs/infra.log` holds **6 `Cron scheduler started` events since 08-01**, so the
+08-01→08-14 row alone absorbs several. **Direction is known (up); magnitude is not.** Do not price
+this fix off 20.4 % / 18.5 % / 50.0 % until the series is rebuilt with each restart timestamp as a
+grid reset. The *sign* of the defect is unaffected — fires are genuinely lost — so the fix still
+stands; only its size is unmeasured.
+
 The row's number reproduces exactly; only its *implied recency* was wrong. This does not weaken the
 fix — a defect that has run at ~20 % for four months unseen is a **better** argument for the history
 check than a fresh spike would be. It does change the framing: nothing recent caused it, so nothing
