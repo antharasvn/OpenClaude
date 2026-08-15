@@ -27,6 +27,7 @@ from zoneinfo import ZoneInfo
 from apscheduler.triggers.cron import CronTrigger
 
 ROOT = Path(__file__).resolve().parent.parent
+INFRA_LOG = ROOT / "logs" / "infra.log"
 LOOKBACK = timedelta(days=16)  # > 2 weekly periods, so a weekly job always has a prior fire
 SLACK = timedelta(seconds=60)  # last_run is stamped at completion, fire time is the start
 
@@ -40,10 +41,47 @@ def last_expected_fire(cron: str, tz: str, now: datetime):
     return prev
 
 
+def last_scheduler_start(log: Path = INFRA_LOG):
+    """Most recent `Cron scheduler started`, i.e. the epoch the interval grid is anchored on.
+
+    Timestamps in `infra.log` are host-local and naive; the writer is a process on this host.
+    """
+    if not log.exists():
+        return None
+    stamp = None
+    with log.open(errors="replace") as fh:
+        for line in fh:
+            if "Cron scheduler started" in line:
+                stamp = line[:19]
+    if stamp is None:
+        return None
+    try:
+        parsed = datetime.strptime(stamp, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None
+    return parsed.replace(tzinfo=datetime.now().astimezone().tzinfo)
+
+
+def interval_expected_fire(interval_seconds: int, scheduler_start, now: datetime):
+    """Last interval fire due before `now`, or None if none is due since the last restart.
+
+    A restart re-anchors every interval trigger and the first fire lands at
+    `start + interval`, never at `start` (QUEUE.md #8) — so inside that first interval an
+    arbitrarily stale `last_run` is correct rather than missed. Without that guard the
+    2 h jobs read MISSED for ~1.5 intervals after every reboot.
+    """
+    if scheduler_start is not None and now < scheduler_start + timedelta(seconds=interval_seconds):
+        return None
+    # An interval genuinely has no bands, so age vs interval is safe here.
+    return now - timedelta(seconds=1.5 * interval_seconds)
+
+
 def main() -> int:
     now = datetime.now(timezone.utc)
     jobs = json.loads((ROOT / "cron" / "jobs.json").read_text())["jobs"]
     state = json.loads((ROOT / "cron" / "state.json").read_text())
+
+    started = last_scheduler_start()
 
     missed, checked = [], 0
     for job in jobs:
@@ -59,8 +97,10 @@ def main() -> int:
             if expected is None:
                 continue
         elif "interval_seconds" in sched:
-            # An interval genuinely has no bands, so age vs interval is safe here.
-            expected = now - timedelta(seconds=1.5 * sched["interval_seconds"])
+            expected = interval_expected_fire(sched["interval_seconds"], started, now)
+            if expected is None:
+                checked += 1  # re-anchored by a restart, not yet due — healthy
+                continue
         else:
             continue
 
