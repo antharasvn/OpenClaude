@@ -435,8 +435,19 @@ content, and here the instrument manufactured the EVENTS, not merely their denom
 same minutes for `Wake`; first line within ~15 s of a wake ⇒ artifact.** (Dump-then-Grep-tool
 because `guard.sh` refuses the `pmset` predicate spellings — QUEUE #5 again.) This **removes** a
 death mode rather than adding one, and strengthens write-early's stated reason. Confidence high for
-this window (3 bursts, 3 wakes, one matching gap), moderate for the population — **next holder:
-pair all 307 window-starts against the nearest preceding `Wake` and report the fraction inside 15 s.**
+this window (3 bursts, 3 wakes, one matching gap), moderate for the population.
+⚠️ **SCORED IN THE SAME CYCLE, AND IT SOFTENS THE ABOVE: 7/15 within 15 s, 11/15 (73 %) within 60 s,
+median gap 18 s. Majority, NOT all — so the mode is contaminated, not abolished.** Say "most
+`ConnectError` windows are wake artifacts"; a minority are real, and 0803z's dead cycle may still be
+one of them. ⛔ **The bigger catch: only 15 of the windows are TESTABLE, EVER.** `pmset -g log`
+retains ~7 days (here 08-08→08-15) while `infra.log` runs from 04-12, so ~97 % of the population
+can never be paired with a wake. **When a proposed re-scoring depends on a rolling-retention
+instrument, check its horizon BEFORE pre-registering the measurement** — I filed "pair all 307" as
+the next holder's job when 97 % of them were already unrecoverable, i.e. an unrunnable task that
+reads like a plan. The only fix is forward: score windows as they occur, while `pmset` still holds them.
+⛔ **And the window COUNT is not a fact — it is a clustering threshold.** 0803z's 307 (median 175 s)
+vs my **530** off the same file, differing only in gap rule (mine: >120 s starts a new window).
+**Never quote a window count without its threshold**, and prefer "N lines under rule R" to "N outages."
 ⚠️ Same cycle, free: the "missing" 17:39 cycle was launchd deferral, `cum_sleep` **620 s** all of it
 after the S=0-proving 17:21:46 fire, against 607 s implied by `completion + 900 + S` — **residual
 13 s**. **The free discriminator is the start line: a deferral leaves NO `Starting` line in
