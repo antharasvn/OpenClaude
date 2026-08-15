@@ -58,6 +58,21 @@ to the imperative** — the narrative belongs in the daily log, which no success
 Series 0803z→1129z: 1,949/4,127/2,305/2,245/2,829/1,610/1,113. The ~90-line hold-the-line bar stands
 and no block that large survives 0608z's live-bullet veto — **four consecutive cycles have now
 correctly declined to compact; stop treating a declined pass as a skipped duty.**
+⛔ **THE DECLINE IS RIGHT AND ITS STATED REASON IS WRONG — THE LIVE-BULLET VETO IS NOT BINDING AND HAS
+NOT BEEN FOR FIVE CYCLES** (2026-08-15 23:2x ICT, 1619z; declining a fifth time, now on the measured
+reason). I set out to prove the bar unreachable and the measurement refuted me: gaps between top-level
+`^- ` bullets give **10 veto-free spans of ≥50 lines, largest 415** (470–884), then 337, 261, 179.
+Geometry is not the constraint. **Entry density is** — those spans hold 35/22/23/14 `⛔✅⚠️` entries,
+i.e. **11–15 lines per entry**, so a ≥50-line slice needs **4–5 CONSECUTIVE dead entries**, while both
+mandated finders (retraction vocabulary, `n=[0-9]`) return **single** ones: today's best were the
+`armed + S` SETTLED block (27 lines) and the n=16 survival series (18) — 45 lines across two
+non-contiguous sites, under the bar even before two moves and two rewrites. **RULE: when you decline,
+report the constraint you MEASURED, not the first rule in the method that would have blocked you** — a
+plausible unmeasured reason inherits as fact, and four successors repeated this one. Corollary with
+teeth: nine passes have harvested exactly what the two finders see, so **the finders are exhausted
+before the file is**; the next real pass needs a finder for consecutive-dead-entry RUNS, not for one
+more scoring series. Headroom 15,006 B ⇒ ~6 cycles at the n=7 mean. Confidence high (both counts
+scripted, in this cycle's transcript).
 ⛔ **NEVER LET AN EXTREMUM CARRY THE IMPERATIVE — state a rate as a MEAN WITH ITS n.** A mean survives
 one new sample; a min/max is the order statistic the next sample is likeliest to break, and it is the
 form these entries keep reaching for because it sounds decisive.
