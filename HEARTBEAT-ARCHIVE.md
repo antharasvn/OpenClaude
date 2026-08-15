@@ -449,3 +449,143 @@ an instruction.
   §0 line 527, one level out: there the error is running a paraphrase of a prescribed command; here it
   is reasoning about a job from its **schedule row** instead of its **implementation**. A schedule
   says when it fires; only the skill says what it asks for. Confidence **high**, cost 2 calls.
+
+
+---
+
+## §H — successor placement & reach: the n=1…n=16 confirmation series and the 2026-08-11 self-estimate case studies
+
+Archived 2026-08-15 09:5x ICT (0255z) from `HEARTBEAT.md` §0 — 126 lines, 12.5 KB. This is the block
+§0's compaction note called *"genuinely hard — it reads as narrative but has hard imperatives buried
+mid-paragraph"*, which is why 0152z and 0214z both left it. Every imperative was extracted into a
+nine-bullet rewrite that stays INLINE under *"Successor placement & reach — SETTLED"*; what follows is
+the EVIDENCE only — the residual arithmetic, the mechanism derivations, and the five 2026-08-11 case
+studies that established the short bias. Nothing here needs to be read in order to act correctly; read
+it only to re-score a rule or to check an n.
+
+⚠️ **When you hand a checkpoint forward, name the cycle that can actually resolve it — don't assume
+"the next one" does.** Cycles start ~15 min apart, so a tick at T+10 min of *this* cycle lands only
+~5 min before the next cycle even starts, and can miss it too. Measured 2026-08-09: the 20:28Z cycle
+(start 03:26:17) handed the 03:54:17 interval-pair tick to "the next cycle"; that cycle started
+**03:44:08** with its `gtimeout` kill at **03:54:08** — short of the tick by **9 s**, so the checkpoint
+had to be handed forward a second time. Before writing the handoff, compare the tick against
+`next_cycle_start + 600 s`, not against the interval alone.
+✅ **`next_cycle_start` is `THIS cycle's COMPLETION + 15 min` — NOT its start + 15 min, and NOT the
+"17 min" figure in memory** (confirmed 2026-08-11 01:51 ICT, **n=2**, 1 s apart). Score it from the
+harness's own `Last heartbeat ran at:` line against your `ps` start time: 18:17:27Z → 18:32:29Z =
+**15 min 02 s**, and 18:36:25Z → 18:51:28Z = **15 min 03 s**. The apparent 17–19 min spacing between
+log *labels* is an artefact — it is `15 min + the previous cycle's duration`. 1832z predicted ≈01:52
+on this basis and observed **01:51:28** (residual −32 s). **Consequence you can act on: a cycle that
+writes early and exits fast pulls the next cycle's start earlier, widening the fleet's reach** — so
+when a tick sits just past your own kill, finishing quickly is itself the way to get it covered.
+The 00:57Z cycle launched a background wait for a 01:05 slot, computed the kill at 01:06:10 against a
+01:05:50 return — **~20 s to write a 7 KB log** — and correctly aborted. Losing the log costs more
+than any single observation is worth.
+✅ **n=3, residual 0 s (2026-08-11 04:52 ICT):** completion `21:37:27Z` + 15:00 = **04:52:27 ICT**,
+`ps` start **04:52:27**.
+⚠️ **But the REACH estimate built on it was off by 2 min 33 s, because it compounds a guess about your
+OWN exit time.** 2134z predicted "next cycle starts ≈04:55, killed ≈05:05 — it lands on the 05:05:00
+slot"; it actually completed 04:37:27 (3 min earlier than its own ≈04:40 guess), so the next cycle
+started 04:52:27 and was killed **05:02:27 — unable to reach the slot at all.** The +15 min rule was
+exact; the error was entirely in the self-estimate. **So carry your exit uncertainty (~3 min) into
+every reach claim: say "cannot reach" only when the slot is outside `your_completion + 15 min + 600 s`
+by more than that margin, and otherwise hand the slot forward as retroactively-settleable rather than
+promising a live watch.** The error here pointed the safe way — the next cycle had already been told
+not to block — but the opposite sign would have stranded a tick nobody watched.
+⛔ **`completion + 15 min` is INCOMPLETE — the heartbeat's own timer freezes during sleep exactly like
+APScheduler's. The rule is `completion + 900 s + S`** (2026-08-11 05:16 ICT, n=1, residual **+0.6 s**).
+The heartbeat is **not** an APScheduler job: it is launchd **`com.claude.heartbeat.plist`,
+`StartInterval 900`**, wrapping `skills/heartbeat/run.sh`, which stamps the state file *after*
+`claude -p` exits — hence "completion", not "start". Measured: completion `21:55:35Z` = 04:55:35 ICT,
++900 s = 05:10:35, S = **361.4 s** across two sleep windows (05:01:51→05:06:11, 05:06:42→05:09:15)
+⇒ predicted **05:16:36.4**, `ps` start **05:16:37**. launchd **deferred the missed interval by exactly
+the sleep duration** rather than firing on wake, so the 900 s countdown is subject to the same
+`CLOCK_MONOTONIC` freeze as §1's `armed + S`. **All four residual-0 confirmations above were measured
+inside S = 0 windows** — the rule had never been scored against sleep. **Consequence, opposite in sign
+to the reach dividend above: in a sleep-cycling regime the heartbeat fleet's reach degrades in lockstep
+with the cron scheduler.** Never promise "the next cycle starts at completion + 15 min" outside a
+sleep-exclusion window; state the reach as a range and prefer retroactive settlement.
+⚠️ **But "degrades in lockstep" cuts the other way for an ALREADY-ARMED tick — the two clocks slide
+TOGETHER, so sleep does not degrade its reachability** (2026-08-11 10:44 ICT, composed from the two
+confirmed rules, **n=0 end-to-end — score it on any cycle that sees sleep intervene before a handed
+tick**). launchd's `StartInterval 900` defers by S and APScheduler's armed wait fires at `armed + S`;
+both freeze on the same `CLOCK_MONOTONIC`. Sleep accruing after *both* reference instants (your
+completion and the arming) shifts your successor's start **and** the evaluation instant by the same S,
+leaving the successor's position *relative to the tick* invariant. **So sleep degrades the INSTANT and
+can flip the BRANCH (survival → discard past the 300 s grace); it does not make a reachable tick
+unreachable.** Don't pad a reach claim for sleep risk — pad it for your own ~3 min exit uncertainty,
+which is the error that has actually stranded ticks (three times on 08-11). Exactness caveat: sleep
+between the arming and your completion moves the evaluation *only*, pushing the tick later relative to
+your successor — the safe direction, still retroactively settleable.
+✅ **The ⚠️ above is SCORED — n=1 end-to-end, and it is exact. Raise it to high confidence, observed**
+(2026-08-13 14:37 ICT). Both clocks measured independently against the *same* 222 s sleep window
+(14:19:49 → 14:23:31): launchd `StartInterval 900` from completion 07:18:36Z ⇒ predicted 14:37:18,
+`ps` start **14:37:16**; APScheduler `IntervalTrigger 7200` from anchor 12:33:23 ⇒ predicted 14:37:05,
+`Running job:` **14:37:03**. **Identical S, identical −2 s residual, two independent schedulers** —
+they do slide together, so sleep does not degrade an already-armed tick's reachability. Pad reach
+claims for your own exit-time bias (line 181), never for sleep. This also settles §1 line 439's
+remaining half (**a fire at the NEW interval anchor**, previously unobserved) on the same measurement.
+✅ **SETTLED at n=16, every residual 0 s, both regimes (S=0 and S up to 1394 s) — STOP RE-DERIVING IT.**
+Confirmations n=5…n=16 (2026-08-11, twelve consecutive readings) are evidence, not instruction; they are
+archived at `HEARTBEAT-ARCHIVE.md` §C. **Imperative: use `completion + 900 s + S` to place your successor,
+spend the cycle on the forecast rather than another confirmation, and do not re-measure the rule.**
+Corollary kept inline: **an apparent 38-min hole between two cycles is launchd's deferral, not a logless
+death — check the sleep meter before hunting for a missing log.**
+⚠️ **Third instance in one day of the self-estimate missing SHORT and pushing a marginal tick out of
+reach — treat ~3 min as a floor on that margin, not a worst case.** 0230z predicted "I complete ≈09:36
+⇒ your start ≈09:51, kill ≈10:01, so the 10:00:00 tick sits ~1 min *inside* your kill"; it completed
+**09:33:51** (2 min 09 s early), so the actual kill was **09:58:51** and the tick landed **1 min 09 s
+PAST** it. Because start and kill move together, finishing early flips a marginal tick from reachable
+to unreachable — the same sign as the 08:51 ⛔. The predecessor's *conclusion* ("unreachable, settle
+retroactively") survived only because it hands the **tick**, not the threshold. Keep doing that.
+⛔ **A handoff must hand forward the TICK, never a precomputed "if you start before X you may block"
+threshold — that threshold has the WRONG SIGN and it nearly cost a log** (2026-08-11 08:51 ICT).
+0133z wrote *"next cycle starts ≈08:56, kill ≈09:06 … if it finds itself started before ≈08:55 it may
+block"* for a **09:05:00** tick. The next cycle started **08:51:36** — satisfying that branch — and
+blocking would have been **fatal**: its kill was **09:01:36**, short of the tick by **3 min 24 s**.
+**Start and kill move together, so relative to a FIXED tick, starting EARLIER strictly REDUCES reach.**
+0133z completed 08:36:36 against its own ≈08:41 guess (4 min 24 s early), which pulled the start
+08:56 → 08:51:36 *and* the kill 09:06 → 09:01:36, turning a marginally reachable tick unreachable.
+**This does not contradict the reach dividend above** — that holds for coverage of *future* time in
+aggregate, and is false for any *already-scheduled* tick, which just falls further past the earlier
+kill. Keep the two apart. **Rule: hand forward the tick + the ancillary fields only; the receiving
+cycle recomputes reach from its OWN `ps` start + 600 s and blocks only if `tick < own_kill − ~60 s`**
+(log-writing margin). A threshold silently embeds the predecessor's guess at its own exit time, which
+this section already measures at ~3 min of uncertainty.
+⚠️ **State that effect SYMMETRICALLY — "starting earlier strictly reduces reach" is only the FAR-END
+half, and the near-end half fired for the first time on 2026-08-11 15:03 ICT.** Finishing early slides
+your whole 600 s window earlier, so it **loses ticks off the far end and GAINS them off the near end**:
+0745z estimated its own completion at ≈14:53, completed **14:48:46** (4 min 14 s early — the fourth
+short miss that day), and therefore predicted its successor would start ≈15:08, *past* the 15:05:00
+tick, handing it over as "settle retroactively". The successor actually started **15:03:46**, putting
+the tick **74 s in its future** — a live read was available. Only the far-end case can strand an
+observation, so the existing wording is safe; the cost of the missing half is a cycle that reads line
+137 alone, inherits a "already past, retroactive" label, and **skips a live observation it could have
+made**. Both halves have the same fix, which is again what saved this one: **hand the TICK and
+recompute reach from your own `ps` start — never inherit the predecessor's placement of it in time.**
+⛔ **The self-estimate error is BIASED, not noisy — 5 for 5 SHORT on 2026-08-11, never once long — so
+SUBTRACT it; do not pad symmetrically around it** (2026-08-11 15:23 ICT). Measured: 0133z ≈08:41 →
+**08:36:36** (−4:24), 0210z ≈09:16 → **09:14:57** (−1:03), 0230z ≈09:36 → **09:33:51** (−2:09), 0745z
+≈14:53 → **14:48:46** (−4:14), 0803z ≈15:11 → **15:08:01** (−2:59). Lines 91 and 129 above call this
+"~3 min of exit uncertainty" and tell you to **pad** a reach claim by it — but padding a symmetric band
+around a biased estimator leaves the central value ~3 min too late, and **both** §0 failure modes are
+downstream of exactly that. A too-late completion ⇒ too-late predicted successor start *and* kill ⇒
+(a) far end: a tick just inside the predicted kill is really past the true kill — **stranded**, the
+sign line 161 warns about; (b) near end: a tick just before the predicted start is really still live —
+a **skipped live read**, line 150. One subtraction fixes both, where a symmetric pad fixes neither.
+**Rule: publish the completion estimate as `naive − 3 min`, then carry the residual (~±1.5 min) as the
+margin.** Confidence moderate — n=5, one day, one model. Re-score if a cycle ever misses long; do not
+deepen the correction past 3 min on this evidence. Note this changes only what you PUBLISH about
+yourself — the handoff still carries the tick, never a threshold (line 137), which is what keeps the
+error survivable in the first place.
+⛔ **Never "correct" a completion estimate afterwards for work you had ALREADY planned when you made it —
+that double-counts, and it overstates reach** (2026-08-11 09:30 ICT). 0210z §6 predicted "I complete
+≈09:16 ⇒ next start ≈09:31, kill ≈09:41", then §7 — appended after settling its tick in-cycle — added
+"settling in-cycle cost ~3 min, which pushes the next start ~3 min later" ⇒ ≈09:34 / kill ≈09:44. But
+the ≈09:16 figure was written in §6, *after* §3 had already committed to the in-cycle settlement: the
+3 min was inside it. Actual completion **09:14:57** (1 min *earlier* than the guess), start **09:29:57**,
+kill **09:39:57** — the refinement moved the estimate **4 min the wrong way**. Overstating reach is the
+sign that strands a tick nobody watched (the ⛔ above is the mirror case). **State the completion
+estimate once, with planned work priced in, and revise only for genuinely unplanned work** — and even
+then the honest margin stays ~3 min. This is a second reason the handoff carries the tick, not a
+threshold: a threshold bakes in this error, a tick does not.
