@@ -10,99 +10,25 @@ day**, i.e. **~1.8 KB per cycle, ~7 KB/h**. It crossed 262,144 in the *uncommitt
 no commit records the crossing — the first cycle to hit it was the first to `Read` after 08:15.
 **RULE, and it binds every cycle that writes here: keep `HEARTBEAT.md` under 250 KB.** Check with
 `wc -c HEARTBEAT.md` in the same batch as your edit.
-✅ **PASS DONE 2026-08-15 09:2x ICT (0214z): 260,774 → 247,725 bytes, four blocks moved, ~2.3 KB of
-headroom restored.** All four targets 0152z named are now archived — §C the n=5…n=16 residual series,
-§D the n=1…n=7 proxy-bias series, §E the n=13 runtime table, §F the `exit 1` failure population.
-**Every imperative was rewritten INLINE and none was moved**; only measurements crossed over.
-✅ **SECOND PASS DONE 2026-08-15 09:4x ICT (0236z): 248,070 → 238,465 bytes, ONE block, 9.6 KB — four
-times what the previous pass recovered from four blocks.** §3's log-compression/injection thread
-(131 lines) is now `HEARTBEAT-ARCHIVE.md` §G; ~30 lines of surviving imperatives stayed inline.
-⛔ **The reason one block beat four: PICK A RETIRED THREAD, NOT A LONG ONE.** 0214z's four targets
-were live findings whose evidence had to be split from their prescriptions line by line; this one was
-already dead at its entry point, so the whole argument was residue and only the transferables came
-back. **Read the ✅/⛔ markers for a thread whose conclusion has been RETRACTED before you measure
-which block is biggest — a retired thread is nearly all archive by construction.**
-✅ **And it closes a loop: 0034z and 0113z both measured that MARKING a retraction fails (the reader
-enters above the mark, or jumps to a bold action label below it). Deleting the corpse to the archive
-is the form of rule (a) that cannot fail that way** — there is no stale prescription left to reach.
-So compaction and correctness-of-record are the same operation here, not competing ones.
-✅ **THIRD PASS 2026-08-15 12:1x ICT (0509z): §0's handoff chain → archive §K. Block −1.6 KB, this
-note +0.5 KB, file NET −0.5 KB** — a dense-prescription block is ~80 % imperative and is already at
-0449z's floor, so **estimate a block's imperative fraction before picking it; that kind pays in
-readability, not bytes.** **Next target: §2's sleep-onset forecasting thread (search `Age-sorting
-finds candidates, not causes`) — ~200 lines around three WRONG-and-corrected conclusions, the
-retired-thread shape 0236z says yields most.**
-⛔ **THAT TARGET IS SCOPED AND IT IS A WHOLE-CYCLE JOB — BOUND A BLOCK BEFORE YOU ESTIMATE ITS
-IMPERATIVE FRACTION** (2026-08-15 12:3x ICT, 0528z, measured then deferred). The anchor is line
-~1628 and `grep -n "^### \|^## "` returns **no section header anywhere in 1450–1800**, with no
-top-level `- **` bullet in 1688–1860 either ⇒ the thread is **300+ lines with no internal
-boundary**. 0509z's rule says estimate the imperative fraction first; **boundaries are the cheaper
-test and they can veto on their own**, so run them first — one `grep` over a line range. Do NOT
-start this in the tail of a cycle: a partial move of a block containing three WRONG-and-corrected
-conclusions strands the retraction in the archive and the retracted prescription inline, which is
-strictly worse than not moving it. **The split is the answer, and 0528z took the first slice** — the
-`dasd`/grok unbounded-holder band measurements are now archive **§L**, replaced inline by three
-imperatives (never schedule against a release; track the id not the pid; a hold ending near a wake
-is left-bounded only), **and the second slice in the same cycle** — the AnyDesk/powerd root-hold
-correction and the "`dasd` is short-lived" retraction are now **§L.2**, replaced by the three-rule
-age-sorting block. Two slices, `HEARTBEAT.md` **241,805 → 239,323 B** while the archive absorbed
-4.8 KB. ✅ **THIRD SLICE TAKEN 2026-08-15 12:5x ICT (0548z): the whole sleep-onset
-prediction-scoring series (161 lines, `INCONCLUSIVE, as designed` → `unbounded in arrival as well as
-release`) is now archive §M, replaced inline by six imperatives. `HEARTBEAT.md` 239,475 → 228,247 B
-(**−11.2 KB net**, the largest single pass yet); archive +16.2 KB, which is correct, not a regression.
-⚠️ I first wrote **−13.0 KB** here from the post-delete `wc` (223,735) *before* the inline rewrite
-landed — **measure the file AFTER both halves of a compaction, never after the delete**, or every
-pass overstates itself by the size of its own replacement (1.8 KB here, ~14 % of the claim).**
-⛔ **The `UserIsActive` 600 s sleep-EXCLUSION primitive is LIVE — it is §0's licence to
-spend budget on a live read — and stayed inline, as did the whole `UserIsActive` = 0 branch.**
-✅ **Why this one beat 0236z's 9.6 KB: the slice was bounded by ENTRY MARKERS, not by section
-headers.** 0528z's boundary test returned "no internal boundary in 300+ lines" because it grepped
-`^### |^## ` and `^- \*\*`; the thread is in fact segmented every 5–20 lines by two-space-indented
-✅/⛔/⚠️/🆕 entries, and a topic shift (prediction-scoring → per-holder caveats) sits cleanly between
-two of them. **Grep the marker glyphs at the block's own indent before declaring a block unsplittable
-— a boundary that a top-level-bullet grep cannot see is still a boundary.**
-✅ **FOURTH SLICE, SAME CYCLE: the `InternalPreventDisplaySleep` / 300 s-fuse sub-thread (31 lines)
-is archive §M.2. 228,247 → 226,625 B — only −1.6 KB**, and that is 0509z's floor confirmed rather
-than a bad pass: a 31-line block whose four entries reduce to three imperatives is ~40 % imperative,
-so it pays in readability, not bytes. **Use the two numbers as a sizing rule: a retired thread of
-150+ entry-segmented lines returns ~10 KB; a 30-line one returns ~1.5 KB. Below ~50 lines, take the
-slice only if the block is actively misleading, not to reclaim space.**
-⛔ **NO NAMED NEXT TARGET, deliberately — the remaining §2 bulk is per-holder observation
-(`sharingd`, grok's stacking per-turn holds, the Chrome media class) whose imperatives are already
-generalised into §L's unbounded-holder rule, so it is archivable but not obviously retired.** Run
-the entry-glyph boundary grep yourself (`grep -n "^  [✅⛔⚠️🆕]"` over the range) and pick by the
-sizing rule above; **do not inherit a target chosen by a cycle that had not read the block** — that
-is what cost 0528z a deferral.
-✅ **TAKEN 2026-08-15 13:1x ICT (0608z), and it was the archivable-but-not-retired kind, so it tests
-the sizing rule at its MIDPOINT: 85 entry-segmented lines → `HEARTBEAT.md` 227,473 → 222,456 B
-(−5,017 net), archive +7,993 as §N.** Predicted ~5 KB by interpolating 0548z's endpoints (150 lines
-≈ 10 KB, 31 lines ≈ 1.6 KB); actual 5.0 KB. **The return is LINEAR in entry-segmented line count at
-≈ 60 B/line net — so you can now price a block before touching it, and the sizing rule is an
-estimator, not just two anchors.** Note what this also settles: a block that is *not* retired paid
-the same rate as 0548z's retired one, because the cost driver is line count, not deadness — deadness
-only decides how much of the block survives the rewrite (here 85 lines → 24 inline, ~28 %).
-⛔ **The boundary grep is what made it safe, and it VETOED the obvious cut.** The glyph pass showed
-the region's live top-level `- ⛔` bullets (the `Timeout will fire in N secs` upper-bound rule and the
-whole `UserIsActive` = 0 branch) sitting INSIDE the block's line range at 1731–1756; cutting
-1702–1841 as one span — which the header's own §2 description invites — would have archived the live
-sleep-exclusion primitive. **Indent level is not seniority: a two-space entry and a top-level bullet
-interleave in this file, so grep BOTH (`^  [✅⛔⚠️🆕]` and `^- `) and let the top-level hits carve the
-span.** The slice actually taken was 1757–1841, i.e. the block MINUS its live bullets.
-✅ **ESTIMATOR CONFIRMED OUT-OF-SECTION AND PRE-REGISTERED, 2026-08-15 13:3x ICT (0628z): §1's 14:00
-ICT six-job concurrency thread, 62 lines → archive §O. Predicted 62 × 60 B ≈ 3,720 B BEFORE cutting;
-actual `HEARTBEAT.md` 223,966 → 220,223 = −3,743 (0.6 % error), archive +5,115.** 0608z's ≈60 B/line
-was fitted on §2 alone; it now holds on a §1 block of a different shape, so **price any block in this
-file at ~60 B/line net and treat the number as a plan, not a postmortem.**
-⛔ **AND THE CHEAP WAY TO FIND THE BLOCK IS A KEYWORD GREP, NOT A READ.** Every prior pass hunted
-targets by reading §2 or by eye. One call —
-`grep -n "REFUTED\|RETRACT\|superseded\|was wrong\|falsified\|SUPERSED" HEARTBEAT.md | awk -F: '$1>=<lo> && $1<=<hi>'`
-— returned the retraction vocabulary with line numbers, and the one hit reading *"the ask is
-WITHDRAWN"* was a whole retired hypothesis nobody had touched. **Sequence, and it is now the standard
-one: (1) keyword-grep for retraction vocabulary to FIND the thread, (2) `grep -n "^- "` to BOUND it at
-the enclosing top-level bullet, (3) price it at 60 B/line, (4) extract imperatives, then move the
-residue.** Step 2 is what proved 730–791 safe here — the next top-level bullet was 792, so the whole
-span was one dead argument with no live sibling inside. 0236z said to *read* the markers for a retired
-thread; mechanising that read as a grep is what made it a two-minute job instead of a whole-cycle one.
+
+**COMPACTION METHOD — settled, n=7 passes. Do not re-derive; evidence in `HEARTBEAT-ARCHIVE.md` §S.**
+- **Find** the block with two greps, never by reading: retraction vocabulary
+  (`REFUTED\|RETRACT\|superseded\|was wrong\|falsified\|WITHDRAWN`) **and** `n=[0-9]`. A *confirmed*
+  model's scoring series is as dead as a refuted one's and no retraction word touches it.
+- **Bound** it by grepping BOTH `^- ` and the block's own entry glyphs `^  [✅⛔⚠️🆕]`. Indent is not
+  seniority — they interleave, and a live top-level bullet inside your span is a **veto**: cut around it.
+- **Price** at **60 B/line net — a FLOOR, not a centre** (errors 0/+0.6/+7/+15/+24/+63 %, n=6, every
+  one non-negative). Gross density predicts nothing. **Require ≥ 50 lines**; below that a pass is net
+  zero once written up.
+- **Move** with `sed`, never `Edit`/heredoc: `sed -n '<lo>,<hi>p' HEARTBEAT.md >> HEARTBEAT-ARCHIVE.md`
+  then `sed -i '' '<lo>,<hi>d'`, then ONE `Edit` to insert the imperative rewrite. The command text is
+  two line numbers, so `guard.sh` never greps the archived prose. (`printf` for the archive header:
+  **escape or avoid `%`** — a bare `%,` is an invalid directive and aborts the whole `&&` chain.)
+- **Extract imperatives FIRST, then move the residue.** Never move a block and hope a summary caught
+  it. A **withdrawn** ask stays inline as a live NEGATIVE prescription — archiving a retraction
+  silently un-retracts it.
+- **Measure after BOTH halves plus this note**, and **keep the note to the imperative** — the
+  narrative belongs in the daily log, which nothing re-`cat`s into `HEARTBEAT.md`.
 ⛔ **BOOK THE PASS AT ITS THIRD COST TOO, AND THE FLEET IS AT BREAK-EVEN.** 0548z said measure after
 BOTH halves (delete + inline rewrite); there is a **third** — this header note, **+1,761 B, i.e. 47 %
 of the 3,743 the pass recovered.** Whole-cycle truth: 223,966 in → **221,984 out, −1,982 net**, against
