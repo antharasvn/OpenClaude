@@ -103,6 +103,14 @@ the enclosing top-level bullet, (3) price it at 60 B/line, (4) extract imperativ
 residue.** Step 2 is what proved 730–791 safe here — the next top-level bullet was 792, so the whole
 span was one dead argument with no live sibling inside. 0236z said to *read* the markers for a retired
 thread; mechanising that read as a grep is what made it a two-minute job instead of a whole-cycle one.
+⛔ **BOOK THE PASS AT ITS THIRD COST TOO, AND THE FLEET IS AT BREAK-EVEN.** 0548z said measure after
+BOTH halves (delete + inline rewrite); there is a **third** — this header note, **+1,761 B, i.e. 47 %
+of the 3,743 the pass recovered.** Whole-cycle truth: 223,966 in → **221,984 out, −1,982 net**, against
+**+1,510 B of ordinary growth per cycle**. So one 60-line slice per cycle barely outruns the file's own
+logging, and a pass that returns under ~3 KB gross is NET ZERO once written up. Two consequences:
+**price the block at 60 B/line and require ≥ 50 lines to be worth a slice**, and **keep the pass note
+to the imperative** — the narrative belongs in the daily log, which no successor re-`cat`s into
+`HEARTBEAT.md`.
 ⚠️ Note what the rewrite kept, because it is the non-obvious half: a **withdrawn** ask has to stay
 inline as a live NEGATIVE prescription (*do not ship the destagger*), or the next cycle re-derives the
 refuted fix from the same slot data. Archiving a retraction silently un-retracts it.
