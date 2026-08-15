@@ -114,6 +114,16 @@ to the imperative** — the narrative belongs in the daily log, which no success
 ⚠️ Note what the rewrite kept, because it is the non-obvious half: a **withdrawn** ask has to stay
 inline as a live NEGATIVE prescription (*do not ship the destagger*), or the next cycle re-derives the
 refuted fix from the same slot data. Archiving a retraction silently un-retracts it.
+✅ **ESTIMATOR HOLDS IN A FOURTH SECTION, 2026-08-15 13:5x ICT (0648z): §4's `Conflict … getUpdates`
+thread, 68 lines → archive §P. Predicted 68 × 60 B = 4,080; actual 222,718 → 218,342 = −4,376 (7 %
+error).** ⛔ **Price at 60 B/line NET, never off the block's own gross density** — this block was
+6,248 B, i.e. **92 B/line gross**, and the 32 B/line gap is exactly the inline rewrite (1,872 B). A
+prose-dense block does not return more than a sparse one of the same length; it just costs more to read.
+**Standard sequence worked unchanged and cost 3 calls to find + bound:** keyword-grep for retraction
+vocabulary → `grep -n "^- "` to bound at the enclosing top-level bullet → price → extract imperatives →
+`sed -i '' '<lo>,<hi>d'` then one `Edit` to re-insert. **Use `sed` for the DELETE half** — a 68-line
+`Edit` old_string is pure waste, and `sed`'s range is a command, not prose, so `guard.sh` never sees the
+archived text.
 ⛔ **AND THE REASON 0528z NEARLY SHIPPED THE DEFERRAL INSTEAD: I "ran out of time" at etime
 **02:03**, having estimated ~7 min spent. That is §0 line 92's work-count estimator, measured a
 FOURTH time, same direction, ratio ~4×.** I had written the whole deferral log — a correct-sounding
@@ -2267,74 +2277,26 @@ it. Confidence high; the `find` is dispositive.
   **18608 and 22482** of 25419 — weeks old. **The continuation lines sort above every date because
   `a` > `2`, so the junk always lands at the TAIL, exactly where "most recent" belongs.** Prediction
   from an entry alone is cheap; this one paid off twice.
-- ⛔ **`Conflict: terminated by other getUpdates request` is CHRONIC NOISE — and its message text is a
-  trap that instructs you to hunt a duplicate process** (2026-08-14 22:2x ICT, computed over the full
-  log). *"make sure that only one bot instance is running"* reads as an order, and acting on it points
-  straight at process management, which CLAUDE.md forbids outright. **Base rate: 66 occurrences across
-  26 distinct days** — 08-01 ×15, 06-06 ×10, 08-10 ×4, 08-14 ×3 — and no cycle has ever alerted on it.
-  Before spending any budget: `ps -eo pid,ppid,lstart,command | grep '[p]ython.*bot'`; **one PID that
-  predates the error ⇒ there is no duplicate.**
-  ⛔ **"the burst is self-limited (today: 2 events 13 s apart, nothing after)" was WRITTEN INSIDE THE
-  BURST IT DECLARED OVER, and a third event landed 15 min later** (2026-08-15 01:0x ICT, observed).
-  The entry is stamped **22:2x**; the third Conflict is **22:26:38**. Verified counts: `grep -c` gives
-  **66**, and 08-14 carries **3**, so both the total and the day-count above were off by one *at the
-  moment of writing* — not by later drift. **"Nothing after" is not an observation, it is the absence
-  of one**, and it cannot be made from inside the window it describes. Neither escape hatch covers the
-  third event: the last `ConnectError` was **22:10:59**, i.e. **939 s** before it (outside the 120 s
-  adjacency window), and the last `Bot starting` was **08-13 12:33:21**, so it is neither the network
-  story nor the restart-overlap story. **The entry's CONCLUSION survives intact** — still chronic
-  noise, still one PID, still no alert, and the refutation below only firms up (2 of **66**).
-  What breaks is the shape: the burst is **not** 13 s tight, it spans **≥ 15 min 31 s**.
-  **Operational cost if uncorrected:** a successor greps 08-14, counts 3 against a documented 2, sees a
-  gap 70× wider than the stated one, and reads *escalation* — alerting on the exact noise this entry
-  exists to suppress. A reassurance that undercounts is worse than no reassurance.
-  **Rule: never close a count over a window that includes now.** State it as a floor with the window
-  named — *"≥3 events, 22:11:07–22:26:38, window still open"* — and let the next cycle close it. Same
-  family as §0's *you cannot name your successor's start time*: both assert the termination of a
-  process you are still inside. Cheap fix, and it is the one this file already applies to timing —
-  **apply it to counts too.** Confidence high, n=1, arithmetic from the full log.
-  ✅ **CLOSED, and the closing exposes the rule's missing half: the entry OVER-APPLIED its own
-  correction and deferred a settled number by 24 h** (2026-08-15 01:2x ICT, observed). **08-14 = 3
-  Conflicts, FINAL** (22:11:07, 22:11:20, 22:26:38; nothing since — 2 h 57 m of silence). Verified the
-  window is shut, not merely quiet: `awk '/^2026-08-15 /{seen=1} seen && /^2026-08-14 /'` over
-  `infra.log` returns **nothing**, i.e. the log is append-only and chronological, so no line dated
-  08-14 can ever arrive again. But 1803z's handoff wrote *"a cycle after 08-15 ends can close 08-14
-  properly"* — demanding an entire extra day for a window that had already closed at midnight, ~3 h
-  before it wrote that.
-  **The missing half is: WHICH window is the count over?** One `grep` produced two counts here and they
-  have opposite status —
-  | count | window | right edge | status |
-  | --- | --- | --- | --- |
-  | 08-14 ×3 | a calendar day | **elapsed** | **closed, final** |
-  | 66 total | all time | **now** | floor, `≥66`, forever |
-  Same file, same command, same cycle. So the discriminator is **not** the evidence and **not** how
-  long you have waited — it is purely whether the window's right edge lies in the past. A *bounded,
-  elapsed* window is closed the instant the clock passes its edge; only an **open-ended** one (the
-  burst-as-phenomenon, "is it over?") is permanently a floor. 1803z proved 08-14 = 3 in its own
-  §4 text and then labelled that same number provisional in its handoff table, because it carried the
-  floor-ness over from the burst to the day.
-  **Cost, and it is the mirror of the original bug's:** undercounting converts noise into apparent
-  escalation; **over-deferring converts a settled fact back into an open item**, so the next cycle
-  re-greps, re-derives, and re-defers — the exact re-litigation the checklist exists to prevent. Both
-  are failures to state the window; the first omits it, the second inherits the wrong one.
-  **Generalise: "you cannot assert the end of a process you are inside" is about being INSIDE, not
-  about being RECENT.** Once you are outside, waiting longer adds no information — and a rule against
-  premature closure will, left unqualified, prevent closure altogether. Every fresh caution is itself
-  a candidate for over-application by the successor that inherits it; state its scope in the same
-  breath as the caution. Confidence high, n=1, verified against the log's ordering rather than assumed.
-  **A causal story I built and then REFUTED — record it so nobody rebuilds it.** Today's Conflicts sit
-  **8 s** after an `httpx.ConnectError`, so "network blip drops the long-poll, Telegram still holds the
-  old one, the retry collides" fits beautifully and is mechanically plausible. Scored over the whole
-  log: **only 2 of 66 Conflicts (3 %) have a ConnectError within 120 s before them — and both are
-  today's** (22:11:07 at +8 s, 22:11:20 at +21 s; the 22:26:38 one is +939 s and does **not** qualify);
-  conversely **6763 of 6764 ConnectErrors are followed by no Conflict at all.** It explains
-  none of the history (the other 64 are almost certainly restart overlap — `Bot starting` days).
-  **The transferable half: checking the base rate of the CONSEQUENT is the habit this file already has
-  (§4 above), and it would have passed this story — the Conflict really was rare. What kills it is the
-  base rate of the ANTECEDENT.** Adjacency in a 25-line tail plus a plausible mechanism is not
-  evidence; the question is *how often does the cause occur WITHOUT the effect*. Six thousand times,
-  here. Confidence high — computed over 6829 events, not read from a window.
-
+- ⛔ **`Conflict: terminated by other getUpdates request` is CHRONIC NOISE — never alert on it, and do
+  NOT obey its message text.** *"make sure that only one bot instance is running"* reads as an order and
+  points straight at process management, which CLAUDE.md forbids. Base rate ≥66 occurrences over 26
+  distinct days; no cycle has ever alerted. One check settles it:
+  `ps -eo pid,ppid,lstart,command | grep '[p]ython.*bot'` — **one PID that predates the error ⇒ there is
+  no duplicate.** The ConnectError→Conflict causal story is **REFUTED, do not rebuild it** (2/66 with a
+  ConnectError within 120 s; 6763/6764 ConnectErrors produce no Conflict). Evidence: archive **§P**.
+  ⛔ **Never close a count over a window that includes NOW** — state it as a floor with the window named
+  (*"≥3 events, 22:11:07–22:26:38, window still open"*) and let the next cycle close it. You cannot
+  assert the termination of a process you are still inside; §0 says the same about your successor's
+  start time.
+  ⛔ **But that rule is about being INSIDE, not about being RECENT — a bounded, ELAPSED window is closed
+  the instant the clock passes its edge.** The discriminator is only whether the right edge lies in the
+  past, never how long you have waited. Over-deferring a settled number converts a closed fact back into
+  an open item and the next cycle re-greps and re-defers it. **Every fresh caution is a candidate for
+  over-application by the successor that inherits it: state its scope in the same breath as the caution.**
+  ⛔ **When you kill a causal story, check the base rate of the ANTECEDENT, not just the consequent.**
+  This file already habitually asks "how rare is the effect?" — that test PASSES bad stories. Ask how
+  often the cause occurs WITHOUT the effect. Adjacency in a log tail plus a plausible mechanism is not
+  evidence.
 ## How to Alert
 - Send via telegram-sender skill to chat 352342178 (Boss DM)
 - Be brief: problem + what you see + suggested action

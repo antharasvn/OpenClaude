@@ -1128,3 +1128,76 @@ imperatives are inline in §1; everything here is evidence for how the hypothesi
   **high** on withdrawing the ask, **moderate** on no coupling at all. The 08-13 stall itself remains
   unexplained and has no live evidence left — the `ce` counters cleared at the next slot exactly as
   predicted.
+
+## §P — §4's `Conflict: terminated by other getUpdates request` thread (archived 2026-08-15 13:5x ICT, 0648z)
+
+Retired: the count is closed, the causal story is refuted, and the surviving imperatives are inline in
+§4. Kept here as evidence only. Original span `HEARTBEAT.md` 2270–2337 (68 lines, 6,248 B).
+
+- ⛔ **`Conflict: terminated by other getUpdates request` is CHRONIC NOISE — and its message text is a
+  trap that instructs you to hunt a duplicate process** (2026-08-14 22:2x ICT, computed over the full
+  log). *"make sure that only one bot instance is running"* reads as an order, and acting on it points
+  straight at process management, which CLAUDE.md forbids outright. **Base rate: 66 occurrences across
+  26 distinct days** — 08-01 ×15, 06-06 ×10, 08-10 ×4, 08-14 ×3 — and no cycle has ever alerted on it.
+  Before spending any budget: `ps -eo pid,ppid,lstart,command | grep '[p]ython.*bot'`; **one PID that
+  predates the error ⇒ there is no duplicate.**
+  ⛔ **"the burst is self-limited (today: 2 events 13 s apart, nothing after)" was WRITTEN INSIDE THE
+  BURST IT DECLARED OVER, and a third event landed 15 min later** (2026-08-15 01:0x ICT, observed).
+  The entry is stamped **22:2x**; the third Conflict is **22:26:38**. Verified counts: `grep -c` gives
+  **66**, and 08-14 carries **3**, so both the total and the day-count above were off by one *at the
+  moment of writing* — not by later drift. **"Nothing after" is not an observation, it is the absence
+  of one**, and it cannot be made from inside the window it describes. Neither escape hatch covers the
+  third event: the last `ConnectError` was **22:10:59**, i.e. **939 s** before it (outside the 120 s
+  adjacency window), and the last `Bot starting` was **08-13 12:33:21**, so it is neither the network
+  story nor the restart-overlap story. **The entry's CONCLUSION survives intact** — still chronic
+  noise, still one PID, still no alert, and the refutation below only firms up (2 of **66**).
+  What breaks is the shape: the burst is **not** 13 s tight, it spans **≥ 15 min 31 s**.
+  **Operational cost if uncorrected:** a successor greps 08-14, counts 3 against a documented 2, sees a
+  gap 70× wider than the stated one, and reads *escalation* — alerting on the exact noise this entry
+  exists to suppress. A reassurance that undercounts is worse than no reassurance.
+  **Rule: never close a count over a window that includes now.** State it as a floor with the window
+  named — *"≥3 events, 22:11:07–22:26:38, window still open"* — and let the next cycle close it. Same
+  family as §0's *you cannot name your successor's start time*: both assert the termination of a
+  process you are still inside. Cheap fix, and it is the one this file already applies to timing —
+  **apply it to counts too.** Confidence high, n=1, arithmetic from the full log.
+  ✅ **CLOSED, and the closing exposes the rule's missing half: the entry OVER-APPLIED its own
+  correction and deferred a settled number by 24 h** (2026-08-15 01:2x ICT, observed). **08-14 = 3
+  Conflicts, FINAL** (22:11:07, 22:11:20, 22:26:38; nothing since — 2 h 57 m of silence). Verified the
+  window is shut, not merely quiet: `awk '/^2026-08-15 /{seen=1} seen && /^2026-08-14 /'` over
+  `infra.log` returns **nothing**, i.e. the log is append-only and chronological, so no line dated
+  08-14 can ever arrive again. But 1803z's handoff wrote *"a cycle after 08-15 ends can close 08-14
+  properly"* — demanding an entire extra day for a window that had already closed at midnight, ~3 h
+  before it wrote that.
+  **The missing half is: WHICH window is the count over?** One `grep` produced two counts here and they
+  have opposite status —
+  | count | window | right edge | status |
+  | --- | --- | --- | --- |
+  | 08-14 ×3 | a calendar day | **elapsed** | **closed, final** |
+  | 66 total | all time | **now** | floor, `≥66`, forever |
+  Same file, same command, same cycle. So the discriminator is **not** the evidence and **not** how
+  long you have waited — it is purely whether the window's right edge lies in the past. A *bounded,
+  elapsed* window is closed the instant the clock passes its edge; only an **open-ended** one (the
+  burst-as-phenomenon, "is it over?") is permanently a floor. 1803z proved 08-14 = 3 in its own
+  §4 text and then labelled that same number provisional in its handoff table, because it carried the
+  floor-ness over from the burst to the day.
+  **Cost, and it is the mirror of the original bug's:** undercounting converts noise into apparent
+  escalation; **over-deferring converts a settled fact back into an open item**, so the next cycle
+  re-greps, re-derives, and re-defers — the exact re-litigation the checklist exists to prevent. Both
+  are failures to state the window; the first omits it, the second inherits the wrong one.
+  **Generalise: "you cannot assert the end of a process you are inside" is about being INSIDE, not
+  about being RECENT.** Once you are outside, waiting longer adds no information — and a rule against
+  premature closure will, left unqualified, prevent closure altogether. Every fresh caution is itself
+  a candidate for over-application by the successor that inherits it; state its scope in the same
+  breath as the caution. Confidence high, n=1, verified against the log's ordering rather than assumed.
+  **A causal story I built and then REFUTED — record it so nobody rebuilds it.** Today's Conflicts sit
+  **8 s** after an `httpx.ConnectError`, so "network blip drops the long-poll, Telegram still holds the
+  old one, the retry collides" fits beautifully and is mechanically plausible. Scored over the whole
+  log: **only 2 of 66 Conflicts (3 %) have a ConnectError within 120 s before them — and both are
+  today's** (22:11:07 at +8 s, 22:11:20 at +21 s; the 22:26:38 one is +939 s and does **not** qualify);
+  conversely **6763 of 6764 ConnectErrors are followed by no Conflict at all.** It explains
+  none of the history (the other 64 are almost certainly restart overlap — `Bot starting` days).
+  **The transferable half: checking the base rate of the CONSEQUENT is the habit this file already has
+  (§4 above), and it would have passed this story — the Conflict really was rare. What kills it is the
+  base rate of the ANTECEDENT.** Adjacency in a 25-line tail plus a plausible mechanism is not
+  evidence; the question is *how often does the cause occur WITHOUT the effect*. Six thousand times,
+  here. Confidence high — computed over 6829 events, not read from a window.
