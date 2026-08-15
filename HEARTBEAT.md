@@ -142,6 +142,16 @@ not the config: `grep "Cron scheduler started with" logs/infra.log | tail -1` ag
 mtime — a config newer than the last scheduler start is a WISH, not a regime.** Transferable, and it is
 §0's hand-the-tick-not-a-threshold rule in a second place: **a setting takes effect at a RE-READ, so
 every "X is off" claim needs the timestamp of the last load beside it or it is unfalsifiable.**
+⛔ **AND THE UNLOADED EDIT IS NOT ONE EDIT — IT IS A STACK, SO RE-DIFF THE FILE IMMEDIATELY BEFORE
+YOU RESTART** (2026-08-15 19:4x ICT, 1246z). `cron/jobs.json` mtime **19:39:32**, seven minutes into
+the next cycle's past: three jobs (`echo-daily`, `vidnotes-daily`, `cleanpro-daily`) flipped back to
+`true` by an interactive chat edit (`infra.log` finalizes a Telegram stream at 19:39:38). The five ids
+that have actually fired since the 15:21:46 start are **disjoint** from the three the config now
+enables. **A deferred restart applies the file's state AT RESTART, never the state you reasoned
+about** — so never say "the pending change" in the singular without its mtime. ✅ Free corroboration
+that the instrument is sound: `Skipping disabled job:` occurs **166×** in `infra.log` but last on
+**2026-07-02** — the logger works, so today's zero is evidence of no re-read, not a mute log. **Prove
+your silence-based claim's instrument has spoken before, or the silence means nothing.**
 ⚠️ Note what the rewrite kept, because it is the non-obvious half: a **withdrawn** ask has to stay
 inline as a live NEGATIVE prescription (*do not ship the destagger*), or the next cycle re-derives the
 refuted fix from the same slot data. Archiving a retraction silently un-retracts it.
