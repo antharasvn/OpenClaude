@@ -330,6 +330,20 @@ pools two CLIs with different sandboxes, and the split is UNRECOVERABLE retroact
 labelled with its runner.** The fix is one line (log `argv[0]` before spawning) and it is the only
 thing that makes the series measurable again: **score forward, do not re-plot the past.** Same shape
 as 1049z's `pmset` retention trap. Evidence: `memory/t0/2026-08-15/heartbeat-1305z.md`.
+⛔ **AND A POOLED PERCENTILE IS NOT A CONTROL CHART — IF THE DAY-LEVEL MEDIAN SWINGS, THE RUNS ARE
+CLUSTERED BY DAY AND YOUR p90 FIRES A WHOLE DAY AT A TIME** (2026-08-15 20:2x ICT, 1326z, scoring
+1305z forward). `vidnotes-alerts` ran `88/85/81/204/290/194/419 s` today; against the pooled n=886
+series (median 92 s, p90 186 s) the last **four consecutive** runs clear p90 and the last is 4.6× the
+median — a step change I was one call from filing. Day medians 08-06→08-15 are
+**101/219/291/210/12/288/116/125/85/194 s — a 24× swing**, so today's 194 is unremarkable and the
+"step" is one day's cluster seen from inside it. **Before calling a run anomalous, compute the
+BETWEEN-day spread of the same statistic; a threshold fitted on pooled runs assumes an independence
+the fleet does not have.** Same family as the homogeneous-population rule above, one level up: that
+one asks whether two jobs share a workload, this one asks whether two runs of ONE job do.
+⚠️ Pre-registered, not concluded: those day medians look bimodal (low {12,85,101,116,125} vs high
+{194,210,219,288,291}, empty 125…194) — the shape a silent day-scale `AGENT_CLI` switch would make.
+n=10 days is too weak. It is only testable once `_run_prompt` logs `argv[0]`. **Do not re-plot the
+past.** Evidence: `memory/t0/2026-08-15/heartbeat-1326z.md`.
 ⚠️ Same series: `vidnotes-alerts` shows a **2797 s "success" under a 600 s cap** — §0's monotonic freeze,
 so these wall durations are sleep-contaminated. Exact-600 hits are S=0 windows by construction and the
 verdict holds, but **never quote a max off this series without asking whether the host slept through it**.
