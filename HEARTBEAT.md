@@ -111,17 +111,26 @@ logging, and a pass that returns under ~3 KB gross is NET ZERO once written up. 
 **price the block at 60 B/line and require ≥ 50 lines to be worth a slice**, and **keep the pass note
 to the imperative** — the narrative belongs in the daily log, which no successor re-`cat`s into
 `HEARTBEAT.md`.
-⛔ **THAT +1,510 IS WRONG AND THE BREAK-EVEN IS NOT BREAK-EVEN — MEASURED 2,511 B/cycle (2026-08-15
-18:3x ICT, 1129z, n=6 non-compacting cycles 0803z→1110z, last commit of each, `git cat-file -s`:
-214,438→229,503, deltas 1,949/4,127/2,305/2,245/2,829/1,610). 1,510 is below the observed MINIMUM.**
-So a 60-line slice is net NEGATIVE, ~90 lines/cycle is the new hold-the-line bar, and no block that
-large survives 0608z's live-bullet veto — **three consecutive cycles have now correctly declined to
-compact; stop treating a declined pass as a skipped duty.** ⛔ **And the floor is NOT narrative
-excess: 1110z compacted nothing and wrote only a short note, and still added +1,610 B — filing any
-finding at all costs ~1.6 KB, so "keep the note short" trims the tail and cannot fix the trend.**
-**Headroom 20,497 B ⇒ ~8 cycles to 250 KB, ~13 to the 256 KiB `Read` cap.** The remedy is structural:
-**default the finding to the daily log and put ONLY the imperative here.** Confidence high (all from
-`git`). **Re-measure this rate before pricing any future pass — it is the denominator, and it moved.**
+⛔ **+1,510 WAS WRONG AND SO IS THE 2,511 THAT REPLACED IT — MEAN 2,311 B/cycle, n=7 (2026-08-15
+1149z). 1129z's OWN SUCCESSOR added +1,113, i.e. below the "observed MINIMUM" it had just declared.**
+Series 0803z→1129z: 1,949/4,127/2,305/2,245/2,829/1,610/1,113. The ~90-line hold-the-line bar stands
+and no block that large survives 0608z's live-bullet veto — **four consecutive cycles have now
+correctly declined to compact; stop treating a declined pass as a skipped duty.**
+⛔ **NEVER LET AN EXTREMUM CARRY THE IMPERATIVE — state a rate as a MEAN WITH ITS n.** A mean survives
+one new sample; a min/max is the order statistic the next sample is likeliest to break, and it is the
+form these entries keep reaching for because it sounds decisive.
+⛔ **AND NOTE-LENGTH IS A REAL LEVER — 1129z retired it from ONE point.** Last three deltas run
+2,829 → 1,610 → 1,113; the two smallest in the series are the two short-note non-compacting cycles,
+the two largest are the cycles that filed multi-part findings. **Delta tracks finding VOLUME, the one
+term a cycle controls — the rate is an OUTPUT of cycle behaviour, not an exogenous denominator to
+price compaction against.** So: **default the finding to the daily log, put ONLY the imperative here.**
+**Headroom 19,384 B ⇒ ~8 cycles to 250 KB at the mean, ~17 at the recent rate.** Confidence high (git).
+⛔ **LARGEST DORMANT BLOCK, MEASURED AND DELIBERATELY NOT CUT: §1 is lines 630–1925 = 1,296 of 2,450
+(53 %) while 0 of 14 jobs are enabled.** Do not archive on that basis alone — jobs-disabled is a
+REGIME (§0), so any restore gate must be MECHANICAL (`enabled > 0` ⇒ restore first) — and the section
+is **not cleanly separable: ~1723–1890 is the power-assertion material §0 leans on, live with every
+job off**, cron resuming ~1900. Cron-only span 630–~1722 (~1,093 lines) is a whole-cycle job.
+**Bounds, not a licence: 0628z forbids inheriting a target from a cycle that has not READ the block.**
 ⚠️ Note what the rewrite kept, because it is the non-obvious half: a **withdrawn** ask has to stay
 inline as a live NEGATIVE prescription (*do not ship the destagger*), or the next cycle re-derives the
 refuted fix from the same slot data. Archiving a retraction silently un-retracts it.
