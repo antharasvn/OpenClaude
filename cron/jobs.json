@@ -28,15 +28,6 @@
       "delivery": {"chat_id": "-5201056067", "announce": "352342178", "on_error": "352342178"}
     },
     {
-      "id": "vidnotes-alerts",
-      "name": "VidNotes Alerts",
-      "enabled": false,
-      "schedule": {"cron": "0 7-23/2 * * *", "timezone": "Europe/Warsaw"},
-      "type": "prompt",
-      "skill": "skills/vidnotes-alerts/SKILL.md",
-      "delivery": {"chat_id": "-5201056067", "announce": "352342178", "on_error": "352342178"}
-    },
-    {
       "id": "cleanpro-daily",
       "name": "CleanPro Daily",
       "enabled": true,
@@ -61,15 +52,6 @@
       "schedule": {"cron": "0 8-22/2 * * *", "timezone": "Asia/Saigon"},
       "type": "script",
       "script": "scripts/cleanpro_alerts_runner.py",
-      "delivery": {"chat_id": "-5201056067", "on_error": "352342178"}
-    },
-    {
-      "id": "cleanpro-exp-monitor",
-      "name": "CleanPro Experiment Monitor",
-      "enabled": false,
-      "schedule": {"interval_seconds": 7200},
-      "type": "script",
-      "script": "scripts/cleanpro_experiment_monitor.py",
       "delivery": {"chat_id": "-5201056067", "on_error": "352342178"}
     },
     {

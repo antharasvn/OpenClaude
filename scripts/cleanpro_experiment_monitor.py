@@ -152,6 +152,10 @@ def format_experiment_report(exp_id, exp_name, metrics):
     return '\n'.join(lines)
 
 def main():
+    # Job removed from cron/jobs.json; exit so leftover in-memory scheduler ticks do nothing.
+    print("cleanpro_experiment_monitor is no longer scheduled; exiting")
+    return
+
     now = datetime.now().strftime('%Y-%m-%d %H:%M')
     print(f"=== CleanPro Experiment Monitor — {now} ===\n")
     
@@ -184,9 +188,7 @@ def main():
         send_telegram(msg)
         print("\n📤 Alert sent to Telegram")
     else:
-        msg = f"No actionable alerts found. All {len(experiments)} running CleanPro experiments are within normal bounds at the {datetime.now().strftime('%H:%M ICT')} check."
-        send_telegram(msg)
-        print("\n📤 No-alert summary sent to Telegram")
+        print("No actionable alerts; staying silent")
 
 if __name__ == '__main__':
     main()
