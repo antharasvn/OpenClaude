@@ -48,13 +48,31 @@ want the files to say what they mean; the hazard is arithmetic done off the stri
 
 | job | n | successes | median ok | **max ok** | cap-kills |
 | --- | --- | --- | --- | --- | --- |
-| `vidnotes-weekly` | 14 | 5 | 354 s | **528 s = 88 % of cap** | **9 (64 %)** |
+| `vidnotes-weekly` | **15** | **6** | 354 s | **536 s = 89 % of cap** | **9 (60 %)** |
 | `weekly-conjecture` | 12 | 7 | 370 s | **540 s = 90 %** | 5 (42 %) |
 | `cleanpro-weekly` | 14 | 12 | 335 s | 449 s = 75 % | 2 (14 %) |
 
 Successes climb continuously toward the cap and clear it — the capacity signature. **`vidnotes-weekly`
-has failed 9 runs in 14; `ce=1` only because a single success resets the counter.** 1800 s leaves the
+has failed 9 runs in 15; `ce=1` only because a single success resets the counter.** 1800 s leaves the
 observed max ~3.3× of headroom.
+
+✅ **PREDICTION SCORED — the table's `vidnotes-weekly` row fired exactly when this file said it would,
+and it cleared the cap by 64 s** (2026-08-18 0948z, observed live). `infra.log`: `Running job` at
+**12:30:00 ICT**, `completed successfully` at **12:38:56** ⇒ **536 s = 89.3 % of the 600 s cap**, and it
+produced a real report (`memory/t0/2026-08-18/vidnotes-weekly-w34.md`, 1156 B, mtime 12:38). Two things
+this settles and one it does not:
+- **The APScheduler `day_of_week` reading is now confirmed by prospective test, not just retrodiction.**
+  `30 7 * * 1` = **Tuesday**, and the table's "Tue 2026-08-18 07:30 Warsaw" (= 12:30 ICT) was right to
+  the second. The ⚠️ above was reconstructed from past fires; this is the first fire predicted *before*
+  it happened. Treat the 0-is-Monday rule as settled.
+- **The capacity branch holds and tightened.** New max-ok 536 s > the old 528 s: the success
+  distribution's ceiling keeps climbing with n, which is the capacity signature doing exactly what §0's
+  test says it should. Nothing has ever finished in the 537–599 s band, so the margin on a *good* run is
+  **64 s (11 %)** — one slow BigQuery page from a tenth failure.
+- **It does NOT weaken the `600 → 1800` ask; it is the strongest single argument for it.** A 60 %
+  failure rate that produces a full report at 89 % of cap is not a hung job, and this run is the
+  counterfactual: had it been 65 s slower, the week's VidNotes report would not exist and `last_run`
+  would still have been stamped fresh. Evidence: `memory/t0/2026-08-18/heartbeat-0948z.md`.
 **Note:** this applies to `:163` only, and *only to the weekly jobs behind it.* `vidnotes-alerts` runs
 through the same line — n=882, median **92 s**, 1 % cap-kills — so the prompt tier **pooled** reads as
 the hang branch and hides all of the above; judge the cap per job. The identical-looking `gtimeout 600`
