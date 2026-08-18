@@ -359,13 +359,9 @@ is third-party background activity the fleet neither controls nor observes** —
 *"`misfire_grace_time: 300` cannot help when the sleep PERIOD is also 300 s"* holds in the trough
 regime only, and any grace-time fix scored across both regimes measures the MIX, not the fix.
 Evidence: `memory/t0/2026-08-18/heartbeat-0534z.md`.
-✅ **AND IT COMPLETED AT 12:38:56 — 536 s, 89 % OF ITS 600 s CAP, 64 s FROM THE KILL. QUEUE #1's
-CAPACITY BRANCH GAINS ITS SECOND NEAR-CAP SUCCESS** (0429z's prior max was 528 s = 88 %, n=14). Two
-successes at 88–89 % and nothing in between them and the cap is the capacity signature by the test's
-own criterion — `600 → 1800` for prompt jobs is now backed by two independent draws, not one.
-**Successor: this run is ALSO the clean regime-control for §2 above** — it is the only weekly fire
-observed entirely inside an assertion window, so its 536 s is uncontaminated by sleep freeze, unlike
-the sleep-inflated durations §0 warns about. Treat it as the reference duration for this job.
+✅ **`vidnotes-weekly` completed 12:38:56 = 536 s, 89 % of cap — QUEUE #1's capacity branch now has TWO
+near-cap successes** (0429z's max 528 s = 88 %, n=14); nothing between 89 % and the cap is the capacity
+signature. It fired wholly inside an assertion window ⇒ 536 s is the sleep-free reference duration.
 
 ⛔ **1755z's ~551-LINE BOUNDARY IS NOW SCORED, AND IT COST ME A WHOLE RE-DERIVED FINDING THIS CYCLE.**
 I observed `MISSED vidnotes-weekly … (0.1h ago)` while the job's child (`grok -p`, PID 37087) was alive
@@ -422,18 +418,22 @@ job. Details and the 3-step order: QUEUE #11, `memory/t0/2026-08-18/heartbeat-06
 `900 + runtime`; 7 working cycles mean 268 s, **~74 cycles/day, not 96 — every per-day figure from 96
 is ~30 % high.** ⛔ **Do NOT retune 0418z's 96-refusal counter on this — refusals
 run 7–9 s ⇒ 95.2/day; the regimes are disjoint.**
-**RULE: when a periodic sampler cannot observe an outage directly, difference its timestamps
-against its nominal period — the residual IS the outage, at the period's precision.** **Refutes
-0514z's** *"no amount of sampling reaches the troughs"*: wake events are timestamped, so troughs are the
-**complement** of the sample (its *inherits awake from its own existence* stands). No `pmset`
-needed. **Excess measures FROZEN time, not the wall trough:** predecessor ran +795 s against a 990 s
-trough that was 808 s asleep, error 1.6 % — a gap read as downtime over-reads by the DarkWake.
-⛔ **The model that produced it is the trap: `prev_start + 908` made 8 of 27 intervals read as LOST
-SLOTS, 65.7 min/day of fiction. Six were the RUNTIME re-labelled; `lost` tracked `run` 1:1 (234→226,
-307→299, 379→371). A residual correlating 1:1 with a variable already in the row is not a finding, it
-is the model's missing term.** The 908 was calibrated in the outage window where every cycle ran 8 s,
-hiding runtime — **calibrate a period on the regime you will apply it to.** Today's
-14:00/14:05 ICT misses are one trough, not four. `heartbeat-state.json` is at the REPO ROOT. Ev: `memory/t0/2026-08-18/heartbeat-0707z.md`.
+**RULE: when a periodic sampler cannot observe an outage directly, difference its timestamps against
+its nominal period — the residual IS the outage, at that precision.** Refutes 0514z's *"no sampling
+reaches the troughs"* (its *inherits awake from its own existence* stands). No `pmset` needed.
+**Excess measures FROZEN time, not the wall trough** (+795 s vs a 990 s trough, 808 s asleep, 1.6 %).
+⛔ **The model was the trap: `prev_start + 908` made 8 of 27 intervals read as LOST SLOTS, 65.7 min/day
+of fiction — six were RUNTIME re-labelled, `lost` tracking `run` 1:1. A residual correlating 1:1 with a
+variable already in the row is the model's missing term, not a finding; calibrate a period on the
+regime you will apply it to.** `heartbeat-state.json` is at the REPO ROOT.
+⛔ **AND ITS *"today's 14:00/14:05 misses are ONE trough"* IS HALF WRONG — 14:05 WAS LOST WITH THE HOST
+AWAKE** (0730z): no `Entering Sleep` after the **14:02:56** DarkWake, `dasd` assertion born 14:02:58
+(28 min awake at 14:31), `infra.log` ends **13:22:09**. **RULE: timestamp a missed slot against the
+NEAREST sleep interval, never its hour's regime.** 0534z addendum: the `fpck-repair` holder RECURS
+(12:12:23, 14:02:58) ⇒ age dates THIS instance, so an assertion window is an episode, never a regime.
+**Pre-registered: after 15:05 ICT `grep "Running job: echo-backend-alerts" logs/infra.log | tail -2` —
+NO LINE ⇒ scheduler mute ~1h45m on an AWAKE host = STALL, all 14 jobs down, escalate.**
+Ev: `memory/t0/2026-08-18/heartbeat-0730z.md`.
 
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
