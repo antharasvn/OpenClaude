@@ -327,11 +327,11 @@ the sample is drawn from the wake events, so no amount of sampling reaches the t
 **Cheap correct form: `pmset -g log > /tmp/pm.log` (also the `guard.sh` escape), pair each
 `Entering Sleep state` against the next `Wake from`/`DarkWake`, and report the duty cycle over a window
 containing troughs you were NOT awake for. Your `etime` is evidence about your cycle, never the fleet.**
-Paid immediately: `check_missed_fires.py` printed **9/14 with four fresh rows** — `vidnotes-daily`,
-`vidnotes-alerts`, `cleanpro-alerts` (all 12:00 ICT) and `echo-backend-alerts` (12:05) — **one cause,
-not four**: 12:00 sits in the 11:58:07→12:02:22 trough, 12:05 in 12:03:07→12:07:22. **`misfire_grace_time:
-300` cannot help when the sleep PERIOD is also 300 s.** Same regime ran 08:58→09:07 and produced today's
+Paid immediately: `check_missed_fires.py`'s **9/14 with four fresh rows** (12:00 x3, 12:05 x1) is
+**one cause, not four** — both slot times sit in troughs. (Its *"grace cannot help when the sleep
+PERIOD is also 300 s"* is superseded: the quantity is the CUMULATIVE freeze — 0751z, above.)
 nine `httpx.ConnectError` lines — **QUEUE #8's "sleep" and "network outage" mechanisms are one event seen
+Same regime ran 08:58→09:07 and produced today's
 twice**, the DarkWake returning the process before the network. 0437z's rule one level up: it said count
 from expected slots because a log-derived rate conditions on the host being awake; the unexamined half is
 that **a cycle inherits "awake" from its own existence.** ⚠️ n=4 same cycle: I ran `python3
@@ -351,14 +351,10 @@ change at `now − age`. Presence is not the signal; age is.** (`PreventUserIdle
 here, aged 00:00:00 — a newborn decoy.) 0514z's own rule recursing onto it: it escaped *"a cycle
 inherits awake from its own existence"* by measuring troughs it was not awake for, then reported that
 regime in the **present tense** — fixing the sampling bias installs a STALENESS bias in its place.
-**Paid immediately, and it explains the split 0514z could not:** 12:00 (`vidnotes-daily`,
-`vidnotes-alerts`, `cleanpro-alerts`) and 12:05 (`echo-backend-alerts`) died in the
-11:58:07→12:02:22 / 12:03:07→12:07:22 troughs, while **`vidnotes-weekly` fired at 12:30:00 to the
-second inside the assertion window.** So **the missed-fire population is NON-STATIONARY and its driver
-is third-party background activity the fleet neither controls nor observes** — 0514z's
-*"`misfire_grace_time: 300` cannot help when the sleep PERIOD is also 300 s"* holds in the trough
-regime only, and any grace-time fix scored across both regimes measures the MIX, not the fix.
-Evidence: `memory/t0/2026-08-18/heartbeat-0534z.md`.
+**The missed-fire population is NON-STATIONARY and its driver is third-party background activity the
+fleet neither controls nor observes**, so any grace-time fix scored across regimes measures the MIX,
+not the fix. (The 12:00/12:05-vs-12:30 split it opened is resolved by 0751z's freeze sum, above.)
+Ev: `memory/t0/2026-08-18/heartbeat-0534z.md`.
 ✅ **`vidnotes-weekly` completed 12:38:56 = 536 s, 89 % of cap — QUEUE #1's capacity branch now has TWO
 near-cap successes** (0429z's max 528 s = 88 %, n=14); nothing between 89 % and the cap is the capacity
 signature. It fired wholly inside an assertion window ⇒ 536 s is the sleep-free reference duration.
@@ -426,14 +422,26 @@ reaches the troughs"* (its *inherits awake from its own existence* stands). No `
 of fiction — six were RUNTIME re-labelled, `lost` tracking `run` 1:1. A residual correlating 1:1 with a
 variable already in the row is the model's missing term, not a finding; calibrate a period on the
 regime you will apply it to.** `heartbeat-state.json` is at the REPO ROOT.
-⛔ **AND ITS *"today's 14:00/14:05 misses are ONE trough"* IS HALF WRONG — 14:05 WAS LOST WITH THE HOST
-AWAKE** (0730z): no `Entering Sleep` after the **14:02:56** DarkWake, `dasd` assertion born 14:02:58
-(28 min awake at 14:31), `infra.log` ends **13:22:09**. **RULE: timestamp a missed slot against the
-NEAREST sleep interval, never its hour's regime.** 0534z addendum: the `fpck-repair` holder RECURS
-(12:12:23, 14:02:58) ⇒ age dates THIS instance, so an assertion window is an episode, never a regime.
-**Pre-registered: after 15:05 ICT `grep "Running job: echo-backend-alerts" logs/infra.log | tail -2` —
-NO LINE ⇒ scheduler mute ~1h45m on an AWAKE host = STALL, all 14 jobs down, escalate.**
-Ev: `memory/t0/2026-08-18/heartbeat-0730z.md`.
+⛔ **A MISSED SLOT IS NOT EXPLAINED BY THE POWER STATE AT THE SLOT — IT IS EXPLAINED BY THE MONOTONIC
+FREEZE ACCUMULATED IN THE ~20 min BEFORE IT. SUM THE `Entering Sleep`→`DarkWake` INTERVALS PRECEDING
+THE SLOT AND COMPARE TO `misfire_grace_time: 300` (`bot/scheduler.py:26`)** (0751z; 3 slots today,
+one variable, monotone). `vidnotes-weekly` 12:30:00 on the second — **0 s** freeze (continuous
+DarkWake 12:12:22→12:47:51). `echo-backend-alerts` 09:05 — **42 s** ⇒ late but caught, 09:06:34.
+`echo-backend-alerts` 14:05 — **808 s** over five intervals (39+6+254+255+254, 13:46:26→14:02:56),
+**none individually ≥300**, so the clock read ≈13:51:32 at wall 14:05 ⇒ 808 s stale vs 300 s grace,
+skipped silently. 0707z's cadence residual measured **808 s** for the same trough — different
+instrument, same number. ⛔ **REFUTED same cycle: DarkWake is NOT the cause — a sustained DarkWake is
+fire-capable and on-time (12:30). (`FullWake` had 0 hits in 250 KB; the fleet's power model is a
+binary, and the third state still is not the variable.)** Kills a fix class: **raising the grace
+helps only if it exceeds the freeze, and the freeze is third-party (0534z `dasd` `fpck-repair`, which
+RECURS — 12:12:23, 14:02:58 — so age dates the EPISODE, never a regime), hence unbounded.**
+⛔ **AND 0730z's "mute ~1h45m ⇒ STALL" PREMISE IS VOID — NOTHING IS SCHEDULED 14:05→15:05.** Loaded
+set (all 14; §1 gate shut) has 14:00 `vidnotes-alerts`+`cleanpro-alerts`, 14:05 `echo-backend-alerts`,
+then `auto-commit`/`cleanpro-exp-monitor` not due till 15:21:46: **2 slot times, not an outage** —
+0437z's *count from expected slots* applied to a silence-DURATION test. **Pre-registered: FullWake
+since 14:37:01, zero freeze since 14:02:56 ⇒ clock re-synced ⇒ 15:05 FIRES. Run `grep "Running job:
+echo-backend-alerts" logs/infra.log | tail -2`; LINE = model holds, stop. NO LINE ⇒ freeze model
+wrong, real stall live — escalate then.** Ev: `memory/t0/2026-08-18/heartbeat-0751z.md`.
 
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
