@@ -45,43 +45,9 @@ number survives none; `§N` references are unaffected and stay cheap. **Treat ev
 `line NNN` here as VOID — re-find the claim by `grep` before relying on it, and do NOT repair the
 numbers: they rot again on the next pass.** The compaction duty that keeps this file readable is the
 same duty that corrupts its citations, and nine passes have repaired none.
-⛔ **BOOK THE PASS AT ITS THIRD COST TOO, AND THE FLEET IS AT BREAK-EVEN.** 0548z said measure after
-BOTH halves (delete + inline rewrite); there is a **third** — this header note, **+1,761 B, i.e. 47 %
-of the 3,743 the pass recovered.** Whole-cycle truth: 223,966 in → **221,984 out, −1,982 net**, against
-**+1,510 B of ordinary growth per cycle**. So one 60-line slice per cycle barely outruns the file's own
-logging, and a pass that returns under ~3 KB gross is NET ZERO once written up. Two consequences:
-**price the block at 60 B/line and require ≥ 50 lines to be worth a slice**, and **keep the pass note
-to the imperative** — the narrative belongs in the daily log, which no successor re-`cat`s into
-`HEARTBEAT.md`.
-⛔ **+1,510 WAS WRONG AND SO IS THE 2,511 THAT REPLACED IT — MEAN 2,311 B/cycle, n=7 (2026-08-15
-1149z). 1129z's OWN SUCCESSOR added +1,113, i.e. below the "observed MINIMUM" it had just declared.**
-Series 0803z→1129z: 1,949/4,127/2,305/2,245/2,829/1,610/1,113. The ~90-line hold-the-line bar stands
-and no block that large survives 0608z's live-bullet veto — **four consecutive cycles have now
-correctly declined to compact; stop treating a declined pass as a skipped duty.**
-⛔ **THE DECLINE IS RIGHT AND ITS STATED REASON IS WRONG — THE LIVE-BULLET VETO IS NOT BINDING AND HAS
-NOT BEEN FOR FIVE CYCLES** (2026-08-15 23:2x ICT, 1619z; declining a fifth time, now on the measured
-reason). I set out to prove the bar unreachable and the measurement refuted me: gaps between top-level
-`^- ` bullets give **10 veto-free spans of ≥50 lines, largest 415** (470–884), then 337, 261, 179.
-Geometry is not the constraint. **Entry density is** — those spans hold 35/22/23/14 `⛔✅⚠️` entries,
-i.e. **11–15 lines per entry**, so a ≥50-line slice needs **4–5 CONSECUTIVE dead entries**, while both
-mandated finders (retraction vocabulary, `n=[0-9]`) return **single** ones: today's best were the
-`armed + S` SETTLED block (27 lines) and the n=16 survival series (18) — 45 lines across two
-non-contiguous sites, under the bar even before two moves and two rewrites. **RULE: when you decline,
-report the constraint you MEASURED, not the first rule in the method that would have blocked you** — a
-plausible unmeasured reason inherits as fact, and four successors repeated this one. Corollary with
-teeth: nine passes have harvested exactly what the two finders see, so **the finders are exhausted
-before the file is**; the next real pass needs a finder for consecutive-dead-entry RUNS, not for one
-more scoring series. Headroom 15,006 B ⇒ ~6 cycles at the n=7 mean. Confidence high (both counts
-scripted, in this cycle's transcript).
 ⛔ **NEVER LET AN EXTREMUM CARRY THE IMPERATIVE — state a rate as a MEAN WITH ITS n.** A mean survives
 one new sample; a min/max is the order statistic the next sample is likeliest to break, and it is the
 form these entries keep reaching for because it sounds decisive.
-⛔ **AND NOTE-LENGTH IS A REAL LEVER — 1129z retired it from ONE point.** Last three deltas run
-2,829 → 1,610 → 1,113; the two smallest in the series are the two short-note non-compacting cycles,
-the two largest are the cycles that filed multi-part findings. **Delta tracks finding VOLUME, the one
-term a cycle controls — the rate is an OUTPUT of cycle behaviour, not an exogenous denominator to
-price compaction against.** So: **default the finding to the daily log, put ONLY the imperative here.**
-**Headroom 19,384 B ⇒ ~8 cycles to 250 KB at the mean, ~17 at the recent rate.** Confidence high (git).
 ⛔ **LARGEST DORMANT BLOCK, MEASURED AND DELIBERATELY NOT CUT: §1 is lines 630–1925 = 1,296 of 2,450
 (53 %) while 0 of 14 jobs are enabled.** Do not archive on that basis alone — jobs-disabled is a
 REGIME (§0), so any restore gate must be MECHANICAL (`enabled > 0` ⇒ restore first) — and the section
@@ -431,6 +397,23 @@ finder tried in 10 passes**. Next real relief is §1's cron-only 630–~1722 beh
 restore gate, or nothing. **Meanwhile the only lever left is the one 1129z measured: file the finding
 in the daily log and put ONLY the imperative here** — and consume your predecessor's handoff note
 rather than appending beside it (measured: 249,108→249,170, net **+62 B** — consuming the note paid for my result, not more).
+
+⛔ **`git remote -v` NAMES A URL, NOT AN AUDIENCE — THIS REPO IS PUBLIC AND HAS BEEN PUBLISHING TWO
+LIVE BOT TOKENS FOR ~4 MONTHS** (2026-08-18 13:3x ICT, 0634z). `antharasvn/OpenClaude` is a
+**public fork** of `n4rly-boop/OpenClaude`; unauthenticated `curl` of `raw.githubusercontent.com`
+returns HTTP 200 with the token line, and Telegram `getMe` says `ok: true` for both `8628864855:…`
+(@aaa_os_bot) and `8733346629:…` (@Silpho_OS_bot), across **11 tracked files**. 488+ auto-commits
+pushed there and **no cycle ever ran the one `gh api` call that reveals the audience.**
+**RULES: (1) Before making anything MORE tracked — or trusting anything already tracked — resolve
+the DESTINATION's visibility; it is the cheapest call in the class and no local instrument speaks
+to it. (2) Pass `owner/name` explicitly to `gh`: bare `gh repo view` resolved to the UPSTREAM
+(`remote.upstream.gh-resolved = base`), and I was one step from filing "the repo was transferred."**
+Paid immediately: **QUEUE #10's option 1 is vetoed** — 0613z wrote *"as public as the repo is"* as a
+conditional and never resolved the antecedent, so its fix would publish 12 MB of daily logs.
+**A hazard stated as a conditional is not a hazard priced.** Sent to the user; rotation is theirs
+(revocation is the only step that closes a 4-month exposure — private-ing or deleting unpublishes
+nothing), and stripping the hardcoded defaults BEFORE they provision env vars breaks every alert
+job. Details and the 3-step order: QUEUE #11, `memory/t0/2026-08-18/heartbeat-0634z.md`.
 
 ## Every Check (runs every 15 min)
 

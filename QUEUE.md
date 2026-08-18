@@ -514,6 +514,45 @@ detail and excluding them may well be deliberate. The three options:
 
 Evidence (and yes, this one is unpushed too): `memory/t0/2026-08-18/heartbeat-0613z.md`.
 
+⛔ **OPTION 1 IS VETOED, AND 0613z WROTE THE CONDITION WITHOUT MEASURING IT** (0634z). Its own
+caveat — *"whatever those logs contain becomes as public as the repo is"* — was left as a
+conditional; measured, **the repo IS public** (see #11). Option 1 therefore publishes **2,671
+files / 12 MB** of daily logs, app metrics and revenue figures to an anonymously-readable repo.
+Take option 2 or 3. **A hazard stated as a conditional is not a hazard priced — resolve the
+antecedent in the same cycle you write it, it is one `gh api` call.**
+
+## 11. Two LIVE bot tokens are published on a PUBLIC repo — 11 tracked files, ~4 months
+
+**Where:** `scripts/{cleanpro_alerts_runner,cleanpro_experiment_monitor,daily_report_common,
+echo_alerts_runner,vidnotes_daily_runner}.py`, `skills/{aividly-daily,cleanpro-weekly,pdfai-daily,
+vidnotes-alerts,vidnotes-weekly,weekly-conjecture-cycle}/SKILL.md`.
+
+**Measured 2026-08-18 0634z, three independent axes:**
+1. `gh api repos/antharasvn/OpenClaude` ⇒ `private: false`, `fork: true`, parent
+   `n4rly-boop/OpenClaude`; `pushed_at 2026-08-18T06:18:45Z` — the fleet's own `auto-commit`.
+2. Unauthenticated `curl` of `raw.githubusercontent.com/…/scripts/cleanpro_alerts_runner.py`
+   ⇒ **HTTP 200, 6,513 B**, token line present in the body.
+3. Telegram `getMe` ⇒ `ok: true` for **both**: `8628864855:…` (@aaa_os_bot) and
+   `8733346629:…` (@Silpho_OS_bot). Live, not already-rotated.
+
+Earliest file first-added **2026-04-12** ⇒ ~4 months public. Holder of @aaa_os_bot's token can read
+every message sent to the fleet's control bot via `getUpdates` and post as it into any chat it is in.
+
+**Order matters and only step 1 actually closes it:** (1) BotFather `/revoke` both — the tokens are
+in ~4 months of commits, so making the repo private or deleting the files unpublishes nothing;
+(2) then move all 11 sites to `os.environ[…]` **with no fallback default**; (3) history rewrite is
+optional cleanup, and needs the user's word. **Do not do (2) before (1)** — stripping the defaults
+with no env provisioned breaks every alert job on its next fire, and fixing a leak by breaking the
+fleet is not a fix. Sent to the user 0634z; awaiting step 1.
+
+**Transferable, and it is why this sat unseen through 488+ auto-commits: `git remote -v` names a
+URL, not an AUDIENCE.** Before making anything more tracked — or trusting anything already tracked —
+resolve the destination's visibility. ⚠️ And pass `owner/name` explicitly: bare `gh repo view`
+resolved to the **upstream** (`remote.upstream.gh-resolved = base`), not origin, and I was one step
+from filing "the repo was transferred to another account."
+
+Evidence: `memory/t0/2026-08-18/heartbeat-0634z.md`.
+
 ---
 
 **Row numbers are stable IDs — never renumber, never reuse.** A gap in the sequence means that row

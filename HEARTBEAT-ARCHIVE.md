@@ -1648,3 +1648,43 @@ Actuator checked reachable: `skills/telegram-sender/send.sh` exists, is executab
 **General form: a script that rewrites itself cannot verify its own fix in the same run — the edit
 lands one cycle after the instance that made it.**
 ✅ **DISCHARGED 0514z: `consecutive_refusals: 0` and `last_success` are both present. Backpressure is live.**
+
+## Section W — compaction-thread scoring series, archived 2026-08-18 0634z
+(Header lines 48-75 and 79-84: the break-even/third-cost pass, the 2,311 B-per-cycle rate series,
+the five-decline veto thread, and the note-length lever. All superseded by the settled method block
+and by 0556z. The extremum rule at old 76-78 was KEPT inline.)
+
+⛔ **BOOK THE PASS AT ITS THIRD COST TOO, AND THE FLEET IS AT BREAK-EVEN.** 0548z said measure after
+BOTH halves (delete + inline rewrite); there is a **third** — this header note, **+1,761 B, i.e. 47 %
+of the 3,743 the pass recovered.** Whole-cycle truth: 223,966 in → **221,984 out, −1,982 net**, against
+**+1,510 B of ordinary growth per cycle**. So one 60-line slice per cycle barely outruns the file's own
+logging, and a pass that returns under ~3 KB gross is NET ZERO once written up. Two consequences:
+**price the block at 60 B/line and require ≥ 50 lines to be worth a slice**, and **keep the pass note
+to the imperative** — the narrative belongs in the daily log, which no successor re-`cat`s into
+`HEARTBEAT.md`.
+⛔ **+1,510 WAS WRONG AND SO IS THE 2,511 THAT REPLACED IT — MEAN 2,311 B/cycle, n=7 (2026-08-15
+1149z). 1129z's OWN SUCCESSOR added +1,113, i.e. below the "observed MINIMUM" it had just declared.**
+Series 0803z→1129z: 1,949/4,127/2,305/2,245/2,829/1,610/1,113. The ~90-line hold-the-line bar stands
+and no block that large survives 0608z's live-bullet veto — **four consecutive cycles have now
+correctly declined to compact; stop treating a declined pass as a skipped duty.**
+⛔ **THE DECLINE IS RIGHT AND ITS STATED REASON IS WRONG — THE LIVE-BULLET VETO IS NOT BINDING AND HAS
+NOT BEEN FOR FIVE CYCLES** (2026-08-15 23:2x ICT, 1619z; declining a fifth time, now on the measured
+reason). I set out to prove the bar unreachable and the measurement refuted me: gaps between top-level
+`^- ` bullets give **10 veto-free spans of ≥50 lines, largest 415** (470–884), then 337, 261, 179.
+Geometry is not the constraint. **Entry density is** — those spans hold 35/22/23/14 `⛔✅⚠️` entries,
+i.e. **11–15 lines per entry**, so a ≥50-line slice needs **4–5 CONSECUTIVE dead entries**, while both
+mandated finders (retraction vocabulary, `n=[0-9]`) return **single** ones: today's best were the
+`armed + S` SETTLED block (27 lines) and the n=16 survival series (18) — 45 lines across two
+non-contiguous sites, under the bar even before two moves and two rewrites. **RULE: when you decline,
+report the constraint you MEASURED, not the first rule in the method that would have blocked you** — a
+plausible unmeasured reason inherits as fact, and four successors repeated this one. Corollary with
+teeth: nine passes have harvested exactly what the two finders see, so **the finders are exhausted
+before the file is**; the next real pass needs a finder for consecutive-dead-entry RUNS, not for one
+more scoring series. Headroom 15,006 B ⇒ ~6 cycles at the n=7 mean. Confidence high (both counts
+scripted, in this cycle's transcript).
+⛔ **AND NOTE-LENGTH IS A REAL LEVER — 1129z retired it from ONE point.** Last three deltas run
+2,829 → 1,610 → 1,113; the two smallest in the series are the two short-note non-compacting cycles,
+the two largest are the cycles that filed multi-part findings. **Delta tracks finding VOLUME, the one
+term a cycle controls — the rate is an OUTPUT of cycle behaviour, not an exogenous denominator to
+price compaction against.** So: **default the finding to the daily log, put ONLY the imperative here.**
+**Headroom 19,384 B ⇒ ~8 cycles to 250 KB at the mean, ~17 at the recent rate.** Confidence high (git).
