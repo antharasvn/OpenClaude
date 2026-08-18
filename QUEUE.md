@@ -644,6 +644,51 @@ was resolved, not lost. Renumbering would rot every `QUEUE #N` cite in the daily
 citation-rot failure #3 was just repaired for. Record each removal in one line below, so the gap
 costs a reader zero calls to explain (2026-08-15 04:4x ICT: the missing **#4** cost three).
 
+## 13. The 14:00 ICT cron slot loses 26 % of its fires — four daily reports, one shared trough, no alert
+
+Filed 2026-08-18 17:5x ICT (1047z). **Decision needed: move the slot, or widen the grace.** Both are
+one line; neither is in a cycle's lane.
+
+`echo-daily`, `mangii-daily`, `pdfai-daily`, `aividly-daily` all run `0 3 * * *` `America/New_York`
+= **14:00 ICT**, which sits inside this host's habitual afternoon idle-sleep window. Fire dates from
+the whole of `logs/infra.log`, **identical for all four** (they share the slot, so this is one event
+×5, not 20 independent failures):
+
+```
+07-31 08-01 08-02 08-03 [—— 08-04 08-05 ——] 08-06 [—— 08-07 08-08 ——] 08-09 … 08-17 [—— 08-18 ——]
+```
+
+**14 of 19 days present ⇒ 26 % of fires lost.** (True rate 21–26 %: 08-08 has only 61 log lines, so
+the host was likely down that day rather than asleep.)
+
+**The scheduler was demonstrably alive through the hole, which is what makes this a schedule defect
+rather than an outage.** On 08-04, 08-05 and 08-07 — 152/120/161 log lines each, so the logger was
+not mute — `echo-backend-alerts` fires at **13:05 and 15:05 but never 14:05**, while the interval
+jobs `auto-commit` and `cleanpro-exp-monitor` fire at **14:41**, inside the gap. Today (08-18) has
+the same shape. That asymmetry is the mechanism: an **interval** trigger resumes on monotonic time
+after a sleep, a **cron** trigger's slot is discarded by `bot/scheduler.py:26`
+`misfire_grace_time: 300` with `coalesce` defaulting `True`. **The interval jobs paper over every
+trough the cron jobs fall into**, which is why `infra.log` reads healthy across all five losses.
+
+Two mechanical fixes, either sufficient:
+1. **Move the four dailies off 14:00 ICT** to an hour the host is reliably awake. They are report
+   jobs; the hour is arbitrary. Cheapest, no code.
+2. **Raise `misfire_grace_time`** for cron jobs so a post-wake catch-up runs. Touches every job.
+
+Related but distinct from **#8** (interval jobs lose ~18 % unseen) — this is the cron-side loss #8's
+detector is built to catch, and it does catch it: `check_missed_fires.py` printed all four this
+morning. The gap is that **only the cycle that happens to run after the slot ever reads it**, and
+three cycles today (0707z, 0730z, 0930z) each read it, each explained the day correctly, and none
+counted the other four days.
+
+**Rule this produced, worth keeping independently of the fix:** 1028z established *`uniq -c` an
+ERROR burst by DAY before filing it*. Misses need the same move and it flips the verdict the other
+way — a burst against its base rate is usually nothing; a miss against its base rate is usually
+systematic. Same omission, opposite conclusions, so "check the base rate" cannot be shorthand for
+"expect to find nothing."
+
+Evidence: `memory/t0/2026-08-18/heartbeat-1047z.md` (unpushed — see **#10**).
+
 ## Resolved
 
 - **#4 — SessionStart hook: uncapped daily-log injection.** Removed 2026-08-15 04:0x ICT by heartbeat
