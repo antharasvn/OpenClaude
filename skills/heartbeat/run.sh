@@ -53,27 +53,33 @@ if [[ $CLAUDE_RC -ne 0 ]]; then
     echo "[heartbeat] Timed out or failed (exit $CLAUDE_RC)"
 fi
 
-# A quota refusal exits in seconds, writes no daily log, sends nothing, and still
+# A dead cycle exits in seconds, writes no daily log, sends nothing, and still
 # stamps last_run — so nothing outside this file ever notices. Count them here.
 #
-# The phrase alone is NOT sufficient: this fleet reports on its own outages, so a
-# perfectly healthy cycle quoting "You've hit your weekly limit" in its summary
-# matches it (measured against the live log, 2026-08-18). A real refusal is all
-# three of: non-zero exit, a single short line of output, and the phrase.
+# Detection is STRUCTURAL only: non-zero exit + ≤400 B of output. Healthy cycles
+# exit 0 with ~3 KB transcripts, so quoting a failure phrase never false-positives
+# on structure. The phrase must NOT gate detection: a 529-Overloaded cycle
+# (2026-08-18 16:46Z) carried no quota phrase, was stamped last_success under the
+# old phrase-gated rule, and a 529 storm would never have alerted. The output text
+# is kept only to LABEL the cause in the alert.
 CLAUDE_BYTES=$(wc -c < "$CLAUDE_OUT" | tr -d ' ')
 REFUSED=0
-if [[ $CLAUDE_RC -ne 0 && $CLAUDE_BYTES -le 400 ]] \
-   && grep -qiE "hit your (weekly|session|usage|5-hour) limit|usage limit reached" "$CLAUDE_OUT"; then
+REASON=""
+if [[ $CLAUDE_RC -ne 0 && $CLAUDE_BYTES -le 400 ]]; then
     REFUSED=1
+    REASON="$(head -c 200 "$CLAUDE_OUT" | tr -d '\n')"
+    # gtimeout cap (124) in -p mode leaves stdout empty — synthesize a label.
+    [[ -z "$REASON" ]] && REASON="exit $CLAUDE_RC with empty output"
 fi
 rm -f "$CLAUDE_OUT"
 
 # Update state file with new timestamp + refusal accounting
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-ALERT=$(python3 - "$STATE_FILE" "$NOW" "$REFUSED" <<'PYEOF'
+ALERT=$(python3 - "$STATE_FILE" "$NOW" "$REFUSED" "$REASON" <<'PYEOF'
 import json, sys
 
 state_file, now, refused = sys.argv[1], sys.argv[2], sys.argv[3] == "1"
+reason = sys.argv[4]
 try:
     with open(state_file) as f:
         data = json.load(f)
@@ -90,6 +96,7 @@ if refused:
         alert = "REFUSED %d" % n
     data["consecutive_refusals"] = n
     data["last_refusal"] = now
+    data["last_refusal_reason"] = reason
 else:
     if prev >= 2:
         alert = "RECOVERED %d" % prev
@@ -108,7 +115,7 @@ if [[ -n "$ALERT" ]]; then
     ALERT_KIND="${ALERT%% *}"
     ALERT_N="${ALERT##* }"
     if [[ "$ALERT_KIND" == "REFUSED" ]]; then
-        ALERT_MSG="⚠️ Heartbeat fleet is being refused — $ALERT_N consecutive cycles (~$((ALERT_N * 15)) min) exited without running. Cron alerts are unaffected (different CLI, different quota), so logs/infra.log will look healthy. Usual cause is a usage limit; see /tmp/claude-heartbeat.log."
+        ALERT_MSG="⚠️ Heartbeat fleet is dark — $ALERT_N consecutive cycles (~$((ALERT_N * 15)) min) exited without running. Latest error: ${REASON:-unknown}. Cron alerts are unaffected (different CLI, different quota), so logs/infra.log will look healthy. See /tmp/claude-heartbeat.log."
     else
         ALERT_MSG="✅ Heartbeat fleet is running again after $ALERT_N refused cycles (~$((ALERT_N * 15)) min dark)."
     fi
