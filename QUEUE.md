@@ -13,6 +13,16 @@ here *and* keep the evidence in `HEARTBEAT.md`. A finding filed only in the chec
 
 ## 1. `prompt`-job cap: `timeout=600` → 1800
 
+⛔ **RE-SCOPED 2026-08-18 (0437z) — THE CAP IS THE MINORITY CAUSE. `weekly-conjecture` fired 12 of
+19 scheduled Mondays (04-13→08-17); of the 7 misses, ZERO involve the timeout — the host was asleep
+and the slot never fired.** Only **3** of the 12 fires hit the cap. So `600 → 1800` recovers at most
+3 of 10 lost reports and **would read as fixed while 37 % of slots stay silent**. The table below
+predicted 08-17 19:00 ICT; `infra.log` jumps 18:05:38 → 19:25:22 (`Idle Sleep` at 18:06:46).
+**Still worth doing — it is correct for the runs that happen — but it is not the whole fix, and the
+no-show half needs a separate decision (wake scheduling, or `launchd` with its deferral semantics,
+instead of an in-process APScheduler whose monotonic timer freezes on sleep).**
+Evidence: `memory/t0/2026-08-18/heartbeat-0437z.md`; rule filed in `HEARTBEAT.md` header.
+
 **Where:** `bot/scheduler.py:163` (message at `:176`).
 **Symptom:** every weekly `prompt` job times out at exactly `fire + 600 s`, produces **no report**,
 and stamps a *fresh* `last_run` — so the staleness check reads it as healthy for the next 7 days.

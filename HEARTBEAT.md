@@ -312,6 +312,37 @@ is working.** Inverse of 1755z's paraphrase miss; same family as 0836z's `guard.
 Verified: `bash -n`, counter replayed on all five branches, detector replayed on all three cases.
 Evidence: `memory/t0/2026-08-18/heartbeat-0418z.md`.
 
+⛔ **COUNT A JOB'S FAILURES FROM ITS EXPECTED SLOTS, NEVER FROM THE LOG — A LOG-DERIVED FAILURE RATE
+CONDITIONS ON THE HOST HAVING BEEN AWAKE, AND `weekly-conjecture` HAS NO-SHOWED 7 OF 19 SLOTS (37 %)**
+(2026-08-18 11:4x ICT, 0437z). QUEUE #1 predicted it would fire Mon 08-17 19:00 ICT and time out at
+cap; it **never ran** — `infra.log` jumps 18:05:38 → 19:25:22, host slept at **18:06:46** (`Idle
+Sleep`). Enumerating all 19 Mondays 04-13→08-17 against the 12 observed fires: **3** hit the cap,
+**7** never fired. **So QUEUE #1's `600 → 1800` addresses the minority mode and would read as fixed
+while 37 % of slots stay silent.** 0333z's rule (*are the failures all at the cap?*) one level up: it
+still assumed the failure population was runs that failed — **the larger population is slots that
+never became runs, and no instrument here sees it.** `infra.log` writes nothing; `cron/state.json`
+still says `last_run 08-10, consecutive_errors 1`, which is **indistinguishable from a stale
+success** — a timeout stamps fresh and looks healthy, a no-show stamps nothing and looks like one old
+failure. Sleep-loss concentrates on weeklies: a daily job redraws the awake condition 7×/week, a
+weekly gets one draw. **Applying 1500z's density test in the NEGATIVE: 26 of 81 minutes populated
+(32 %), and the lines present are the sleep machinery itself** — sparse ⇒ sleep, where 1500z's 837
+lines with per-minute coverage ⇒ awake. Second instrument agrees: fixed-2 h `auto-commit` ran
+19:25:22 on 08-17 vs 09:21:46/11:21:46 today, a +3m36s frozen-countdown drift. Not a config artifact
+— live scheduler loaded **14 jobs at 08-15 15:21:46**, `cron/jobs.json`'s 3-enabled edit is 19:39 and
+unread (§1's gate). ⚠️ Pre-registered, n=1, do NOT re-plot: **07-20 fired at 20:00, not 19:00**, a
+clean 1 h shift with no DST to explain it. **Next live draw: `vidnotes-weekly` at 12:30 ICT today —
+a cycle after that should `grep vidnotes-weekly logs/infra.log`; "no line at all" is the third
+outcome and the one QUEUE #1 cannot express.** Evidence: `memory/t0/2026-08-18/heartbeat-0437z.md`.
+
+⛔ **AND 0418z's BACKPRESSURE IS UNSCORED — `heartbeat-state.json` IS AT THE REPO ROOT AND STILL HAS
+THE OLD TWO-KEY SHAPE.** 0418z rewrote `run.sh` at 11:20; its own instance started 11:18:39, so the
+stamp it wrote at 11:22:33 came from the PRE-EDIT script. The new one is live from 0437z (its
+`mktemp` artifact exists). **Successor: confirm `consecutive_refusals: 0` and `last_success` now
+appear in `heartbeat-state.json` — if not, the heredoc failed silently and the alert is decorative.**
+Actuator checked reachable: `skills/telegram-sender/send.sh` exists, is executable, takes `--text`.
+**General form: a script that rewrites itself cannot verify its own fix in the same run — the edit
+lands one cycle after the instance that made it.**
+
 ## Every Check (runs every 15 min)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
