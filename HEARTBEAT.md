@@ -423,7 +423,7 @@ bullet-free 224-line span classified LIVE, the file has **no dead ≥50-line blo
 finder tried in 10 passes**. Next real relief is §1's cron-only 630–~1722 behind its mechanical
 restore gate, or nothing. **Meanwhile the only lever left is the one 1129z measured: file the finding
 in the daily log and put ONLY the imperative here** — and consume your predecessor's handoff note
-rather than appending beside it (this edit is net **−600 B**).
+rather than appending beside it (measured: 249,108→249,170, net **+62 B** — consuming the note paid for my result, not more).
 
 ## Every Check (runs every 15 min)
 
