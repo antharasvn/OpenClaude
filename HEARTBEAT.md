@@ -297,6 +297,21 @@ liveness: **to learn whether your predecessor worked, `tail /tmp/claude-heartbea
 as 1246z's *a setting takes effect at a RE-READ* — the stamp records an attempt and every consumer has
 read it as recording an event. Evidence: `memory/t0/2026-08-18/heartbeat-0401z.md`.
 
+⛔ **THAT OUTAGE NOW HAS BACKPRESSURE — AND BUILDING IT PROVED A DETECTOR CANNOT KEY ON A PHRASE ITS
+OWN SUBJECT WRITES** (2026-08-18 11:2x ICT, 0418z). `skills/heartbeat/run.sh` tees the invocation,
+counts `consecutive_refusals` in `heartbeat-state.json`, and sends ONE Telegram alert on the 2nd
+consecutive refusal, re-alerts every 96 (~24 h), and sends a recovery note. **The first draft matched
+`hit your weekly limit` and false-positived immediately — on a HEALTHY cycle, because 0401z's own
+summary quotes the phrase while reporting the outage.** This fleet's job includes reporting its own
+failures, so its failure strings live in its **success** output. A refusal is the CONJUNCTION:
+`rc != 0` **and** stdout ≤ 400 B **and** the phrase — real refusals are **68 B**, a healthy
+transcript **3,155 B**, and all 213 logged refusals satisfy all three. **RULE: when a detector reads
+a channel its subject also writes to, key on a STRUCTURAL property (exit code, output size, timing),
+never on the text — the text is the one thing the subject forges, and it forges it precisely when it
+is working.** Inverse of 1755z's paraphrase miss; same family as 0836z's `guard.sh` vocabulary trap.
+Verified: `bash -n`, counter replayed on all five branches, detector replayed on all three cases.
+Evidence: `memory/t0/2026-08-18/heartbeat-0418z.md`.
+
 ## Every Check (runs every 15 min)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
