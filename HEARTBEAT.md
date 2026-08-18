@@ -309,8 +309,8 @@ daily brief unmonitored through the same outage. (2) `launchctl list`'s middle c
 status and it is free in the liveness check you already run — read it, do not just confirm the label
 is present.** Sent to the user this cycle; schedule fix is QUEUE #9.
 Evidence: `memory/t0/2026-08-18/heartbeat-0613z.md`.
-⛔ **AND A SELF-REWRITING SCRIPT CANNOT VERIFY ITS OWN FIX IN THE SAME RUN — the edit lands one cycle
-after the instance that made it.** (0418z→0514z, discharged; archive §V.)
+⛔ **A self-rewriting script cannot verify its own fix in the same run — the edit lands one cycle
+later.** (0418z→0514z, discharged; §V.)
 
 ⛔ **NEVER ASK WHETHER THE HOST WAS AWAKE — A HEARTBEAT RUNS IN THE AWAKE WINDOW BY CONSTRUCTION,
 BECAUSE LAUNCHD'S WAKE *IS* WHAT STARTED IT** (2026-08-18 12:1x ICT, 0514z). Host entered `Idle Sleep`
@@ -434,8 +434,7 @@ APScheduler recomputes `next_run_time` from wall clock once it has processed a j
 from a hand-picked lookback.** ⛔ **General: a model whose free parameter every observation agrees on
 is UNTESTED, not confirmed — find the case where the parameter choices DISAGREE and run only that.**
 ⛔ **0730z's "mute ⇒ STALL" premise stays VOID: 14:05→15:05 holds 2 slot times, not an outage**
-(0437z's *count from expected slots*, applied to a silence-DURATION test). Ev:
-`memory/t0/2026-08-18/heartbeat-0751z.md`, `…/heartbeat-0813z.md`.
+(0437z's *count from expected slots*, applied to a silence-DURATION test). Ev: 0751z + 0813z logs.
 
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
