@@ -489,6 +489,31 @@ under `CLAUDE.md`'s launchd rules:**
 08-18 enumerated *instances of the heartbeat*, not *consumers of the quota*. There are two consumers.
 Evidence: `memory/t0/2026-08-18/heartbeat-0613z.md`.
 
+## 10. Every `Evidence:` pointer in this file and `HEARTBEAT.md` is unpushed — 29 cited, 0 in git
+
+**Where:** `.gitignore:27` — `memory/`.
+**Measured 2026-08-18 0613z:** the two documents the fleet commits and pushes cite **29 distinct**
+`memory/t0/…` evidence files (20 pointers in `HEARTBEAT.md`, 12 in `QUEUE.md`). **29 of 29 exist on
+this host. 0 of 29 are tracked by git.** So every row in this queue is footnoted to something you
+cannot open from GitHub, from another machine, or from a restored clone — and if this host's disk is
+lost, every claim survives and none of its evidence does.
+
+This is the citation-rot failure `HEARTBEAT.md` already documents (*"cite by §N plus a distinctive
+quoted phrase, never by line number"*) at a second layer: those pointers **resolve perfectly for the
+one reader who does not need them** — a cycle running on this host — **and dangle for every other
+reader.** A local check will never catch it; `git ls-files` is the only instrument that speaks.
+
+**Your call, and I am not assuming the ignore is a mistake** — daily logs carry raw operational
+detail and excluding them may well be deliberate. The three options:
+1. **Un-ignore `memory/t0/`.** Evidence becomes verifiable; the repo grows by the log volume and
+   whatever those logs contain becomes as public as the repo is.
+2. **Keep the ignore, drop the pretence** — stop writing `Evidence: memory/…` into committed files
+   and inline the decisive measurement into the row itself, which is where a reader can use it.
+3. **Keep both**, and accept the citations are notes-to-self, not evidence. Cheapest, and worth
+   saying out loud once so no future reader trusts a pointer they cannot follow.
+
+Evidence (and yes, this one is unpushed too): `memory/t0/2026-08-18/heartbeat-0613z.md`.
+
 ---
 
 **Row numbers are stable IDs — never renumber, never reuse.** A gap in the sequence means that row
