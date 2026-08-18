@@ -386,6 +386,13 @@ is third-party background activity the fleet neither controls nor observes** —
 *"`misfire_grace_time: 300` cannot help when the sleep PERIOD is also 300 s"* holds in the trough
 regime only, and any grace-time fix scored across both regimes measures the MIX, not the fix.
 Evidence: `memory/t0/2026-08-18/heartbeat-0534z.md`.
+✅ **AND IT COMPLETED AT 12:38:56 — 536 s, 89 % OF ITS 600 s CAP, 64 s FROM THE KILL. QUEUE #1's
+CAPACITY BRANCH GAINS ITS SECOND NEAR-CAP SUCCESS** (0429z's prior max was 528 s = 88 %, n=14). Two
+successes at 88–89 % and nothing in between them and the cap is the capacity signature by the test's
+own criterion — `600 → 1800` for prompt jobs is now backed by two independent draws, not one.
+**Successor: this run is ALSO the clean regime-control for §2 above** — it is the only weekly fire
+observed entirely inside an assertion window, so its 536 s is uncontaminated by sleep freeze, unlike
+the sleep-inflated durations §0 warns about. Treat it as the reference duration for this job.
 
 ⛔ **1755z's ~551-LINE BOUNDARY IS NOW SCORED, AND IT COST ME A WHOLE RE-DERIVED FINDING THIS CYCLE.**
 I observed `MISSED vidnotes-weekly … (0.1h ago)` while the job's child (`grok -p`, PID 37087) was alive
