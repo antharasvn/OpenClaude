@@ -282,6 +282,21 @@ marker** — asking "is there a bullet-free gap ≥50 lines" is the wrong questi
 declines. Whole-cycle truth including this note (+1,314 B, **20 %** of the recovery, vs 1638z's 47 %):
 **241,173 → 235,869 = −5,304 net. Headroom 14,131 B ⇒ ~6 cycles at the n=7 mean.** Confidence high (`wc -c`).
 
+⛔ **THE FLEET WAS DEAD FOR 213 CONSECUTIVE CYCLES AND EVERY INSTRUMENT EXCEPT
+`/tmp/claude-heartbeat.log` READ AS HEALTHY** (2026-08-18 11:0x ICT, 0401z, first live cycle since
+`2026-08-15T18:14:02Z` — 2 d 9 h 47 m of `You've hit your weekly limit`, `exit 1`, no log, no send;
+reset at 04:00Z today). Two rules, both measured this cycle:
+**(1) A healthy `logs/infra.log` is NOT evidence the heartbeat is alive.** Cron prompt-jobs run
+`grok -p` (`AGENT_CLI` defaults to grok) against a DIFFERENT quota than the heartbeat's `claude -p`,
+so `vidnotes-alerts`/`cleanpro-alerts`/`echo-backend-alerts`/`auto-commit` all logged
+`completed successfully` straight through the outage. `infra.log` witnesses cron, never this fleet.
+**(2) The prompt's `Last heartbeat ran at: <ISO>` is a stamp of the last INVOCATION, not the last RUN
+— `run.sh` writes it after a refusal too.** Mine said `03:46:04Z`, 15 min old, and was the 213th
+refusal. It stays valid for successor placement (§"Successor placement & reach") and is worthless as
+liveness: **to learn whether your predecessor worked, `tail /tmp/claude-heartbeat.log`.** Same shape
+as 1246z's *a setting takes effect at a RE-READ* — the stamp records an attempt and every consumer has
+read it as recording an event. Evidence: `memory/t0/2026-08-18/heartbeat-0401z.md`.
+
 ## Every Check (runs every 15 min)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
