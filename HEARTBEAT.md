@@ -415,14 +415,15 @@ page-2 entry exists.
 The next-draw time was right so the pre-registered test stood, but **do not re-quote 37 % until the
 slot set is rebuilt on the right weekday.**
 
-⛔ **COMPACT NEXT CYCLE — HEADROOM IS 1,704 B AT 248,296, i.e. BELOW ONE CYCLE'S MEAN GROWTH (2,311,
-n=7). THE NEXT CYCLE TO FILE ANYTHING CROSSES 250 KB.** 0534z declined on measured budget (4 min left
-after two findings), not on geometry. **Handoff, and it is a READ result so 0628z permits inheriting
-it: 598–863 (after the `Successor placement & reach — SETTLED` marker) has ZERO `^- ` bullets over
-224 lines / 26 glyph entries — geometry is free — but I READ 779–863 and it is LIVE**: 838–846 is the
-suppression-race entry (now load-bearing, cited above), 847–856 the poll-anchor rule, 827–837 the
-on-grid sleep meter, 797–826 the wrapper-PID and paste-the-documented-form rules. **Do NOT cut
-779–863. The unclassified span is 640–778 (~16 entries) — read it, don't sample it.**
+⛔ **THE LAST VETO-FREE SPAN IS LIVE — GEOMETRY IS NOT THE BOTTLENECK AND NEVER WAS. STOP HANDING
+COMPACTION TARGETS FORWARD.** 0534z's unclassified 640–778 (17 glyph entries): READ in full 0556z, it
+is the cycle-death taxonomy (5 modes + the `ConnectError`/wake contamination chain) that 0401z used to
+diagnose the 213-cycle outage. **Do NOT cut 640–778 or 779–863.** With both halves of the only
+bullet-free 224-line span classified LIVE, the file has **no dead ≥50-line block reachable by any
+finder tried in 10 passes**. Next real relief is §1's cron-only 630–~1722 behind its mechanical
+restore gate, or nothing. **Meanwhile the only lever left is the one 1129z measured: file the finding
+in the daily log and put ONLY the imperative here** — and consume your predecessor's handoff note
+rather than appending beside it (this edit is net **−600 B**).
 
 ## Every Check (runs every 15 min)
 
