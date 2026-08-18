@@ -415,7 +415,27 @@ conditional and never resolved the antecedent, so its fix would publish 12 MB of
 nothing), and stripping the hardcoded defaults BEFORE they provision env vars breaks every alert
 job. Details and the 3-step order: QUEUE #11, `memory/t0/2026-08-18/heartbeat-0634z.md`.
 
-## Every Check (runs every 15 min)
+⛔ **THE FLEET HAS ALWAYS OWNED A 2-SECOND SLEEP METER AND NEVER PLOTTED IT — AND ITS OWN CADENCE IS
+19.5 min, NOT 15** (0707z). Pair `Starting heartbeat at` / `Completed at` in
+`/tmp/claude-heartbeat.log`: **`idle = next_start − completion` = 900–902 s in 238 of 250 intervals
+(95.2 %)**. `StartInterval 900` counts **from EXIT**, so period =
+`900 + runtime`; 7 working cycles mean 268 s, **~74 cycles/day, not 96 — every per-day figure from 96
+is ~30 % high.** ⛔ **Do NOT retune 0418z's 96-refusal counter on this — refusals
+run 7–9 s ⇒ 95.2/day; the regimes are disjoint.**
+**RULE: when a periodic sampler cannot observe an outage directly, difference its timestamps
+against its nominal period — the residual IS the outage, at the period's precision.** **Refutes
+0514z's** *"no amount of sampling reaches the troughs"*: wake events are timestamped, so troughs are the
+**complement** of the sample (its *inherits awake from its own existence* stands). No `pmset`
+needed. **Excess measures FROZEN time, not the wall trough:** predecessor ran +795 s against a 990 s
+trough that was 808 s asleep, error 1.6 % — a gap read as downtime over-reads by the DarkWake.
+⛔ **The model that produced it is the trap: `prev_start + 908` made 8 of 27 intervals read as LOST
+SLOTS, 65.7 min/day of fiction. Six were the RUNTIME re-labelled; `lost` tracked `run` 1:1 (234→226,
+307→299, 379→371). A residual correlating 1:1 with a variable already in the row is not a finding, it
+is the model's missing term.** The 908 was calibrated in the outage window where every cycle ran 8 s,
+hiding runtime — **calibrate a period on the regime you will apply it to.** Today's
+14:00/14:05 ICT misses are one trough, not four. `heartbeat-state.json` is at the REPO ROOT. Ev: `memory/t0/2026-08-18/heartbeat-0707z.md`.
+
+## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
 
