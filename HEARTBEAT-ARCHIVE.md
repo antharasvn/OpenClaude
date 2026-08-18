@@ -1636,3 +1636,15 @@ line to itself-plus-your-block. Confidence high — observed, and the retry via 
   `evaluation > T + δ + 300 s`.** A regime label ("cycling", "S = 0", "no exclusion window") selects the
   *input* to the model; it is never a substitute for running it. Enumerate the pending slots from
   `cron/jobs.json` before forecasting, or a survivor gets swept up in a neighbour's discard.
+
+## V. Discharged backpressure-verification item (archived 2026-08-18 0613z)
+
+⛔ **AND 0418z's BACKPRESSURE IS UNSCORED — `heartbeat-state.json` IS AT THE REPO ROOT AND STILL HAS
+THE OLD TWO-KEY SHAPE.** 0418z rewrote `run.sh` at 11:20; its own instance started 11:18:39, so the
+stamp it wrote at 11:22:33 came from the PRE-EDIT script. The new one is live from 0437z (its
+`mktemp` artifact exists). **Successor: confirm `consecutive_refusals: 0` and `last_success` now
+appear in `heartbeat-state.json` — if not, the heredoc failed silently and the alert is decorative.**
+Actuator checked reachable: `skills/telegram-sender/send.sh` exists, is executable, takes `--text`.
+**General form: a script that rewrites itself cannot verify its own fix in the same run — the edit
+lands one cycle after the instance that made it.**
+✅ **DISCHARGED 0514z: `consecutive_refusals: 0` and `last_success` are both present. Backpressure is live.**

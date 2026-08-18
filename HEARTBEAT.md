@@ -334,15 +334,22 @@ clean 1 h shift with no DST to explain it. **Next live draw: `vidnotes-weekly` a
 a cycle after that should `grep vidnotes-weekly logs/infra.log`; "no line at all" is the third
 outcome and the one QUEUE #1 cannot express.** Evidence: `memory/t0/2026-08-18/heartbeat-0437z.md`.
 
-⛔ **AND 0418z's BACKPRESSURE IS UNSCORED — `heartbeat-state.json` IS AT THE REPO ROOT AND STILL HAS
-THE OLD TWO-KEY SHAPE.** 0418z rewrote `run.sh` at 11:20; its own instance started 11:18:39, so the
-stamp it wrote at 11:22:33 came from the PRE-EDIT script. The new one is live from 0437z (its
-`mktemp` artifact exists). **Successor: confirm `consecutive_refusals: 0` and `last_success` now
-appear in `heartbeat-state.json` — if not, the heredoc failed silently and the alert is decorative.**
-Actuator checked reachable: `skills/telegram-sender/send.sh` exists, is executable, takes `--text`.
-**General form: a script that rewrites itself cannot verify its own fix in the same run — the edit
-lands one cycle after the instance that made it.**
-✅ **DISCHARGED 0514z: `consecutive_refusals: 0` and `last_success` are both present. Backpressure is live.**
+⛔ **0418z's BACKPRESSURE COVERS ONE OF THE TWO `claude -p` CONSUMERS — `com.claude.daily-brief`
+SHARES THE HEARTBEAT'S QUOTA, HAS NO DETECTOR, AND SILENTLY MISSED 08-16, 08-17 AND 08-18**
+(2026-08-18 13:1x ICT, 0613z). `launchctl list` shows it at **exit status 1**; `/tmp/claude-daily-brief.log`
+is **194 B total and is nothing but three `You've hit your weekly limit` lines**. It is a plain
+`claude -p` (plist `ProgramArguments`), so it drew on the same weekly quota the heartbeat drained at
+96 cycles/day. Worst detail is the schedule: `StartCalendarInterval` **09:00 local**, and the reset is
+**11:00 ICT** — it fires at the most depleted moment of the week and loses by 2 h. Today's run refused
+at 02:00Z, the reset landed 04:00Z, and by my cycle the quota had been free 2 h 13 m.
+**RULES: (1) When you build a detector for a resource, enumerate every CONSUMER of that resource, not
+every instance of the thing you were debugging — 0418z alerted on the fleet and left the user's own
+daily brief unmonitored through the same outage. (2) `launchctl list`'s middle column is the last exit
+status and it is free in the liveness check you already run — read it, do not just confirm the label
+is present.** Sent to the user this cycle; schedule fix is QUEUE #9.
+Evidence: `memory/t0/2026-08-18/heartbeat-0613z.md`.
+⛔ **AND A SELF-REWRITING SCRIPT CANNOT VERIFY ITS OWN FIX IN THE SAME RUN — the edit lands one cycle
+after the instance that made it.** (0418z→0514z, discharged; archive §V.)
 
 ⛔ **NEVER ASK WHETHER THE HOST WAS AWAKE — A HEARTBEAT RUNS IN THE AWAKE WINDOW BY CONSTRUCTION,
 BECAUSE LAUNCHD'S WAKE *IS* WHAT STARTED IT** (2026-08-18 12:1x ICT, 0514z). Host entered `Idle Sleep`

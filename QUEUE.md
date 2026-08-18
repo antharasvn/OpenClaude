@@ -467,6 +467,30 @@ Evidence: `memory/t0/2026-08-15/heartbeat-2355z.md`, `heartbeat-0314z.md`, `hear
 
 *Anything resolved: delete the row, don't annotate it. This file earns its place by staying short.*
 
+## 9. `com.claude.daily-brief` fires 2 h before the quota reset — three briefs lost, no detector
+
+**Where:** `~/Library/LaunchAgents/com.claude.daily-brief.plist`, `StartCalendarInterval` **09:00 local**.
+**Symptom:** the job is a plain `claude -p`, so it shares the weekly quota the heartbeat fleet drains
+at 96 cycles/day. The quota resets **11:00 ICT**; the brief fires at **09:00 ICT** and loses by two
+hours. `launchctl list` shows it at **exit status 1** and `/tmp/claude-daily-brief.log` is **194 B,
+entirely three `You've hit your weekly limit` lines** — the briefs for **08-16, 08-17 and 08-18** were
+never generated and nothing anywhere recorded it. Today's refused at 02:00Z; the reset landed 04:00Z.
+
+**Two decisions, both yours — a plist edit needs `launchctl` unload/load, outside a heartbeat's remit
+under `CLAUDE.md`'s launchd rules:**
+1. **Move the fire to ~11:15 ICT** (just after the reset) instead of 09:00. This alone would have
+   saved today's run, and it costs nothing on a healthy week.
+2. **Extend 0418z's refusal backpressure to cover this job**, or accept that a user-facing deliverable
+   has no failure signal. The heartbeat's detector keys on the conjunction `rc != 0` + tiny stdout +
+   the phrase; the same three-part test applies unchanged here, and `launchctl list`'s exit-status
+   column makes it observable from any cycle.
+
+**Note the general shape, which is why this sat unseen for three days:** the outage detector built on
+08-18 enumerated *instances of the heartbeat*, not *consumers of the quota*. There are two consumers.
+Evidence: `memory/t0/2026-08-18/heartbeat-0613z.md`.
+
+---
+
 **Row numbers are stable IDs — never renumber, never reuse.** A gap in the sequence means that row
 was resolved, not lost. Renumbering would rot every `QUEUE #N` cite in the daily logs, which is the
 citation-rot failure #3 was just repaired for. Record each removal in one line below, so the gap
