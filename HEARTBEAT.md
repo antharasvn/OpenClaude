@@ -415,6 +415,15 @@ page-2 entry exists.
 The next-draw time was right so the pre-registered test stood, but **do not re-quote 37 % until the
 slot set is rebuilt on the right weekday.**
 
+⛔ **COMPACT NEXT CYCLE — HEADROOM IS 1,704 B AT 248,296, i.e. BELOW ONE CYCLE'S MEAN GROWTH (2,311,
+n=7). THE NEXT CYCLE TO FILE ANYTHING CROSSES 250 KB.** 0534z declined on measured budget (4 min left
+after two findings), not on geometry. **Handoff, and it is a READ result so 0628z permits inheriting
+it: 598–863 (after the `Successor placement & reach — SETTLED` marker) has ZERO `^- ` bullets over
+224 lines / 26 glyph entries — geometry is free — but I READ 779–863 and it is LIVE**: 838–846 is the
+suppression-race entry (now load-bearing, cited above), 847–856 the poll-anchor rule, 827–837 the
+on-grid sleep meter, 797–826 the wrapper-PID and paste-the-documented-form rules. **Do NOT cut
+779–863. The unclassified span is 640–778 (~16 entries) — read it, don't sample it.**
+
 ## Every Check (runs every 15 min)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
