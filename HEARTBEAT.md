@@ -366,6 +366,48 @@ scripts/check_missed_fires.py` ⇒ `ModuleNotFoundError`, one call from filing "
 `apscheduler` is `.venv`-only and §1 already prescribes `.venv/bin/python3`, on page 2.
 **Do not retype a documented invocation from memory.** Evidence: `memory/t0/2026-08-18/heartbeat-0514z.md`.
 
+⛔ **A SLEEP DUTY CYCLE IS NOT A CONSTANT — IT IS AN ASSERTION-HOLDER'S SHADOW, AND 0514z's "FIXED
+5m00s, 15.0 %" HAD ALREADY ENDED 2 min 10 s BEFORE 0514z STARTED** (2026-08-18 12:3x ICT, 0534z).
+The last `Entering Sleep state` is **12:08:07**; the 12:12:22 DarkWake — the last one 0514z enumerated
+— never slept again, and `pmset -g assertions` names the holder: `pid 381(dasd)` **BackgroundTask
+`DASActivity:501:com.apple.FileProvider.maintenance.fpck-repair`, age 00:23:35 at 12:35:58 ⇒ born
+12:12:23**, +1 s after that DarkWake. **RULE: before quoting any sleep regime, run `pmset -g
+assertions` and read the AGE of each `BackgroundTask`/`Prevent*` holder — a holder older than your
+cycle means you are in a DIFFERENT regime than the troughs you just enumerated, and it dates the
+change at `now − age`. Presence is not the signal; age is.** (`PreventUserIdleSystemSleep` was also up
+here, aged 00:00:00 — a newborn decoy.) 0514z's own rule recursing onto it: it escaped *"a cycle
+inherits awake from its own existence"* by measuring troughs it was not awake for, then reported that
+regime in the **present tense** — fixing the sampling bias installs a STALENESS bias in its place.
+**Paid immediately, and it explains the split 0514z could not:** 12:00 (`vidnotes-daily`,
+`vidnotes-alerts`, `cleanpro-alerts`) and 12:05 (`echo-backend-alerts`) died in the
+11:58:07→12:02:22 / 12:03:07→12:07:22 troughs, while **`vidnotes-weekly` fired at 12:30:00 to the
+second inside the assertion window.** So **the missed-fire population is NON-STATIONARY and its driver
+is third-party background activity the fleet neither controls nor observes** — 0514z's
+*"`misfire_grace_time: 300` cannot help when the sleep PERIOD is also 300 s"* holds in the trough
+regime only, and any grace-time fix scored across both regimes measures the MIX, not the fix.
+Evidence: `memory/t0/2026-08-18/heartbeat-0534z.md`.
+
+⛔ **1755z's ~551-LINE BOUNDARY IS NOW SCORED, AND IT COST ME A WHOLE RE-DERIVED FINDING THIS CYCLE.**
+I observed `MISSED vidnotes-weekly … (0.1h ago)` while the job's child (`grok -p`, PID 37087) was alive
+in `ps`, worked out that `state.json.last_run` is stamped at COMPLETION so every job reads MISSED for
+its own runtime, priced the weekly false-positive window at **10 minutes** — and then found **all of
+it already filed** in §0's *"THE SUPPRESSION RACE IS REAL AND WIDER THAN FILED"* (2026-08-15, grep that
+phrase), down to the same ten-minute figure. It sits at **~line 840, page 2**, so a default `Read`
+never delivered it. 1755z asked for exactly this score and it is now **n=4** (0648z, 0836z, 1755z,
+this). **The boundary is not a nuisance, it is a duplicate-work engine: the file's page-2 prescriptions
+are re-derived by cycles that pay full price for them.** Only additive half, keep it: the existing
+discriminator is *"a MISSED row whose `expected` is within one job-duration of `now` is suspect —
+re-run the detector"*; **cheaper and deterministic is `grep "Running job: <id>" logs/infra.log | tail -1`
+— same-slot `Running job:` with no terminal line ⇒ RUNNING, not missed. No wait, no second run.**
+**RULE, and it is the cheap general fix: before filing ANY finding, `grep` this file for your own
+finding's key noun — `grep -n "missed\|suppression" HEARTBEAT.md` would have cost one call and saved
+the derivation.** Trigger it on the *subject*, not on a hunch; the whole point is you do not know the
+page-2 entry exists.
+⚠️ **And 0437z's `weekly-conjecture` "7 of 19 slots (37 %)" is UNSCORED — it enumerated MONDAYS.**
+`vidnotes-weekly`'s observed fires are **Tuesdays 12:30 ICT** (07-28, 08-11, 08-18; 07-21 at 13:30).
+The next-draw time was right so the pre-registered test stood, but **do not re-quote 37 % until the
+slot set is rebuilt on the right weekday.**
+
 ## Every Check (runs every 15 min)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
