@@ -575,6 +575,50 @@ from filing "the repo was transferred to another account."
 
 Evidence: `memory/t0/2026-08-18/heartbeat-0634z.md`.
 
+## 12. `Read HEARTBEAT.md` returns 20 % of the file, and all four checks are in the other 80 %
+
+⛔ **The prompt orders every cycle to "read HEARTBEAT.md for the checklist". A compliant `Read`
+returns lines 1–551 (25k-token page cap, established by 1755z) and shows ZERO of §1–§4.**
+Measured 2026-08-18 0910z: 2,669 lines / 249,998 B total; lines 1–551 = 50,710 B = **20.3 %**, of
+which lines 1–438 (40,743 B, **80 % of the window**) are the retrospective header, not checklist.
+
+| section | starts at line | in the readable window? |
+| --- | --- | --- |
+| retrospective header | 1 | yes, all of it |
+| §0 Cycle budget | 441 | only its first 110 of 459 lines |
+| §1 Cron Job Health | 898 | **no** |
+| §2 Bot Health | 2111 | **no** |
+| §3 Memory & Reminders | 2295 | **no** |
+| §4 Infra Log Anomalies | 2520 | **no** |
+| How to Alert / What NOT to do | 2619 | **no** |
+
+**Not a hypothesis — it is the mechanism behind an already-recorded n=3.** §2's correct
+`pgrep -f -- "-m bot"` form is at 2111; 0648z, 0836z and 1755z each paraphrased it from memory, got
+an empty result on a healthy bot, and were one call from filing a service-down.
+
+**The binding constraint is 551 LINES, not 250 KB.** The guard is aimed at `Read`'s 256 KB *hard*
+cap; pagination bites at 20 % of that. Consequence: **compaction below line 551 cannot change what a
+cycle sees**, and six cycles have been aiming there. Price compaction in lines-above-551, not bytes.
+
+**Two sub-findings, both measured from `git cat-file -s` on today's commits:**
+1. **The guard has no actuator and was breached and committed twice today** — `c16404d` 250,725 B
+   (725 B over) and `096ace2` 250,085 B, before `cad898b` trimmed under. It is a sentence in a file,
+   so it fails exactly the way a `cron/jobs.json` edit fails (0851z's actuator rule, third instance).
+2. **The file is pinned at capacity**: 0707z 249,985 → now 249,998 = **+13 B net across five
+   commits** on ~2.3 KB of gross churn. It is no longer an append log; every cycle pays an eviction
+   cost out of the same 600 s that funds its finding.
+
+**The decision (why this is a queue row and not a heartbeat edit):** the file cannot hold both the
+header and the checklist inside 551 lines, so something must be demoted, and the header is the only
+span currently being read *and* holds five live imperatives (the compaction method, the
+`"$(cat …)"` guard.sh escape, the local-vs-UTC daily-log directory rule, the `pmset` density test,
+the `(Running job:|Job)` regex). A cycle moving it would trade five live rules for four checks
+unilaterally. **Recommendation, in order:** (1) lift only the *commands* from §1–§4 into a short
+`## Checks` block at line 1, leaving their evidence in place; (2) demote the header's scoring prose
+to `HEARTBEAT-ARCHIVE.md`, keeping its imperatives; (3) re-price compaction in lines above 551.
+
+Evidence: `memory/t0/2026-08-18/heartbeat-0910z.md` (unpushed — see #10).
+
 ---
 
 **Row numbers are stable IDs — never renumber, never reuse.** A gap in the sequence means that row
