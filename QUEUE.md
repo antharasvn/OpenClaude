@@ -489,6 +489,28 @@ under `CLAUDE.md`'s launchd rules:**
 08-18 enumerated *instances of the heartbeat*, not *consumers of the quota*. There are two consumers.
 Evidence: `memory/t0/2026-08-18/heartbeat-0613z.md`.
 
+
+### Pre-registered: the SAME outage recurs ~2026-08-22 18:30Z, and it takes 3 more briefs with it (0834z)
+
+The 08-16/17/18 briefs were not lost to a one-off — they were lost to the tail of a **weekly** quota
+window the fleet exhausts early. Reconstructed from the two timestamps that are known exactly:
+first refusal **2026-08-15T18:33:12Z**, reset **2026-08-18T04:00:00Z**. If windows reset on a fixed
+weekday at 04:00Z, the exhausted window opened **2026-08-11T04:00Z**, so the fleet burned a 7-day
+allowance in **4.60 days (66 %)** and spent the remaining **2.40 days refusing**.
+
+**Prediction, at unchanged burn: the current window (opened 2026-08-18T04:00Z) exhausts about
+2026-08-22T18:30Z (2026-08-23 01:30 ICT), and every `com.claude.daily-brief` fire from 08-23 through
+08-25 09:00 ICT is refused — three more, exactly as before.** Confidence moderate: n=1 window, and it
+assumes the weekly cadence and today's ~96 cycles/day both hold.
+
+**Mechanical check, cheap from any cycle** — `launchctl list | grep daily-brief` (column 2 is the exit
+status) and `tail -3 /tmp/claude-heartbeat.log`. A refusal before 08-22T18:30Z means the burn rate
+rose; silence past 08-23T04:00Z means it fell, and either way the estimate is worth re-deriving rather
+than re-asserting. **This is the number that decides option 1 above: moving the fire to ~11:15 ICT
+saves the brief on the reset day only — it does NOT save 08-23 or 08-24, because on those days the
+quota is dead all day.** Option 1 alone is worth ~1 brief in 3; the fix that saves the other two is
+capping the heartbeat's own consumption, which nothing currently does.
+
 ## 10. Every `Evidence:` pointer in this file and `HEARTBEAT.md` is unpushed — 29 cited, 0 in git
 
 **Where:** `.gitignore:27` — `memory/`.
