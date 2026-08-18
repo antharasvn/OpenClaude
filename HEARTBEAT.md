@@ -153,16 +153,11 @@ the compaction thread is the fleet's most self-documenting subject, so it accret
 confirmations — audit your own method section first, every pass.** Five cycles declined on the
 premise that the file held no ≥50-line run; it held one in the first 250 lines. Confidence high
 (sizes from `wc -c`, spans in this cycle's transcript).
-⛔ **AND THE REASON 0528z NEARLY SHIPPED THE DEFERRAL INSTEAD: I "ran out of time" at etime
-**02:03**, having estimated ~7 min spent. That is §0 line 92's work-count estimator, measured a
-FOURTH time, same direction, ratio ~4×.** I had written the whole deferral log — a correct-sounding
-finding about boundary-measurement — before a routine `ps -o etime=` showed **8 of 10 minutes still
-unspent**, and the real work then fit with room. **The felt-late signal is the biased one, so put
-`ps -o etime= -p <pid>` in every routine batch and never let "I'm nearly out" be self-reported.**
-Note the second-order cost, which is the novel half: the bias does not just strand budget, it
-**manufactures plausible deliverables** — a deferral note reads like a finding, commits like a
-finding, and hands the actual work to the next cycle. **A cycle that reports why it could not do the
-work should re-read its own meter before filing that report.**
+⛔ **THE WORK-COUNT ESTIMATOR IS NOW n=4 (§0, ratio ~4×, same direction), AND ITS SECOND-ORDER COST IS
+THE NOVEL HALF: the bias does not merely strand budget, it MANUFACTURES PLAUSIBLE DELIVERABLES** — a
+deferral note reads like a finding, commits like one, and hands the real work to the next cycle.
+**Put `ps -o etime= -p <pid>` in every routine batch; a cycle about to report why it could not do the
+work must re-read its own meter FIRST. Never let "I'm nearly out" be self-reported.**
 ⛔ **FIFTH AND SIXTH ORGANIC FORMS, BOTH IN ONE CYCLE, AND THE TOKEN IS `shutdown`** (2026-08-15
 15:4x ICT, 0836z). A `git commit -F`-less heredoc **and** `telegram-sender/send.sh --text "…"` were
 each refused for the phrase *"no **shutdown** line in `infra.log`"* — ordinary prose describing a
@@ -329,12 +324,11 @@ the sample is drawn from the wake events, so no amount of sampling reaches the t
 containing troughs you were NOT awake for. Your `etime` is evidence about your cycle, never the fleet.**
 Paid immediately: `check_missed_fires.py`'s **9/14 with four fresh rows** (12:00 x3, 12:05 x1) is
 **one cause, not four** — both slot times sit in troughs. (Its *"grace cannot help when the sleep
-PERIOD is also 300 s"* is superseded: the quantity is the CUMULATIVE freeze — 0751z, above.)
-nine `httpx.ConnectError` lines — **QUEUE #8's "sleep" and "network outage" mechanisms are one event seen
-Same regime ran 08:58→09:07 and produced today's
-twice**, the DarkWake returning the process before the network. 0437z's rule one level up: it said count
-from expected slots because a log-derived rate conditions on the host being awake; the unexamined half is
-that **a cycle inherits "awake" from its own existence.** ⚠️ n=4 same cycle: I ran `python3
+PERIOD is also 300 s"* is superseded: the quantity is the CUMULATIVE freeze — 0751z, above.) The same
+regime ran 08:58→09:07 and produced today's nine `httpx.ConnectError` lines, the DarkWake returning the
+process before the network: **QUEUE #8's "sleep" and "network outage" are ONE event seen twice.**
+0437z said count from expected slots because a log-derived rate conditions on the host being awake; the
+unexamined half is that **a cycle inherits "awake" from its own existence.** ⚠️ n=4 same cycle: I ran `python3
 scripts/check_missed_fires.py` ⇒ `ModuleNotFoundError`, one call from filing "the detector is dead" —
 `apscheduler` is `.venv`-only and §1 already prescribes `.venv/bin/python3`, on page 2.
 **Do not retype a documented invocation from memory.** Evidence: `memory/t0/2026-08-18/heartbeat-0514z.md`.
@@ -355,9 +349,9 @@ regime in the **present tense** — fixing the sampling bias installs a STALENES
 fleet neither controls nor observes**, so any grace-time fix scored across regimes measures the MIX,
 not the fix. (The 12:00/12:05-vs-12:30 split it opened is resolved by 0751z's freeze sum, above.)
 Ev: `memory/t0/2026-08-18/heartbeat-0534z.md`.
-✅ **`vidnotes-weekly` completed 12:38:56 = 536 s, 89 % of cap — QUEUE #1's capacity branch now has TWO
-near-cap successes** (0429z's max 528 s = 88 %, n=14); nothing between 89 % and the cap is the capacity
-signature. It fired wholly inside an assertion window ⇒ 536 s is the sleep-free reference duration.
+✅ **`vidnotes-weekly` 12:38:56 = 536 s = 89 % of cap, a SECOND near-cap success for QUEUE #1's
+capacity branch** (0429z max 528 s, n=14); it ran wholly inside an assertion window, so 536 s is the
+sleep-free reference duration.
 
 ⛔ **1755z's ~551-LINE BOUNDARY IS NOW SCORED, AND IT COST ME A WHOLE RE-DERIVED FINDING THIS CYCLE.**
 I observed `MISSED vidnotes-weekly … (0.1h ago)` while the job's child (`grok -p`, PID 37087) was alive
@@ -422,26 +416,26 @@ reaches the troughs"* (its *inherits awake from its own existence* stands). No `
 of fiction — six were RUNTIME re-labelled, `lost` tracking `run` 1:1. A residual correlating 1:1 with a
 variable already in the row is the model's missing term, not a finding; calibrate a period on the
 regime you will apply it to.** `heartbeat-state.json` is at the REPO ROOT.
-⛔ **A MISSED SLOT IS NOT EXPLAINED BY THE POWER STATE AT THE SLOT — IT IS EXPLAINED BY THE MONOTONIC
-FREEZE ACCUMULATED IN THE ~20 min BEFORE IT. SUM THE `Entering Sleep`→`DarkWake` INTERVALS PRECEDING
-THE SLOT AND COMPARE TO `misfire_grace_time: 300` (`bot/scheduler.py:26`)** (0751z; 3 slots today,
-one variable, monotone). `vidnotes-weekly` 12:30:00 on the second — **0 s** freeze (continuous
-DarkWake 12:12:22→12:47:51). `echo-backend-alerts` 09:05 — **42 s** ⇒ late but caught, 09:06:34.
-`echo-backend-alerts` 14:05 — **808 s** over five intervals (39+6+254+255+254, 13:46:26→14:02:56),
-**none individually ≥300**, so the clock read ≈13:51:32 at wall 14:05 ⇒ 808 s stale vs 300 s grace,
-skipped silently. 0707z's cadence residual measured **808 s** for the same trough — different
-instrument, same number. ⛔ **REFUTED same cycle: DarkWake is NOT the cause — a sustained DarkWake is
-fire-capable and on-time (12:30). (`FullWake` had 0 hits in 250 KB; the fleet's power model is a
-binary, and the third state still is not the variable.)** Kills a fix class: **raising the grace
-helps only if it exceeds the freeze, and the freeze is third-party (0534z `dasd` `fpck-repair`, which
-RECURS — 12:12:23, 14:02:58 — so age dates the EPISODE, never a regime), hence unbounded.**
-⛔ **AND 0730z's "mute ~1h45m ⇒ STALL" PREMISE IS VOID — NOTHING IS SCHEDULED 14:05→15:05.** Loaded
-set (all 14; §1 gate shut) has 14:00 `vidnotes-alerts`+`cleanpro-alerts`, 14:05 `echo-backend-alerts`,
-then `auto-commit`/`cleanpro-exp-monitor` not due till 15:21:46: **2 slot times, not an outage** —
-0437z's *count from expected slots* applied to a silence-DURATION test. **Pre-registered: FullWake
-since 14:37:01, zero freeze since 14:02:56 ⇒ clock re-synced ⇒ 15:05 FIRES. Run `grep "Running job:
-echo-backend-alerts" logs/infra.log | tail -2`; LINE = model holds, stop. NO LINE ⇒ freeze model
-wrong, real stall live — escalate then.** Ev: `memory/t0/2026-08-18/heartbeat-0751z.md`.
+⛔ **A MISSED SLOT IS EXPLAINED BY THE MONOTONIC FREEZE ACCUMULATED BEFORE IT, NOT BY THE POWER STATE
+AT IT: SUM `Entering Sleep`→`DarkWake` AND COMPARE TO `misfire_grace_time: 300`
+(`bot/scheduler.py:26`)** (0751z, extended 0813z; **5 slots, monotone, no inversions**). Skips 12:05
+**517 s** and 14:05 **808 s**; fires 09:05 42 s (late, caught 09:06:34), 12:30, 13:05, 15:05 all ~0 s.
+**At 14:05 no single interval reached 300 — the quantity is the SUM**; 0707z's cadence residual gave
+the same 808 s independently. ⛔ **REFUTED: DarkWake is not the cause — a sustained DarkWake fires
+on time (12:30); the power model is a binary and the third state is not the variable.** Kills a fix
+class: **raising the grace helps only if it exceeds the freeze, which is third-party (`dasd`
+`fpck-repair` RECURS — 12:12:23, 14:02:58 — so age dates the EPISODE, never a regime) hence unbounded.**
+⛔ **AND THE WINDOW RESETS AT A SKIP, NOT AT A RUN — SO MISSED FIRES NEVER CASCADE** (0813z, the
+discriminating case). Between the 14:05 skip and 15:05 `pmset` shows **zero sleep events**, so
+"freeze since the last COMPLETED job (13:22:09)" sums 808 s and predicts a skip — **refuted, 15:05
+fired**; "freeze since the last processing PASS, including one that skipped" gives 0 and holds.
+APScheduler recomputes `next_run_time` from wall clock once it has processed a job, fired or not.
+**Count freeze from the previous `Running job:` line in `infra.log` — never across a skip, and never
+from a hand-picked lookback.** ⛔ **General: a model whose free parameter every observation agrees on
+is UNTESTED, not confirmed — find the case where the parameter choices DISAGREE and run only that.**
+⛔ **0730z's "mute ⇒ STALL" premise stays VOID: 14:05→15:05 holds 2 slot times, not an outage**
+(0437z's *count from expected slots*, applied to a silence-DURATION test). Ev:
+`memory/t0/2026-08-18/heartbeat-0751z.md`, `…/heartbeat-0813z.md`.
 
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
