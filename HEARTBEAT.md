@@ -499,6 +499,31 @@ inherits that config's staleness twice. §1's gate is cited to protect ACTIONS; 
 it voided a STRUCTURAL inference, which read as safe because it was about shape — shape is state.**
 Second consecutive cycle caught by the same unloaded file. Ev: `…/heartbeat-2224z.md`.
 
+⛔ **ATTESTATION, FILED WHILE THE GATE STILL PASSES: `AGENT_CLI=grok` IS THE RUNNING VALUE — AND
+QUEUE #11's FIX WILL MAKE THAT UNVERIFIABLE, BECAUSE A WHOLE-FILE FRESHNESS GATE HAS NO PER-KEY
+RESOLUTION** (2026-08-20 06:3x ICT, 2336z). 0613z's *enumerate every CONSUMER* run to the bottom:
+launchd is closed — `grep -l claude ~/Library/LaunchAgents/*.plist` ⇒ the 3 known labels, no
+`LaunchDaemons`, no crontab ⇒ the `claude -p` set is **heartbeat + daily-brief**, complete. The third
+candidate is the bot: `backends.py:277` picks the chat CLI via `get_agent_cli()` and
+`scheduler.py:142` branches the **same** function for cron prompt jobs (*"Cron jobs run on the same
+CLI as chat"*) — **one switch**. On `claude`, all four prompt jobs would drain the heartbeat's weekly
+quota and 0418z's detector, which reads only `/tmp/claude-heartbeat.log`, would never see them.
+**Verified safe, not assumed: §1's gate run on `.env` instead of `jobs.json`** — mtime **08-13
+12:29:14** < start **08-15 15:21:46** ⇒ `.env:22 AGENT_CLI=grok` IS live; `set_agent_cli()` has
+**zero callers**; 27 `Prompt job … timed out` lines corroborate the grok branch. ⛔ **`load_dotenv`
+mutates `os.environ` AFTER exec, so `ps eww -p 927 | grep -c AGENT_CLI` ⇒ 0 while `PATH`/`HOME` from
+the same dump are present — the live value is UNREADABLE from outside the process.** Disk file +
+mtime is the only evidence. **#11's fix appends 4 token keys to `.env` ⇒ mtime passes the start ⇒ the
+gate retro-invalidates the 5 keys already there**, including the one underwriting 0401z's *"`infra.log`
+witnesses cron, never this fleet."* Not false — **unfalsifiable**, until the restart 1403z says this
+fleet cannot perform. Third cost on #11, past 2205z's *necessary-not-sufficient*: **the fix blinds the
+check on settings it does not touch.** **RULES: (1) A whole-file gate has no per-key resolution —
+READ AND RECORD what you depend on BEFORE writing to its file; an attestation survives the write, a
+gate does not. (2) "Instrument A tells you nothing about subsystem B" is an INDEPENDENCE claim, and
+independence degrades to coupling silently — here one word, shared by a comment that says so out
+loud, with no error anywhere when it moves. Independence reads as architectural, which is why nobody
+re-derives it.** Ev: `memory/t0/2026-08-20/heartbeat-2336z.md`.
+
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
