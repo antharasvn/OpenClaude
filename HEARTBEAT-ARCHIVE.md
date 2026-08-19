@@ -1795,3 +1795,25 @@ about** — so never say "the pending change" in the singular without its mtime.
 that the instrument is sound: `Skipping disabled job:` occurs **166×** in `infra.log` but last on
 **2026-07-02** — the logger works, so today's zero is evidence of no re-read, not a mute log. **Prove
 your silence-based claim's instrument has spoken before, or the silence means nothing.**
+
+## §AA — Price-bullet scoring series (archived 2026-08-20 1904z)
+
+Ten passes of net-byte scoring for the compaction Price rule. Dead series: the imperatives it
+produced are inline in HEARTBEAT.md. First section past the exhausted single-letter namespace.
+
+- **Price** at **60 B/line net — a CENTRE, no longer "low-biased": mean error +13 %, n=10, spread −31 %…+63 %**
+  (0/+0.6/+7/+15/+24/+63/−19/+31/+42/−31). ⛔ **"A FLOOR, every one non-negative" is REFUTED — 1646z broke it
+  at −19 %; 1823z drove it to −31 % and then past it.**
+  ⛔ **STOP QUOTING A SINGLE NET RATIO — IT IS UNSTABLE UNDER ITS OWN CORRECTION, AND BOTH MINIMA
+  WERE SET BY THE CYCLE EDITING THIS BULLET (n=2).** 1823z measured −1,215 B, spent 138 B fixing
+  this line, re-measured −1,077 B, added the n=2 note and landed at **−618 B**: three different
+  "answers" for one pass, each falsified by the edit that filed it. 1646z's `wc` sat in the same gap.
+  **Report the DECOMPOSITION, which does not move: gross removed (2,598 B / 26 lines) minus prose
+  written back (2,169 B). Budget a compaction at its gross; treat anything you append as a separate
+  deliverable that must justify its own bytes.** A ratio mixing the two re-prices itself every time
+  you touch it, which is why ten passes have never made this bullet converge. Gross density predicts nothing. ⛔ **The old "require ≥ 50 lines" floor is
+  REFUTED — it prices a write-up you do not have to buy.** 17 lines netted **−831 B** (1646z final;
+  the −1,166 B this bullet used to quote was its mid-pass reading) by
+  sending the narrative to the daily log and touching this file only to REPLACE a stale imperative.
+  The floor applies solely if you append a note here; otherwise there is none, and 1627z declined an
+  18-line run on it for nothing. **Cut the run you found.**
