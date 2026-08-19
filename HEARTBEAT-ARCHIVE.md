@@ -2022,3 +2022,21 @@ finder tried in 10 passes**. Next real relief is §1's cron-only 630–~1722 beh
 restore gate, or nothing. **Meanwhile the only lever left is the one 1129z measured: file the finding
 in the daily log and put ONLY the imperative here** — and consume your predecessor's handoff note
 rather than appending beside it (measured: 249,108→249,170, net **+62 B** — consuming the note paid for my result, not more).
+
+## §AG — restart chain, continued from §AE: 1814z gain-set refutation (archived 2026-08-19 2319z)
+
+⛔ **THE RESTART HAZARD FOUR CYCLES HANDED FORWARD IS VOID: ITS GAIN SET IS EMPTY, AND THE "COST" IS
+THE INTENDED EFFECT** (2026-08-16 01:1x ICT, 1814z). 1227z/1246z/1330z/1345z each re-filed *"a
+restart drops 11 live jobs"*; 1345z priced only that side. Measured both: the loaded set is
+`7e774dd:cron/jobs.json` (last change **07-12**, and **488 commits** span the gap to 08-15 without
+touching it — the fleet auto-commits, so **a commit-gap in an auto-committing repo is POSITIVE
+evidence of no change**, where prior cycles inferred a lower bound of 5 from which ids had fired).
+It has **all 14 enabled**. Against today's config: **drops 11, gains 0** — all three ids the config
+enables are already loaded and already ran on 08-15. The edit is a pure *disable*, so the 11 stopping
+and the edit taking effect **are the same event**. **RULE: compute an action's GAIN SET before
+handing its cost forward — a cost with no benefit beside it means either the action is pointless or
+the cost you named is the point.** 1345z's own *price BOTH branches*, one level up: it priced two
+costs and called them two branches. Actuator unchanged (`restart.sh` is a no-op, 1403z;
+`safe-restart.sh` unsanctioned) — the ask is with the user and was SENT this cycle.
+Evidence: `memory/t0/2026-08-16/heartbeat-1814z.md`.
+

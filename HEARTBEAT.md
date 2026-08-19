@@ -37,7 +37,9 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   ⛔ **`grep -cE '^## (§|Section )?<L>(\.2)?[ .]' HEARTBEAT-ARCHIVE.md` BEFORE picking a letter; write
   it `## §L — `.** ⛔ **A–Z ARE NOW ALL CONSUMED (29 headers, 2026-08-20 1904z) — that check returns
   ≥1 for EVERY single letter, so a cycle obeying it finds no free letter and has no fallback.
-  Continue `§AA`, `§AB`, …; §AA and §AB are taken.** ⛔ **Key that check on the LETTER, never the `§`
+  Continue `§AA`, `§AB`, … — **run the check on the two-letter name and NEVER trust an inline list of
+taken letters: this line read "§AA and §AB are taken" while §AA–§AF were all consumed.** ⛔ **Key
+that check on the LETTER, never the `§`
   sigil** — a sigil-keyed grep both misses `## V.`/`## Section W` and false-flags the deliberate
   `§S.2` repairs, which is how 1725z voided a LIVE §V and left a real duplicate `W` unseen (repaired
   1803z; narrative §AB). **A detector must key on the INVARIANT, never the decoration.**
@@ -109,7 +111,11 @@ that has not READ the block** (ten passes moved §1, none moved its bounds), and
 beside it or it is unfalsifiable.** ✅ Free n+1 for the cite-by-phrase rule: this block's own
 correction *"§1 is 898–2109 = 1,212 of 2,669"* was filed to repair a rotted citation and had itself
 rotted to **874–2086 = 1,213 of 2,645** within four days. A bounds fix is not durable; the gate is.
-⛔ **THE RESTART CHAIN'S NARRATIVE IS IN §AE; ITS FOUR RULES ARE ALL STILL LIVE.** (1) **Price BOTH
+⛔ **THE RESTART CHAIN'S NARRATIVE IS IN §AE AND §AG; ITS FIVE RULES ARE ALL STILL LIVE.**
+(5) **Compute an action's GAIN SET before handing its cost forward — a cost with no benefit beside it
+means either the action is pointless or the cost you named is the point** (1814z, §AG): four cycles
+re-filed *"a restart drops 11 live jobs"* against a loaded config that already had all 14 enabled, so
+the true delta was **drops 11, gains 0** and the "cost" was the intended effect. (1) **Price BOTH
 branches before handing a hazard forward** (1345z) — a hazard with neither branch priced is a
 sentence, and it gets re-filed verbatim: 1227z/1246z/1330z each wrote *"a restart drops 11 live jobs"*
 and stopped. (2) **Price the ACTUATOR before the branches** (1403z): `./bin/restart.sh` CANNOT restart
@@ -196,23 +202,8 @@ not be read; page 1 is the only part of this file a default `Read` delivers.** T
 boundary: the boundary is line ~551, and compaction moves it. Confidence high (four probes in this
 cycle's transcript). Evidence: `memory/t0/2026-08-16/heartbeat-1755z.md`.
 
-⛔ **THE RESTART HAZARD FOUR CYCLES HANDED FORWARD IS VOID: ITS GAIN SET IS EMPTY, AND THE "COST" IS
-THE INTENDED EFFECT** (2026-08-16 01:1x ICT, 1814z). 1227z/1246z/1330z/1345z each re-filed *"a
-restart drops 11 live jobs"*; 1345z priced only that side. Measured both: the loaded set is
-`7e774dd:cron/jobs.json` (last change **07-12**, and **488 commits** span the gap to 08-15 without
-touching it — the fleet auto-commits, so **a commit-gap in an auto-committing repo is POSITIVE
-evidence of no change**, where prior cycles inferred a lower bound of 5 from which ids had fired).
-It has **all 14 enabled**. Against today's config: **drops 11, gains 0** — all three ids the config
-enables are already loaded and already ran on 08-15. The edit is a pure *disable*, so the 11 stopping
-and the edit taking effect **are the same event**. **RULE: compute an action's GAIN SET before
-handing its cost forward — a cost with no benefit beside it means either the action is pointless or
-the cost you named is the point.** 1345z's own *price BOTH branches*, one level up: it priced two
-costs and called them two branches. Actuator unchanged (`restart.sh` is a no-op, 1403z;
-`safe-restart.sh` unsanctioned) — the ask is with the user and was SENT this cycle.
-Evidence: `memory/t0/2026-08-16/heartbeat-1814z.md`.
-
 ⛔ **CHECK THE SCHEDULE STRIDE BEFORE FILING A MISSED SLOT — `vidnotes-alerts` AND `cleanpro-alerts`
-ARE EVERY-2-HOURS, NOT HOURLY** (same cycle). `0 7-23/2` Europe/Warsaw and `0 8-22/2` Asia/Saigon.
+ARE EVERY-2-HOURS, NOT HOURLY** (1814z). `0 7-23/2` Europe/Warsaw and `0 8-22/2` Asia/Saigon.
 Warsaw = ICT−5 in August ⇒ vidnotes lands on even ICT hours; Saigon = host local ⇒ cleanpro runs
 08–22 ICT only, so a cleanpro-free 00:00 ICT is **correct, not a hole**. The odd-hour "gaps" in
 `infra.log` are the stride. Only `echo-backend-alerts` (`5 * * * *`) is truly hourly.
