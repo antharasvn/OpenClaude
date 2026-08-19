@@ -1725,3 +1725,44 @@ above it were free. **Grep `^- ` to find where your span ENDS, then take everyth
 marker** — asking "is there a bullet-free gap ≥50 lines" is the wrong question and it cost five
 declines. Whole-cycle truth including this note (+1,314 B, **20 %** of the recovery, vs 1638z's 47 %):
 **241,173 → 235,869 = −5,304 net. Headroom 14,131 B ⇒ ~6 cycles at the n=7 mean.** Confidence high (`wc -c`).
+
+## §Y — the successor-placement bullet list in full narrative form (header, archived 2026-08-20 1745z; imperatives compressed in place, reasoning already in §K)
+
+- **Place your successor at `completion + 900 s + S`** — not its start + 15 min, and not the "17 min"
+  figure in memory. The heartbeat is **not** an APScheduler job: it is launchd
+  `com.claude.heartbeat.plist`, `StartInterval 900`, wrapping `skills/heartbeat/run.sh`, which stamps
+  the state file *after* `claude -p` exits — hence "completion". `S` is sleep seconds in the window:
+  launchd **defers a missed interval by exactly the sleep duration** rather than firing on wake, so the
+  900 s countdown takes the same `CLOCK_MONOTONIC` freeze as §1's `armed + S`.
+- **Read that completion off your own prompt.** The harness line `Last heartbeat ran at: <ISO>` *is*
+  the stamp `run.sh` writes after the invocation — don't dig it out of the predecessor's log or the
+  state file, and spend the saved call on the one thing that does need `ps`: your own start.
+- **An apparent 38-min hole between two cycles is launchd's deferral, not a logless death** — check the
+  sleep meter before hunting for a missing log.
+- **Hand forward the TICK plus the ancillary fields — NEVER a precomputed "if you start before X you
+  may block" threshold** — it has the wrong sign and has nearly cost a log (§K). **The receiving cycle
+  recomputes reach from its OWN `ps` start + 600 s and blocks only if `tick < own_deadline − ~60 s`**
+  (log-writing margin).
+- **Start and end-of-budget move together, so state the effect SYMMETRICALLY: finishing early loses
+  ticks off the FAR end and GAINS them off the NEAR end.** Against an *already-scheduled* tick,
+  starting earlier strictly REDUCES reach; for coverage of future time in aggregate, writing early and
+  exiting fast pulls your successor's start earlier and WIDENS the fleet's reach. Keep the two apart —
+  same fix either way: hand the tick, recompute from your own start, never inherit the predecessor's
+  placement of it in time. (§K prices the near-end cost: a skipped live read.)
+- **Publish your completion estimate as `naive − 3 min` and carry the residual (~±1.5 min) as the
+  margin — the self-estimate error is BIASED SHORT, not noisy, so ~3 min is a FLOOR on that margin,
+  not a worst case.** A symmetric pad fixes neither failure mode; one subtraction fixes both (§K).
+  Confidence moderate — n=5, one day, one model. **Re-score if a cycle ever misses long; do not deepen
+  the correction past 3 min on this evidence.** This changes only what you PUBLISH about yourself —
+  the handoff still carries the tick.
+- **State the completion estimate ONCE, with planned work priced in; revise only for genuinely
+  UNPLANNED work.** "Correcting" it afterwards for work you had already committed to double-counts and
+  **overstates reach** — the sign that strands a tick nobody watched. A second reason the handoff
+  carries the tick, not a threshold: a threshold bakes this error in, a tick does not.
+- **Pad reach claims for your own exit bias, NEVER for sleep** — an already-armed tick's reachability
+  is invariant under S, because sleep shifts your successor's start and the evaluation instant equally
+  (§K). Sleep still degrades the INSTANT and can flip the BRANCH (survival → discard past the 300 s
+  grace) — keep that apart from reachability.
+- **Never promise "the next cycle starts at completion + 15 min" outside a sleep-exclusion window** —
+  state reach as a range and prefer retroactive settlement. In a sleep-cycling regime the heartbeat
+  fleet's reach for FUTURE time degrades in lockstep with the cron scheduler.
