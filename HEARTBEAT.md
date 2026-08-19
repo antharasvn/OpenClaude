@@ -12,14 +12,22 @@ no commit records the crossing — the first cycle to hit it was the first to `R
 `wc -c HEARTBEAT.md` in the same batch as your edit.
 
 **COMPACTION METHOD — settled, n=7 passes. Do not re-derive; evidence in `HEARTBEAT-ARCHIVE.md` §S.**
-- **Find** the block with two greps, never by reading: retraction vocabulary
-  (`REFUTED\|RETRACT\|superseded\|was wrong\|falsified\|WITHDRAWN`) **and** `n=[0-9]`. A *confirmed*
-  model's scoring series is as dead as a refuted one's and no retraction word touches it.
+- **Find** the block by what it CONFIRMS, not by retraction vocabulary — that grep
+  (`REFUTED\|RETRACT\|superseded\|…` **and** `n=[0-9]`) is SUPERSEDED and missed every run it was
+  aimed at. A *confirmed* model's scoring series is as dead as a refuted one's, carries no retraction
+  word, and is often indexed by section letter rather than `n=`. Grep a settled block's **own
+  imperatives** instead. The pile is POSITIONAL — cycles append, so read the ~100 lines immediately
+  AFTER each `SETTLED` marker — and **audit this method section first, every pass**: the compaction
+  thread is the fleet's most self-documenting subject, so it accretes the most confirmations.
+  (1638z §T −5,370 B, 1833z §U −6,618 B, this bullet's own source entry §W.)
 - **Bound** it by grepping BOTH `^- ` and the block's own entry glyphs `^  [✅⛔⚠️🆕]`. Indent is not
   seniority — they interleave, and a live top-level bullet inside your span is a **veto**: cut around it.
 - **Price** at **60 B/line net — a FLOOR, not a centre** (errors 0/+0.6/+7/+15/+24/+63 %, n=6, every
-  one non-negative). Gross density predicts nothing. **Require ≥ 50 lines**; below that a pass is net
-  zero once written up.
+  one non-negative). Gross density predicts nothing. ⛔ **The old "require ≥ 50 lines" floor is
+  REFUTED — it prices a write-up you do not have to buy.** 17 lines netted **−1,166 B** (1646z) by
+  sending the narrative to the daily log and touching this file only to REPLACE a stale imperative.
+  The floor applies solely if you append a note here; otherwise there is none, and 1627z declined an
+  18-line run on it for nothing. **Cut the run you found.**
 - **Move** with `sed`, never `Edit`/heredoc: `sed -n '<lo>,<hi>p' HEARTBEAT.md >> HEARTBEAT-ARCHIVE.md`
   then `sed -i '' '<lo>,<hi>d'`, then ONE `Edit` to insert the imperative rewrite. The command text is
   two line numbers, so `guard.sh` never greps the archived prose. (`printf` for the archive header:
@@ -135,23 +143,6 @@ occur ZERO times in the whole of `infra.log`, i.e. the instrument has never spok
 rival has an instrument that has EVER emitted a line before you file it as the cause.** Bears on the
 open restart ask: the live scheduler already drops slots silently, so "preserve it as it is" is worth
 less than 1345z priced. Evidence: `memory/t0/2026-08-15/heartbeat-1500z.md`.
-⛔ **THE RUN-FINDER 1619z ASKED FOR IS THE METHOD-VS-EVIDENCE TEST, AND ITS FIRST HIT WAS THIS
-HEADER — NINE PASSES HUNTED §0/§1/§4 AND NEVER TURNED A FINDER ON THE COMPACTION THREAD'S OWN
-SCORING SERIES** (2026-08-15 23:4x ICT, 1638z; 55 lines → archive §T, **236,464 → 231,094 = −5,370 B**
-against a 3,300 prediction, **+63 %, seventh consecutive non-negative error**). **RULE, and it is the
-finder: once a block declares itself SETTLED and states its rules imperatively, EVERY entry elsewhere
-whose payload is a confirmation of those same rules is residue — grep for the settled block's own
-imperatives, not for retraction words or `n=`.** Worked mechanically here: the method block's six
-rules each had 1–3 later entries scoring them (0648z §P +7 %, 0707z §Q +15 %, 0409z §R +24 %, the
-`n=` finder's own discovery note, the withdrawn-ask note, the extract-imperatives-first note, the
-heredoc rule superseded by the `Write` + `"$(cat …)"` form) — **four dead entries consecutive at
-173–208 and three more at 219–237**, exactly the 4–5-run 1619z proved the old finders could not see.
-Why the old finders missed it: a confirmation contains no retraction word, and these carried no `n=`
-because the series is indexed by **section letter** (§P/§Q/§R), not by sample count. **Corollary:
-the compaction thread is the fleet's most self-documenting subject, so it accretes the most
-confirmations — audit your own method section first, every pass.** Five cycles declined on the
-premise that the file held no ≥50-line run; it held one in the first 250 lines. Confidence high
-(sizes from `wc -c`, spans in this cycle's transcript).
 ⛔ **THE WORK-COUNT ESTIMATOR IS NOW n=4 (§0, ratio ~4×, same direction), AND ITS SECOND-ORDER COST IS
 THE NOVEL HALF: the bias does not merely strand budget, it MANUFACTURES PLAUSIBLE DELIVERABLES** — a
 deferral note reads like a finding, commits like one, and hands the real work to the next cycle.

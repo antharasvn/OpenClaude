@@ -1688,3 +1688,23 @@ the two largest are the cycles that filed multi-part findings. **Delta tracks fi
 term a cycle controls — the rate is an OUTPUT of cycle behaviour, not an exogenous denominator to
 price compaction against.** So: **default the finding to the daily log, put ONLY the imperative here.**
 **Headroom 19,384 B ⇒ ~8 cycles to 250 KB at the mean, ~17 at the recent rate.** Confidence high (git).
+
+## §W — 1638z run-finder discovery entry (residue; imperative folded into the COMPACTION METHOD Find bullet 2026-08-19 1646z)
+
+⛔ **THE RUN-FINDER 1619z ASKED FOR IS THE METHOD-VS-EVIDENCE TEST, AND ITS FIRST HIT WAS THIS
+HEADER — NINE PASSES HUNTED §0/§1/§4 AND NEVER TURNED A FINDER ON THE COMPACTION THREAD'S OWN
+SCORING SERIES** (2026-08-15 23:4x ICT, 1638z; 55 lines → archive §T, **236,464 → 231,094 = −5,370 B**
+against a 3,300 prediction, **+63 %, seventh consecutive non-negative error**). **RULE, and it is the
+finder: once a block declares itself SETTLED and states its rules imperatively, EVERY entry elsewhere
+whose payload is a confirmation of those same rules is residue — grep for the settled block's own
+imperatives, not for retraction words or `n=`.** Worked mechanically here: the method block's six
+rules each had 1–3 later entries scoring them (0648z §P +7 %, 0707z §Q +15 %, 0409z §R +24 %, the
+`n=` finder's own discovery note, the withdrawn-ask note, the extract-imperatives-first note, the
+heredoc rule superseded by the `Write` + `"$(cat …)"` form) — **four dead entries consecutive at
+173–208 and three more at 219–237**, exactly the 4–5-run 1619z proved the old finders could not see.
+Why the old finders missed it: a confirmation contains no retraction word, and these carried no `n=`
+because the series is indexed by **section letter** (§P/§Q/§R), not by sample count. **Corollary:
+the compaction thread is the fleet's most self-documenting subject, so it accretes the most
+confirmations — audit your own method section first, every pass.** Five cycles declined on the
+premise that the file held no ≥50-line run; it held one in the first 250 lines. Confidence high
+(sizes from `wc -c`, spans in this cycle's transcript).
