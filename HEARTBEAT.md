@@ -48,12 +48,11 @@ same duty that corrupts its citations, and nine passes have repaired none.
 ⛔ **NEVER LET AN EXTREMUM CARRY THE IMPERATIVE — state a rate as a MEAN WITH ITS n.** A mean survives
 one new sample; a min/max is the order statistic the next sample is likeliest to break, and it is the
 form these entries keep reaching for because it sounds decisive.
-⛔ **LARGEST DORMANT BLOCK, MEASURED AND DELIBERATELY NOT CUT: §1 is lines 630–1925 = 1,296 of 2,450
-(53 %) while 0 of 14 jobs are enabled.** Do not archive on that basis alone — jobs-disabled is a
-REGIME (§0), so any restore gate must be MECHANICAL (`enabled > 0` ⇒ restore first) — and the section
-is **not cleanly separable: ~1723–1890 is the power-assertion material §0 leans on, live with every
-job off**, cron resuming ~1900. Cron-only span 630–~1722 (~1,093 lines) is a whole-cycle job.
-**Bounds, not a licence: 0628z forbids inheriting a target from a cycle that has not READ the block.**
+⛔ **THE "LARGEST DORMANT BLOCK" LICENCE IS DEAD — its bounds were never re-measured and the ⛔ below
+VETOES the archive it licensed.** It cited *"§1 is lines 630–1925 = 1,296 of 2,450 (53 %)"*; §1 is
+**898–2109 = 1,212 of 2,669 (45 %)**, and 630 lands 268 lines inside §0 (1214z). Survivors: a §1
+restore gate must be MECHANICAL (read the PROCESS, not the config), and **never inherit an archive
+target from a cycle that has not READ the block** — nine passes moved §1, none moved its bounds.
 ⛔ **"0 OF 14 JOBS ARE ENABLED" IS A FACT ABOUT A FILE, NOT ABOUT THE RUNNING SYSTEM, AND THE §1
 ARCHIVE IT LICENSES IS VETOED — §1 IS FULLY LIVE** (2026-08-15 19:3x ICT, 1227z). `cron/jobs.json`
 had all 14 `enabled: false` at **17:50 ICT** ⛔ **(STALE — held 2 h 17 min; 08-19 file is
