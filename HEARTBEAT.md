@@ -41,14 +41,10 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   ⛔ **`grep -cE '^## (§|Section )?<L>(\.2)?[ .]' HEARTBEAT-ARCHIVE.md` BEFORE picking a letter; write
   it `## §L — `.** ⛔ **A–Z ARE NOW ALL CONSUMED (29 headers, 2026-08-20 1904z) — that check returns
   ≥1 for EVERY single letter, so a cycle obeying it finds no free letter and has no fallback.
-  Continue `§AA`, `§AB`, …; §AA is taken.** The sigil-keyed `grep -c '^## §<L>'` that 1725z prescribed fails BOTH ways and left
-  two live errors: it misses `## V.` and `## Section W`, and it counts the deliberate `§S.2`/`§M.2`
-  repairs as clashes. **§V is LIVE, never void** — 1725z declared it "never written" off its own broken
-  grep while §V sat in the archive as *"Discharged backpressure-verification item"*, exactly as this
-  header cited it. **W was the real duplicate** (0634z + 1646z, two spellings, invisible to that grep).
-  Both repaired 1803z: `## V.`→`## §V —`, `## Section W`→`## §W.2`; §W = the 1646z Find residue.
-  **A detector must key on the INVARIANT (the letter), never the decoration (the sigil)** — 1755z's
-  paraphrase miss in a fourth place, and note it was written BY the cycle documenting that same trap.
+  Continue `§AA`, `§AB`, …; §AA and §AB are taken.** ⛔ **Key that check on the LETTER, never the `§`
+  sigil** — a sigil-keyed grep both misses `## V.`/`## Section W` and false-flags the deliberate
+  `§S.2` repairs, which is how 1725z voided a LIVE §V and left a real duplicate `W` unseen (repaired
+  1803z; narrative §AB). **A detector must key on the INVARIANT, never the decoration.**
 - **Extract imperatives FIRST, then move the residue.** Never move a block and hope a summary caught
   it. A **withdrawn** ask stays inline as a live NEGATIVE prescription — archiving a retraction
   silently un-retracts it.

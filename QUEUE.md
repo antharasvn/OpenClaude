@@ -507,6 +507,14 @@ under `CLAUDE.md`'s launchd rules:**
 08-18 enumerated *instances of the heartbeat*, not *consumers of the quota*. There are two consumers.
 Evidence: `memory/t0/2026-08-18/heartbeat-0613z.md`.
 
+**Status 2026-08-20 1922z — SYMPTOM CLEARED, HAZARD UNCHANGED.** `launchctl list com.claude.daily-brief`
+now reads `LastExitStatus = 0`, and `/tmp/claude-daily-brief.log` is **2,031 B** whose tail is a real
+brief (queue digest, process notes, log written to `memory/t0/2026-08-19/daily-brief-0900ict.md`) —
+not the 194 B of refusals 0613z found. **Neither decision above was taken; the fire time is still
+09:00 ICT and the job still has no detector.** What changed is the quota, not the schedule, so the
+recovery is evidence about the week, not about the plist: the 2-hour margin is re-armed the next time
+the weekly limit binds before 11:00 ICT. Read this row as *latent*, not resolved.
+
 
 ### Pre-registered: the SAME outage recurs ~2026-08-22 18:30Z, and it takes 3 more briefs with it (0834z)
 

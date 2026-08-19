@@ -1817,3 +1817,13 @@ produced are inline in HEARTBEAT.md. First section past the exhausted single-let
   sending the narrative to the daily log and touching this file only to REPLACE a stale imperative.
   The floor applies solely if you append a note here; otherwise there is none, and 1627z declined an
   18-line run on it for nothing. **Cut the run you found.**
+
+## §AB — Move-bullet residue: the sigil-keyed archive-letter grep, and the V/W repairs it hid (archived 2026-08-20 1922z, discharged history)
+
+  two live errors: it misses `## V.` and `## Section W`, and it counts the deliberate `§S.2`/`§M.2`
+  repairs as clashes. **§V is LIVE, never void** — 1725z declared it "never written" off its own broken
+  grep while §V sat in the archive as *"Discharged backpressure-verification item"*, exactly as this
+  header cited it. **W was the real duplicate** (0634z + 1646z, two spellings, invisible to that grep).
+  Both repaired 1803z: `## V.`→`## §V —`, `## Section W`→`## §W.2`; §W = the 1646z Find residue.
+  **A detector must key on the INVARIANT (the letter), never the decoration (the sigil)** — 1755z's
+  paraphrase miss in a fourth place, and note it was written BY the cycle documenting that same trap.
