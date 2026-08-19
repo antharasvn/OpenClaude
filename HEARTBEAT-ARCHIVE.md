@@ -1844,3 +1844,119 @@ produced are inline in HEARTBEAT.md. First section past the exhausted single-let
   lines (−6,618 B) with a live bullet as its upper bound. **Grep `^- ` for where your span ENDS,
   then take everything back to the marker**; "is there a bullet-free gap ≥ N lines" is the wrong
   question. (Source entries archived §X.)
+
+## §AD — cleanpro baselines.json char-0 chain (four turns, both halves CLOSED 2026-08-14; moved from HEARTBEAT.md 2026-08-20 2033z)
+
+  ✅ **CLOSED — the `:37` candidate is CONTAINED as of 2026-08-14 19:24 ICT; stop queuing it.** 1218z
+  wrapped `load_baselines()` in `try/except (ValueError, OSError)` falling back to a fresh default dict
+  (`scripts/cleanpro_alerts_runner.py:35-49`, `py_compile` clean). Verified read-only before touching
+  it: `load_baselines()` has exactly **one** caller (`:71`) which reads `conversion_rate_7d` and never
+  writes back, so a corrupt file now degrades to the 10.0 default the run **was already using anyway**
+  (`:77` — the key does not exist at top level, so the healthy path is byte-identical). The
+  mis-calibrated threshold at `:99` was deliberately **not** touched — that stays boss-pending.
+  **Why a heartbeat shipped this instead of queuing it a fourth time:** three cycles filed it as the
+  cheap containment that must land *before* `bot/scheduler.py:149`'s `timeout=600 → 1800`, because that
+  repair lets `cleanpro-weekly` reach its **unspecified** Step 10-12 for the first time since 08-04.
+  The containment is independent of the scheduler change, cannot alter the healthy path, and turns a
+  total 2-hourly alert outage into a logged `WARN`. **Transferable: when a queued item decomposes into
+  a boss-decision half and a strictly-defensive half, ship the defensive half now** — pairing them
+  meant neither shipped for three cycles while the exposure stayed open.
+  ⚠️ **"sole" is WRONG — there is a SECOND char-0 candidate at `:37`, and the fix to that entry is to
+  apply its own rule to itself** (2026-08-14 06:15 ICT). `load_baselines()` at `:35-38` does
+  `json.loads(BASELINES.read_text())` guarded by `.exists()` **only** — a present-but-empty
+  `baselines.json` gives char 0 too, and it is reached on *every* run (`:60`), where `:32` is reached
+  only when an alert fires. Excluded by **measurement, not reading**: the file is **1533 bytes and
+  parses clean** (keys `updated, week, period, growth, funnel, paywall, product, countries_top5_cvr`).
+  So `:32` survives by elimination and the 05:12 conclusion holds — but it was asserted on an
+  uniqueness claim that was false, i.e. **the entry that says "open the line before carrying it
+  forward" had not enumerated the alternatives.** Corroborating evidence nobody had read: the failing
+  run took **10 s** vs **14 s / 14 s** for the two preceding successes, so it cleared the BigQuery call
+  and died late — consistent with `:32`, not with `:21`. **Consequence that inverts the reading:** `:32`
+  runs *after* `urlopen` returns, so the alert was probably **delivered** and the crash is
+  post-delivery; `print('TELEGRAM_SENT_OK')` at `:100-101` just never executes, so `last_status` reads
+  as total failure either way. Still **unverified by observation** —
+  `stderr.decode()[-500:]` at `bot/scheduler.py` truncates above the calling frame. **Free falsifier
+  every 2 h:** a run that errors identically while the conv-check *cannot* fire (`paywall_shown < 10`
+  or `conv_pct >= 7.0`) makes `:32` unreachable and refutes it. **Transferable: elimination is only as
+  strong as the enumeration — count the candidate sites before naming one, and prefer a cheap
+  measurement (parse the file) over a second reading of the same code.** The danger is not just the lost cycle: a boss who *did* open line 21 would see the
+  guard, judge the suspicion refuted, and close the case. **Rule: before carrying a suspected line
+  number forward a SECOND time, open that line — and mark inherited suspicions as unverified in your
+  log so the next cycle knows they are guesses.**
+  **This is the same class as §0's `/tmp/claude-heartbeat.log` ⛔ (15 h of a wrong mechanism because
+  nobody read the runner or its plist) and §1's `logs/infra.err` ⛔ (a path no cycle confirmed existed).
+  Three instances now of *the checklist reasoning about a file it had not opened* — treat that as the
+  fleet's dominant failure mode, not a coincidence.** Second-order, free: **an error message's character
+  offset is evidence, not decoration** — here it separated two call sites the truncated log
+  (`stderr.decode()[-500:]` at `bot/scheduler.py`) had made indistinguishable.
+  ⛔ **THIRD turn on that entry, and it inverts a QUEUE ITEM: the `:37` exclusion is durable only
+  while `cleanpro-weekly` stays BROKEN — repairing the weekly re-arms the candidate that was
+  eliminated to convict `:32`** (2026-08-14 18:21 ICT, observed). Both line numbers verified by
+  opening the file this cycle: `:32` is the sole unguarded `json.loads` on the alert path, `:37` is
+  guarded by `.exists()` only. The new fact is **who writes the file the 06:15 entry measured**.
+  The alerts runner **never writes it** (`BASELINES` appears only at `:10`, `:36`, `:37`; the two
+  `json.dumps` are the Telegram payload `:25` and the stdout result `:102`). The writer is
+  **`cleanpro-weekly`** (`skills/cleanpro-weekly/SKILL.md:223`), and mtime proves it: **Aug 4 03:35**
+  against that job's `last_run` **`2026-08-03T20:37:28Z` = 08-04 03:37 ICT** — fired 03:30, wrote
+  03:35, stamped 03:37. It has fired **nothing since** (the 08-11 Tuesday slot was discarded, §1 line
+  466), so the file is frozen at the 1533 bytes the 06:15 entry parsed. **That outage is the only
+  reason the exclusion still holds.** When `timeout=600 → 1800` at `bot/scheduler.py:149` lets the
+  weekly run again, a weekly dying mid-write leaves a truncated/empty `baselines.json` that `:37`
+  reads on **every** subsequent 2-hourly alerts run — char 0, unguarded, reached *before* the
+  BigQuery call, where `:32` needs an alert to actually fire. Mechanism corroborated on the sibling:
+  `skills/vidnotes-weekly/SKILL.md:619` rewrites baselines with a **`cat > … << EOF` heredoc**
+  (non-atomic truncate-then-write). And the contrast names the fix: `skills/vidnotes-alerts/SKILL.md:551`
+  handles this **by policy** — *"missing or unreadable → use seed values. Log warning. Never abort."* —
+  while the CleanPro Python twin has no guard, despite `load_baselines()` already returning exactly
+  those seeds on its not-exists branch. **One-line fix: `try/except (ValueError, OSError)` at `:37`
+  falling through to the `:38` seed dict; pair it with the `:149` timeout change rather than shipping
+  that alone.** This does **not** overturn `:32` for the *observed* failure — `:37` was genuinely
+  excluded at the time it occurred. What changes is the exclusion's **shelf life**.
+  **Transferable, and it is the next turn of this entry's own lesson: an elimination argument inherits
+  the VOLATILITY of every measurement it rests on.** 06:15 said *enumerate the alternatives before
+  asserting uniqueness*; add ***and check whether an excluded alternative can come back***. Here the
+  excluder is an outage, so the exclusion is an artefact of something we are actively trying to fix —
+  the most dangerous kind, because the repair is what breaks it. Generalise past this file: **when a
+  fix is queued, ask which previously-settled findings were resting on the broken state.** Confidence
+  high that the weekly is the writer; moderate that a mid-write death yields char 0 specifically
+  (heredoc form read on the vidnotes sibling, not on the cleanpro one — one grep for whoever wants it).
+  ⛔ **FOURTH turn, and it ran that grep: `skills/cleanpro-weekly/SKILL.md:223` is a POINTER, not a
+  write, and its target DOES NOT EXIST — so there is no code in this repo that writes
+  `data/cleanpro/baselines.json`** (2026-08-14 18:59 ICT, four direct greps). `:220-223` reads
+  *"Step 10-12: Update baselines … Same as daily but weekly paths:"* then three path bullets — no
+  command, no heredoc, no `json.dump`. **`skills/` has no `cleanpro-daily`** (only `cleanpro-weekly`
+  on the CleanPro side), and `:138` defers the same way (*"Same approach as daily"*). `cleanpro-daily`
+  is a **script** job (`scripts/cleanpro_daily_runner.py`) which **never mentions baselines**; the sole
+  `scripts/` file that does is the read-only alerts runner. The mtime argument survives — the file is
+  1533 B at **Aug 4 03:35** against the weekly's 03:37 stamp — so **"the weekly is the writer" holds;
+  "the weekly has a write recipe" does not.** An agent improvised Step 10-12 from a dangling reference.
+  Three consequences: (a) **the mid-write shape cannot be settled by grep in either direction** — each
+  run improvises, so the failure form is not fixed across runs, which is worse than a known-bad
+  heredoc because it cannot be pattern-matched; leave it moderate, falsifier is observational only.
+  (b) **The queued pairing gets a second, independent ground:** `timeout=600 → 1800` at
+  `bot/scheduler.py:149` lets the weekly reach Step 10-12 for the first time since 08-04, and Step
+  10-12 is **unspecified** — the repair walks the job into undefined behaviour on the very file whose
+  unguarded `:37` read is the open char-0 candidate. (c) **New small boss item, should land before or
+  with `:149`:** inline the baselines write atomically (temp + `os.replace`) or repoint `:138`/`:220-223`
+  at something real.
+  **Transferable — this is a FOURTH form of the fleet's dominant failure mode (line 1824), the
+  CITATION form.** 18:21 *did* open the file and *did* cite the right line; the line was a **pointer**,
+  it read the pointer as the referent, and then sourced the missing mechanism from a **different
+  skill's** file to fill the gap. Opening the file was necessary, not sufficient — the unfollowed step
+  was **following the reference one hop further**. **Rule: when a cited line delegates ("same as X",
+  "see Y", "as above"), the citation is not complete until X is opened — and a delegation target that
+  does not exist is itself the finding.** Cost: one grep. Confidence high.
+  ✅ **CLOSED — Step 10-12 now HAS a procedure, written 2026-08-14 20:25 ICT (commit `69e1643`);
+  drop it from the boss queue.** The 18:59 entry's consequence (c) asked for *"inline the baselines
+  write atomically or repoint at something real"*; that is the **strictly-defensive half** of the
+  pairing with `bot/scheduler.py:149`, so it shipped rather than queuing a second time (1218z's rule,
+  line 1733). `skills/cleanpro-weekly/SKILL.md` §10 is now: read-modify-write that carries **unknown
+  top-level keys through unchanged**, a missing/unparseable file degrades to `{}` + `WARN` instead of
+  aborting, and the write is temp-file + `os.replace` in the same directory — so a mid-write death
+  leaves the **previous valid file**, not a truncated one. Embedded python verified to compile.
+  Grounded on the live file rather than invented: **10** top-level keys (`updated, week, period,
+  growth, funnel, paywall, product, countries_top5_cvr, engineering, caveats`) — note the 06:15 entry
+  above enumerates only **8**, so *that* uniqueness argument was reading a stale key list too.
+  **This does not close `:37`** — it makes the corrupt input unlikely where 1218z's `try/except` makes
+  it survivable; keep both. And it retires the 18:21 shelf-life worry: repairing the weekly no longer
+  walks it into undefined behaviour, so `:149` can land on its own merits.
