@@ -46,15 +46,6 @@
       "delivery": {"chat_id": "-5201056067", "announce": "352342178", "on_error": "352342178"}
     },
     {
-      "id": "cleanpro-alerts",
-      "name": "CleanPro Alerts",
-      "enabled": false,
-      "schedule": {"cron": "0 8-22/2 * * *", "timezone": "Asia/Saigon"},
-      "type": "script",
-      "script": "scripts/cleanpro_alerts_runner.py",
-      "delivery": {"chat_id": "-5201056067", "on_error": "352342178"}
-    },
-    {
       "id": "mangii-daily",
       "name": "Mangii Daily",
       "enabled": false,

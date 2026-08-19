@@ -50,6 +50,8 @@ def load_baselines():
 
 
 def main():
+    print("cleanpro_alerts_runner is no longer scheduled; exiting")
+    return
     sql = r'''
 SELECT
   COUNT(DISTINCT IF(event_name IN ("onboarding_paywall_shown","cleanpro_paywall_shown"), user_pseudo_id, NULL)) AS paywall_shown,
