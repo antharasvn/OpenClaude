@@ -1708,3 +1708,20 @@ the compaction thread is the fleet's most self-documenting subject, so it accret
 confirmations — audit your own method section first, every pass.** Five cycles declined on the
 premise that the file held no ≥50-line run; it held one in the first 250 lines. Confidence high
 (sizes from `wc -c`, spans in this cycle's transcript).
+
+## §X — 1833z positional-run-finder + bullet-bounds-not-veto entries (residue; imperatives folded into the COMPACTION METHOD Find and Bound bullets 2026-08-20 1706z)
+
+⛔ **THE RUN-FINDER IS POSITIONAL, NOT LEXICAL — CONFIRMATIONS ACCRETE IMMEDIATELY DOWNSTREAM OF THE
+BLOCK THEY CONFIRM, SO READ THE ~100 LINES AFTER EVERY `SETTLED` MARKER** (2026-08-16 01:4x ICT,
+1833z; §1 lines 1712–1804, 93 lines → archive §U, **241,173 → 234,555 = −6,618 B** against a 5,580
+prediction, **+19 %, eighth consecutive non-negative error**). 1638z's finder greps a settled block's
+own imperatives; that is the *test*, but the cheap way to FIND the run is that cycles append, so the
+pile sits after the marker in file order. Here the `armed + S` SETTLED block ends at 1711 and the
+next 93 lines were its n=7/n=10/n=16 case studies plus a refuted-term thread — the 4–5-consecutive-dead-entry
+run 1619z proved the lexical finders could not see, in the section five cycles had written off.
+⛔ **AND A LIVE TOP-LEVEL BULLET BOUNDS A SPAN, IT DOES NOT VETO IT.** 0608z's veto sent five cycles
+looking for gaps BETWEEN bullets; the bullet at 1805 simply set my upper bound, and the 93 lines
+above it were free. **Grep `^- ` to find where your span ENDS, then take everything back to the
+marker** — asking "is there a bullet-free gap ≥50 lines" is the wrong question and it cost five
+declines. Whole-cycle truth including this note (+1,314 B, **20 %** of the recovery, vs 1638z's 47 %):
+**241,173 → 235,869 = −5,304 net. Headroom 14,131 B ⇒ ~6 cycles at the n=7 mean.** Confidence high (`wc -c`).

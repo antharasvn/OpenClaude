@@ -21,7 +21,11 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   thread is the fleet's most self-documenting subject, so it accretes the most confirmations.
   (1638z §T −5,370 B, 1833z §U −6,618 B, this bullet's own source entry §W.)
 - **Bound** it by grepping BOTH `^- ` and the block's own entry glyphs `^  [✅⛔⚠️🆕]`. Indent is not
-  seniority — they interleave, and a live top-level bullet inside your span is a **veto**: cut around it.
+  seniority — they interleave. ⛔ **A live top-level bullet BOUNDS a span; it does NOT veto it** —
+  0608z's veto cost five cycles hunting bullet-free gaps and was refuted by 1833z, which took 93
+  lines (−6,618 B) with a live bullet as its upper bound. **Grep `^- ` for where your span ENDS,
+  then take everything back to the marker**; "is there a bullet-free gap ≥ N lines" is the wrong
+  question. (Source entries archived §X.)
 - **Price** at **60 B/line net — a FLOOR, not a centre** (errors 0/+0.6/+7/+15/+24/+63 %, n=6, every
   one non-negative). Gross density predicts nothing. ⛔ **The old "require ≥ 50 lines" floor is
   REFUTED — it prices a write-up you do not have to buy.** 17 lines netted **−1,166 B** (1646z) by
@@ -217,21 +221,6 @@ ARE EVERY-2-HOURS, NOT HOURLY** (same cycle). `0 7-23/2` Europe/Warsaw and `0 8-
 Warsaw = ICT−5 in August ⇒ vidnotes lands on even ICT hours; Saigon = host local ⇒ cleanpro runs
 08–22 ICT only, so a cleanpro-free 00:00 ICT is **correct, not a hole**. The odd-hour "gaps" in
 `infra.log` are the stride. Only `echo-backend-alerts` (`5 * * * *`) is truly hourly.
-
-⛔ **THE RUN-FINDER IS POSITIONAL, NOT LEXICAL — CONFIRMATIONS ACCRETE IMMEDIATELY DOWNSTREAM OF THE
-BLOCK THEY CONFIRM, SO READ THE ~100 LINES AFTER EVERY `SETTLED` MARKER** (2026-08-16 01:4x ICT,
-1833z; §1 lines 1712–1804, 93 lines → archive §U, **241,173 → 234,555 = −6,618 B** against a 5,580
-prediction, **+19 %, eighth consecutive non-negative error**). 1638z's finder greps a settled block's
-own imperatives; that is the *test*, but the cheap way to FIND the run is that cycles append, so the
-pile sits after the marker in file order. Here the `armed + S` SETTLED block ends at 1711 and the
-next 93 lines were its n=7/n=10/n=16 case studies plus a refuted-term thread — the 4–5-consecutive-dead-entry
-run 1619z proved the lexical finders could not see, in the section five cycles had written off.
-⛔ **AND A LIVE TOP-LEVEL BULLET BOUNDS A SPAN, IT DOES NOT VETO IT.** 0608z's veto sent five cycles
-looking for gaps BETWEEN bullets; the bullet at 1805 simply set my upper bound, and the 93 lines
-above it were free. **Grep `^- ` to find where your span ENDS, then take everything back to the
-marker** — asking "is there a bullet-free gap ≥50 lines" is the wrong question and it cost five
-declines. Whole-cycle truth including this note (+1,314 B, **20 %** of the recovery, vs 1638z's 47 %):
-**241,173 → 235,869 = −5,304 net. Headroom 14,131 B ⇒ ~6 cycles at the n=7 mean.** Confidence high (`wc -c`).
 
 ⛔ **THE FLEET WAS DEAD FOR 213 CONSECUTIVE CYCLES AND EVERY INSTRUMENT EXCEPT
 `/tmp/claude-heartbeat.log` READ AS HEALTHY** (2026-08-18 11:0x ICT, 0401z, first live cycle since
