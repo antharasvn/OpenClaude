@@ -689,6 +689,31 @@ systematic. Same omission, opposite conclusions, so "check the base rate" cannot
 
 Evidence: `memory/t0/2026-08-18/heartbeat-1047z.md` (unpushed — see **#10**).
 
+## 14. Bound the SessionStart hook to the NEWEST logs — it currently delivers the oldest two
+
+**Where:** `.claude/settings.json`, the `SessionStart` command. **I may not edit it** — `CLAUDE.md`
+lists `.claude/settings.json` hooks as never-modify — so this is yours.
+
+**What it does now:** `for f in "$LOGDIR"/*.md; do cat "$f"; done`, unbounded. Glob order is
+lexicographic, and log names are `heartbeat-<UTC>z.md`, so it emits **oldest first**.
+
+**Why that matters:** the harness caps hook stdout **under 10 KB** (smallest persisted stdout across
+all 1,792 session dirs of this workspace: **10,190 B**) and replaces the remainder with a file path
+plus a ~2 KB preview. Measured: **1,679 of 1,792 sessions (93.7 %) were truncated.** A local day
+crosses 10 KB at ~7 logs, roughly 2 h in — 08-19 finished at **195,113 B, 19× the cap**. So for ~22 h
+of every 24, the only daily-log content a cycle actually sees is the **first two files of the day**,
+and the predecessor handoff the convention exists to carry is always in the discarded part.
+
+**Fix (one line):** iterate newest-first and cap the count, e.g.
+`for f in $(ls -t "$LOGDIR"/*.md | head -3); do …` — same hook, same cost, delivers the handoff.
+
+**Note this row does not reopen #4.** #4 asked you to cap the hook to save *context bytes*; 2100z
+correctly falsified that — the bytes were never injected. This asks you to cap it for the opposite
+reason: the truncation that voided #4's cost is itself dropping the newest logs.
+Evidence: `memory/t0/2026-08-20/heartbeat-1844z.md`; rule in `HEARTBEAT.md` header.
+
+---
+
 ## Resolved
 
 - **#4 — SessionStart hook: uncapped daily-log injection.** Removed 2026-08-15 04:0x ICT by heartbeat

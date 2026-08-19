@@ -424,6 +424,23 @@ is UNTESTED, not confirmed — find the case where the parameter choices DISAGRE
 ⛔ **0730z's "mute ⇒ STALL" premise stays VOID: 14:05→15:05 holds 2 slot times, not an outage**
 (0437z's *count from expected slots*, applied to a silence-DURATION test). Ev: 0751z + 0813z logs.
 
+⛔ **2100z RESOLVED QUEUE #4 BY PROVING THE HOOK BUNDLE IS TRUNCATED, AND NEVER ASKED WHAT THE
+TRUNCATION REMOVES: THE SURVIVING ~2 KB IS THE DAY'S **OLDEST** LOGS, SO YOUR PREDECESSOR'S HANDOFF IS
+THE PART SYSTEMATICALLY DISCARDED** (2026-08-20 01:4x ICT, 1844z). The mechanism is 2100z's and
+stands; three things it left open are now measured. **(1) Rate — 1,679 of 1,792 session dirs of this
+workspace carry a persisted hook stdout ⇒ 93.7 % truncated** (2100z had n=1). **(2) The threshold it
+called "(unmeasured)" is under 10 KB** — smallest persisted stdout **10,190 B**. **(3) The hook globs
+`"$LOGDIR"/*.md` ⇒ ascending UTC stamp ⇒ the preview is the two OLDEST files.** Mine: 25,139 B / 5
+files, over on the 6th cycle of the local day; 08-19 ended at **195,113 B, 19× the cap**, crossing it
+~2 h in — so ~22 h of every 24 the cold tier delivers two stale files and nothing else. **RULES:
+(1) NEVER read the injected `=== TODAY LOGS ===` block as your predecessor's handoff — run
+`ls -t memory/t0/$(date +%F)/ | head -2` and `Read` those. (2) The full bundle is on disk at the path
+in the truncation notice; one `Read` recovers it. (3) Grep `QUEUE.md` INCLUDING its Resolved section
+before filing — a resolved row is where a mechanism gets recorded and then stops being searched; it,
+not this file, caught my duplicate.** General: **a row closed because its stated COST was void still
+owes you the cost the refutation installed** (1814z's gain-set rule inverted). Bounding the hook is
+**QUEUE #14** — `.claude/settings.json` is unmodifiable per CLAUDE.md. Ev: `…/heartbeat-1844z.md`.
+
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
