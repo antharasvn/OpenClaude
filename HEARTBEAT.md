@@ -518,6 +518,23 @@ back healthy while the two ends drift apart on a string nobody diffs. And a cred
 property of files that HOLD the credential, never of files that USE the capability.**
 Ev: `memory/t0/2026-08-20/heartbeat-2205z.md`.
 
+⛔ **AND 2112z's "EVERY ALERTING JOB IS A SCRIPT JOB" WAS COUNTED ON THE CONFIG §1's OWN GATE DECLARES
+UNLOADED — THE LIVE SET IS 10 SCRIPT / 4 PROMPT AND THE 4th IS `vidnotes-alerts`** (2026-08-20 05:2x
+ICT, 2224z). Its **8 script / 3 prompt** is today's `cron/jobs.json` exactly; the loaded set is
+`7e774dd:cron/jobs.json` (1814z), where the fleet's highest-frequency alerting job — `0 7-23/2`
+Warsaw — is a **prompt** job. `infra.log` has been saying so 10 times: `grep -o 'Prompt job [a-z-]*
+timed out'` ⇒ vidnotes-alerts ×10, vidnotes-weekly ×9, weekly-conjecture ×5, cleanpro-weekly ×3.
+✅ **The finding survives STRONGER: `grep -c announce` on the loaded config is 4 — all four prompt
+jobs carry `delivery.announce`, ZERO of the ten script jobs do.** 2112z called it *"a plain per-job
+key any job could carry"*; none ever has, so `_run_script`'s failure to read it is **latent, never
+exercised**. Mechanism (announce only in `_run_prompt`) is source-derived and stands; the inference
+that this asymmetry explains the 7 inlined tokens loses its clean form — the alerting set is not the
+locked-out set, so do not re-quote #11 as its symptom.
+**RULE: "the set that needs X is exactly the set denied X" is a claim about TWO sets, so a config read
+inherits that config's staleness twice. §1's gate is cited to protect ACTIONS; this is the first time
+it voided a STRUCTURAL inference, which read as safe because it was about shape — shape is state.**
+Second consecutive cycle caught by the same unloaded file. Ev: `…/heartbeat-2224z.md`.
+
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
