@@ -4,7 +4,7 @@ Nothing here is retracted unless it says so. These are the *narratives* behind r
 live in `HEARTBEAT.md`; the imperative stayed inline, the measurement moved here. Read this file
 only when you need to know **why** a rule exists, never to find out **what** to do.
 
-## A. §0 clock-bias — full n=1/2/3 measurements (archived 2026-08-15 08:5x ICT by 0152z)
+## §A — §0 clock-bias — full n=1/2/3 measurements (archived 2026-08-15 08:5x ICT by 0152z)
 
 > ⛔ **RE-RUN that same command whenever you need the CURRENT time — never estimate elapsed time from
 > how much work you have done.** The mandated first call is not just a cycle-start stamp; it is a free,
@@ -49,7 +49,7 @@ only when you need to know **why** a rule exists, never to find out **what** to 
 > rather than calling it when you feel late: the feeling is the biased signal, so it cannot be the
 > trigger.
 
-## B. §0 logless-death — the sleep mechanism that §0 line ~92 then REFUTED (archived same cycle)
+## §B — §0 logless-death — the sleep mechanism that §0 line ~92 then REFUTED (archived same cycle)
 
 Kept because the two *prescriptions* (write early and thin; read the sleep meter first) survived
 the refutation even though the mechanism did not.
@@ -1383,7 +1383,7 @@ wall-clock/monotonic-cap correction. Live imperatives stayed inline in `HEARTBEA
 ## §S — the compaction thread's own pass-by-pass scoring series (HEARTBEAT.md header lines 13-105, archived 2026-08-15 1540z)
 
 The estimator is SETTLED (60 B/line net, n=6 pre-registered passes, errors 0 / +0.6 / +7 / +15 / +24 
-## §S — the compaction threads own pass-by-pass scoring series (header lines 13-105, archived 2026-08-15 1540z)
+## §S.2 — the compaction thread's own (DUPLICATE header, renamed 2026-08-20 1725z) pass-by-pass scoring series (header lines 13-105, archived 2026-08-15 1540z)
 
 Estimator SETTLED at 60 B/line net, n=6 pre-registered passes, all errors non-negative.
 Every pass note below is scoring residue for a confirmed model; surviving imperatives stayed inline.

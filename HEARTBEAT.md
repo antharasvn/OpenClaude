@@ -11,7 +11,7 @@ no commit records the crossing — the first cycle to hit it was the first to `R
 **RULE, and it binds every cycle that writes here: keep `HEARTBEAT.md` under 250 KB.** Check with
 `wc -c HEARTBEAT.md` in the same batch as your edit.
 
-**COMPACTION METHOD — settled, n=7 passes. Do not re-derive; evidence in `HEARTBEAT-ARCHIVE.md` §S.**
+**COMPACTION METHOD — settled, n=8 scored passes. Do not re-derive; evidence in `HEARTBEAT-ARCHIVE.md` §S.**
 - **Find** the block by what it CONFIRMS, not by retraction vocabulary — that grep
   (`REFUTED\|RETRACT\|superseded\|…` **and** `n=[0-9]`) is SUPERSEDED and missed every run it was
   aimed at. A *confirmed* model's scoring series is as dead as a refuted one's, carries no retraction
@@ -26,9 +26,11 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   lines (−6,618 B) with a live bullet as its upper bound. **Grep `^- ` for where your span ENDS,
   then take everything back to the marker**; "is there a bullet-free gap ≥ N lines" is the wrong
   question. (Source entries archived §X.)
-- **Price** at **60 B/line net — a FLOOR, not a centre** (errors 0/+0.6/+7/+15/+24/+63 %, n=6, every
-  one non-negative). Gross density predicts nothing. ⛔ **The old "require ≥ 50 lines" floor is
-  REFUTED — it prices a write-up you do not have to buy.** 17 lines netted **−1,166 B** (1646z) by
+- **Price** at **60 B/line net — a low-biased CENTRE: mean error +15 %, n=8, spread −19 %…+63 %**
+  (0/+0.6/+7/+15/+24/+63/−19/+31). ⛔ **"A FLOOR, every one non-negative" is REFUTED — 1646z broke it
+  at −19 % while EDITING THIS BULLET, and left the number standing.** Gross density predicts nothing. ⛔ **The old "require ≥ 50 lines" floor is
+  REFUTED — it prices a write-up you do not have to buy.** 17 lines netted **−831 B** (1646z final;
+  the −1,166 B this bullet used to quote was its mid-pass reading) by
   sending the narrative to the daily log and touching this file only to REPLACE a stale imperative.
   The floor applies solely if you append a note here; otherwise there is none, and 1627z declined an
   18-line run on it for nothing. **Cut the run you found.**
@@ -36,10 +38,17 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   then `sed -i '' '<lo>,<hi>d'`, then ONE `Edit` to insert the imperative rewrite. The command text is
   two line numbers, so `guard.sh` never greps the archived prose. (`printf` for the archive header:
   **escape or avoid `%`** — a bare `%,` is an invalid directive and aborts the whole `&&` chain.)
+  ⛔ **`grep -c '^## §<L>' HEARTBEAT-ARCHIVE.md` BEFORE picking a letter; write it `## §L — `.** The §N
+  scheme rotted exactly like the `line NNN` pointers it replaced (1725z): **§S was assigned twice**,
+  **§A/§B were written `## A.` so a `§A` grep misses them**, and **§V is cited from this header and was
+  never written**. A duplicate resolves to TWO places — the mode the citation rule below assumed could
+  not happen. Repaired 1725z; **§V stays VOID**.
 - **Extract imperatives FIRST, then move the residue.** Never move a block and hope a summary caught
   it. A **withdrawn** ask stays inline as a live NEGATIVE prescription — archiving a retraction
   silently un-retracts it.
-- **Measure after BOTH halves plus this note**, and **keep the note to the imperative** — the
+- **Measure after your LAST edit — "after BOTH halves" is not enough**: 1646z's `wc -c` sat between the
+  delete and its imperative rewrite (+335 B, 29 % of the recovery) and nearly filed +14 % for a −19 %.
+  **Keep the note to the imperative** — the
   narrative belongs in the daily log, which nothing re-`cat`s into `HEARTBEAT.md`.
 ⛔ **AND EVERY PASS SILENTLY FALSIFIES THIS FILE'S OWN CROSS-REFERENCES — ALL 56 `line NNN` POINTERS
 ARE NOW WRONG, AND EACH ONE LANDS ON REAL, UNRELATED PROSE** (2026-08-15 23:0x ICT, 1559z; 8 of 8
@@ -289,7 +298,7 @@ status and it is free in the liveness check you already run — read it, do not 
 is present.** Sent to the user this cycle; schedule fix is QUEUE #9.
 Evidence: `memory/t0/2026-08-18/heartbeat-0613z.md`.
 ⛔ **A self-rewriting script cannot verify its own fix in the same run — the edit lands one cycle
-later.** (0418z→0514z, discharged; §V.)
+later.** (0418z→0514z, discharged; §V is VOID — never written.)
 
 ⛔ **NEVER ASK WHETHER THE HOST WAS AWAKE — A HEARTBEAT RUNS IN THE AWAKE WINDOW BY CONSTRUCTION,
 BECAUSE LAUNCHD'S WAKE *IS* WHAT STARTED IT** (2026-08-18 12:1x ICT, 0514z). Host entered `Idle Sleep`
