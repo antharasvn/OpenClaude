@@ -27,7 +27,7 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   then take everything back to the marker**; "is there a bullet-free gap ≥ N lines" is the wrong
   question. (Source entries archived §X.)
 - **Price** at **60 B/line net — a low-biased CENTRE: mean error +18 %, n=9, spread −19 %…+63 %**
-  (0/+0.6/+7/+15/+24/+63/−19/+31/+43). ⛔ **"A FLOOR, every one non-negative" is REFUTED — 1646z broke it
+  (0/+0.6/+7/+15/+24/+63/−19/+31/+42). ⛔ **"A FLOOR, every one non-negative" is REFUTED — 1646z broke it
   at −19 % while EDITING THIS BULLET, and left the number standing.** Gross density predicts nothing. ⛔ **The old "require ≥ 50 lines" floor is
   REFUTED — it prices a write-up you do not have to buy.** 17 lines netted **−831 B** (1646z final;
   the −1,166 B this bullet used to quote was its mid-pass reading) by
