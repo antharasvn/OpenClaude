@@ -38,11 +38,15 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   then `sed -i '' '<lo>,<hi>d'`, then ONE `Edit` to insert the imperative rewrite. The command text is
   two line numbers, so `guard.sh` never greps the archived prose. (`printf` for the archive header:
   **escape or avoid `%`** — a bare `%,` is an invalid directive and aborts the whole `&&` chain.)
-  ⛔ **`grep -c '^## §<L>' HEARTBEAT-ARCHIVE.md` BEFORE picking a letter; write it `## §L — `.** The §N
-  scheme rotted exactly like the `line NNN` pointers it replaced (1725z): **§S was assigned twice**,
-  **§A/§B were written `## A.` so a `§A` grep misses them**, and **§V is cited from this header and was
-  never written**. A duplicate resolves to TWO places — the mode the citation rule below assumed could
-  not happen. Repaired 1725z; **§V stays VOID**.
+  ⛔ **`grep -cE '^## (§|Section )?<L>(\.2)?[ .]' HEARTBEAT-ARCHIVE.md` BEFORE picking a letter; write
+  it `## §L — `.** The sigil-keyed `grep -c '^## §<L>'` that 1725z prescribed fails BOTH ways and left
+  two live errors: it misses `## V.` and `## Section W`, and it counts the deliberate `§S.2`/`§M.2`
+  repairs as clashes. **§V is LIVE, never void** — 1725z declared it "never written" off its own broken
+  grep while §V sat in the archive as *"Discharged backpressure-verification item"*, exactly as this
+  header cited it. **W was the real duplicate** (0634z + 1646z, two spellings, invisible to that grep).
+  Both repaired 1803z: `## V.`→`## §V —`, `## Section W`→`## §W.2`; §W = the 1646z Find residue.
+  **A detector must key on the INVARIANT (the letter), never the decoration (the sigil)** — 1755z's
+  paraphrase miss in a fourth place, and note it was written BY the cycle documenting that same trap.
 - **Extract imperatives FIRST, then move the residue.** Never move a block and hope a summary caught
   it. A **withdrawn** ask stays inline as a live NEGATIVE prescription — archiving a retraction
   silently un-retracts it.
@@ -298,7 +302,7 @@ status and it is free in the liveness check you already run — read it, do not 
 is present.** Sent to the user this cycle; schedule fix is QUEUE #9.
 Evidence: `memory/t0/2026-08-18/heartbeat-0613z.md`.
 ⛔ **A self-rewriting script cannot verify its own fix in the same run — the edit lands one cycle
-later.** (0418z→0514z, discharged; §V is VOID — never written.)
+later.** (0418z→0514z, discharged; archived §V.)
 
 ⛔ **NEVER ASK WHETHER THE HOST WAS AWAKE — A HEARTBEAT RUNS IN THE AWAKE WINDOW BY CONSTRUCTION,
 BECAUSE LAUNCHD'S WAKE *IS* WHAT STARTED IT** (2026-08-18 12:1x ICT, 0514z). Host entered `Idle Sleep`

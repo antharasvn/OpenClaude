@@ -1637,7 +1637,7 @@ line to itself-plus-your-block. Confidence high — observed, and the retry via 
   *input* to the model; it is never a substitute for running it. Enumerate the pending slots from
   `cron/jobs.json` before forecasting, or a survivor gets swept up in a neighbour's discard.
 
-## V. Discharged backpressure-verification item (archived 2026-08-18 0613z)
+## §V — Discharged backpressure-verification item (archived 2026-08-18 0613z)
 
 ⛔ **AND 0418z's BACKPRESSURE IS UNSCORED — `heartbeat-state.json` IS AT THE REPO ROOT AND STILL HAS
 THE OLD TWO-KEY SHAPE.** 0418z rewrote `run.sh` at 11:20; its own instance started 11:18:39, so the
@@ -1649,7 +1649,7 @@ Actuator checked reachable: `skills/telegram-sender/send.sh` exists, is executab
 lands one cycle after the instance that made it.**
 ✅ **DISCHARGED 0514z: `consecutive_refusals: 0` and `last_success` are both present. Backpressure is live.**
 
-## Section W — compaction-thread scoring series, archived 2026-08-18 0634z
+## §W.2 — compaction-thread scoring series, archived 2026-08-18 0634z
 (Header lines 48-75 and 79-84: the break-even/third-cost pass, the 2,311 B-per-cycle rate series,
 the five-decline veto thread, and the note-length lever. All superseded by the settled method block
 and by 0556z. The extremum rule at old 76-78 was KEPT inline.)
