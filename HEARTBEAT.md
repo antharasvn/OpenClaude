@@ -2644,10 +2644,24 @@ delegates `bin/safe-restart.sh` — the script 1403z had refused — to a 30 s l
   at all.** Same for `find logs/ -name '*.log.*' -mtime +7` (0 of 0). Nothing here rotates to `.log.N`.
 - The 10 MB `bot.log` truncate is **permanently dead by a GNU-flag-on-BSD mismatch**: `stat -c %s`
   is GNU syntax and darwin's BSD `stat` exits 1 with *"illegal option -- c"*, which `|| echo 0`
-  swallows into `_size=0`, so `(( 0 > 10485760 ))` is false at every size. Verified by running it.
-  Consequence beyond the no-op: **the guard people believe exists does not**, so `bot.log` (1.3 MB
-  now) will sail past 10 MB untouched. A `|| echo 0` fallback on a portability failure converts a
-  broken command into a plausible reading — the same silent-default shape as `2>/dev/null || true`.
+  swallows into `_size=0`, so `(( 0 > 10485760 ))` is false at every size. Verified by running it
+  (re-run 2026-08-20 1915z, still *"illegal option -- c"*). A `|| echo 0` fallback on a portability
+  failure converts a broken command into a plausible reading — the same silent-default shape as
+  `2>/dev/null || true`.
+  ⛔ **BUT THE CONSEQUENCE CLAUSE — *"so `bot.log` (1.3 MB now) will sail past 10 MB untouched"* —
+  IS REFUTED, AND NO BYTE OF GROWTH WAS EVER MEASURED TO SUPPORT IT** (2026-08-20 1915z, 5 days on).
+  `bot.log` is **1,327,703 B — still 1.3 MB**, and `awk '/^2026-08-15/{f=1} f' bot.log | wc -c` puts
+  the entire post-1442z accretion at **11,241 B ⇒ ~2.2 KB/day (~48 lines/day, flat 46–48 across
+  08-16…08-19)**. The 9.16 MB to the threshold is **~4,070 days ≈ 11 years away.** The un-guarded
+  file is the faster one: `logs/infra.log` is **2,116,486 B over 131 days ⇒ ~16 KB/day**, 7× the
+  rate, covered by **no arm at all** (the `logs/` arm deletes `*.log.*`, and nothing on this host
+  rotates), reaching 10 MB in ~1.4 y. So both are non-events and the guard's breakage protects
+  nothing that needed protecting. **RULE: a broken guard is a hazard only at the RATE OF THE THING
+  IT GUARDS — price the rate, never the breakage.** 1442z executed all three arms to prove the
+  no-op (good) and then let "the guard is dead" *become* "the file will sail past 10 MB" with no
+  measurement between them; the measurement was one `awk` away. Transferable, and it is the
+  §0 hand-the-tick rule in the guard direction: **a disabled control and an active exposure are
+  different findings, and only the second one has a deadline.** Ev: `…/2026-08-20/heartbeat-1915z.md`.
 **Transferable: the hazard NARROWED to exactly one arm — safe-restart on bot death — and that is the
 version of the ask the boss should be answering.** Padding a real hazard with unmeasured siblings
 does not make the case stronger; it makes the one true item easier to discount. Measuring a
