@@ -615,6 +615,21 @@ optional cleanup, and needs the user's word. **Do not do (2) before (1)** — st
 with no env provisioned breaks every alert job on its next fire, and fixing a leak by breaking the
 fleet is not a fix. Sent to the user 0634z; awaiting step 1.
 
+**⛔ Step 2 is CHEAPER than filed, and step 2's stated cost was wrong (2026-08-20 2205z).** "With no
+env provisioned" implies a provisioning project. There is none — the hatch is wired end to end:
+`bot/config.py:11,17` `load_dotenv(SCRIPT_DIR / ".env")` (the repo's only dotenv loader) → `bot/app.py:20`
+imports it, so PID 927's `os.environ` carries `.env` → **`grep -n "env=" bot/scheduler.py` is EMPTY**, so
+script jobs inherit it → the scripts already do `os.environ.get(NAME, "<literal>")`. Of the 5 names read,
+`.env` defines **1** (`TELEGRAM_BOT_TOKEN`); `AAA_BOT_TOKEN`, `AAA_CHAT_ID`, `SILPHO_BOT_TOKEN`,
+`SILPHO_CHAT_ID` are absent ⇒ all fall through. `.env` is untracked + `.gitignore:2` ⇒ safe destination.
+So step 2 is **add 4 keys to `.env`, then strip the literals** — but ⚠️ **necessary, not sufficient:**
+`load_dotenv` runs at bot START (PID 927 up since 08-15 15:21:26), so the keys reach nothing until a
+restart — the same actuator `restart.sh` cannot perform (1403z) and `safe-restart.sh` is unsanctioned.
+Step 1 (revoke) still gates everything and is still with the user.
+**⚠️ Do not re-quote 2112z's "7 files = #11's exposure set":** api.telegram.org users = 7 scripts,
+credential-holders = 5 scripts, both = 4. `cleanpro_daily_runner.py`, `echo_daily_runner.py`,
+`mangii_daily_runner.py` hold nothing to rotate. This row's own 5-script list was right; 2112z drifted.
+
 **Transferable, and it is why this sat unseen through 488+ auto-commits: `git remote -v` names a
 URL, not an AUDIENCE.** Before making anything more tracked — or trusting anything already tracked —
 resolve the destination's visibility. ⚠️ And pass `owner/name` explicitly: bare `gh repo view`

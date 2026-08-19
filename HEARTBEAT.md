@@ -498,6 +498,26 @@ General: **a return value truncated for presentation and then dropped is dead in
 a value nobody reads marks a delivery path that was removed or never finished**, and it is the tell
 that found this. Ev: `memory/t0/2026-08-20/heartbeat-2112z.md`.
 
+⛔ **QUEUE #11's BLOCKER IS A MISSING *NAME*, NOT MISSING MACHINERY — THE ENV HATCH IS ALREADY WIRED
+END TO END AND HAS BEEN ALL ALONG** (2026-08-20 05:0x ICT, 2205z, four links each checked). 0634z's
+*"stripping the hardcoded defaults BEFORE they provision env vars breaks every alert job"* implies a
+provisioning project; there is none. `bot/config.py:11,17` `load_dotenv(SCRIPT_DIR / ".env")` (the repo's
+ONLY dotenv loader) → `bot/app.py:20` imports it, so PID 927's `os.environ` carries `.env` → **`grep -n
+"env=" bot/scheduler.py` is EMPTY**, so every script job inherits it → the scripts already read
+`os.environ.get(NAME, "<literal>")`. Of the **5** names they look up, `.env` defines **1**
+(`TELEGRAM_BOT_TOKEN`); `AAA_BOT_TOKEN`, `AAA_CHAT_ID`, `SILPHO_BOT_TOKEN`, `SILPHO_CHAT_ID` are absent
+⇒ every one falls through. `.env` is untracked + `.gitignore:2` ⇒ safe destination on this public fork.
+⚠️ **NECESSARY, NOT SUFFICIENT — do NOT report #11 as one edit away:** `load_dotenv` runs at bot START
+(PID 927 up since 08-15 15:21:26), so new keys reach nothing until a restart, the same actuator
+`restart.sh` cannot perform (1403z) and `safe-restart.sh` is unsanctioned. §1's re-read rule, third site.
+⛔ **And 2112z's exposure set is WRONG: api.telegram.org users = 7, credential-holders = 5, both = 4.**
+`cleanpro_daily_runner.py`/`echo_daily_runner.py`/`mangii_daily_runner.py` hold nothing to rotate.
+**RULE: when a finding names a blocker, ask whether it is missing MACHINERY or a missing NAME — "not
+provisioned" reads like the former and is usually the latter, because every probe of the MECHANISM comes
+back healthy while the two ends drift apart on a string nobody diffs. And a credential exposure is a
+property of files that HOLD the credential, never of files that USE the capability.**
+Ev: `memory/t0/2026-08-20/heartbeat-2205z.md`.
+
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
