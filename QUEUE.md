@@ -583,6 +583,14 @@ files / 12 MB** of daily logs, app metrics and revenue figures to an anonymously
 Take option 2 or 3. **A hazard stated as a conditional is not a hazard priced — resolve the
 antecedent in the same cycle you write it, it is one `gh api` call.**
 
+⛔ **AND ITS PRODUCTION RATE IS UNOBSERVABLE, NOT MERELY UNVERIFIED** (2112z). The 60.4/56.3/52.5 %
+figures above are a **backtest**; `infra.log` has **841** `Running job: cleanpro-alerts` lines and
+**zero** of this runner's stdout — `grep -c` returns 0 for `No anomalies detected. paywall_shown`,
+0 for `💰 CONVERSION`, 0 for `TELEGRAM_SENT_OK`. `_run_script` returns `stdout[-500:]` and
+APScheduler discards it (see #11's note). **Do not multiply the backtest rate by slot count to state
+how many alerts the user received — no local instrument can confirm one.** Fixing #11's delivery
+asymmetry makes this measurable as a side effect.
+
 ## 11. Two LIVE bot tokens are published on a PUBLIC repo — 11 tracked files, ~4 months
 
 **Where:** `scripts/{cleanpro_alerts_runner,cleanpro_experiment_monitor,daily_report_common,
@@ -614,6 +622,30 @@ resolved to the **upstream** (`remote.upstream.gh-resolved = base`), not origin,
 from filing "the repo was transferred to another account."
 
 Evidence: `memory/t0/2026-08-18/heartbeat-0634z.md`.
+
+⛔ **STEP 2 IS THE WRONG REPAIR — THE TOKENS ARE INLINE BECAUSE THE SCHEDULER GIVES SCRIPT JOBS NO
+WAY TO SPEAK, SO ENV VARS KEEP THE LEAK'S CAUSE AND ADD SEVEN SECRETS TO PROVISION** (2112z).
+`bot/scheduler.py:182-187` already has the delivery path: `delivery = job.get("delivery", {})` →
+`announce` → `send_rendered_bot`, using **the bot's own credential**, no token in any script.
+`delivery` is a plain per-job key any job could carry — **but the block is inside `_run_prompt`, and
+`_run_script` (108-129) never reads it.** `grep -n announce bot/scheduler.py` ⇒ 5 lines, all 181–189.
+The config is **8 script jobs to 3 prompt jobs**, and the three prompt jobs are the weeklies +
+`weekly-conjecture`: **every ALERTING job is a script job, i.e. exactly the set locked out.** Hence
+`grep -c api.telegram.org scripts/*.py` ⇒ **7 files** (4 of them defining their own `send_telegram`)
+— this row's exposure set, reimplemented seven times as a workaround.
+
+**Revised order: (1) revoke, unchanged and still the only step that closes the 4-month exposure;
+(2) lift the `delivery.announce` block out of `_run_prompt` into `_run_job` so both types get it, add
+`delivery.announce` to the alert jobs, then DELETE `send_telegram` and the token from all 7 scripts —
+no env var needed anywhere.** Step 2 as written is still safe to fall back on, but it provisions
+seven secrets to preserve a duplication that should not exist. Free side effect: an announced result
+is a logged result, which closes the blind spot under #3.
+
+**Transferable: when N components each reimplement one capability, find the single place that offers
+it CONDITIONALLY — the duplication is a workaround for an access asymmetry, not N authorship
+decisions. And you cannot price a credential exposure until you know what the credential is doing
+there; rotation alone re-creates it on the next runner someone writes.**
+Evidence: `memory/t0/2026-08-20/heartbeat-2112z.md`.
 
 ## 12. `Read HEARTBEAT.md` returns 20 % of the file, and all four checks are in the other 80 %
 
