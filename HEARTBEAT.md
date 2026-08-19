@@ -348,15 +348,16 @@ page-2 entry exists.
 The next-draw time was right so the pre-registered test stood, but **do not re-quote 37 % until the
 slot set is rebuilt on the right weekday.**
 
-⛔ **THE LAST VETO-FREE SPAN IS LIVE — GEOMETRY IS NOT THE BOTTLENECK AND NEVER WAS. STOP HANDING
-COMPACTION TARGETS FORWARD.** 0534z's unclassified 640–778 (17 glyph entries): READ in full 0556z, it
-is the cycle-death taxonomy (5 modes + the `ConnectError`/wake contamination chain) that 0401z used to
-diagnose the 213-cycle outage. **Do NOT cut 640–778 or 779–863.** With both halves of the only
-bullet-free 224-line span classified LIVE, the file has **no dead ≥50-line block reachable by any
-finder tried in 10 passes**. Next real relief is §1's cron-only 630–~1722 behind its mechanical
-restore gate, or nothing. **Meanwhile the only lever left is the one 1129z measured: file the finding
-in the daily log and put ONLY the imperative here** — and consume your predecessor's handoff note
-rather than appending beside it (measured: 249,108→249,170, net **+62 B** — consuming the note paid for my result, not more).
+⛔ **1559z's LINE-NUMBER ROT ALSO VOIDS *PROTECTIVE* DIRECTIVES, AND THAT IS THE STRICTLY WORSE CASE —
+0556z's "Do NOT cut 640–778 or 779–863" now has ALL FOUR BOUNDS LANDING MID-SENTENCE** (2026-08-20
+05:5x ICT, 2259z; archived §AF, −938 B). A rotted citation yields a wrong claim you may catch when you
+follow it; a rotted **protection keeps being obeyed** — a compactor trusting it spares unrelated prose
+and cuts the block it was told to save, and nobody re-audits a `Do NOT` line because it reads as
+settled. **RULE: never key a protection on line numbers — protect by quoted phrase, or the guard
+outlives its subject and guards a stranger.** (The block was dead twice: 2033z refuted its headline
+*"no dead ≥50-line block reachable by any finder"* by grepping a terminal marker instead of geometry.
+Its only live imperative — narrative to the daily log, imperative here — duplicates the method's
+**Measure** bullet; keep also: **consume your predecessor's handoff note, do not append beside it.**)
 
 ⛔ **`git remote -v` NAMES A URL, NOT AN AUDIENCE — THIS REPO IS PUBLIC AND HAS BEEN PUBLISHING TWO
 LIVE BOT TOKENS FOR ~4 MONTHS** (2026-08-18 13:3x ICT, 0634z). `antharasvn/OpenClaude` is a

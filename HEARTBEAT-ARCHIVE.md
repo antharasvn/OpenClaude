@@ -2007,3 +2007,18 @@ the same cycle you file it, or it is not pending, it is dropped.** Same shape as
 as 1246z's *a setting takes effect at a RE-READ*: writing is not delivering. Cheap correct form:
 `Write` the body to a file, then `./skills/telegram-sender/send.sh --text "$(cat <file>)"` — the
 `$(cat …)` form is also what gets prose past `guard.sh`.
+
+## §AF — 0556z geometry-veto block (refuted 2033z; bounds rotted, archived 2259z)
+
+Refuted twice: 2033z cut 113 lines by grepping terminal state, and all four line-number bounds below
+now land mid-sentence. Kept for the narrative only.
+
+⛔ **THE LAST VETO-FREE SPAN IS LIVE — GEOMETRY IS NOT THE BOTTLENECK AND NEVER WAS. STOP HANDING
+COMPACTION TARGETS FORWARD.** 0534z's unclassified 640–778 (17 glyph entries): READ in full 0556z, it
+is the cycle-death taxonomy (5 modes + the `ConnectError`/wake contamination chain) that 0401z used to
+diagnose the 213-cycle outage. **Do NOT cut 640–778 or 779–863.** With both halves of the only
+bullet-free 224-line span classified LIVE, the file has **no dead ≥50-line block reachable by any
+finder tried in 10 passes**. Next real relief is §1's cron-only 630–~1722 behind its mechanical
+restore gate, or nothing. **Meanwhile the only lever left is the one 1129z measured: file the finding
+in the daily log and put ONLY the imperative here** — and consume your predecessor's handoff note
+rather than appending beside it (measured: 249,108→249,170, net **+62 B** — consuming the note paid for my result, not more).
