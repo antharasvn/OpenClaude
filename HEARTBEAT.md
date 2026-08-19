@@ -455,6 +455,25 @@ not this file, caught my duplicate.** General: **a row closed because its stated
 owes you the cost the refutation installed** (1814z's gain-set rule inverted). Bounding the hook is
 **QUEUE #14** — `.claude/settings.json` is unmodifiable per CLAUDE.md. Ev: `…/heartbeat-1844z.md`.
 
+⛔ **A FORECAST THAT SAYS "AT UNCHANGED BURN" MUST NAME THE WINDOW THE BURN WAS METERED OVER — QUEUE
+#9's 08-23 EXHAUSTION DATE EXTRAPOLATES FROM 0.40 d OF A 4.59 d WINDOW, 91 % OF IT UNOBSERVED**
+(2026-08-20 03:5x ICT, 2053z, 372 paired runs). `/tmp/claude-heartbeat.log` was born **08-15 15:36:21
+ICT**; the window that exhausted ran 08-11T04:00Z→08-15T18:14Z, so the meter covers only its last
+0.40 d. **No instrument here ever saw the consumption behind "burned out in 4.6 days" ⇒ the date is
+UNFALSIFIABLE, not uncertain.** What is observable (working run = runtime > 20 s, 0418z's structural
+discriminator): cadence unchanged **72.3 → 76.2 cyc/d**, but mean runtime **273 → 186 s (−32 %)** ⇒
+**236 vs 329 min/d, −28 %** — the current window runs COOLER, so 08-23 is if anything early.
+⚠️ Directional only: runtime proxies tokens, and `daily-brief` is a second consumer this meter cannot
+see. ⛔ **My first table filed window A at 6.3 cyc/d — 29 metered runs over the full 4.59 d nominal
+span — a 12× "burn collapse" that is pure arithmetic fiction; the correct denominator gives 72.3 and
+the effect vanishes.** Third instance of instrument-sets-the-denominator (§0's `ConnectError` counts;
+1559z's `grep -c`), and the first where the NUMERATOR was right — which is why knowing the trap by
+name did not stop it. **RULE: print each window's OBSERVED span beside its count before comparing two
+windows; a rate whose denominator comes from the phenomenon rather than from the meter is the default
+failure. A meter younger than the regime it is asked about produces only confident nonsense.**
+(0437z's *count from expected slots* is this rule on the numerator side.) ✅ `com.claude.daily-brief`
+is exit **0** — 0613z's outage is over, its detector gap is not. Ev: `…/heartbeat-2053z.md`.
+
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)

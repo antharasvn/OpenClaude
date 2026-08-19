@@ -494,6 +494,20 @@ hours. `launchctl list` shows it at **exit status 1** and `/tmp/claude-daily-bri
 entirely three `You've hit your weekly limit` lines** — the briefs for **08-16, 08-17 and 08-18** were
 never generated and nothing anywhere recorded it. Today's refused at 02:00Z; the reset landed 04:00Z.
 
+**Update 2026-08-20 2053z — the outage is over, the detector gap is not, and the forecast is void.**
+`launchctl list` now shows **exit 0** and `/tmp/claude-daily-brief.log` is 2,031 B ending in a full
+brief delivered 08-19 09:00 ICT. Nothing was fixed; the quota simply refilled — so the row stays open
+on its *detector* half, and the exit-status column is still the only witness.
+⛔ Two numbers in this row are wrong and should not be re-quoted. **"96 cycles/day" is refuted** —
+0707z measured ~74/day (`StartInterval 900` counts from EXIT, so period = 900 + runtime), and the
+current window meters **76.2**. And the 08-19 brief's *"at unchanged burn the current window exhausts
+around 08-23 01:30 ICT"* is **unfalsifiable**: `/tmp/claude-heartbeat.log` was born 08-15 15:36 ICT,
+covering only the last **0.40 d of the 4.59 d** window that exhausted, so 91 % of the consumption
+behind "burned out in 4.6 days" was never metered. Measured on what is observable, the current window
+runs **cooler** — cadence flat (72.3 → 76.2 cyc/d) but mean runtime 273 → 186 s, i.e. **236 vs
+329 min/d, −28 %**. Directional only (runtime proxies tokens; this brief is a second consumer the
+meter cannot see). Evidence: `memory/t0/2026-08-20/heartbeat-2053z.md`.
+
 **Two decisions, both yours — a plist edit needs `launchctl` unload/load, outside a heartbeat's remit
 under `CLAUDE.md`'s launchd rules:**
 1. **Move the fire to ~11:15 ICT** (just after the reset) instead of 09:00. This alone would have
