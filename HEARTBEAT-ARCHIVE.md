@@ -1766,3 +1766,32 @@ declines. Whole-cycle truth including this note (+1,314 B, **20 %** of the recov
 - **Never promise "the next cycle starts at completion + 15 min" outside a sleep-exclusion window** —
   state reach as a range and prefer retroactive settlement. In a sleep-cycling regime the heartbeat
   fleet's reach for FUTURE time degrades in lockstep with the cron scheduler.
+
+## §Z — the §1 archive-licence and restore-gate entries (header, archived 2026-08-20 1823z; gate EXECUTED that cycle, imperatives compressed in place)
+
+⛔ **THE "LARGEST DORMANT BLOCK" LICENCE IS DEAD — its bounds were never re-measured and the ⛔ below
+VETOES the archive it licensed.** It cited *"§1 is lines 630–1925 = 1,296 of 2,450 (53 %)"*; §1 is
+**898–2109 = 1,212 of 2,669 (45 %)**, and 630 lands 268 lines inside §0 (1214z). Survivors: a §1
+restore gate must be MECHANICAL (read the PROCESS, not the config), and **never inherit an archive
+target from a cycle that has not READ the block** — nine passes moved §1, none moved its bounds.
+⛔ **"0 OF 14 JOBS ARE ENABLED" IS A FACT ABOUT A FILE, NOT ABOUT THE RUNNING SYSTEM, AND THE §1
+ARCHIVE IT LICENSES IS VETOED — §1 IS FULLY LIVE** (2026-08-15 19:3x ICT, 1227z). `cron/jobs.json`
+had all 14 `enabled: false` at **17:50 ICT** ⛔ **(STALE — held 2 h 17 min; 08-19 file is
+11 jobs/3 enabled, 3 alert jobs DELETED, restart delta 14→3 — 1118z)**, but
+`bot/scheduler.py:36` reads that flag **only inside `start()`**, and the live scheduler logged
+`Cron scheduler started with 14 jobs` at **15:21:46** — EARLIER, so no edit since has ever been
+loaded; `logs/infra.log` has **zero** `Skipping disabled job` lines, ever. **The restore gate must read the PROCESS,
+not the config: `grep "Cron scheduler started with" logs/infra.log | tail -1` against `cron/jobs.json`'s
+mtime — a config newer than the last scheduler start is a WISH, not a regime.** Transferable, and it is
+§0's hand-the-tick-not-a-threshold rule in a second place: **a setting takes effect at a RE-READ, so
+every "X is off" claim needs the timestamp of the last load beside it or it is unfalsifiable.**
+⛔ **AND THE UNLOADED EDIT IS NOT ONE EDIT — IT IS A STACK, SO RE-DIFF THE FILE IMMEDIATELY BEFORE
+YOU RESTART** (2026-08-15 19:4x ICT, 1246z). `cron/jobs.json` mtime **19:39:32**, seven minutes into
+the next cycle's past: three jobs (`echo-daily`, `vidnotes-daily`, `cleanpro-daily`) flipped back to
+`true` by an interactive chat edit (`infra.log` finalizes a Telegram stream at 19:39:38). The five ids
+that have actually fired since the 15:21:46 start are **disjoint** from the three the config now
+enables. **A deferred restart applies the file's state AT RESTART, never the state you reasoned
+about** — so never say "the pending change" in the singular without its mtime. ✅ Free corroboration
+that the instrument is sound: `Skipping disabled job:` occurs **166×** in `infra.log` but last on
+**2026-07-02** — the logger works, so today's zero is evidence of no re-read, not a mute log. **Prove
+your silence-based claim's instrument has spoken before, or the silence means nothing.**

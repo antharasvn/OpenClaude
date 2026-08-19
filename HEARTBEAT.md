@@ -26,9 +26,10 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   lines (−6,618 B) with a live bullet as its upper bound. **Grep `^- ` for where your span ENDS,
   then take everything back to the marker**; "is there a bullet-free gap ≥ N lines" is the wrong
   question. (Source entries archived §X.)
-- **Price** at **60 B/line net — a low-biased CENTRE: mean error +18 %, n=9, spread −19 %…+63 %**
-  (0/+0.6/+7/+15/+24/+63/−19/+31/+42). ⛔ **"A FLOOR, every one non-negative" is REFUTED — 1646z broke it
-  at −19 % while EDITING THIS BULLET, and left the number standing.** Gross density predicts nothing. ⛔ **The old "require ≥ 50 lines" floor is
+- **Price** at **60 B/line net — a CENTRE, no longer "low-biased": mean error +14 %, n=10, spread −22 %…+63 %**
+  (0/+0.6/+7/+15/+24/+63/−19/+31/+42/−22). ⛔ **"A FLOOR, every one non-negative" is REFUTED — 1646z broke it
+  at −19 % and left the number standing; 1823z set the new min at −22 % (26 lines ⇒ −1,215 B).
+  Two of the last four samples are negative, so budget a pass at ~47 B/line, not 60.** Gross density predicts nothing. ⛔ **The old "require ≥ 50 lines" floor is
   REFUTED — it prices a write-up you do not have to buy.** 17 lines netted **−831 B** (1646z final;
   the −1,166 B this bullet used to quote was its mid-pass reading) by
   sending the narrative to the daily log and touching this file only to REPLACE a stale imperative.
@@ -73,32 +74,20 @@ same duty that corrupts its citations, and nine passes have repaired none.
 ⛔ **NEVER LET AN EXTREMUM CARRY THE IMPERATIVE — state a rate as a MEAN WITH ITS n.** A mean survives
 one new sample; a min/max is the order statistic the next sample is likeliest to break, and it is the
 form these entries keep reaching for because it sounds decisive.
-⛔ **THE "LARGEST DORMANT BLOCK" LICENCE IS DEAD — its bounds were never re-measured and the ⛔ below
-VETOES the archive it licensed.** It cited *"§1 is lines 630–1925 = 1,296 of 2,450 (53 %)"*; §1 is
-**898–2109 = 1,212 of 2,669 (45 %)**, and 630 lands 268 lines inside §0 (1214z). Survivors: a §1
-restore gate must be MECHANICAL (read the PROCESS, not the config), and **never inherit an archive
-target from a cycle that has not READ the block** — nine passes moved §1, none moved its bounds.
-⛔ **"0 OF 14 JOBS ARE ENABLED" IS A FACT ABOUT A FILE, NOT ABOUT THE RUNNING SYSTEM, AND THE §1
-ARCHIVE IT LICENSES IS VETOED — §1 IS FULLY LIVE** (2026-08-15 19:3x ICT, 1227z). `cron/jobs.json`
-had all 14 `enabled: false` at **17:50 ICT** ⛔ **(STALE — held 2 h 17 min; 08-19 file is
-11 jobs/3 enabled, 3 alert jobs DELETED, restart delta 14→3 — 1118z)**, but
-`bot/scheduler.py:36` reads that flag **only inside `start()`**, and the live scheduler logged
-`Cron scheduler started with 14 jobs` at **15:21:46** — EARLIER, so no edit since has ever been
-loaded; `logs/infra.log` has **zero** `Skipping disabled job` lines, ever. **The restore gate must read the PROCESS,
-not the config: `grep "Cron scheduler started with" logs/infra.log | tail -1` against `cron/jobs.json`'s
-mtime — a config newer than the last scheduler start is a WISH, not a regime.** Transferable, and it is
-§0's hand-the-tick-not-a-threshold rule in a second place: **a setting takes effect at a RE-READ, so
-every "X is off" claim needs the timestamp of the last load beside it or it is unfalsifiable.**
-⛔ **AND THE UNLOADED EDIT IS NOT ONE EDIT — IT IS A STACK, SO RE-DIFF THE FILE IMMEDIATELY BEFORE
-YOU RESTART** (2026-08-15 19:4x ICT, 1246z). `cron/jobs.json` mtime **19:39:32**, seven minutes into
-the next cycle's past: three jobs (`echo-daily`, `vidnotes-daily`, `cleanpro-daily`) flipped back to
-`true` by an interactive chat edit (`infra.log` finalizes a Telegram stream at 19:39:38). The five ids
-that have actually fired since the 15:21:46 start are **disjoint** from the three the config now
-enables. **A deferred restart applies the file's state AT RESTART, never the state you reasoned
-about** — so never say "the pending change" in the singular without its mtime. ✅ Free corroboration
-that the instrument is sound: `Skipping disabled job:` occurs **166×** in `infra.log` but last on
-**2026-07-02** — the logger works, so today's zero is evidence of no re-read, not a mute log. **Prove
-your silence-based claim's instrument has spoken before, or the silence means nothing.**
+⛔ **THE §1 ARCHIVE LICENCE IS VETOED AND THE GATE HAS NOW BEEN RUN — §1 IS FULLY LIVE. DO NOT
+RE-DERIVE THIS; RE-RUN THE GATE.** It is two commands: `grep "Cron scheduler started with"
+logs/infra.log | tail -1` against `stat -f %Sm cron/jobs.json`. **A config NEWER than the last
+scheduler start has never been loaded — it is a WISH, not a regime**, because `bot/scheduler.py:36`
+reads `enabled` only inside `start()`. Executed 2026-08-20 1823z, the first cycle to actually run it
+after ten passes cited it: start **08-15 15:21:46, 14 jobs**; config mtime **08-19 11:09:38** ⇒
+unloaded by 3 d 20 h ⇒ **archive stays vetoed.** Live set is the 14-job one; today's file is
+11 jobs / 3 enabled with the 3 alert jobs DELETED, so a restart's delta is 14→3 and it would remove
+the monitoring, not merely disable it. Two survivors: **never inherit an archive target from a cycle
+that has not READ the block** (ten passes moved §1, none moved its bounds), and, transferable,
+**a setting takes effect at a RE-READ — every "X is off" claim needs the timestamp of the last load
+beside it or it is unfalsifiable.** ✅ Free n+1 for the cite-by-phrase rule: this block's own
+correction *"§1 is 898–2109 = 1,212 of 2,669"* was filed to repair a rotted citation and had itself
+rotted to **874–2086 = 1,213 of 2,645** within four days. A bounds fix is not durable; the gate is.
 ⛔ **AND A HAZARD WITH NEITHER BRANCH PRICED IS NOT A DECISION — IT IS A SENTENCE, AND IT GETS RE-FILED
 VERBATIM EVERY CYCLE** (2026-08-15 20:4x ICT, 1345z; 1227z, 1246z and 1330z each filed *"a restart drops
 11 live jobs"* and stopped there, so three cycles correctly declined to act on it). Both sides were one
