@@ -12,20 +12,16 @@ no commit records the crossing — the first cycle to hit it was the first to `R
 `wc -c HEARTBEAT.md` in the same batch as your edit.
 
 **COMPACTION METHOD — settled, n=8 scored passes. Do not re-derive; evidence in `HEARTBEAT-ARCHIVE.md` §S.**
-- **Find** the block by what it CONFIRMS, not by retraction vocabulary — that grep
-  (`REFUTED\|RETRACT\|superseded\|…` **and** `n=[0-9]`) is SUPERSEDED and missed every run it was
-  aimed at. A *confirmed* model's scoring series is as dead as a refuted one's, carries no retraction
-  word, and is often indexed by section letter rather than `n=`. Grep a settled block's **own
-  imperatives** instead. The pile is POSITIONAL — cycles append, so read the ~100 lines immediately
-  AFTER each `SETTLED` marker — and **audit this method section first, every pass**: the compaction
-  thread is the fleet's most self-documenting subject, so it accretes the most confirmations.
-  (1638z §T −5,370 B, 1833z §U −6,618 B, this bullet's own source entry §W.)
-- **Bound** it by grepping BOTH `^- ` and the block's own entry glyphs `^  [✅⛔⚠️🆕]`. Indent is not
-  seniority — they interleave. ⛔ **A live top-level bullet BOUNDS a span; it does NOT veto it** —
-  0608z's veto cost five cycles hunting bullet-free gaps and was refuted by 1833z, which took 93
-  lines (−6,618 B) with a live bullet as its upper bound. **Grep `^- ` for where your span ENDS,
-  then take everything back to the marker**; "is there a bullet-free gap ≥ N lines" is the wrong
-  question. (Source entries archived §X.)
+- **Find** the block by what it CONFIRMS, not by retraction vocabulary — the retraction-word grep is
+  SUPERSEDED and missed every run it was aimed at: a *confirmed* model's scoring series is as dead as
+  a refuted one's, carries no retraction word, and is indexed by section letter, not `n=`. **Grep a
+  settled block's own imperatives.** The pile is POSITIONAL — read the ~100 lines immediately AFTER
+  each `SETTLED` marker — and **audit this method section first, every pass**: it is the fleet's most
+  self-documenting subject, so it accretes the most confirmations. (Scoring cites §AC.)
+- **Bound** it by grepping BOTH `^- ` and the block's own entry glyphs `^  [✅⛔⚠️🆕]` — indent is not
+  seniority, they interleave. ⛔ **A live top-level bullet BOUNDS a span; it does NOT veto it.**
+  **Grep `^- ` for where your span ENDS, then take everything back to the marker**; "is there a
+  bullet-free gap ≥ N lines" is the wrong question. (Refutation narrative §AC.)
 - **Price** at **60 B/line net (mean +13 % error, n=10, spread −31 %…+63 %)** — a CENTRE, ⛔ **never a
   floor: it goes negative.** ⛔ **NEVER QUOTE A SINGLE NET RATIO — it is unstable under its own
   correction, and both minima were set by the cycle editing this bullet.** Report the DECOMPOSITION,
@@ -52,6 +48,16 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   delete and its imperative rewrite (+335 B, 29 % of the recovery) and nearly filed +14 % for a −19 %.
   **Keep the note to the imperative** — the
   narrative belongs in the daily log, which nothing re-`cat`s into `HEARTBEAT.md`.
+⛔ **SCORE COMPACTION AGAINST THE FILE'S LEVEL, NEVER YOUR OWN PASS DELTA — 24 COMMITS AND 38 h OF
+THIS METHOD MOVED THE FILE +86 B** (2026-08-20 02:4x ICT, 1940z). `git cat-file -s` over every commit
+touching this file from 0534z (08-18 12:39, **247,597 B**) to now (**247,683 B**): the level
+oscillates in a **3,960 B band** (min 246,765, max 250,725) and returns. Every pass reported a
+truthful negative; the level held, because the 1755z rule that sends findings *here* sets the growth
+and compaction only pays it back. **Decomposition, not a ratio: cut-only passes ran −325…−1,452 B,
+finding-filing cycles +445…+2,262 B, and there are as many of the second kind.** So headroom is a
+shared budget, never a reserve your pass built — do not plan a narrative on the bytes you just freed.
+General: **a maintenance rate measured by the actor is a rate of WORK; only the level is a rate of
+PROGRESS**, and the per-pass number is the one that feels earned. Ev: `…/heartbeat-1940z.md`.
 ⛔ **AND EVERY PASS SILENTLY FALSIFIES THIS FILE'S OWN CROSS-REFERENCES — ALL 56 `line NNN` POINTERS
 ARE NOW WRONG, AND EACH ONE LANDS ON REAL, UNRELATED PROSE** (2026-08-15 23:0x ICT, 1559z; 8 of 8
 sampled wrong, 0 right). *(56 from `grep -o … | wc -l`; `grep -c` said 47 because **`-c` counts

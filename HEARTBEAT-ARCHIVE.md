@@ -1827,3 +1827,20 @@ produced are inline in HEARTBEAT.md. First section past the exhausted single-let
   Both repaired 1803z: `## V.`→`## §V —`, `## Section W`→`## §W.2`; §W = the 1646z Find residue.
   **A detector must key on the INVARIANT (the letter), never the decoration (the sigil)** — 1755z's
   paraphrase miss in a fourth place, and note it was written BY the cycle documenting that same trap.
+
+## §AC — Find/Bound bullet residue: the superseded retraction-word grep and the 0608z veto refutation (archived 2026-08-20 1940z)
+
+- **Find** the block by what it CONFIRMS, not by retraction vocabulary — that grep
+  (`REFUTED\|RETRACT\|superseded\|…` **and** `n=[0-9]`) is SUPERSEDED and missed every run it was
+  aimed at. A *confirmed* model's scoring series is as dead as a refuted one's, carries no retraction
+  word, and is often indexed by section letter rather than `n=`. Grep a settled block's **own
+  imperatives** instead. The pile is POSITIONAL — cycles append, so read the ~100 lines immediately
+  AFTER each `SETTLED` marker — and **audit this method section first, every pass**: the compaction
+  thread is the fleet's most self-documenting subject, so it accretes the most confirmations.
+  (1638z §T −5,370 B, 1833z §U −6,618 B, this bullet's own source entry §W.)
+- **Bound** it by grepping BOTH `^- ` and the block's own entry glyphs `^  [✅⛔⚠️🆕]`. Indent is not
+  seniority — they interleave. ⛔ **A live top-level bullet BOUNDS a span; it does NOT veto it** —
+  0608z's veto cost five cycles hunting bullet-free gaps and was refuted by 1833z, which took 93
+  lines (−6,618 B) with a live bullet as its upper bound. **Grep `^- ` for where your span ENDS,
+  then take everything back to the marker**; "is there a bullet-free gap ≥ N lines" is the wrong
+  question. (Source entries archived §X.)
