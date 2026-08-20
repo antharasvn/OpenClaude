@@ -513,6 +513,16 @@ a claim about a PROCESS — never escalate it to one about the destination.**
 backoff retries — gaps 1,1,2,4,5,7,12,17,26,30,30 s. So 0514z's *"nine `ConnectError` lines"* is
 very likely n=1: its MECHANISM holds (first error 2 s after the 09:29:38 DarkWake), its COUNT does
 not. 2053z's denominator rule, on a numerator the client's retry policy generates.
+✅ **RUN OVER THE WHOLE LOG (1105z): 6,884 stamped lines = 537 EPISODES, mean 12.8 lines each ⇒ any
+`grep -c` incident count is ~13× HIGH. And the line count is a CLOCK, not a count** — every episode
+>20 min in the 05-11→06-04 era sits at **2.00–2.04 lines/min** (n=10, durations 25–173 min), i.e. the
+30 s backoff cap emitting 2 lines/min for as long as the outage lasts; later ones drift to 1.15–1.85,
+always a cadence, never a failure count. **RULE: when a client logs one line per RETRY, only episode
+COUNT and episode DURATION are honest numbers.** Honest totals: **47.8 h inside an episode of a
+3,129 h span (1.5 %)**; per month 5/88/239/170/35 — **falling**; last 30 d 132 episodes / 389 min.
+⛔ **The 8 longest (91–173 min) are ALL 05-11/05-12 — one ~20 h night, an EPISODE not a population**
+(0016z's thermal row, second instance: **check whether a tail row's members share a DATE before it
+becomes a rate**). Ev: `…/heartbeat-1105z-connecterror-is-a-clock.md`.
 ⛔ **And the free lid-detector it suggests is REFUTED BY ITS OWN SILENCE:** the identical DarkWake
 duty cycle ran through 09:32:56+ with zero errors. **RULE: check a candidate detector against the
 stretch where it stayed SILENT, not only where it fired.**
