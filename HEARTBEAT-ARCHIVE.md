@@ -2299,3 +2299,167 @@ corpse rather than marking it.
 > line 2320" — a `HEARTBEAT.md:NNNN` self-cite, exactly what §1 forbids, and it had already rotted
 > before the archival moved it.)*
 
+
+## §AU — assertion-forensics family, retired by 0016z (lid is a COMMAND, not a holder)
+
+Moved from HEARTBEAT.md 2026-08-20 1449z. 157 lines of pmset -g assertions prediction/exclusion
+machinery. Retired because 0016z measured the LID as the majority sleep driver and assertions
+cannot see a command. Preserved verbatim for the id-test and timeout-semantics derivations.
+
+- **Keep-awake source is NOT always the display.** Six cycles ran clean on a display-on assertion; the
+  00:37 ICT cycle ran clean on transient `dasd` BackgroundTask assertions (Spotlight indexing) with the
+  display off. Read `pmset -g assertions` for *which* hold is active before predicting the next slot —
+  a `dasd` hold is *sizeable but unbounded*, a display hold is not. And per memory §504, check the
+  listed owner: a heartbeat's own `caffeinate` is not host health.
+  ⛔ **AGE-SORTING FINDS CANDIDATES, NOT CAUSES — never name a root hold from the assertion list
+  alone.** Two prescriptions were built on age-sorting and BOTH were refuted within the hour
+  (`HEARTBEAT-ARCHIVE.md` §L.2): "powerd is downstream of the display-on holder" died when powerd's
+  hold **outlived** the holder it was supposedly downstream of, and "bound your prediction by that
+  process's life" died because the holder **released without exiting**. The real root was a third
+  process nobody had ranked. Three rules survive:
+  **(a) Confirm a root hold only by seeing it OUTLIVE another hold's release** — outliving is the
+  test; being oldest is not.
+  **(b) Never bound a prediction by an owner process's LIFE.** A process releases its assertion and
+  keeps running; liveness and holding are independent facts (see §L).
+  **(c) A `dasd` batch is NOT short-lived** (measured 26 / 40 / 55+ min, later ≈65) — age the holds
+  in `pmset -g assertions`, treat every release time as unpredictable rather than imminent, and never
+  schedule against one in either direction.
+- **Read `pmset -g custom` too — assertions say WHAT holds the host awake, the timers say FOR HOW
+  LONG** (added 2026-08-09 06:21 ICT; never read by any prior cycle). Measured on this host:
+  `displaysleep 10`, `sleep 1`, identical on AC and Battery. So powerd's "Prevent sleep while display
+  is on" — which §1 above calls open-ended — is really a **10-minute countdown re-armed by every HID
+  event**, and since `sleep 1` has long expired by then, system sleep follows within ~1 min of the
+  display going dark. Date the last HID event from the `UserIsActive` row's age in
+  `pmset -g assertions` (or its `Timeout will fire in N secs`), then predict sleep onset at
+  last_tickle + ~11 min. What is unbounded is the *user*, not the assertion. This also explains the
+  05:42 paradox above: `PreventUserIdleDisplaySleep` can read **0** while powerd's hold stands,
+  because powerd tracks the display's *power state*, not the assertion count. Confidence moderate,
+  n=0 — the timers are measured, the chain is inferred. Confirm it for free on any cycle that sees
+  sleep accrue: the onset is datable to the second from the `getUpdates` polling gap in
+  `/tmp/claude-telegram-bot.err`. A later-than-predicted gap means something re-tickled HID and is
+  **inconclusive, not a refutation**.
+  ⛔ **THE POSITIVE BRANCH OF THIS CHAIN IS RETIRED — DO NOT PREDICT A SLEEP-ONSET INSTANT.** Scored
+  n≥5 across 2026-08-09→08-11: residuals **+258 s / +412 s / no-onset / no-onset / −75…−265 s** — it
+  has now erred in BOTH directions, so it is not a systematic overshoot that a constant could fix.
+  The undershoot is unfixable from disk: nothing makes system sleep precede the display countdown on
+  the powerd chain, so the surviving causes are display-off events outside the idle countdown
+  (manual sleep, lock, hot corner, screensaver, lid) — unmodelled and unobservable here.
+  Evidence, every probe and every scoring: `HEARTBEAT-ARCHIVE.md` §M.
+  ✅ **What survives is the NEGATIVE direction, and it is the only scheduling primitive here: a fresh
+  full-600 s `UserIsActive` tickle EXCLUDES sleep for ~11 min** (display timeout + `sleep 1`).
+  **Read the remainder off the assertion's own `Timeout will fire in N secs` — never compute
+  `last_tickle + 10 min`.** Proving sleep *cannot* happen is reliable; predicting that it *will* is
+  not, because release depends on an unbounded holder. §0 line ~327 is this primitive's live use.
+  ⛔ **Instrument ranking, each with a PRECONDITION that must be checked before it is quoted:
+  `UserIsActive` id (needs S = 0 over the span) > `PreventUserIdleDisplaySleep` count (needs 0 over
+  the span) > powerd's display-on stopwatch (needs count 0 over the span). With S > 0 all three are
+  blind and only §1's meter + `getUpdates` gaps say anything.** When two instruments disagree, the
+  one with an unmet precondition is the wrong one — that rule was derived by falsification, not
+  preference.
+  ⛔ **The two branches of the id test are NOT symmetric.** *Churn* (id changes across probes) is
+  unconditional positive evidence of a ≥600 s HID-idle gap. *Persist* (same id across >600 s) proves
+  a re-tickle **only across a span with S = 0** — `TimeoutActionRelease` counts down on
+  `CLOCK_MONOTONIC` and freezes during sleep, so a persisted id bounds AWAKE time, never wall time,
+  and at S = 1394 s it read exactly backwards (id said HID active; the display had slept).
+  **Record the meter delta beside every `UserIsActive` id reading — a bare id is not a conclusion.**
+  Every confirmation that made the persist branch look solid was measured inside an S = 0 window,
+  the same pattern that hid the missing `+ S` in §0's `completion + 900 s` rule.
+  ✅ **Record the id WITH its age, every probe, and compare IDs rather than ages.** The age field
+  resets on every tickle while the id persists — that is precisely why the id is the instrument and
+  the age is not; and powerd churns its own hold around wake, so equal ages can be different holds.
+  ⛔ **ENUMERATE ALL FOUR CELLS BEFORE SCORING A TWO-INSTRUMENT CHAIN.** The scoring table for this
+  chain listed three (id changed + onset ⇒ confirmed; id unchanged + no onset ⇒ inconclusive; id
+  changed + no onset ⇒ falsification) and the outcome that actually arrived was the **fourth** — id
+  unchanged AND onset — which the rule called impossible. That omission is why the result read as a
+  falsification rather than a fifth inconclusive, and a table missing a cell will always score its
+  own blind spot as a surprise. Transferable past this chain: **the cell you did not write down is
+  the one your rule forbids, and forbidden cells are exactly what a scoring pass exists to catch.**
+  ⚠️ **`sharingd`'s `PreventUserIdleSystemSleep` "Handoff" CHURNS its id — never build a floor on it**
+  (same probe): `0x00010bc600018c27` @ 05:17:20 → `0x00010faf00018cd4` @ 05:37:20 (age 00:04:07 ⇒
+  creation 05:33:13). Two different holds 20 min apart, each a few minutes old. It has a real age so
+  it does not fall under the `bluetoothd` age-00:00:00 discount, but it is transient by the same
+  reasoning as §1's unbounded-holder rule pointed the other way — treat it as neither a floor nor a
+  ceiling. powerd's stopwatch agreed here
+  (`0x0001a361000199b9`, creation 13:14:44/45 at both probes, 135.6 min, count 0 both times), so use it
+  as corroboration, but **record the `UserIsActive` id with its age every probe** — it is one field
+  from one row and it settles the question alone.
+  ✅ **Same id extended to 3812 s (2026-08-09 16:12 ICT), and it survives a mid-span holder arrival.**
+  `0x0001a36700099a6e` still up at 16:12:38 (age 00:01:26, 513 secs left) — 15:09:06 → 16:12:38 on one
+  id, 6.4× its own 600 s timeout, meter flat at 44789.7 throughout. Note the **age field resets on
+  every tickle while the id persists**, which is exactly why the id is the instrument and the age is
+  not. Also a clean illustration of the count-branch closing mid-span: `PreventUserIdleDisplaySleep`
+  read 0 at the 15:09–15:30 probes but **1** at 16:12 (AnyDesk re-created its hold ~15:57:31, with the
+  paired `coreaudiod` `Created for PID: 42666`), so 13:14:45 → 15:57:31 stays re-tickle-**proved** while
+  the segment after it is merely inconclusive. The id test kept working across that transition; the
+  count test did not.
+  ⛔ **`InternalPreventDisplaySleep` / `com.apple.powermanagement.delayDisplayOff` is a SECOND,
+  SHORTER powerd clock — a 300 s re-armed fuse (age + remaining = 300, n=4) — and it is NOT the
+  display countdown. The countdown remainder comes off the `UserIsActive` row only**, which is why
+  one probe can read `21 secs` on this fuse and `569 secs` on `UserIsActive` with no contradiction.
+  Its `TimeoutActionTurnOff` is gated on `PreventUserIdleDisplaySleep` = 0, and **its expiry never
+  touches system sleep — so it can never cost a slot.** Evidence: `HEARTBEAT-ARCHIVE.md` §M.2.
+  ⚠️ **Gotcha with a transferable in it: `pmset` prints this status row only WHILE the hold is up —
+  on expiry the row leaves the block rather than reading 0.** A cycle grepping
+  `InternalPreventDisplaySleep *0` matches nothing and cannot tell "expired" from "never sampled".
+  **Test for a status row's PRESENCE whenever absence is one of its states** — a value-grep silently
+  collapses "gone" and "not looked at" into the same empty result, and empty reads as benign.
+- ⛔ **`Timeout will fire in N secs` on a NON-`UserIsActive` holder is an UPPER bound on that hold's
+  life — it is the WRONG DIRECTION for a sleep-exclusion window, never build a floor from it**
+  (2026-08-11 02:50 ICT). Some `PreventUserIdleSystemSleep` owners carry a real absolute countdown
+  (`AddressBookSourceSync`, n=4 as of 2026-08-10 02:28 ICT: the timeout does **not** re-arm, unlike
+  `UserIsActive` — see the id test above). That makes the timeout a genuine *release* deadline, and it
+  is tempting to read a large N as free exclusion: at 02:46:33 on 08-11, `pid 80238` held one with
+  **1613 secs** remaining, which would appear to guarantee the 03:05:00 slot outright. **It
+  guarantees nothing.** `Timeout will fire in N` says the hold is gone **by** that instant, not that
+  it survives **until** it — the holder may release early, as the 1910z→1928z instance did somewhere
+  in an unresolvable 16 min window. An exclusion window needs a *lower* bound on holder life.
+  **Only `UserIsActive` yields a floor**, because powerd's display-on hold tracks the display
+  countdown and that chain is measured (n=2 exclusion cases above). Treat every other holder as
+  §1's unbounded case even when it prints a number.
+- ⛔ **The sleep-exclusion primitive is UNAVAILABLE when `UserIsActive` = 0 — check for it before
+  leaning on any survival forecast** (2026-08-09 10:05 ICT). The n=2/n=3 exclusion cases both had a
+  fresh full-600 s tickle to lean on. This configuration is the opposite and reads:
+  `UserIsActive` **0**, `PreventUserIdleDisplaySleep` **0**, and powerd's display-on stopwatch
+  (§1's re-tickle instrument) **absent from the owner list**. Its absence *is* the measurement — the
+  display is already off, so the 600 s countdown has expired rather than been re-armed, and there is
+  **no exclusion window at all**. When that happens the chain collapses to
+  **`onset = the remaining unbounded hold's release + ~60 s`** (`sleep 1`), which §1's unbounded-holder
+  rule makes unpredictable in *both* directions. Here the sole remaining hold was `pid 13250`
+  `grok-1.0.0-macos-aarch64` `NoIdleSleepAssertion` "grok: agent turn in progress" — id
+  `0x0001884400018bd5`, creation **09:32:24** derived identically at three probes. **So the whole cron
+  scheduler's survival can rest on one unrelated process's assertion.** A forecast made in this state
+  must be labelled *conditional on that hold*, never asserted. Discount `ExternalMedia` as always (§1).
+  ⛔ **HOLDER-READING RULES — six imperatives distilled from the per-holder series (grok, AnyDesk, the
+  Chrome media/WebRTC class, `sharingd`, `bluetoothd`). Evidence: `HEARTBEAT-ARCHIVE.md` §N.**
+  - **Never use process liveness as a proxy for an assertion still being held — read the assertion.**
+    grok and AnyDesk both release their hold *without exiting* (n=2 independent holder classes), so
+    this is wrong by default, not a quirk.
+  - **Enumerate owner rows by PID, never by assertion name, and never stop at one row.** A holder
+    stacks across processes (two concurrent grok holds at one probe) and can hand off to ITSELF under a
+    different assertion name (Chrome "Video Wake Lock" → "WebRTC has active PeerConnections"), so a
+    disappearing row is not a release and one row understates the postponement.
+  - **Point the id test at `UserIsActive` ONLY.** That row's `TimeoutActionRelease` is what makes a
+    persistent id proof of re-tickle; every other class churns ids while holding continuously (Chrome's
+    triple churned in lockstep, `sharingd`'s Handoff every few minutes), so an id change there is
+    ordinary churn and reading it as a release scores one continuous hold as two short unrelated ones.
+  - **`PreventUserIdleDisplaySleep` does not identify its holder, and is blind in the direction that
+    matters.** The count reads unchanged while the holder swaps (AnyDesk → Chrome), and reads **0**
+    while a *system* hold is up — so it can never establish "no other idle-sleep hold is up", and any
+    onset prediction resting on that precondition is unsound. Read the owner rows, not the status block.
+  - **Only holds with a real age AND an idle-sleep assertion type count.** Discount `bluetoothd`'s
+    age-00:00:00 `com.apple.BTStack` (present through a real onset) and `ExternalMedia` however old
+    (36:54:21 across every sleep of its day) — a long age alone does not make a hold sleep-blocking.
+  - **No holder class has a characteristic length** (grok ~40 min; `dasd` 26 / 40 / 55+), so every
+    non-`UserIsActive` hold stays unbounded in both directions. **Take S from the meter, never from one
+    `getUpdates` gap** — a 32 min gap contained a **20-second** dark wake, unusable by the executor.
+  ✅ The `UserIsActive` = 0 branch above was NAMED IN ADVANCE and then validated by a real onset
+  (2026-08-09 10:47 ICT): state diagnosed correctly, timing correctly called unpredictable. That is the
+  negative-space proof that the exclusion window is what had been protecting the slots that fired clean.
+  ⚠️ **Always read the `Created for PID:` line — a `coreaudiod` audio hold is a proxy for some other
+  process** (AnyDesk's paired system hold, Chrome's media triple). It blocks idle **system** sleep
+  independently of the display, so a cycle reading only the `UserIsActive` row badly
+  **under**estimates the exclusion window; it grants no guarantee, so it stays conditional. §N.
+  ⚠️ **An S = 0 attribution made off `UserIsActive` survives all of the above; what breaks is the
+  narrative "X released"** — the label-absorbs-an-unlike-event error again. Chrome blocked system
+  sleep continuously ≥26 min across a transition that read as a release on every instrument the
+  observing cycle had. §N.
