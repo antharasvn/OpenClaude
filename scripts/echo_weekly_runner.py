@@ -16,8 +16,12 @@ APP_NAME = 'Echo'
 BASE = PROJECT_ROOT / 'data' / 'echo'
 
 
-def run(cmd, input_text=None):
-    return subprocess.run(cmd, input=input_text, text=True, capture_output=True, check=False)
+def run(cmd, input_text=None, timeout=300):
+    # See daily_report_common.run — this shim was a copy of it with the timeout
+    # parameter dropped.
+    return subprocess.run(
+        cmd, input=input_text, text=True, capture_output=True, check=False, timeout=timeout
+    )
 
 
 def bq_query(sql: str):

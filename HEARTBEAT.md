@@ -275,6 +275,24 @@ called by armed `ouroboros.sh:28` every 30 s ⇒ a hang stalls RECOVERY, and
 `cleanpro_daily_runner.py:453`. Patched. **RULE: scoping a sweep to the dir the first instance was
 found in is how the worse one hides; "N unaudited" is a grep HIT count until sites are split from
 prose.** Ev: `…/heartbeat-2004z-the-anti-hang-rule-exempted-the-send-path.md`.
+⛔ **FIVE FILES DEFINE A LOCAL `run()` SHIM, ALL CALLED AS `run(cmd)`, AND ONLY
+`daily_report_common.py:31` WAS BOUNDED — SO AN AUDIT KEYED ON THE CALL SITE CANNOT CLASSIFY SAFETY**
+(2105z; patched, all five now `timeout=300`). Unbounded were `cleanpro_alerts_runner.py:13`
+(`cleanpro-alerts`, 841 fires), `echo_alerts_runner.py:28` (`echo-backend-alerts`, the only hourly
+job), `auto_commit.py:19` (10 min), `echo_weekly_runner.py:19` (dormant) — wrapping `bq query`,
+`gcloud logging read`, `git push`. Byte-identical to the bounded one except the missing parameter; a
+hang runs to the 600 s cap and QUEUE #6 discards stderr on timeout, so it is silent. **RULES: (1) when
+N files each define a same-named wrapper, resolve the callee's DEFINITION per file — `run(cmd)` is the
+same token in both regimes and the difference lives three lines away in another file. This is 2046z's
+copy-paste family with the twist that hides it: THE FAMILY COPIED THE CALL, NOT THE DEFINITION, so a
+`subprocess.run` grep sees one already-reviewed site per file. (2) Sweep by the rule's REASON
+(unbounded blocking call) not its noun (`api.telegram.org`) — an AST pass over
+`run/check_output/call/Popen/urlopen` lacking `timeout` is the whole-hazard instrument. (3) Match the
+in-repo convention when patching: the `bq` site needed `timeout=600` like
+`daily_report_common.bq_query`, else the fix newly kills healthy slow queries. (4) A line-keyed
+`grep -v` CANNOT audit a statement-keyed call — it flagged `notify-interrupted.sh:64` whose flags are
+on line 65.** ✅ 2046z's 9 Telegram sites re-verified genuinely bounded. Ev:
+`…/heartbeat-2105z-four-samenamed-run-shims-one-bounded.md`.
 ⛔ **`heartbeat-state.json`'s `last_message_sent` IS DEAD — SEEDED, DOCUMENTED, WRITTEN BY NOTHING,
 READ BY NOTHING** (1943z). `run.sh:23` names it only in the fresh-file seed; cycles send via
 `telegram-sender/send.sh`, which stamps no state, so it reads **2026-07-15** after two sends on 08-20.

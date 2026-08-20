@@ -10,12 +10,19 @@ CHAT_ID = '-5201056067'
 BASELINES = PROJECT_ROOT / 'data' / 'cleanpro' / 'baselines.json'
 
 
-def run(cmd, input_text=None):
-    return subprocess.run(cmd, input=input_text, text=True, capture_output=True, check=False)
+def run(cmd, input_text=None, timeout=300):
+    # timeout is load-bearing and matches daily_report_common.run: an unbounded
+    # bq/gcloud call here hangs until the scheduler's 600 s cap, and _run_script
+    # discards stderr on timeout (QUEUE #6), so the failure is invisible.
+    return subprocess.run(
+        cmd, input=input_text, text=True, capture_output=True, check=False, timeout=timeout
+    )
 
 
 def bq_query(sql: str):
-    cp = run(['bq','query','--use_legacy_sql=false','--project_id=cleaner-app-e98f0','--format=json'], input_text=sql)
+    # timeout=600 mirrors daily_report_common.bq_query — bq is the one call here
+    # that legitimately runs past the 300 s shim default.
+    cp = run(['bq','query','--use_legacy_sql=false','--project_id=cleaner-app-e98f0','--format=json'], input_text=sql, timeout=600)
     if cp.returncode != 0:
         raise RuntimeError(cp.stderr or cp.stdout)
     return json.loads(cp.stdout or '[]')

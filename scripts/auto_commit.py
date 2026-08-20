@@ -16,8 +16,12 @@ REPOS = [
 ]
 
 
-def run(cmd, cwd=None):
-    return subprocess.run(cmd, cwd=cwd, text=True, capture_output=True, check=False)
+def run(cmd, cwd=None, timeout=300):
+    # See daily_report_common.run: `git push` can hang on the network, and this
+    # job fires every 10 min, so an unbounded call stacks slots.
+    return subprocess.run(
+        cmd, cwd=cwd, text=True, capture_output=True, check=False, timeout=timeout
+    )
 
 
 def auto_commit_repo(repo_path: Path) -> str:

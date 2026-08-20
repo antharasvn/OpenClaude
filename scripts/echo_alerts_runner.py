@@ -25,8 +25,12 @@ CRITICAL_FUNCTIONS = [
 ]
 
 
-def run(cmd, input_text=None):
-    return subprocess.run(cmd, input=input_text, text=True, capture_output=True, check=False)
+def run(cmd, input_text=None, timeout=300):
+    # See daily_report_common.run: unbounded here means a hung gcloud call burns
+    # the whole scheduler slot and _run_script drops the stderr (QUEUE #6).
+    return subprocess.run(
+        cmd, input=input_text, text=True, capture_output=True, check=False, timeout=timeout
+    )
 
 
 def send_telegram(text: str):
