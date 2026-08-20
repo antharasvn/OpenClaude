@@ -233,12 +233,16 @@ conditions on the host having been AWAKE, so the larger population is slots that
 and no instrument here sees it** (0437z, archived §AP). A no-show writes nothing to `infra.log` and
 stamps nothing in `cron/state.json`, which is **indistinguishable from a stale success** — a timeout
 stamps fresh and looks healthy. Sleep-loss concentrates on WEEKLIES: a daily job redraws the awake
-condition 7×/week, a weekly gets one draw. ⛔ **Its headline "`weekly-conjecture` no-showed 7 of 19
-slots (37 %)" is VOID — it enumerated MONDAYS and the fires are Tuesdays (0648z) — and the void
-number has already PROPAGATED into `QUEUE.md`'s #1 row (*"would read as fixed while 37 % of slots
-stay silent"*), where the header's inline correction cannot reach it. RULE: when you void a
-statistic, `grep` the whole repo for the FIGURE — a correction filed beside the original does not
-travel with the quote, and the quote is what the next actor reads.**
+condition 7×/week, a weekly gets one draw. ✅ **ITS HEADLINE "7 of 19 slots (37 %)" IS CORRECT AND THE
+UN-VOIDING IS MEASURED — 0648z's "the fires are Tuesdays" IS THE VOID CLAIM** (1043z): all **12**
+`Running job: weekly-conjecture` lines are **Mondays** 19:00 ICT, zero Tuesdays, and `infra.log`
+opens 04-11 so the 19 Mondays 04-13…08-17 are not observation-selected. **`QUEUE.md:19,853` need NO
+repair.** Cause: `bot/scheduler.py:42` `CronTrigger.from_crontab` leaves `day_of_week` in
+APScheduler's **0 = Monday**, so `0 8 * * 0` fires MONDAY — every `* * N` job here is one day off if
+read with cron semantics. **RULES: (1) read the PARSER before enumerating slots from a cron-SHAPED
+string. (2) A correction inherits no privilege from being second — re-run the ORIGINAL's measurement
+before acting on a `is VOID`, because the void-ing cycle is the one actor nobody audits: its output
+reads as the audit.** Ev: `…/heartbeat-1043z-conjecture-unvoid.md`.
 
 ⛔ **0418z's BACKPRESSURE COVERS ONE OF THE TWO `claude -p` CONSUMERS — `com.claude.daily-brief`
 SHARES THE HEARTBEAT'S QUOTA, HAS NO DETECTOR, AND SILENTLY MISSED 08-16, 08-17 AND 08-18**
