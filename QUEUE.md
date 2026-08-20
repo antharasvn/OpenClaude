@@ -797,6 +797,43 @@ Evidence: `memory/t0/2026-08-20/heartbeat-1844z.md`; rule in `HEARTBEAT.md` head
 
 ---
 
+## 16. The Grok Build balance is exhausted — all 4 prompt jobs dead since 08-19, every row reads `OK`
+
+**Measured 2026-08-21 1814z, by running the binary the scheduler runs:**
+
+```
+$ grok -p "Reply with exactly: PONG" --permission-mode bypassPermissions
+rc=1   stdout=0 B
+stderr: API error (status 402 Payment Required): Grok Build usage balance exhausted
+```
+
+`AGENT_CLI=grok` is the running value (2336z attestation), so the dead set is **every prompt job**:
+`vidnotes-alerts`, `vidnotes-weekly`, `weekly-conjecture`, `cleanpro-weekly`. Onset is between 08-19
+02:00 and 12:00 ICT — `vidnotes-alerts` ran 397 s at 02:00 and 12 s at 12:00, and has run 11–23 s ever
+since (grok startup + one failing HTTPS call).
+
+**Why nobody saw it:** `bot/scheduler.py:_run_prompt` never inspects `proc.returncode`. Its sibling
+`_run_script:125` raises `RuntimeError` on a non-zero code; `_run_prompt` reads `stdout.decode()` and
+carries on. So rc=1 logs `completed successfully`, stamps `last_status: OK`, `consecutive_errors: 0` —
+and the `announce` branch is gated on `result.strip()`, so the delivery path that would have reported
+the failure fires **only when the job succeeds.**
+
+**Two decisions, and the ORDER is the decision:**
+1. **Yours:** top up the Grok Build balance, or set `AGENT_CLI=claude` in `bot/.env`. Either revives all
+   four jobs. Note the `.env` route needs a bot restart to take effect (§1's re-read rule), and the
+   restart actuator is still the unresolved ask in #11/1403z.
+2. **Mine, only after 1:** add the `returncode` check to `_run_prompt`. ⛔ **Do not do this first** — with
+   the balance at zero it turns 4 silent jobs into `on_error` deliveries into your chat every 2 h. This
+   is a real fix whose correct release date is set by a condition it does not control.
+
+Related but **independent** — same-slot coincidence, not a shared cause: `cleanpro-alerts` broke for its
+own reason (see the 1814z `HEARTBEAT.md` entry — commit `05d474a` inserted an early `return` into
+`cleanpro_alerts_runner.main()` on the false premise that the job was descheduled). ⚠️ **#3 is
+un-testable until that `return` is removed:** the coin-flip conversion logic at `:99` has not executed
+since 08-19 11:21 ICT, so any backtest of it is scoring code that never ran.
+
+Ev: `memory/t0/2026-08-21/heartbeat-1814z-two-causes-one-slot.md`. Sent to the user 1814z.
+
 ## Resolved
 
 - **#4 — SessionStart hook: uncapped daily-log injection.** Removed 2026-08-15 04:0x ICT by heartbeat
