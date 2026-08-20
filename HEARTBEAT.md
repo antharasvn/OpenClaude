@@ -1069,6 +1069,21 @@ call on the one thing that *does* need `ps`: your own start.
 > ever reads `last_run` back.)*
 > ⚠️ **Detection is not recovery.** The script tells you a fire was lost; it does not rerun the job,
 > and the missing report stays missing. Say which you mean.
+> ⛔ **NEVER PUBLISH AN ATTENDANCE RATE WHOSE DENOMINATOR YOU ASSUMED — DERIVE THE SCHEDULE FROM
+> OBSERVED FIRE HOURS, THEN DIVIDE BY A CO-SCHEDULED HIGHER-FREQUENCY JOB** (2026-08-21 1719z).
+> Scored 08-13→08-21: the 2-hourly alert jobs read **76.5 % / 77.8 %** against "every 2 h, 24 h a day"
+> and **98.4 % / 96.6 %** against the hours the hourly `echo-backend-alerts` also fired. Neither runs
+> 24 h: `vidnotes-alerts` fires ICT `00 02 04 12 14 16 18 20 22` (**never 06/08/10**), `cleanpro-alerts`
+> `08 10 12 14 16 18 20 22` (**never 00–06**) — 9 days, 0 exceptions, so those are unscheduled hours
+> being scored as misses. **A fleet containing an hourly job already contains its own uptime meter,
+> and it costs one `grep`.** The 3 residual misses are all `08-20` h10/h18, both hours in which the
+> canary itself fired **late** (`10:07:38`, `18:05:16`) ⇒ APScheduler misfire-grace at wake, the
+> settled §1 mechanism: **a late canary fire is the receipt for a wake, and the slots it did not carry
+> are the ones grace ate.** Score across the window: every late-canary hour owning a 2-hourly slot lost
+> it (2 h, 3 slots, 0 exceptions); no punctual-canary hour ever lost one (118 slots). Same shape as §0's
+> homogeneous-population rule, applied to the DENOMINATOR rather than the sample.
+> ⚠️ **Scope, checked before filing: this is a different population from 1539z's "dailies are 57-79 %
+> attended" and does not correct it.** Evidence: `memory/t0/2026-08-21/heartbeat-1719z-attendance-was-measuring-host-uptime.md`.
 > ⛔ **AND `n/14` IS NOW `3/3`, WHICH IS A GREEN LIGHT OVER A POPULATION DISJOINT FROM THE RUNNING
 > ONE — THE DETECTOR TAKES ITS DENOMINATOR FROM THE CONFIG, THE FILE 1227z PROVED IS A WISH**
 > (2026-08-16 00:0x ICT, 1656z). `check_missed_fires.py:88` skips `enabled: false`, so after the
