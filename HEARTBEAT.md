@@ -142,17 +142,15 @@ spillovers, so the method's unstated ≥1-fire threshold is wrong at both edges)
 `…/heartbeat-1739z-unloaded-is-not-unreadable.md`.
 
 ⛔ **A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE** — the fleet lost 18:00–18:05 ICT across three
-timezones with the host awake (1500z; narrative §AL). ⛔ **Its `pmset` LINE-DENSITY argument is dead in BOTH directions, and the *measures churn, not state*
-rule dies with it (1205z below: 93 % `Assertions`, plus the replacement meter). Do not re-derive.** ⛔ Same cycle: its freeze-vs-drop refutation is now carried in full by 1404z's n=22 block below.
-**Measure the SURVIVORS before filing a threshold — on a large varying quantity almost
-any threshold fits the first case checked.** Ev: `…/heartbeat-0823z-darkwake-refutes-density.md`. ⛔ **And do not promote the survivor: APScheduler misfire is the obvious
+timezones with the host awake (1500z; §AL). Its `pmset` density argument and its freeze-vs-drop half are
+both dead — carried by 1205z and 1404z below; do not re-derive either.
+**Measure the SURVIVORS before filing a threshold — on a large varying quantity almost any threshold
+fits the first case checked.** ⛔ **And do not promote the survivor: APScheduler misfire is the obvious
 rival and it is UNTESTABLE here — `missed`/`maximum number of running instances`/`Execution of job`
-occur ZERO times in the whole of `infra.log`, i.e. the instrument has never spoken** (contrast
-`Skipping disabled job:`, 166 hits, which is why 1246z's silence argument was valid there).
-**RULE: a negative result about one mechanism is not a positive result about its rival — check the
-rival has an instrument that has EVER emitted a line before you file it as the cause.** Bears on the
-open restart ask: the live scheduler already drops slots silently, so "preserve it as it is" is worth
-less than 1345z priced. Evidence: `memory/t0/2026-08-15/heartbeat-1500z.md`.
+occur ZERO times in `infra.log`, i.e. the instrument has never spoken** (contrast `Skipping disabled
+job:`, 166 hits). **RULE: a negative result about one mechanism is not a positive result about its
+rival — check the rival has an instrument that has EVER emitted a line before you file it as the
+cause.** Ev: `…/heartbeat-1500z.md`, `…/heartbeat-0823z-darkwake-refutes-density.md`.
 ⛔ **THE WORK-COUNT ESTIMATOR IS NOW n=4 (§0, ratio ~4×, same direction), AND ITS SECOND-ORDER COST IS
 THE NOVEL HALF: the bias does not merely strand budget, it MANUFACTURES PLAUSIBLE DELIVERABLES** — a
 deferral note reads like a finding, commits like one, and hands the real work to the next cycle.
@@ -303,6 +301,24 @@ there is. (3) When two consumers of one harness differ in health, diff how they 
 not what they do.** ✅ Re-measured its undelivered lead item: both alert jobs still no-ops since
 08-19 12:00 ICT (`vidnotes-alerts` 13–23 s vs 6–10 min; `cleanpro-alerts` 0–2 s vs 9–13 s) — **2.5
 days, not 21 h.** Sent to user; the flag is theirs. Ev: `…/heartbeat-1756z-exit-zero-is-not-delivered.md`.
+⛔ **THE 08-19 ALERT COLLAPSE IS **TWO** UNRELATED FAULTS SHARING ONE SLOT, AND THE LIVE HALF IS THAT
+`AGENT_CLI=grok` IS OUT OF MONEY — ALL FOUR PROMPT JOBS ARE DEAD AND EVERY ROW READS `OK`** (1814z).
+Run the binary, don't infer: `grok -p …` ⇒ **rc=1, stdout 0 B, `status 402 Payment Required: Grok Build
+usage balance exhausted`** ⇒ `vidnotes-alerts`/`vidnotes-weekly`/`weekly-conjecture`/`cleanpro-weekly`
+all down since 08-19 02:00–12:00 ICT. Silent because **`_run_prompt` NEVER INSPECTS `proc.returncode`**
+while its sibling `_run_script:125` raises on it — so rc=1 logs `completed successfully`, and `announce`
+is gated on `result.strip()`, i.e. **the delivery path fires only when the job works.** ⛔ Do NOT add the
+rc check before the balance is topped up: it converts 4 silent jobs into `on_error` every 2 h. Cause 2,
+independent: `05d474a` (08-19 11:21) put `print("…no longer scheduled; exiting"); return` at the top of
+`cleanpro_alerts_runner.main()` **and** deleted the job from `cron/jobs.json` — but §1's gate says that
+file is unloaded since 08-15, so it still fires, exits **0** in **0 s**, and reads OK.
+**RULES: (1) when N members of a class fail together, FIND THE MEMBER THAT DIDN'T — `echo-backend-alerts`
+was healthy throughout (5–17 s), which alone refutes any common cause; a shared onset is the stride, not
+a signature (12:00 is the first slot the two share). 1756z and three cycles before it hunted one cause.
+(2) Two runners of one class must agree on what counts as FAILURE — the sibling that skips the exit code
+is not lenient, it is un-instrumented, and both emit the same success line. (3) If you neuter a script
+you believe is descheduled, exit NON-ZERO; an early `return` is indistinguishable from a silent healthy
+run.** Sent to the user (1540z r4); both fixes are asks, not acts. Ev: `…/heartbeat-1814z-two-causes-one-slot.md`.
 ⛔ **A self-rewriting script cannot verify its own fix in the same run — the edit lands one cycle
 later.** (0418z→0514z, discharged; archived §V.)
 
