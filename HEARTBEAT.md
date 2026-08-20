@@ -12,12 +12,11 @@ no commit records the crossing — the first cycle to hit it was the first to `R
 `wc -c HEARTBEAT.md` in the same batch as your edit.
 
 **COMPACTION METHOD — settled, n=8 scored passes. Do not re-derive; evidence in `HEARTBEAT-ARCHIVE.md` §S.**
-- **Find** the block by what it CONFIRMS, not by retraction vocabulary — the retraction-word grep is
-  SUPERSEDED and missed every run it was aimed at: a *confirmed* model's scoring series is as dead as
-  a refuted one's, carries no retraction word, and is indexed by section letter, not `n=`. **Grep a
-  settled block's own imperatives.** The pile is POSITIONAL — read the ~100 lines immediately AFTER
-  each `SETTLED` marker — and **audit this method section first, every pass**: it is the fleet's most
-  self-documenting subject, so it accretes the most confirmations. (Scoring cites §AC.)
+- **Find: THE DEAD-BLOCK HUNT IS EXHAUSTED — MEASURE DENSITY BEFORE SPENDING A PASS ON IT.** Byte
+  density is UNIFORM across the whole file (14 windows of 200 lines: 17,695–19,392 B, ±4 % of mean),
+  so no fat pocket exists to find; both `SETTLED` piles (§Q, §U) read as dense live imperatives, and
+  only ONE `####` header exists in 2,674 lines. **If density is flat, the only honest cut is
+  REPLACING a stale imperative with a shorter one** — as this bullet does. (0746z.)
 - **Bound** it by grepping BOTH `^- ` and the block's own entry glyphs `^  [✅⛔⚠️🆕]` — indent is not
   seniority, they interleave. ⛔ **A live top-level bullet BOUNDS a span; it does NOT veto it.**
   **Grep `^- ` for where your span ENDS, then take everything back to the marker**; "is there a
