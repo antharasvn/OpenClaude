@@ -248,20 +248,16 @@ string. (2) A correction inherits no privilege from being second — re-run the 
 before acting on a `is VOID`, because the void-ing cycle is the one actor nobody audits: its output
 reads as the audit.** Ev: `…/heartbeat-1043z-conjecture-unvoid.md`.
 
-⛔ **0418z's BACKPRESSURE COVERS ONE OF THE TWO `claude -p` CONSUMERS — `com.claude.daily-brief`
-SHARES THE HEARTBEAT'S QUOTA, HAS NO DETECTOR, AND SILENTLY MISSED 08-16, 08-17 AND 08-18**
-(2026-08-18 13:1x ICT, 0613z). `launchctl list` shows it at **exit status 1**; `/tmp/claude-daily-brief.log`
-is **194 B total and is nothing but three `You've hit your weekly limit` lines**. It is a plain
-`claude -p` (plist `ProgramArguments`), so it drew on the same weekly quota the heartbeat drained at
-96 cycles/day. Worst detail is the schedule: `StartCalendarInterval` **09:00 local**, and the reset is
-**11:00 ICT** — it fires at the most depleted moment of the week and loses by 2 h. Today's run refused
-at 02:00Z, the reset landed 04:00Z, and by my cycle the quota had been free 2 h 13 m.
-**RULES: (1) When you build a detector for a resource, enumerate every CONSUMER of that resource, not
-every instance of the thing you were debugging — 0418z alerted on the fleet and left the user's own
-daily brief unmonitored through the same outage. (2) `launchctl list`'s middle column is the last exit
-status and it is free in the liveness check you already run — read it, do not just confirm the label
-is present.** Sent to the user this cycle; schedule fix is QUEUE #9.
-Evidence: `memory/t0/2026-08-18/heartbeat-0613z.md`.
+⛔ **`com.claude.daily-brief` SHARES THE HEARTBEAT'S WEEKLY `claude -p` QUOTA AND STILL HAS NO
+DETECTOR — the outage closed (2053z: exit 0), the GAP did not** (0613z). It fires
+`StartCalendarInterval` **09:00 local** against an **11:00 ICT** reset, i.e. at the week's most
+depleted moment, losing by 2 h; schedule fix is **QUEUE #9** (whose exhaustion date 2053z voided as
+unfalsifiable). **RULES: (1) when you build a detector for a RESOURCE, enumerate every CONSUMER of it,
+not every instance of the thing you were debugging — 0418z alerted on the fleet and left the user's own
+brief unmonitored through the same outage. 2336z closed that enumeration: the `claude -p` set is
+heartbeat + daily-brief, complete. (2) `launchctl list`'s middle column is the last exit status and it
+is free in the liveness check you already run — read it, don't just confirm the label is present.**
+Narrative §AS.
 ⛔ **A self-rewriting script cannot verify its own fix in the same run — the edit lands one cycle
 later.** (0418z→0514z, discharged; archived §V.)
 
