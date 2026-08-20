@@ -252,20 +252,24 @@ its failure strings live in its **success** output. Detection is now `rc != 0` *
 (real refusals **68 B**, healthy transcript **3,155 B**). **RULE: when a detector reads a channel its
 subject also writes to, key on a STRUCTURAL property (exit code, output size, timing), never on the
 text — the subject forges the text precisely when it is working.**
-⛔ **BUT ON THE `exit 124` BRANCH THAT SIZE TEST HAS ZERO POWER — IT IS SATISFIED BY CONSTRUCTION, AND
-IT BOOKED A FULLY SUCCESSFUL CYCLE AS A REFUSAL** (2026-08-21 02:2x ICT, 1922z). `claude -p` emits its
-result only at the end, so a gtimeout cap-kill leaves **0 B of stdout however much work landed**. My
-predecessor (18:57:33Z) wrote its daily log, patched this file, sent its Telegram and pushed `19e56f1`
-at **19:07:10Z — 24 s before the kill** — and still set `last_refusal_reason: exit 124 with empty
-output`. **Two cap-kills in a row would alert the user that a working fleet is dark.** Fixed in
-`run.sh`: rc=124 **plus** an in-window `git log --since="$CYCLE_START" --grep="^heartbeat "` hit ⇒
-truncated success, not a refusal (`--grep` excludes the every-2 h `auto-commit`, which would otherwise
-mask a genuinely dead cap-kill ~8 % of the time). Rate: **7 of 440 starts (1.6 %)**, so this is a
-recurring class, not a one-off. **RULE, and it is the general half: a structural discriminator is only
-structural ON THE BRANCH WHERE IT CAN VARY — before reusing one, ask what the failure mode does to the
-signal, because a test the failure mode SETS is not evidence, it is a tautology wearing the costume of
-0418z's own principle.** Verified: `bash -n` + replay of both the positive (19e56f1 found) and the
-`--grep` filter. Per the settled rule the edit lands next cycle. Ev: `…/heartbeat-1922z-exit-124-is-a-truncated-summary-not-a-refusal.md`.
+⛔ **BUT ON THE `exit 124` BRANCH THAT SIZE TEST HAS ZERO POWER — IT IS SATISFIED BY CONSTRUCTION**
+(1922z; shipped, live in `run.sh`). A cap-kill leaves **0 B of stdout however much work landed**:
+18:57:33Z pushed `19e56f1` 24 s before its kill and was still booked a refusal. Now rc=124 **plus** an
+in-window `git log --since="$CYCLE_START" --grep="^heartbeat "` hit ⇒ truncated success (`--grep`
+excludes `auto-commit`, else a genuinely dead cap-kill is masked ~8 %). **7 of 440 starts (1.6 %)** —
+a class. **RULE: a structural discriminator is only structural ON THE BRANCH WHERE IT CAN VARY; a test
+the failure mode SETS is a tautology in the costume of 0418z's principle.**
+⛔ **AND THAT FIX SWITCHED OFF THE ONLY ALARM COVERING A HUNG DELIVERY — AUDIT A NEW DISCRIMINATOR BY
+ITS *LOSS* SET** (2004z). `send.sh` made **4 curl calls with 0 timeout flags**; curl has no default
+overall timeout, and the bot's `.err` carries **201 NetworkError / 200 httpx.ConnectError** to
+`api.telegram.org`. Sends happen at cycle END (1540z r4) ⇒ a hang burns the cap ⇒ rc=124 **after** the
+commit ⇒ 1922z's branch calls it healthy, no alert, user sees silence. **Fixed: `--connect-timeout 10`,
+`--max-time 20`/`120`; a dead send now exits 28. Verified live — this cycle's Telegram went through the
+patched script.** **RULES: (1) ask of any new discriminator which previously-alarming states it now
+calls healthy (1814z's gain-set, backwards). (2) A RULE'S REASON HAS WIDER SCOPE THAN ITS RECIPE, AND
+THE RECIPE IS WHAT GETS OBEYED — `CLAUDE.md:4`'s sole global rule bans WebFetch *because it hangs* and
+prescribes `--max-time 15` for FETCHING; the costliest hang was outbound, so nobody matched it. 7 more
+`skills/` curl callers UNAUDITED.** Ev: `…/heartbeat-2004z-the-anti-hang-rule-exempted-the-send-path.md`.
 ⛔ **`heartbeat-state.json`'s `last_message_sent` IS DEAD — SEEDED, DOCUMENTED, WRITTEN BY NOTHING,
 READ BY NOTHING** (1943z). `run.sh:23` names it only in the fresh-file seed; cycles send via
 `telegram-sender/send.sh`, which stamps no state, so it reads **2026-07-15** after two sends on 08-20.

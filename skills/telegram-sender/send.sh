@@ -7,6 +7,18 @@
 
 set -euo pipefail
 
+# Every curl below carries --connect-timeout/--max-time (added 2026-08-20 2004z).
+# CLAUDE.md's only global rule bans WebFetch *because it hangs* and prescribes
+# `curl -sL --max-time 15`; that rule was read as syntax for FETCHING a URL, so
+# the fleet's outbound delivery path — four curls, zero timeout flags — was exempt
+# from the one rule written to prevent exactly this. curl has no default overall
+# timeout: once connected, a stalled read blocks forever. The bot's own .err log
+# carries 201 NetworkError / 200 httpx.ConnectError to api.telegram.org, so the
+# hang is not hypothetical. A hang here is maximally expensive: sends happen at
+# cycle end, so it burns the rest of the 600 s cap and produces rc=124 with a
+# heartbeat commit already in-window — which run.sh's 1922z branch now books as
+# "truncated success", i.e. no alert. Fail fast and loud instead: on timeout curl
+# exits 28 and `set -e` propagates it to the caller.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
@@ -100,7 +112,7 @@ if [[ -n "$TEXT" ]]; then
         PAYLOAD+=(-F "parse_mode=$PARSE_MODE")
     fi
 
-    RESPONSE=$(curl -s -w "\n%{http_code}" "${API_BASE}/sendMessage" "${PAYLOAD[@]}")
+    RESPONSE=$(curl -s --connect-timeout 10 --max-time 20 -w "\n%{http_code}" "${API_BASE}/sendMessage" "${PAYLOAD[@]}")
     HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
     BODY=$(echo "$RESPONSE" | sed '$d')
 
@@ -132,7 +144,7 @@ if [[ -n "$PHOTO" ]]; then
         PAYLOAD+=(-F "parse_mode=$PARSE_MODE")
     fi
 
-    RESPONSE=$(curl -s -w "\n%{http_code}" "${API_BASE}/sendPhoto" "${PAYLOAD[@]}")
+    RESPONSE=$(curl -s --connect-timeout 10 --max-time 120 -w "\n%{http_code}" "${API_BASE}/sendPhoto" "${PAYLOAD[@]}")
     HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
     BODY=$(echo "$RESPONSE" | sed '$d')
 
@@ -159,7 +171,7 @@ if [[ -n "$PHOTO_URL" ]]; then
         PAYLOAD+=(-F "parse_mode=$PARSE_MODE")
     fi
 
-    RESPONSE=$(curl -s -w "\n%{http_code}" "${API_BASE}/sendPhoto" "${PAYLOAD[@]}")
+    RESPONSE=$(curl -s --connect-timeout 10 --max-time 120 -w "\n%{http_code}" "${API_BASE}/sendPhoto" "${PAYLOAD[@]}")
     HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
     BODY=$(echo "$RESPONSE" | sed '$d')
 
@@ -191,7 +203,7 @@ if [[ -n "$FILE" ]]; then
         PAYLOAD+=(-F "parse_mode=$PARSE_MODE")
     fi
 
-    RESPONSE=$(curl -s -w "\n%{http_code}" "${API_BASE}/sendDocument" "${PAYLOAD[@]}")
+    RESPONSE=$(curl -s --connect-timeout 10 --max-time 120 -w "\n%{http_code}" "${API_BASE}/sendDocument" "${PAYLOAD[@]}")
     HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
     BODY=$(echo "$RESPONSE" | sed '$d')
 
