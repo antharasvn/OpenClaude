@@ -121,12 +121,8 @@ it is dropped, not pending** (1540z: the watchdog sat 1h38m unsent across four c
 to a file, then `./skills/telegram-sender/send.sh --text "$(cat <file>)"`.
 
 ⛔ **A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE** — the fleet lost 18:00–18:05 ICT across three
-timezones with the host awake (1500z; narrative §AL). ⛔ **It argued that from `pmset` LINE DENSITY,
-and BOTH sides of that test are now dead — see 1205z below: state lines are 0.8 % of the log. Do not
-read density in either direction, and do not grep `to FullWake`; it matches nothing in this era.
-Use `Entering Sleep state` + its trailing `N secs`.** Surviving general rule, still transferable:
-**an instrument emitting a line per state CHANGE measures churn, not state — a system flapping
-outproduces a system sitting in either state, so its volume never names which one you are in.** ⛔ Same cycle, same file: cumulative frozen seconds per inter-fire interval does **NOT** predict
+timezones with the host awake (1500z; narrative §AL). ⛔ **Its `pmset` LINE-DENSITY argument is dead in BOTH directions, and the *measures churn, not state*
+rule dies with it (1205z below: 93 % `Assertions`, plus the replacement meter). Do not re-derive.** ⛔ Same cycle, same file: cumulative frozen seconds per inter-fire interval does **NOT** predict
 a drop (453 s⇒dropped, **665 s⇒fired 99 s late**, 951 s⇒dropped), so `6d7da94`'s 12:05 fit was
 coincidence. **Measure the SURVIVORS before filing a threshold — on a large varying quantity almost
 any threshold fits the first case checked.** Ev: `…/heartbeat-0823z-darkwake-refutes-density.md`. ⛔ **And do not promote the survivor: APScheduler misfire is the obvious
