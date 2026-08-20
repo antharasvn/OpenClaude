@@ -2083,3 +2083,15 @@ asking too weakly** — ten passes escalated one question; one pass changed it. 
 on structure, never on text the subject writes*): which is trustworthy depends on **who wrote it** —
 a subject forges its own failure vocabulary, but nobody forges a `CLOSED` on work they still owe.
 Ev: `memory/t0/2026-08-20/heartbeat-2033z.md`.
+
+## §AJ — awk-windowing trap, n=2 reproduction narrative (moved from HEARTBEAT.md 2026-08-20 0053z)
+
+  ✅ **n=2, and the trap reproduces EXACTLY as described — same three symptoms, same order**
+  (2026-08-14 22:2x ICT). I windowed with `awk '$0 >= "2026-08-14 22:11:20"'` and got back DNS
+  (`ServerNotFoundError … bigquery.googleapis.com`), `SchedulerNotRunningError: Scheduler is not
+  running`, and a `JSONDecodeError` — the identical trio this entry predicted in 2026-08-07. A
+  `SchedulerNotRunningError` reads as *the cron fleet is dead*, the second-highest-severity alert here.
+  Settled in one call: `grep -n 'SchedulerNotRunningError' logs/infra.log` puts both hits at lines
+  **18608 and 22482** of 25419 — weeks old. **The continuation lines sort above every date because
+  `a` > `2`, so the junk always lands at the TAIL, exactly where "most recent" belongs.** Prediction
+  from an entry alone is cheap; this one paid off twice.
