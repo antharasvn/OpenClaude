@@ -203,7 +203,7 @@ def main() -> None:
                 try:
                     out = sp.run(
                         ["pgrep", "-P", str(pid)],
-                        capture_output=True, text=True,
+                        capture_output=True, text=True, timeout=10,
                     )
                     if out.returncode == 0:
                         for line in out.stdout.strip().split("\n"):
@@ -234,7 +234,7 @@ def main() -> None:
                 try:
                     out = sp.run(
                         ["ps", "-o", "etime=", "-p", str(pid)],
-                        capture_output=True, text=True,
+                        capture_output=True, text=True, timeout=10,
                     )
                     if out.returncode != 0:
                         return None
@@ -266,7 +266,7 @@ def main() -> None:
                 try:
                     out = sp.run(
                         ["ps", "-o", "command=", "-p", str(pid)],
-                        capture_output=True, text=True,
+                        capture_output=True, text=True, timeout=10,
                     )
                     if out.returncode == 0:
                         return bool(re.search(r"claude.*stream-json", out.stdout))

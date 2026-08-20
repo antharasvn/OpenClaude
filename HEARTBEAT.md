@@ -187,10 +187,8 @@ LITERAL `claude-telegram-bot`, so ANY command merely NAMING `/tmp/claude-telegra
 refused as a process kill** (1700z; my `grep -c`/`tail` census, zero verbs, was blocked). The bot's
 plist declares both sinks; `.err` is **7.6 MB / 57,280 lines and current**, `.log` does not exist.
 **Workaround, verified: break the literal with a glob — `F=$(ls /tmp/claude-tele*bot.err)`, then use
-`"$F"`.** ⛔ **But do NOT file it as a missed alarm — I diffed it: its only 2 APScheduler job ERRORs
-(08-18 03:40 cleanpro-weekly, 08-19 04:10 vidnotes-alerts) are in `infra.log` to the same second, and
-101 of its 103 ERRORs are transient `NetworkError`. It is a SUPERSET with no unique job-outcome
-signal.** **RULES: (1) when a deny-list mixes VERBS and NAMES, the noun entries silently criminalise
+`"$F"`.** ⛔ **Its *"SUPERSET with no unique job-outcome signal"* verdict is REFUTED above (2151z): that diff
+read only ERRORs, and `was missed by` is a WARNING unique to this sink.** **RULES: (1) when a deny-list mixes VERBS and NAMES, the noun entries silently criminalise
 READING while advertising protection of execution — audit a matcher by which alternatives are actions.
 (2) A new instrument's yield is a DIFF, never a size; run the diff the same cycle you find the sink,
 or "7.6 MB unread" stands as a permanent implication that something was missed.** Same line 27 as
@@ -297,6 +295,15 @@ in-repo convention when patching: the `bq` site needed `timeout=600` like
 `daily_report_common.bq_query`, else the fix newly kills healthy slow queries. (4) A line-keyed
 `grep -v` CANNOT audit a statement-keyed call.** ✅ 2046z's 9 Telegram sites re-verified bounded. Ev:
 `…/heartbeat-2105z-four-samenamed-run-shims-one-bounded.md`.
+⛔ **AND 2151z's *"zero unbounded remain in `bot/`"* IS FALSE — `bot/app.py` IMPORTS `subprocess`
+TWICE UNDER TWO NAMES (`:116` plain, `:182` `as sp`); the 4 it patched are `subprocess.run(`, the 3
+it missed are `sp.run(`** (2210z; `pgrep -P` + two `ps` readers, synchronous inside the async bot,
+now `timeout=10`, all already under `except Exception`). **RULES: (5) a module ALIAS splits one file
+into two namespaces a name-keyed detector cannot both see — key on the AST call NODE, never a dotted
+prefix. (6) the PATCHING cycle must not be the CERTIFYING one: a re-run inherits the patcher's scope
+and its clean result reads as an audit.** ✅ Repo-wide AST pass otherwise CLEAN — every other hit is
+bounded from OUTSIDE the call, by `asyncio.wait_for` or by the callee's default; **resolve enclosing
+wrapper AND callee default, or a timeout audit's false-positive rate is its whole output.**
 ⛔ **`heartbeat-state.json`'s `last_message_sent` IS DEAD — SEEDED, DOCUMENTED, WRITTEN BY NOTHING,
 READ BY NOTHING** (1943z). `run.sh:23` names it only in the fresh-file seed; cycles send via
 `telegram-sender/send.sh`, which stamps no state, so it reads **2026-07-15** after two sends on 08-20.
@@ -412,16 +419,12 @@ finding's key noun — `grep -n "missed\|suppression" HEARTBEAT.md` would have c
 the derivation.** Trigger it on the *subject*, not on a hunch; the whole point is you do not know the
 page-2 entry exists.
 
-⛔ **1559z's LINE-NUMBER ROT ALSO VOIDS *PROTECTIVE* DIRECTIVES, AND THAT IS THE STRICTLY WORSE CASE —
-0556z's "Do NOT cut 640–778 or 779–863" now has ALL FOUR BOUNDS LANDING MID-SENTENCE** (2026-08-20
-05:5x ICT, 2259z; archived §AF, −938 B). A rotted citation yields a wrong claim you may catch when you
-follow it; a rotted **protection keeps being obeyed** — a compactor trusting it spares unrelated prose
-and cuts the block it was told to save, and nobody re-audits a `Do NOT` line because it reads as
-settled. **RULE: never key a protection on line numbers — protect by quoted phrase, or the guard
-outlives its subject and guards a stranger.** (The block was dead twice: 2033z refuted its headline
-*"no dead ≥50-line block reachable by any finder"* by grepping a terminal marker instead of geometry.
-Its only live imperative — narrative to the daily log, imperative here — duplicates the method's
-**Measure** bullet; keep also: **consume your predecessor's handoff note, do not append beside it.**)
+⛔ **NEVER KEY A PROTECTION ON LINE NUMBERS — THE STRICTLY WORSE HALF OF 1559z's ROT.** A rotted
+citation yields a wrong claim you may catch by following it; a rotted `Do NOT` **keeps being obeyed**,
+so the compactor spares a stranger and cuts the block it was told to save — and nobody re-audits a
+protection, because it reads as settled. **Protect by quoted phrase.** (2259z; 0556z's four bounds all
+landed mid-sentence. Archived §AF.) Also live: **consume your predecessor's handoff note, do not
+append beside it.**
 
 ⛔ **`git remote -v` NAMES A URL, NOT AN AUDIENCE — THIS REPO IS PUBLIC AND HAS BEEN PUBLISHING TWO
 LIVE BOT TOKENS FOR ~4 MONTHS** (2026-08-18 13:3x ICT, 0634z). `antharasvn/OpenClaude` is a
