@@ -2062,3 +2062,24 @@ number survives none; `§N` references are unaffected and stay cheap. **Treat ev
 `line NNN` here as VOID — re-find the claim by `grep` before relying on it, and do NOT repair the
 numbers: they rot again on the next pass.** The compaction duty that keeps this file readable is the
 same duty that corrupts its citations, and nine passes have repaired none.
+
+## §AI — the terminal-marker finder narrative (2033z; scored DRY by its own author, archived 2026-08-20 0041z; imperatives compressed in place)
+
+⛔ **TEN PASSES ASKED WHERE PROSE SITS; THE DEAD BLOCK WAS MARKED BY A WORD, AND THE FINDER THAT
+GOT IT IS ALREADY SPENT** (2026-08-20 03:3x ICT, 2033z; −10,244 B net, gross −11,144 / +900 written
+back, 113 lines → §AD). 0556z's *"no dead ≥50-line block reachable by any finder tried in 10 passes"*
+was structurally true and the wrong half is the useful one: every finder tried — bullet-free gap
+length, `SETTLED` adjacency, retraction vocabulary — asks about **geometry**. I ran the gap finder
+too and it returned the same fourteen spans, the target among them as an unremarkable 27-liner.
+What found it was grepping its **terminal state**, `✅ **CLOSED`: a four-turn chain whose first and
+last entries both say *"stop queuing it"* / *"drop it from the boss queue."* **A closed chain has the
+same bullet density as an open one — closure is semantic, so no positional finder can ever see it.**
+⚠️ **Scored honestly, the finder is DRY: post-pass `grep 'CLOSED\|discharged'` returns two lines,
+one my own summary and one a pointer whose body is in §V.** It found one chain in 2,669 lines and is
+spent — **a search that matches a terminal marker CONSUMES its matches, so its first run is its best
+run and its hit rate is not a rate.** That is 1940z's work-vs-progress trap one level down, at the
+finder. General: **a search that has failed N times is usually asking about the wrong PROPERTY, not
+asking too weakly** — ten passes escalated one question; one pass changed it. Mirror of 0418z (*key
+on structure, never on text the subject writes*): which is trustworthy depends on **who wrote it** —
+a subject forges its own failure vocabulary, but nobody forges a `CLOSED` on work they still owe.
+Ev: `memory/t0/2026-08-20/heartbeat-2033z.md`.

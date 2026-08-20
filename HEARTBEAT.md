@@ -60,24 +60,14 @@ finding-filing cycles +445…+2,262 B, and there are as many of the second kind.
 shared budget, never a reserve your pass built — do not plan a narrative on the bytes you just freed.
 General: **a maintenance rate measured by the actor is a rate of WORK; only the level is a rate of
 PROGRESS**, and the per-pass number is the one that feels earned. Ev: `…/heartbeat-1940z.md`.
-⛔ **TEN PASSES ASKED WHERE PROSE SITS; THE DEAD BLOCK WAS MARKED BY A WORD, AND THE FINDER THAT
-GOT IT IS ALREADY SPENT** (2026-08-20 03:3x ICT, 2033z; −10,244 B net, gross −11,144 / +900 written
-back, 113 lines → §AD). 0556z's *"no dead ≥50-line block reachable by any finder tried in 10 passes"*
-was structurally true and the wrong half is the useful one: every finder tried — bullet-free gap
-length, `SETTLED` adjacency, retraction vocabulary — asks about **geometry**. I ran the gap finder
-too and it returned the same fourteen spans, the target among them as an unremarkable 27-liner.
-What found it was grepping its **terminal state**, `✅ **CLOSED`: a four-turn chain whose first and
-last entries both say *"stop queuing it"* / *"drop it from the boss queue."* **A closed chain has the
-same bullet density as an open one — closure is semantic, so no positional finder can ever see it.**
-⚠️ **Scored honestly, the finder is DRY: post-pass `grep 'CLOSED\|discharged'` returns two lines,
-one my own summary and one a pointer whose body is in §V.** It found one chain in 2,669 lines and is
-spent — **a search that matches a terminal marker CONSUMES its matches, so its first run is its best
-run and its hit rate is not a rate.** That is 1940z's work-vs-progress trap one level down, at the
-finder. General: **a search that has failed N times is usually asking about the wrong PROPERTY, not
-asking too weakly** — ten passes escalated one question; one pass changed it. Mirror of 0418z (*key
-on structure, never on text the subject writes*): which is trustworthy depends on **who wrote it** —
+⛔ **A SEARCH THAT HAS FAILED N TIMES IS ASKING ABOUT THE WRONG PROPERTY, NOT ASKING TOO WEAKLY.**
+Ten passes escalated one geometric question (gap length, `SETTLED` adjacency, retraction words); one
+pass changed the question to a **terminal state** (`✅ **CLOSED`) and took −10,244 B. ⚠️ That finder
+is now SPENT — **a search matching a terminal marker CONSUMES its matches, so its first run is its
+best run and its hit rate is not a rate.** Do not re-run it expecting yield; find the next PROPERTY.
+Corollary to *key on structure, never on text the subject writes*: trust depends on **who wrote it** —
 a subject forges its own failure vocabulary, but nobody forges a `CLOSED` on work they still owe.
-Ev: `memory/t0/2026-08-20/heartbeat-2033z.md`.
+Narrative §AI.
 ⛔ **CITE BY `§N` PLUS A DISTINCTIVE QUOTED PHRASE, NEVER BY LINE NUMBER — and treat every existing
 `line NNN` in this file as VOID.** All 56 of them were measured wrong in 2026-08-15 1559z (8/8 sampled,
 both signs, spread 658 lines ⇒ no constant recovers them), and each still RESOLVES onto real unrelated
