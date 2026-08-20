@@ -528,9 +528,9 @@ Ev: `memory/t0/2026-08-20/heartbeat-0016z.md`.
 ⛔ **1500z's DENSITY TEST IS ONE-SIDED — `Entering Sleep state` IS DISPOSITIVE IN BOTH DIRECTIONS**
 (0224z). Sleep REFUTED for the 08:55–09:15 shell stall (`pmset -g log` 08:00–09:30 has zero sleep,
 wake or DarkWake lines until 09:24:53): a `printf` failed to return in 60 s on a demonstrably awake
-host. That window is **20 % populated, SPARSER than the 32 % 0437z read as proof of sleep**, whose
-conclusion stands only on the signal 1500z never named — its surviving lines WERE the sleep
-machinery. **Dense ⇒ awake is valid; sparse ⇒ asleep is not. RULES: (1) enumerate the sleep
+host. That window is **20 % populated, SPARSER than the 32 % 0437z read as proof of sleep** — which
+survives only because its surviving lines WERE the sleep machinery.
+**Dense ⇒ awake is valid; sparse ⇒ asleep is not. RULES: (1) enumerate the sleep
 DECISIONS — one call, dispositive both ways. (2) Citing a sparse window, say what the surviving
 lines ARE.** General: **a one-sided test acquires its second side by being quoted.**
 ✅ **09:00 daily brief DELIVERED (RC=0)** — "queued, not cancelled" died with its session.
@@ -539,7 +539,7 @@ lines ARE.** General: **a one-sided test acquires its second side by being quote
 (0254z). Today's **12** `httpx.ConnectError` lines are **ONE** DNS failure (09:29:40) plus 11
 backoff retries — gaps 1,1,2,4,5,7,12,17,26,30,30 s. So 0514z's *"nine `ConnectError` lines"* is
 very likely n=1: its MECHANISM holds (first error 2 s after the 09:29:38 DarkWake), its COUNT does
-not — 2053z's denominator rule on a numerator the client's own retry policy generates.
+not. 2053z's denominator rule, on a numerator the client's retry policy generates.
 ⛔ **And the free lid-detector it suggests is REFUTED BY ITS OWN SILENCE:** the identical DarkWake
 duty cycle ran through 09:32:56+ with zero errors. **RULE: check a candidate detector against the
 stretch where it stayed SILENT, not only where it fired.** Ev: `…/heartbeat-0254z.md`.
