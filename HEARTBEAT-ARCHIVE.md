@@ -2516,3 +2516,24 @@ is still *right* keeps them all. **RULE: after refuting a model, grep for the si
 MECHANISM, not the sites that state what to DO about it. A cycle repairing a refutation greps for what
 to stop doing; the belief clause survives inside conclusions that are independently true, and it is the
 belief clause that regenerates the prescription.** Ev: `…/heartbeat-1503z-*.md`.
+
+## §AY — pmset line density is assertion churn (1205z), and its ConnectError neighbours
+
+Moved from HEARTBEAT.md 2026-08-20 2046z. Durable half lives in the page-1 header block "SUM the `Entering Sleep state` LINES OWN TRAILING N secs".
+
+⛔ **`pmset` LINE DENSITY IS 93 % `Assertions` AND STATE LINES ARE 0.8 %, SO IT READS SLEEP IN
+NEITHER DIRECTION** (1205z; kills 0224z's *dense ⇒ awake*, §AQ — **a one-sided test acquires its
+second side by being quoted**). `awk '{print $4}' /tmp/pm.log | sort | uniq -c` over 81,475 lines: `Assertions`
+**75,835**, `ThermalEvent` 1,968, and `Sleep`+`Wake`+`DarkWake` **658 total**. So density is a proxy
+for **assertion churn, a different variable** — a window can be maximally dense while the host sleeps,
+which unearns *dense ⇒ awake* as well. 0823z blamed a per-CHANGE emitter; the dominant emitter is not
+writing about state at all. **Do not refine the heuristic — drop it.** (`ThermalEvent` is worse still:
+1,925 lines at 1.00/s for 32 min today, decoupled from state.)
+✅ **Free replacement, and it retires 0751z's pairing: the `Entering Sleep state` line's own trailing
+`N secs` IS the frozen duration — no `DarkWake` line to pair, which matters because `to FullWake`
+matched NOTHING in this log era while four sleep decisions sat in the window.**
+`awk '/Entering Sleep state/{for(i=1;i<=NF;i++)if($i=="secs")s+=$(i-1)}END{print s}'` ⇒ **2,457 s**
+against 0707z's cadence excess (`start − prev completion − 900`) of **2,447 s** — **0.4 % agreement,
+n+1 on 0707z's 1.6 %**, two independent meters. ⛔ **0016z's thermal "nothing in the 6.4 d since"
+EXPIRED on a second episode: an "and nothing since" clause carries an expiry stamped by its meter's
+end, and it rots first.** Ev: `…/heartbeat-1205z-pmset-density-is-assertion-churn.md`.

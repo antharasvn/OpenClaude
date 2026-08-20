@@ -443,6 +443,7 @@ def main():
                 subprocess.run(
                     [
                         "curl", "-s", "-X", "POST",
+                        "--connect-timeout", "10", "--max-time", "120",
                         f"https://api.telegram.org/bot{DEFAULT_BOT_TOKEN}/sendPhoto",
                         "-F", f"chat_id={DEFAULT_CHAT_ID}",
                         "-F", f"photo=@{heatmap_output}",

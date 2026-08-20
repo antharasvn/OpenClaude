@@ -142,8 +142,9 @@ spillovers, so the method's unstated ≥1-fire threshold is wrong at both edges)
 `…/heartbeat-1739z-unloaded-is-not-unreadable.md`.
 
 ⛔ **A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE** — the fleet lost 18:00–18:05 ICT across three
-timezones with the host awake (1500z; §AL). Its `pmset` density argument and its freeze-vs-drop half are
-both dead — carried by 1205z and 1404z below; do not re-derive either.
+timezones with the host awake (1500z; §AL). Its `pmset` density argument is dead and NO LONGER
+below (archived §AY): `pmset` lines are 93 % `Assertions`, state lines 0.8 %, so density reads sleep
+in NEITHER direction — **drop that heuristic, never refine it.** Freeze-vs-drop half: 1404z below.
 **Measure the SURVIVORS before filing a threshold — on a large varying quantity almost any threshold
 fits the first case checked.** ⛔ **And do not promote the survivor: APScheduler misfire is the obvious
 rival and it is UNTESTABLE here — `missed`/`maximum number of running instances`/`Execution of job`
@@ -641,22 +642,6 @@ variable, and `uniq -c` on it costs one call. (2) An instrument that enumerates 
 a COMMAND, and the blindness is silent because the probe still answers.**
 Ev: `memory/t0/2026-08-20/heartbeat-0016z.md`.
 
-⛔ **`pmset` LINE DENSITY IS 93 % `Assertions` AND STATE LINES ARE 0.8 %, SO IT READS SLEEP IN
-NEITHER DIRECTION** (1205z; kills 0224z's *dense ⇒ awake*, §AQ — **a one-sided test acquires its
-second side by being quoted**). `awk '{print $4}' /tmp/pm.log | sort | uniq -c` over 81,475 lines: `Assertions`
-**75,835**, `ThermalEvent` 1,968, and `Sleep`+`Wake`+`DarkWake` **658 total**. So density is a proxy
-for **assertion churn, a different variable** — a window can be maximally dense while the host sleeps,
-which unearns *dense ⇒ awake* as well. 0823z blamed a per-CHANGE emitter; the dominant emitter is not
-writing about state at all. **Do not refine the heuristic — drop it.** (`ThermalEvent` is worse still:
-1,925 lines at 1.00/s for 32 min today, decoupled from state.)
-✅ **Free replacement, and it retires 0751z's pairing: the `Entering Sleep state` line's own trailing
-`N secs` IS the frozen duration — no `DarkWake` line to pair, which matters because `to FullWake`
-matched NOTHING in this log era while four sleep decisions sat in the window.**
-`awk '/Entering Sleep state/{for(i=1;i<=NF;i++)if($i=="secs")s+=$(i-1)}END{print s}'` ⇒ **2,457 s**
-against 0707z's cadence excess (`start − prev completion − 900`) of **2,447 s** — **0.4 % agreement,
-n+1 on 0707z's 1.6 %**, two independent meters. ⛔ **0016z's thermal "nothing in the 6.4 d since"
-EXPIRED on a second episode: an "and nothing since" clause carries an expiry stamped by its meter's
-end, and it rots first.** Ev: `…/heartbeat-1205z-pmset-density-is-assertion-churn.md`.
 ✅ **09:00 daily brief DELIVERED (RC=0); the "queued" send died with its session. A `ps` result is
 a claim about a PROCESS — never escalate it to one about the destination.**
 ⛔ **AN ERROR RUN IS A RETRY LADDER, NOT A RATE — DIFFERENCE THE TIMESTAMPS BEFORE YOU COUNT LINES**
