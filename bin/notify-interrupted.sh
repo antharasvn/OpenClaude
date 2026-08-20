@@ -55,7 +55,14 @@ while read -r CHAT_ID THREAD_ID; do
     if [[ "$THREAD_ID" -ne 0 ]]; then
         PAYLOAD="{\"chat_id\": $CHAT_ID, \"text\": \"$MESSAGE\", \"message_thread_id\": $THREAD_ID}"
     fi
+    # --connect-timeout/--max-time are load-bearing: ouroboros.sh:28 calls this
+    # script from the bot's recovery path every 30s, and api.telegram.org is the
+    # host the bot's own .err logs 201 NetworkError / 200 ConnectError against.
+    # curl has no default overall timeout, so an unflagged POST here stalls the
+    # watchdog indefinitely. On timeout curl exits 28 and the `|| true` keeps
+    # the notify non-fatal to recovery.
     RESPONSE=$(curl -s -X POST \
+        --connect-timeout 10 --max-time 20 \
         "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
         -H "Content-Type: application/json" \
         -d "$PAYLOAD" 2>/dev/null) || true

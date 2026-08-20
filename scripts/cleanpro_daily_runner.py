@@ -450,7 +450,11 @@ def main():
             # send via curl multipart
             subprocess.run(
                 [
+                    # 120s ceiling: multipart photo upload, not a text POST.
+                    # Unflagged curl has no overall timeout, so a hung
+                    # api.telegram.org would burn this job's whole slot.
                     "curl", "-s", "-X", "POST",
+                    "--connect-timeout", "10", "--max-time", "120",
                     f"https://api.telegram.org/bot{DEFAULT_BOT_TOKEN}/sendPhoto",
                     "-F", f"chat_id={DEFAULT_CHAT_ID}",
                     "-F", f"photo=@{heatmap_path}",
