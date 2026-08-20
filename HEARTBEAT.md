@@ -319,6 +319,22 @@ a signature (12:00 is the first slot the two share). 1756z and three cycles befo
 is not lenient, it is un-instrumented, and both emit the same success line. (3) If you neuter a script
 you believe is descheduled, exit NON-ZERO; an early `return` is indistinguishable from a silent healthy
 run.** Sent to the user (1540z r4); both fixes are asks, not acts. Ev: `…/heartbeat-1814z-two-causes-one-slot.md`.
+⛔ **THE 08-19 DESCHEDULE WAS AN **11-JOB** INTENT AND EVERY CYCLE CALLED IT "THE 3 ALERT JOBS" —
+§1's `14→3` WAS ARITHMETICALLY RIGHT AND HID 8 OF THE 11** (1835z). One diff of job IDs, loaded blob
+vs today's file: **3 DELETED** (`cleanpro-alerts`, `cleanpro-exp-monitor`, `vidnotes-alerts`) **+ 8
+DISABLED** (`aividly/mangii/pdfai-daily`, `auto-commit`, `cleanpro-weekly`, `echo-backend-alerts`,
+`vidnotes-weekly`, `weekly-conjecture`), 0 added — all 11 still firing. ⛔ **`cleanpro-exp-monitor` is
+NOT an alert job and must not inherit `cleanpro-alerts`' diagnosis: no early-`return` guard, real body,
+`:15` hardcodes the publicly-exposed `8628864855:…` token, and it fired **12×/24 h — tied 2nd busiest
+in the fleet**. Its 0–2 s runtimes are a healthy no-op (Firebase CLI ⇒ empty ⇒ exits before any
+`bq query`; a `bq` failure would raise at `_run_script:125`), so do NOT file it as a fifth dead job.**
+**RULES: (1) decompose an `N→M` config delta into the AUTHOR OPERATIONS that produced it before
+quoting it — a complete number carries an incomplete narrative, and nobody re-audits arithmetic that
+checks out. (2) A set named for its most salient member gets DIAGNOSED as that member (1814z's
+find-the-one-that-didn't, mirrored onto naming): when N things are acted on together, find the one
+that is not of the named type. (3) §1's gate prompts "what still runs" and never "what was the author
+trying to STOP" — the second is the answer the user thinks they already got.**
+Ev: `…/heartbeat-1835z-the-deschedule-covered-eleven-jobs-not-three.md`.
 ⛔ **A self-rewriting script cannot verify its own fix in the same run — the edit lands one cycle
 later.** (0418z→0514z, discharged; archived §V.)
 
