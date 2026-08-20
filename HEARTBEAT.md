@@ -514,6 +514,25 @@ independence degrades to coupling silently — here one word, shared by a commen
 loud, with no error anywhere when it moves. Independence reads as architectural, which is why nobody
 re-derives it.** Ev: `memory/t0/2026-08-20/heartbeat-2336z.md`.
 
+⛔ **THE RECEIVER'S WORD IS ALREADY READ AND THEN THROWN AWAY — `send.sh` GATES ON HTTP 200 AND
+`exit 2`s, THEN RECORDS NOTHING** (2026-08-20 23:2x ICT, 1623z; 1558z's handoff imperative, filed with
+one correction it needs). 1558z concluded *"the only honest detector reads the side effect's own
+receipt"* and implied this fleet reads none. It already does: `send.sh:107-111` tests the
+receiver-produced `%{http_code}` and exits **2** on non-200, so a *refused* send is loud. The blind
+spot is narrower and worse — on success it `echo`s to **stdout and writes no file** (`logs/telegram-sent.log`
+absent; `grep '"ok"' send.sh` ⇒ 0 hits). For a `claude -p` job stdout dies with the turn ⇒ **no
+persistent record of any Telegram delivery, by any job, anywhere on disk**, so every *"the user was
+alerted"* line in QUEUE/HEARTBEAT is producer-side inference. ⛔ **And this morning's brief did not
+fail here — a bare `printf` hung 60 s, so the actuator never RAN;** do not file the send path as that
+cause. **RULE: when a finding says the honest signal is UNREAD, check whether it is unread or
+READ-AND-DISCARDED — the two are identical from outside, but the first implies a rewrite and the
+second is one `>>` from fixed, so the framing alone decides whether anyone attempts it.** Same shape
+as 2112z's `[-500:]` return value nobody receives: dead intent, not a missing capability.
+⚠️ Latent, unexercised: `curl -s` at `:103,135,162,194` with **no `--max-time`** against CLAUDE.md's
+standing `--max-time 15` — a hung API call blocks the job forever and `set -euo pipefail` gives it no
+non-zero path either. Both fixes are one line, need no restart, and are **ASKED, NOT APPLIED.**
+Ev: `memory/t0/2026-08-20/heartbeat-1558z-exit-0-is-a-turn-not-a-delivery.md` + 1623z log.
+
 ⛔ **FIVE CYCLES BUILT THE SLEEP MODEL ON `Idle Sleep`; OVER THE METER'S WHOLE SPAN IDLE IS 8.8 % AND
 THE **LID** IS THE MAJORITY DRIVER — AND THE LID IS THE ONE CAUSE 0534z's PROBE STRUCTURALLY CANNOT
 SEE** (2026-08-20 07:2x ICT, 0016z). 170 `Entering Sleep state` lines, span 08-13 09:19:30 → 08-20
