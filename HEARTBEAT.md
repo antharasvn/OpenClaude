@@ -285,22 +285,19 @@ heartbeat + daily-brief, complete. (2) `launchctl list`'s middle column is the l
 is free in the liveness check you already run — read it, don't just confirm the label is present.**
 Narrative §AS.
 ⛔ **AN EXIT CODE ATTESTS THAT A PROCESS ENDED, NEVER THAT IT DELIVERED — THE 08-20 09:00 BRIEF EXITED
-0, WROTE ITSELF, AND WAS NEVER SENT** (1756z). All 6 `daily-brief` entries in this file are about its
-QUOTA or its EXIT STATUS; **no cycle had ever `cat`ed `/tmp/claude-daily-brief.log`**, which ends
-*"generated but not delivered — the Bash tool is wedged"*. Body still undelivered at
-`temp/daily-brief-20260820.txt`. Cause is one flag: `~/.claude.json`
-`hasTrustDialogAccepted = False` ⇒ `.err` says *"Ignoring 10 permissions.allow entries"* ⇒ its Bash
+0, WROTE ITSELF, AND WAS NEVER SENT** (1756z). **No cycle had `cat`ed `/tmp/claude-daily-brief.log`**, which ends *"generated but not delivered"*. Cause is one flag, **PER-DIRECTORY, NEVER
+TOP-LEVEL**: `~/.claude.json` `projects["<job's cwd>"].hasTrustDialogAccepted` — a top-level read returns `None` ⇒ reads as
+FIXED (1857z). `False` for this repo AND `/Users/antharas`; the plist picks the repo ⇒ **trust accepted in another cwd does not fix it** ⇒ `.err` says *"Ignoring 10 permissions.allow entries"* ⇒ its Bash
 calls hang on a prompt a `-p` job cannot answer. **The heartbeat is immune only because it carries
 `--allowedTools` in ARGV; the brief relies on `.claude/settings.json`, which trust gates.**
 **RULES: (1) read the OUTPUT, never the status, of any job whose product leaves the machine — 0613z's
-*read the middle column* is necessary and worthless alone. (2) This is 0418z's *key on structure, not
-on text the subject writes* INVERTED, so knowing 0418z did not prevent it: here the structural signal
-was CLEAN and the text was the only honest witness. A subject forges its failure vocabulary but never
+*read the middle column* is necessary and worthless alone. (2) 0418z's *key on structure, not on
+text the subject writes*, INVERTED — so knowing it did not prevent this: the structural signal was
+CLEAN and the text was the only honest witness. A subject forges its failure vocabulary but never
 forges a CONFESSION — a self-reported failure inside a success-coded run is the highest-trust signal
 there is. (3) When two consumers of one harness differ in health, diff how they receive PERMISSIONS,
-not what they do.** ✅ Re-measured its undelivered lead item: both alert jobs still no-ops since
-08-19 12:00 ICT (`vidnotes-alerts` 13–23 s vs 6–10 min; `cleanpro-alerts` 0–2 s vs 9–13 s) — **2.5
-days, not 21 h.** Sent to user; the flag is theirs. Ev: `…/heartbeat-1756z-exit-zero-is-not-delivered.md`.
+not what they do.** (Alert-duration half superseded by 1814z.) Sent 1756z + 1857z; the flag is
+theirs. ⛔ **A `wc -c` BATCHED WITH THE COMMIT IS NOT A GATE: 1857z shipped 250,148 B.** Ev: `…/heartbeat-1756z-exit-zero-is-not-delivered.md`.
 ⛔ **THE 08-19 ALERT COLLAPSE IS **TWO** UNRELATED FAULTS SHARING ONE SLOT, AND THE LIVE HALF IS THAT
 `AGENT_CLI=grok` IS OUT OF MONEY — ALL FOUR PROMPT JOBS ARE DEAD AND EVERY ROW READS `OK`** (1814z).
 Run the binary, don't infer: `grok -p …` ⇒ **rc=1, stdout 0 B, `status 402 Payment Required: Grok Build
@@ -337,7 +334,6 @@ STOP" — the second is the answer the user thinks they already got.**
 Ev: `…/heartbeat-1835z-the-deschedule-covered-eleven-jobs-not-three.md`.
 ⛔ **A self-rewriting script cannot verify its own fix in the same run — the edit lands one cycle
 later.** (0418z→0514z, discharged; archived §V.)
-
 
 
 ⛔ **NEVER ASK WHETHER THE HOST WAS AWAKE — a heartbeat runs in the awake window by construction, so
