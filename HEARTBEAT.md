@@ -268,14 +268,11 @@ commit ⇒ 1922z's branch calls it healthy, no alert, user sees silence. **Fixed
 patched script.** **RULES: (1) ask of any new discriminator which previously-alarming states it now
 calls healthy (1814z's gain-set, backwards). (2) A RULE'S REASON HAS WIDER SCOPE THAN ITS RECIPE, AND
 THE RECIPE IS WHAT GETS OBEYED — `CLAUDE.md:4`'s sole global rule bans WebFetch *because it hangs* and
-prescribes `--max-time 15` for FETCHING; the costliest hang was outbound, so nobody matched it. 7 more
-`skills/` curl callers UNAUDITED.** ✅ **SWEPT 2024z AND THE COUNT WAS FICTION: `skills/` holds only
-2 other curl SITES and both already carry `--max-time`; the "7" counted `SKILL.md` PROSE. The two real
-unprotected `api.telegram.org` POSTs were OUTSIDE the swept dir — `bin/notify-interrupted.sh:58`,
-which armed `ouroboros.sh:28` calls every 30 s, so a hang stalls the RECOVERY path itself, and
-`cleanpro_daily_runner.py:453` (`sendPhoto`, no curl nor subprocess timeout). Both patched, both
-syntax-checked. **RULE: scoping a sweep to the directory the first instance was found in is how the
-worse instance hides; and an "N unaudited" figure is a grep HIT count until sites are split from
+prescribes `--max-time 15` for FETCHING; the costliest hang was outbound, so nobody matched it. ✅ **SWEPT 2024z: `skills/` WAS ALREADY CLEAN (2 sites, both flagged; the "7 more" counted `SKILL.md`
+PROSE). Both real unprotected `api.telegram.org` POSTs sat OUTSIDE it — `bin/notify-interrupted.sh:58`,
+called by armed `ouroboros.sh:28` every 30 s ⇒ a hang stalls RECOVERY, and
+`cleanpro_daily_runner.py:453`. Patched. **RULE: scoping a sweep to the dir the first instance was
+found in is how the worse one hides; "N unaudited" is a grep HIT count until sites are split from
 prose.** Ev: `…/heartbeat-2004z-the-anti-hang-rule-exempted-the-send-path.md`.
 ⛔ **`heartbeat-state.json`'s `last_message_sent` IS DEAD — SEEDED, DOCUMENTED, WRITTEN BY NOTHING,
 READ BY NOTHING** (1943z). `run.sh:23` names it only in the fresh-file seed; cycles send via
