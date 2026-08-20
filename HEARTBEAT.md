@@ -61,8 +61,13 @@ that check on the LETTER, never the `§`
   narrative belongs in the daily log, which nothing re-`cat`s into `HEARTBEAT.md`.
 ⛔ **SCORE COMPACTION AGAINST THE FILE'S LEVEL, NEVER YOUR OWN PASS DELTA — 24 COMMITS AND 38 h OF
 THIS METHOD MOVED THE FILE +86 B** (2026-08-20 02:4x ICT, 1940z). `git cat-file -s` over every commit
-touching this file from 0534z (08-18 12:39, **247,597 B**) to now (**247,683 B**): the level
-oscillates in a **3,960 B band** (min 246,765, max 250,725) and returns. Every pass reported a
+touching this file: over the last 80 (08-15 22:44→08-20 20:11) the spread is **17,970 B**, but that
+is TREND not oscillation — the file rose 232,755→249,128 (**+16 KB**) across them, so do not requote
+it as a band; the 3,960 was a flat 2-day window. ⛔ **The durable half: 7 of those 80 commits
+(3 EPISODES — 4 land inside 90 s) SHIPPED ABOVE THE 250 KB CAP, max 250,725, and every one PASSED
+its own `wc -c` — because each cycle measures before its last write. A cap policed by a check the
+policy itself schedules too early is breached by ordinary variance, not by negligence.** Margin to
+the hard 256 KB `Read` cap is 5.3 KB. Every pass reported a
 truthful negative; the level held, because the 1755z rule that sends findings *here* sets the growth
 and compaction only pays it back. **Decomposition, not a ratio: cut-only passes ran −325…−1,452 B,
 finding-filing cycles +445…+2,262 B, and there are as many of the second kind.** So headroom is a
