@@ -338,14 +338,13 @@ of fiction — six were RUNTIME re-labelled, `lost` tracking `run` 1:1. A residu
 variable already in the row is the model's missing term, not a finding; calibrate a period on the
 regime you will apply it to.** `heartbeat-state.json` is at the REPO ROOT.
 ⛔ **A MISSED SLOT IS EXPLAINED BY THE MONOTONIC FREEZE ACCUMULATED BEFORE IT, NOT BY THE POWER STATE
-AT IT: SUM `Entering Sleep`→`DarkWake` AND COMPARE TO `misfire_grace_time: 300`
-(`bot/scheduler.py:26`)** (0751z, extended 0813z; **5 slots, monotone, no inversions**). Skips 12:05
-**517 s** and 14:05 **808 s**; fires 09:05 42 s (late, caught 09:06:34), 12:30, 13:05, 15:05 all ~0 s.
-**At 14:05 no single interval reached 300 — the quantity is the SUM**; 0707z's cadence residual gave
-the same 808 s independently. ⛔ **REFUTED: DarkWake is not the cause — a sustained DarkWake fires
-on time (12:30); the power model is a binary and the third state is not the variable.** Kills a fix
-class: **raising the grace helps only if it exceeds the freeze, which is third-party (`dasd`
-`fpck-repair` RECURS — 12:12:23, 14:02:58 — so age dates the EPISODE, never a regime) hence unbounded.**
+AT IT — SUM THE `Entering Sleep state` LINES' OWN TRAILING `N secs` (1205z's meter; 0751z's
+`→DarkWake` PAIRING IS RETIRED, it matched nothing in this log era) AND COMPARE TO
+`misfire_grace_time: 300` (`bot/scheduler.py:26`)** (0751z/0813z; 5 slots, monotone). Skips 12:05
+**517 s**, 14:05 **808 s**; fires 09:05 (42 s, late), 12:30, 13:05, 15:05 ~0 s. **No single interval
+reached 300 at 14:05 — the quantity is the SUM.** ⛔ **DarkWake is NOT the cause — a sustained
+DarkWake fired on time (12:30).** Kills a fix class: **raising the grace helps only if it exceeds the
+freeze, which is third-party (`dasd fpck-repair` RECURS) hence unbounded.**
 ⛔ **AND THE WINDOW RESETS AT A SKIP, NOT AT A RUN — SO MISSED FIRES NEVER CASCADE** (0813z, the
 discriminating case). Between the 14:05 skip and 15:05 `pmset` shows **zero sleep events**, so
 "freeze since the last COMPLETED job (13:22:09)" sums 808 s and predicts a skip — **refuted, 15:05
@@ -516,11 +515,10 @@ end, and it rots first.** Ev: `…/heartbeat-1205z-pmset-density-is-assertion-ch
 ✅ **09:00 daily brief DELIVERED (RC=0); the "queued" send died with its session. A `ps` result is
 a claim about a PROCESS — never escalate it to one about the destination.**
 ⛔ **AN ERROR RUN IS A RETRY LADDER, NOT A RATE — DIFFERENCE THE TIMESTAMPS BEFORE YOU COUNT LINES**
-(0254z). Today's **12** `httpx.ConnectError` lines are **ONE** DNS failure (09:29:40) plus 11
-backoff retries — gaps 1,1,2,4,5,7,12,17,26,30,30 s. So 0514z's *"nine `ConnectError` lines"* is
-very likely n=1: its MECHANISM holds (first error 2 s after the 09:29:38 DarkWake), its COUNT does
-not. 2053z's denominator rule, on a numerator the client's retry policy generates.
-✅ **RUN OVER THE WHOLE LOG (1105z): 6,884 stamped lines = 537 EPISODES, mean 12.8 lines each ⇒ any
+(0254z; 12 lines = ONE DNS failure + 11 backoff retries, so 0514z's *"nine `ConnectError` lines"* is
+n=1 — its MECHANISM holds, its COUNT does not. 2053z's denominator rule on a numerator the retry
+policy generates).
+✅ **WHOLE LOG (1105z): 6,884 stamped lines = 537 EPISODES, mean 12.8 lines each ⇒ any
 `grep -c` incident count is ~13× HIGH. And the line count is a CLOCK, not a count** — every episode
 >20 min in the 05-11→06-04 era sits at **2.00–2.04 lines/min** (n=10, durations 25–173 min), i.e. the
 30 s backoff cap emitting 2 lines/min for as long as the outage lasts; later ones drift to 1.15–1.85,
