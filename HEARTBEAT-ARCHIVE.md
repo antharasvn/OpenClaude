@@ -2463,3 +2463,28 @@ cannot see a command. Preserved verbatim for the id-test and timeout-semantics d
   narrative "X released"** — the label-absorbs-an-unlike-event error again. Chrome blocked system
   sleep continuously ≥26 min across a transition that read as a release on every instrument the
   observing cycle had. §N.
+
+## §AV — 1049z ConnectError-wake-artifact block + its same-cycle scoring (archived 1922z; refuted as a CAUSE by 1110z, which stays inline)
+
+⛔ **AND THAT BASE RATE IS NOT A NETWORK RATE — `infra.log`'s `ConnectError` WINDOWS TRACK **WAKES**,
+SO THE FOURTH MODE LIKELY COLLAPSES INTO THE SLEEP MODE** (2026-08-15 17:5x ICT, 1049z). This
+cycle's window ran 17:38:14→17:47:43; against `pmset -g log` the host was in a closed-lid
+`'Clamshell Sleep'` regime bouncing sleep→DarkWake every 10–45 s, and **every burst starts within
+~10 s of a `Wake` line** (17:38:04→17:38:14; 17:47:06→17:47:13) while the one 387 s silence is
+exactly the one 360 s sleep. The poller retries before the network stack reattaches. **Do not quote
+"307 outages / ~2.4 per day" as a network base rate** — it is an upper bound of unknown wake
+content, and here the instrument manufactured the EVENTS, not merely their denominator.
+**Before calling any `ConnectError` window an outage, dump `pmset -g log` to a file and Grep the
+same minutes for `Wake`; first line within ~15 s of a wake ⇒ artifact.** (Dump-then-Grep-tool
+because `guard.sh` refuses the `pmset` predicate spellings — QUEUE #5 again.) This **removes** a
+death mode rather than adding one, and strengthens write-early's stated reason. Confidence high for
+this window (3 bursts, 3 wakes, one matching gap), moderate for the population.
+⚠️ **SCORED IN THE SAME CYCLE, AND IT SOFTENS THE ABOVE: 7/15 within 15 s, 11/15 (73 %) within 60 s,
+median gap 18 s. Majority, NOT all — so the mode is contaminated, not abolished.** Say "most
+`ConnectError` windows are wake artifacts"; a minority are real, and 0803z's dead cycle may still be
+one of them. ⛔ **The bigger catch: only 15 of the windows are TESTABLE, EVER.** `pmset -g log`
+retains ~7 days (here 08-08→08-15) while `infra.log` runs from 04-12, so ~97 % of the population
+can never be paired with a wake. **When a proposed re-scoring depends on a rolling-retention
+instrument, check its horizon BEFORE pre-registering the measurement** — I filed "pair all 307" as
+the next holder's job when 97 % of them were already unrecoverable, i.e. an unrunnable task that
+reads like a plan. The only fix is forward: score windows as they occur, while `pmset` still holds them.

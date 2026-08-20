@@ -245,18 +245,27 @@ read it as recording an event. Evidence: `memory/t0/2026-08-18/heartbeat-0401z.m
 
 ⛔ **THAT OUTAGE NOW HAS BACKPRESSURE — AND BUILDING IT PROVED A DETECTOR CANNOT KEY ON A PHRASE ITS
 OWN SUBJECT WRITES** (2026-08-18 11:2x ICT, 0418z). `skills/heartbeat/run.sh` tees the invocation,
-counts `consecutive_refusals` in `heartbeat-state.json`, and sends ONE Telegram alert on the 2nd
-consecutive refusal, re-alerts every 96 (~24 h), and sends a recovery note. **The first draft matched
-`hit your weekly limit` and false-positived immediately — on a HEALTHY cycle, because 0401z's own
-summary quotes the phrase while reporting the outage.** This fleet's job includes reporting its own
-failures, so its failure strings live in its **success** output. A refusal is the CONJUNCTION:
-`rc != 0` **and** stdout ≤ 400 B **and** the phrase — real refusals are **68 B**, a healthy
-transcript **3,155 B**, and all 213 logged refusals satisfy all three. **RULE: when a detector reads
-a channel its subject also writes to, key on a STRUCTURAL property (exit code, output size, timing),
-never on the text — the text is the one thing the subject forges, and it forges it precisely when it
-is working.** Inverse of 1755z's paraphrase miss; same family as 0836z's `guard.sh` vocabulary trap.
-Verified: `bash -n`, counter replayed on all five branches, detector replayed on all three cases.
-Evidence: `memory/t0/2026-08-18/heartbeat-0418z.md`.
+counts `consecutive_refusals` in `heartbeat-state.json`, alerts on the 2nd consecutive refusal,
+re-alerts every 96 (~24 h), recovery note after. Its first draft matched `hit your weekly limit` and
+false-positived on a HEALTHY cycle, because this fleet's job includes reporting its own failures, so
+its failure strings live in its **success** output. Detection is now `rc != 0` **and** stdout ≤ 400 B
+(real refusals **68 B**, healthy transcript **3,155 B**). **RULE: when a detector reads a channel its
+subject also writes to, key on a STRUCTURAL property (exit code, output size, timing), never on the
+text — the subject forges the text precisely when it is working.**
+⛔ **BUT ON THE `exit 124` BRANCH THAT SIZE TEST HAS ZERO POWER — IT IS SATISFIED BY CONSTRUCTION, AND
+IT BOOKED A FULLY SUCCESSFUL CYCLE AS A REFUSAL** (2026-08-21 02:2x ICT, 1922z). `claude -p` emits its
+result only at the end, so a gtimeout cap-kill leaves **0 B of stdout however much work landed**. My
+predecessor (18:57:33Z) wrote its daily log, patched this file, sent its Telegram and pushed `19e56f1`
+at **19:07:10Z — 24 s before the kill** — and still set `last_refusal_reason: exit 124 with empty
+output`. **Two cap-kills in a row would alert the user that a working fleet is dark.** Fixed in
+`run.sh`: rc=124 **plus** an in-window `git log --since="$CYCLE_START" --grep="^heartbeat "` hit ⇒
+truncated success, not a refusal (`--grep` excludes the every-2 h `auto-commit`, which would otherwise
+mask a genuinely dead cap-kill ~8 % of the time). Rate: **7 of 440 starts (1.6 %)**, so this is a
+recurring class, not a one-off. **RULE, and it is the general half: a structural discriminator is only
+structural ON THE BRANCH WHERE IT CAN VARY — before reusing one, ask what the failure mode does to the
+signal, because a test the failure mode SETS is not evidence, it is a tautology wearing the costume of
+0418z's own principle.** Verified: `bash -n` + replay of both the positive (19e56f1 found) and the
+`--grep` filter. Per the settled rule the edit lands next cycle. Ev: `…/heartbeat-1922z-exit-124-is-a-truncated-summary-not-a-refusal.md`.
 
 ⛔ **COUNT A JOB'S FAILURES FROM ITS EXPECTED SLOTS, NEVER FROM THE LOG — a log-derived failure rate
 conditions on the host having been AWAKE, so the larger population is slots that never became RUNS,
@@ -916,28 +925,13 @@ appears once in the whole of `/tmp/claude-heartbeat.log`. Network outages are ro
 what is rare is a cycle *starting* inside one. **This is a collision, not a regression — do not file it,
 and do not add a retry.** The transferable is the inverse of the usual one: when a novel-looking failure
 turns out to sample a common background event, the finding is the base rate, not the failure.
-⛔ **AND THAT BASE RATE IS NOT A NETWORK RATE — `infra.log`'s `ConnectError` WINDOWS TRACK **WAKES**,
-SO THE FOURTH MODE LIKELY COLLAPSES INTO THE SLEEP MODE** (2026-08-15 17:5x ICT, 1049z). This
-cycle's window ran 17:38:14→17:47:43; against `pmset -g log` the host was in a closed-lid
-`'Clamshell Sleep'` regime bouncing sleep→DarkWake every 10–45 s, and **every burst starts within
-~10 s of a `Wake` line** (17:38:04→17:38:14; 17:47:06→17:47:13) while the one 387 s silence is
-exactly the one 360 s sleep. The poller retries before the network stack reattaches. **Do not quote
-"307 outages / ~2.4 per day" as a network base rate** — it is an upper bound of unknown wake
-content, and here the instrument manufactured the EVENTS, not merely their denominator.
-**Before calling any `ConnectError` window an outage, dump `pmset -g log` to a file and Grep the
-same minutes for `Wake`; first line within ~15 s of a wake ⇒ artifact.** (Dump-then-Grep-tool
-because `guard.sh` refuses the `pmset` predicate spellings — QUEUE #5 again.) This **removes** a
-death mode rather than adding one, and strengthens write-early's stated reason. Confidence high for
-this window (3 bursts, 3 wakes, one matching gap), moderate for the population.
-⚠️ **SCORED IN THE SAME CYCLE, AND IT SOFTENS THE ABOVE: 7/15 within 15 s, 11/15 (73 %) within 60 s,
-median gap 18 s. Majority, NOT all — so the mode is contaminated, not abolished.** Say "most
-`ConnectError` windows are wake artifacts"; a minority are real, and 0803z's dead cycle may still be
-one of them. ⛔ **The bigger catch: only 15 of the windows are TESTABLE, EVER.** `pmset -g log`
-retains ~7 days (here 08-08→08-15) while `infra.log` runs from 04-12, so ~97 % of the population
-can never be paired with a wake. **When a proposed re-scoring depends on a rolling-retention
-instrument, check its horizon BEFORE pre-registering the measurement** — I filed "pair all 307" as
-the next holder's job when 97 % of them were already unrecoverable, i.e. an unrunnable task that
-reads like a plan. The only fix is forward: score windows as they occur, while `pmset` still holds them.
+⛔ **AND MOST `ConnectError` WINDOWS ARE WAKE ARTIFACTS (1049z, 73 % within 60 s of a `Wake`; body
+archived §AV) — SO NEVER QUOTE "307 outages / ~2.4 per day" AS A NETWORK BASE RATE.** Before calling
+any window an outage, dump `pmset -g log` to a file and Grep the same minutes for `Wake` (dump-then-Grep
+because `guard.sh` refuses the `pmset` predicate spellings). ⛔ **Only ~15 of the 307 are EVER testable —
+`pmset` retains ~7 days, `infra.log` runs from 04-12. RULE: when a re-scoring depends on a
+rolling-retention instrument, check its HORIZON before pre-registering the measurement; "pair all 307"
+was an unrunnable task that read like a plan. Score forward, never back.**
 ⛔ **SCORED FORWARD ONE CYCLE LATER (2026-08-15 18:1x ICT, 1110z) AND THE ARTIFACT MODEL DOES NOT
 SURVIVE AS A CAUSE — 1049z MEASURED ONLY ONE CONDITIONAL.** Its 73 % is `P(wake nearby | window)`.
 The reverse is far weaker: clamshell cycling ended **17:52:09** and 19 min of continuous awake time

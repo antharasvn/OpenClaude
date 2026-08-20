@@ -35,7 +35,8 @@ except Exception:
 ")
 
 echo "[heartbeat] Last run: $LAST_RUN"
-echo "[heartbeat] Starting heartbeat at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+CYCLE_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+echo "[heartbeat] Starting heartbeat at $CYCLE_START"
 
 # Run Claude with heartbeat prompt
 cd "$PROJECT_DIR"
@@ -70,6 +71,22 @@ if [[ $CLAUDE_RC -ne 0 && $CLAUDE_BYTES -le 400 ]]; then
     REASON="$(head -c 200 "$CLAUDE_OUT" | tr -d '\n')"
     # gtimeout cap (124) in -p mode leaves stdout empty — synthesize a label.
     [[ -z "$REASON" ]] && REASON="exit $CLAUDE_RC with empty output"
+    # ...but on the 124 branch `≤400 B` is satisfied BY CONSTRUCTION: `claude -p`
+    # emits its result only at the end, so a cap-kill has 0 B of stdout however
+    # much work landed. 2026-08-20T18:57:33Z ran the full cycle, wrote its daily
+    # log, patched HEARTBEAT.md and pushed 19e56f1 at 19:07:10Z — 24 s before the
+    # kill — and was still booked a refusal. Two of those in a row would alert the
+    # user that a working fleet is down. Ask the artifact, not the transcript:
+    # a commit inside this cycle's window means the work shipped and only the
+    # SUMMARY was truncated. Same principle as the structural rule above (never
+    # key on text the subject writes) applied to a branch where the structural
+    # signal it chose has no power.
+    if [[ $CLAUDE_RC -eq 124 ]] \
+       && [[ -n "$(git -C "$PROJECT_DIR" log --since="$CYCLE_START" --grep="^heartbeat " --format=%h 2>/dev/null)" ]]; then
+        REFUSED=0
+        REASON=""
+        echo "[heartbeat] exit 124 but commits landed in-window — truncated success, not a refusal"
+    fi
 fi
 rm -f "$CLAUDE_OUT"
 
