@@ -789,3 +789,73 @@ Evidence: `memory/t0/2026-08-20/heartbeat-1844z.md`; rule in `HEARTBEAT.md` head
   2100z: **falsified, not fixed.** The hook is uncapped as filed, but the harness truncates its output
   to a ~2 KB preview and persists the rest to a file, so the 600–692 KB/day context cost the row was
   built on does not exist. Evidence: `memory/t0/2026-08-15/heartbeat-2100z.md`.
+
+---
+
+## 15. A cron fire was lost while the host was AWAKE — #13's sleep mechanism does not cover it
+
+Filed 2026-08-20 15:5x ICT (0846z). **Decision needed: none yet — this is a request to NOT close #13
+as the whole story.** The diagnostic step that would settle it is in a cycle's lane and is named at
+the bottom.
+
+`vidnotes-daily` (`30 7 * * 1-7` Europe/Warsaw = **12:00 ICT**) missed its 2026-08-20 fire. It ran
+the same slot normally on 08-19 (`logs/infra.log:26113`), so it is loaded in the running scheduler
+(pid 927, up 5 d). `logs/infra.log` has **no `Running job: vidnotes-daily` line** today — the gap
+runs 11:21:49 → 13:06:39 with nothing in it at all.
+
+**The host was awake at 12:00:00.** From the assertion summary printed at 12:05:03:
+
+```
+2026-08-20 12:05:03 +0700 Assertions PID 343(powerd) Summary PreventUserIdleSystemSleep
+        "Powerd - Prevent sleep while display is on" 00:28:54
+```
+
+28 m 54 s ending 12:05:03 ⇒ held from **11:36:09**, matching the `Wake` at 11:36:08 (FullWake, HID
+activity). System idle sleep was *prevented*, not merely absent, across the fire instant; the first
+`Sleep` after it is 12:05:30. `echo-backend-alerts` (hourly ~:05) also lost its 12:05 slot inside
+that same awake window.
+
+**Why this is worth a row rather than a note.** #13's mechanism — cron slot discarded by
+`misfire_grace_time: 300` during sleep — is correct and well-evidenced for the 14:00 block (today's
+14:00 loss is a clean instance: the 14:04:43 DarkWake reports its preceding sleep as `334 secs`,
+putting onset at 13:59:09). But #13's two proposed fixes (**move the slot**, **widen the grace**)
+both assume sleep is the only cause. If some fraction of misses happen while awake, either fix ships,
+the 14:00 trough closes, and the residual keeps silently dropping reports — which is the exact
+failure shape #1 already documented for itself (*"would read as fixed while 37 % of slots stay
+silent"*). Two rows now share that shape; that is a pattern, not a coincidence.
+
+**Cheap next step, in a cycle's lane, not the boss's:** read `last_status` / `consecutive_errors`
+for `vidnotes-daily` after an awake miss. If it moved, the job *fired and failed* and infra.log is
+simply not recording the attempt — a logging defect. If it did not move, the fire never reached the
+executor while the machine was up — a scheduler-thread defect, and neither of #13's fixes touches it.
+This cycle did not run that check (it was identified with ~6 min of budget left).
+
+**Rule:** *a diagnosis that explains every instance stops being tested.* Sleep has explained every
+cron miss here for weeks, so no cycle checked awake-state before attributing one. Before building a
+fix on a universal cause, go looking for the instance it does not explain.
+
+Confidence: **high** that no infra.log line exists (direct absence across a 105-min gap);
+**moderate** that the host was awake (assertion arithmetic, single source).
+Evidence: `memory/t0/2026-08-20/heartbeat-0846z.md`.
+
+**RESOLVED SAME CYCLE (0846z, ~5 min later — the check above was cheap and should not have been
+deferred).** `cron/state.json` for `vidnotes-daily`: `last_run 2026-08-19T05:02:06Z`,
+`last_status OK`, `consecutive_errors 0` — **nothing moved.** So the fire never reached the executor;
+it is not a fire-and-fail-silently logging defect.
+
+⚠️ **Correcting the row above: this does NOT put the cause outside #13's fixes.** A scheduler thread
+blocked >300 s while the *machine* is awake produces exactly this state — the fire is discarded as a
+misfire with no execution and no status change, identical to the sleep case. **Widening
+`misfire_grace_time` therefore plausibly covers both; moving the slot covers only the sleep half.**
+That tips #13's choice toward fix 2, and it is the opposite of what this row asserted before the
+check ran. Awake-vs-asleep changes the *mechanism*, not necessarily the *remedy* — worth keeping
+distinct, not worth blocking #13 on.
+
+🆕 **Unrelated finding from the same read, and it is the sharper one.** `cron/jobs.json` has
+`echo-backend-alerts` **`enabled: false`**, yet it ran today at 08:05:07Z and is in `infra.log` at
+11:05 / 13:06 / 15:05 ICT. The known drift ("jobs.json is a wish, not the loaded state") was
+documented as *config claims enabled, scheduler dropped it*. **This is the reverse: config claims
+disabled, scheduler is running it anyway.** So the drift is bidirectional, and the restart hazard is
+worse than filed — a restart would silently *stop* a job that is currently working and that nobody
+has been told is nominally off. **A staleness bug that runs in both directions cannot be reasoned
+about by assuming which copy is more permissive.**
