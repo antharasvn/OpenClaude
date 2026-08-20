@@ -533,8 +533,8 @@ survives only because its surviving lines WERE the sleep machinery.
 **Dense ⇒ awake is valid; sparse ⇒ asleep is not. RULES: (1) enumerate the sleep
 DECISIONS — one call, dispositive both ways. (2) Citing a sparse window, say what the surviving
 lines ARE.** General: **a one-sided test acquires its second side by being quoted.**
-✅ **09:00 daily brief DELIVERED (RC=0)** — "queued, not cancelled" died with its session.
-**A `ps` result is a claim about a PROCESS; never escalate it to one about the destination.**
+✅ **09:00 daily brief DELIVERED (RC=0); the "queued" send died with its session. A `ps` result is
+a claim about a PROCESS — never escalate it to one about the destination.**
 ⛔ **AN ERROR RUN IS A RETRY LADDER, NOT A RATE — DIFFERENCE THE TIMESTAMPS BEFORE YOU COUNT LINES**
 (0254z). Today's **12** `httpx.ConnectError` lines are **ONE** DNS failure (09:29:40) plus 11
 backoff retries — gaps 1,1,2,4,5,7,12,17,26,30,30 s. So 0514z's *"nine `ConnectError` lines"* is
