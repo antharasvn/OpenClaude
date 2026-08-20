@@ -368,6 +368,22 @@ stale-success reader cannot tell from fresh. All four cycles that priced this me
 one job that survives it. ⛔ **Not an n+1 on 1404z: 951 is already a row in its n=22 table — filing it
 as fresh evidence was caught only by grepping my own key noun.** Sent to the user (1540z rule 4).
 Ev: `…/heartbeat-1522z-a-freeze-is-priced-per-slot-and-paid-per-pass.md`.
+⛔ **AND ITS ENUMERATION MERGED **TWO** HOLES INTO ONE — IT LISTED A JOB BY CATEGORY INSTEAD OF BY
+RESOLVED SLOT, AND THE ABSORBED JOB MADE ITS REAL HOLE VANISH** (1539z, caught by checking
+`cron/state.json` against `infra.log`). `vidnotes-daily` has **no 14:00 slot**: loaded config gives it
+`0 7 * * *` **Europe/Warsaw = 12:00 ICT**, while echo/mangii/pdfai/aividly are `0 3 * * *`
+America/New_York = 14:00. 08-20 had **hole A 11:21:49→13:21:47** (2 h 00 m; took 12:00 `vidnotes-daily`
+and `echo-backend-alerts` 12:05 **and** 13:05) and **hole B 13:21:47→15:05:00** (1522z's, its other four
+members correct) — separated by the 13:21 interval pass that FIRED, so not one gap. 1522z's impact
+TOTAL was right by luck: one job absorbed from the wrong slot exactly replaced the job it never saw
+missing. **RULE: resolve each candidate's cron+timezone to the meter's clock BEFORE testing membership
+in a gap — a category is not a slot; and the damage is not a mis-attributed row, it is that a merged
+hole LOOKS EXPLAINED while its twin is never counted.** ⛔ **The population question none of the four
+pricing cycles asked — distinct run-days 08-07→08-20 (14 d): echo/mangii/pdfai/aividly-daily
+**10/14 (71 %)**, `vidnotes-daily` **8/14 (57 %)**, cleanpro-daily **11/14 (79 %)**. With 1522z's
+*dailies do not self-heal*, the user's reports have been missing ~⅓ of runs for two weeks and every
+`state.json` row still reads `last_status: OK`.** Sent to the user (1540z rule 4).
+Ev: `…/heartbeat-1539z-two-holes-merged-into-one.md`.
 ⛔ **AND THE WINDOW RESETS AT A SKIP, NOT AT A RUN — SO MISSED FIRES NEVER CASCADE** (0813z, the
 discriminating case). Between the 14:05 skip and 15:05 `pmset` shows **zero sleep events**, so
 "freeze since the last COMPLETED job (13:22:09)" sums 808 s and predicts a skip — **refuted, 15:05
