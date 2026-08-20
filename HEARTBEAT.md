@@ -541,6 +541,21 @@ becomes a rate**). Ev: `…/heartbeat-1105z-connecterror-is-a-clock.md`.
 duty cycle ran through 09:32:56+ with zero errors. **RULE: check a candidate detector against the
 stretch where it stayed SILENT, not only where it fired.**
 
+⛔ **`memory/` IS GITIGNORED — ALL 32 `Ev:` CITATIONS IN THIS FILE POINT AT UNTRACKED FILES, AND
+"COMMITTED AND PUSHED" HAS BEEN HALF FALSE EVERY CYCLE** (1205z). `.gitignore:27` `memory/`; tracked
+memory files **1**, on disk **2,838 / 13 MB**. `HEARTBEAT.md`, `HEARTBEAT-ARCHIVE.md`, `QUEUE.md` are
+tracked — **the imperatives are versioned and the evidence is not.** `git add -A && git commit`
+succeeds on the tracked half and drops the log silently; my correction commit hit `nothing to commit`
+while `&& git push … && echo PUSHED` still printed **PUSHED**, so the success signal covers neither
+what you handed it nor what you claimed. **RULE: after committing a cycle, `git ls-files --error-unmatch`
+the log you cited, or say "filed locally" — never "pushed".** ⛔ **DO NOT "FIX" THIS BY UNIGNORING IT:
+0634z's public fork makes that a 13 MB publication, which is exactly why QUEUE #10 option 1 is vetoed.**
+The rule is protective by accident — its comment reads *"all memory lives in workspaces, not here"*,
+i.e. it encodes the **workspaces layout CLAUDE.md declared a STALE duplicate tree on 2026-08-07**.
+General: **a stale rule that happens to be protective is the hardest kind to audit — the premise is
+dead, the effect is load-bearing, and correcting the premise breaks the protection.** Real exposure:
+one disk, no VCS, no backup, holding this fleet's entire cold tier.
+
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
 ### 0. Cycle budget — 600 s of AWAKE time, not 600 s of wall clock (corrected 2026-08-09 02:50 ICT)
