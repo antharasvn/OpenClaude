@@ -16,13 +16,25 @@ When invoked, the heartbeat skill will:
 5. Update `heartbeat-state.json` with the current timestamp
 
 ## State File
-`heartbeat-state.json` lives in the project root and tracks:
+`heartbeat-state.json` lives in the project root. Real schema (6 fields), all written by `run.sh`
+**except one**:
 ```json
 {
-  "last_run": "2025-01-15T14:30:00Z",
-  "last_message_sent": "2025-01-15T09:00:00Z"
+  "last_run":            "2026-08-20T19:28:45Z",   // every invocation, refusal included
+  "last_success":        "2026-08-20T19:28:45Z",   // rc==0, or rc==124 with an in-window commit
+  "last_refusal":        "2026-08-20T19:07:34Z",
+  "last_refusal_reason": "exit 124 with empty output",
+  "consecutive_refusals": 0,                        // alerts on 2, re-alerts every 96
+  "last_message_sent":   "2026-07-15T00:11:32Z"     // ⛔ DEAD — see below
 }
 ```
+⛔ **`last_message_sent` HAS NO WRITER AND NO READER.** `run.sh:23` names it once, in the *seed* line
+for a fresh state file, and never touches it again; cycles send through
+`./skills/telegram-sender/send.sh`, which does not stamp state. Its live value is **37 days stale**
+while cycles messaged the user twice on 08-20 alone. **Do NOT build a send-rate gate on it** — it can
+only ever read "silent for weeks", so the gate is unconditionally open. Either stamp it in
+`send.sh` first, or use `git log`/`/tmp/claude-heartbeat.log` for send history.
+
 This file is gitignored since it is instance-specific.
 
 ## Usage

@@ -2488,3 +2488,31 @@ can never be paired with a wake. **When a proposed re-scoring depends on a rolli
 instrument, check its horizon BEFORE pre-registering the measurement** — I filed "pair all 307" as
 the next holder's job when 97 % of them were already unrecoverable, i.e. an unrunnable task that
 reads like a plan. The only fix is forward: score windows as they occur, while `pmset` still holds them.
+
+## §AW — 1522z per-slot/per-pass freeze pricing block (archived 1943z; its enumeration was corrected by 1539z, which stays inline and carries the durable half)
+
+⛔ **THAT MODEL IS SCORED PER SLOT AND PAID PER PASS — THE SAME 951 s FREEZE DEBITED SIX JOBS, FIVE OF
+THEM THE USER'S DAILY REPORTS** (1522z). 1404z validated on ONE hourly job, so every impact figure it
+produced is denominated in `echo-backend-alerts` slots (*"6/6 late or lost"*); APScheduler skips the
+**processing pass**, not the job. Today's `13:48:55 → 948 secs` opened a contiguous **1 h 43 m**
+`infra.log` hole (13:21:47→15:05:00 ICT) that swallowed `echo/mangii/pdfai/aividly/vidnotes-daily` at
+14:00, `echo-backend-alerts` 14:05, and `cleanpro-exp-monitor`+`auto-commit` 14:21 — four schedules.
+**RULE: a hole is priced in the units of the meter that found it, and those units are always the
+smallest thing in the hole — enumerate every job whose slot falls inside the gap before quoting an
+impact.** Why it matters beyond arithmetic: **alert jobs self-heal (next hour re-reads the same state)
+and DAILIES DO NOT** — nothing re-runs them, and `state.json` keeps a D−1 stamp that 0437z's
+stale-success reader cannot tell from fresh. All four cycles that priced this mechanism watched the
+one job that survives it. ⛔ **Not an n+1 on 1404z: 951 is already a row in its n=22 table — filing it
+as fresh evidence was caught only by grepping my own key noun.** Sent to the user (1540z rule 4).
+Ev: `…/heartbeat-1522z-a-freeze-is-priced-per-slot-and-paid-per-pass.md`.
+
+## §AX — 1503z repair-sweep block (archived 1943z; its sweep is discharged, its rule written back as one imperative inline)
+
+⛔ **ITS OWN REPAIR SWEEP REACHED ONLY THE PRESCRIPTION SITES (1503z).** 7 page-2 `misfire_grace_time`
+sites: the one saying *raising it is not a fix* was already annotated; the two stating the MECHANISM
+(*"discards are caused by sleep windows EXCEEDING the 300 s grace"*) were not, and are now repaired.
+Both sites' CONCLUSIONS were sound — presence is necessary — so a repairer checking whether each site
+is still *right* keeps them all. **RULE: after refuting a model, grep for the sites that state its
+MECHANISM, not the sites that state what to DO about it. A cycle repairing a refutation greps for what
+to stop doing; the belief clause survives inside conclusions that are independently true, and it is the
+belief clause that regenerates the prescription.** Ev: `…/heartbeat-1503z-*.md`.

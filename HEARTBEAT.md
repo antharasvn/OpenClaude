@@ -266,6 +266,15 @@ structural ON THE BRANCH WHERE IT CAN VARY — before reusing one, ask what the 
 signal, because a test the failure mode SETS is not evidence, it is a tautology wearing the costume of
 0418z's own principle.** Verified: `bash -n` + replay of both the positive (19e56f1 found) and the
 `--grep` filter. Per the settled rule the edit lands next cycle. Ev: `…/heartbeat-1922z-exit-124-is-a-truncated-summary-not-a-refusal.md`.
+⛔ **`heartbeat-state.json`'s `last_message_sent` IS DEAD — SEEDED, DOCUMENTED, WRITTEN BY NOTHING,
+READ BY NOTHING** (1943z). `run.sh:23` names it only in the fresh-file seed; cycles send via
+`telegram-sender/send.sh`, which stamps no state, so it reads **2026-07-15** after two sends on 08-20.
+**Never gate sending on it** — it can only say "silent for weeks", so the gate is unconditionally
+open. Marked dead in `skills/heartbeat/SKILL.md`, whose schema block listed **only** this field and
+none of 0418z's four live ones. **RULE, and it is the general half: DOCUMENTATION COVERAGE IS NOT
+LIVENESS AND HERE IT IS INVERTED — a field survives in a schema block precisely because no code
+touches it, while live fields are added by working commits that never revisit the doc. Before
+trusting any state field, `grep` for its WRITER; a value that merely parses is not a measurement.**
 
 ⛔ **COUNT A JOB'S FAILURES FROM ITS EXPECTED SLOTS, NEVER FROM THE LOG — a log-derived failure rate
 conditions on the host having been AWAKE, so the larger population is slots that never became RUNS,
@@ -429,29 +438,16 @@ and kills the fix class outright: **no grace value separates these classes, so r
 fix, it is not a fix.** ⛔ **DarkWake is NOT the cause — a sustained DarkWake fired on time.**
 **General: when a threshold on a magnitude keeps needing re-derivation, test the BINARY version first —
 presence/absence is the cheaper hypothesis, and here it is the true one.**
-⛔ **ITS OWN REPAIR SWEEP REACHED ONLY THE PRESCRIPTION SITES (1503z).** 7 page-2 `misfire_grace_time`
-sites: the one saying *raising it is not a fix* was already annotated; the two stating the MECHANISM
-(*"discards are caused by sleep windows EXCEEDING the 300 s grace"*) were not, and are now repaired.
-Both sites' CONCLUSIONS were sound — presence is necessary — so a repairer checking whether each site
-is still *right* keeps them all. **RULE: after refuting a model, grep for the sites that state its
-MECHANISM, not the sites that state what to DO about it. A cycle repairing a refutation greps for what
-to stop doing; the belief clause survives inside conclusions that are independently true, and it is the
-belief clause that regenerates the prescription.** Ev: `…/heartbeat-1503z-*.md`.
-⛔ **THAT MODEL IS SCORED PER SLOT AND PAID PER PASS — THE SAME 951 s FREEZE DEBITED SIX JOBS, FIVE OF
-THEM THE USER'S DAILY REPORTS** (1522z). 1404z validated on ONE hourly job, so every impact figure it
-produced is denominated in `echo-backend-alerts` slots (*"6/6 late or lost"*); APScheduler skips the
-**processing pass**, not the job. Today's `13:48:55 → 948 secs` opened a contiguous **1 h 43 m**
-`infra.log` hole (13:21:47→15:05:00 ICT) that swallowed `echo/mangii/pdfai/aividly/vidnotes-daily` at
-14:00, `echo-backend-alerts` 14:05, and `cleanpro-exp-monitor`+`auto-commit` 14:21 — four schedules.
-**RULE: a hole is priced in the units of the meter that found it, and those units are always the
-smallest thing in the hole — enumerate every job whose slot falls inside the gap before quoting an
-impact.** Why it matters beyond arithmetic: **alert jobs self-heal (next hour re-reads the same state)
-and DAILIES DO NOT** — nothing re-runs them, and `state.json` keeps a D−1 stamp that 0437z's
-stale-success reader cannot tell from fresh. All four cycles that priced this mechanism watched the
-one job that survives it. ⛔ **Not an n+1 on 1404z: 951 is already a row in its n=22 table — filing it
-as fresh evidence was caught only by grepping my own key noun.** Sent to the user (1540z rule 4).
-Ev: `…/heartbeat-1522z-a-freeze-is-priced-per-slot-and-paid-per-pass.md`.
-⛔ **AND ITS ENUMERATION MERGED **TWO** HOLES INTO ONE — IT LISTED A JOB BY CATEGORY INSTEAD OF BY
+⛔ **AFTER REFUTING A MODEL, GREP FOR THE SITES STATING ITS MECHANISM, NOT THE SITES STATING WHAT TO
+DO ABOUT IT** (1503z, sweep discharged, archived §AX): a repairer greps for what to stop doing, so the
+belief clause survives inside conclusions that are independently true — and it regenerates the
+prescription.
+⛔ **A FREEZE IS SCORED PER SLOT AND PAID PER PASS — APScheduler skips the processing PASS, not the
+job, so ENUMERATE EVERY JOB WHOSE SLOT FALLS IN THE GAP before quoting an impact; a hole is priced in
+the units of the meter that found it, and those units are always the smallest thing in it** (1522z,
+archived §AW). **Alert jobs SELF-HEAL (next slot re-reads the same state); DAILIES DO NOT** — nothing
+re-runs them and `state.json` keeps a D−1 stamp 0437z's stale-success reader cannot tell from fresh.
+⛔ **BUT ITS ENUMERATION MERGED **TWO** HOLES INTO ONE — IT LISTED A JOB BY CATEGORY INSTEAD OF BY
 RESOLVED SLOT, AND THE ABSORBED JOB MADE ITS REAL HOLE VANISH** (1539z, caught by checking
 `cron/state.json` against `infra.log`). `vidnotes-daily` has **no 14:00 slot**: loaded config gives it
 `0 7 * * *` **Europe/Warsaw = 12:00 ICT**, while echo/mangii/pdfai/aividly are `0 3 * * *`
