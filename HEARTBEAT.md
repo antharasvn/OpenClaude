@@ -506,6 +506,23 @@ survives only because its surviving lines WERE the sleep machinery.
 **Dense ⇒ awake is valid; sparse ⇒ asleep is not. RULES: (1) enumerate the sleep
 DECISIONS — one call, dispositive both ways. (2) Citing a sparse window, say what the surviving
 lines ARE.** General: **a one-sided test acquires its second side by being quoted.**
+⛔ **AND NOW THE SURVIVING SIDE IS DEAD TOO — DENSITY IS 93 % `Assertions` AND THE STATE LINES ARE
+0.8 %** (1205z). `awk '{print $4}' /tmp/pm.log | sort | uniq -c` over 81,475 lines: `Assertions`
+**75,835**, `ThermalEvent` 1,968, and `Sleep`+`Wake`+`DarkWake` **658 total**. So density is a proxy
+for **assertion churn, a different variable** — a window can be maximally dense while the host sleeps,
+which unearns *dense ⇒ awake* as well. 0823z blamed a per-CHANGE emitter; the dominant emitter is not
+writing about state at all. **Do not refine the heuristic — drop it.** Worse contaminant measured the
+same cycle: `ThermalEvent Ignored DarkWake thermal emergency` ran **1,925 lines at 1.00/s** for 32 min
+(08-20 17:39:56–18:12:00 ICT), decoupled from state and firing while the machine heads for sleep.
+✅ **Free replacement, and it retires 0751z's pairing: the `Entering Sleep state` line's own trailing
+`N secs` IS the frozen duration — no `DarkWake` line to pair, which matters because `to FullWake`
+matched NOTHING in this log era while four sleep decisions sat in the window.**
+`awk '/Entering Sleep state/{for(i=1;i<=NF;i++)if($i=="secs")s+=$(i-1)}END{print s}'` ⇒ **2,457 s**
+against 0707z's cadence excess (`start − prev completion − 900`) of **2,447 s** — **0.4 % agreement,
+n+1 on 0707z's 1.6 %**, two independent meters. ⛔ **0016z's thermal "nothing in the 6.4 d since" has
+EXPIRED — a second episode landed 08-20 10:39Z, after that meter's end. General: an "and nothing
+since" clause carries an expiry stamped by the meter, and it is the half of an episode-vs-population
+finding that rots first.** Ev: `…/heartbeat-1205z-pmset-density-is-assertion-churn.md`.
 ✅ **09:00 daily brief DELIVERED (RC=0); the "queued" send died with its session. A `ps` result is
 a claim about a PROCESS — never escalate it to one about the destination.**
 ⛔ **AN ERROR RUN IS A RETRY LADDER, NOT A RATE — DIFFERENCE THE TIMESTAMPS BEFORE YOU COUNT LINES**
