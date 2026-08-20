@@ -792,6 +792,21 @@ Evidence: `memory/t0/2026-08-20/heartbeat-1844z.md`; rule in `HEARTBEAT.md` head
 
 ---
 
+## 15. ✅ CLOSED — REFUTED 2026-08-20 0906z. The awake miss IS #13's mechanism, read correctly
+
+**Resolution (0906z):** not a new failure class. `HEARTBEAT.md` §0751z already states the mechanism as
+*"a missed slot is explained by the monotonic freeze accumulated BEFORE it, not by the power state AT
+it"* — so an awake fire instant was never evidence against it. Freeze banked between the last
+processing pass (11:21:49) and the FullWake (11:36:08) sums to **453 s > the 300 s misfire_grace_time**;
+§0823z already lists `453 s ⇒ dropped`. Both of 0846z's untested candidates are dead: executor
+saturation refuted (zero jobs in flight 11:21:49→13:06:39, no `max_instances`/`executors` set) and
+`last_status` never moved. The awake claim itself is CONFIRMED and upgraded to high confidence via
+sleep-decision enumeration (zero `Entering Sleep state` between 11:36:08 and 12:05:25).
+Bears on #1/#13: the killer is pre-banked freeze, so a wake-at-the-slot fix is insufficient — the grace
+must lengthen or reset. Evidence: `memory/t0/2026-08-20/heartbeat-0906z-queue15-refuted.md`.
+
+### Original filing (superseded)
+
 ## 15. A cron fire was lost while the host was AWAKE — #13's sleep mechanism does not cover it
 
 Filed 2026-08-20 15:5x ICT (0846z). **Decision needed: none yet — this is a request to NOT close #13
