@@ -536,15 +536,13 @@ lines ARE.** General: **a one-sided test acquires its second side by being quote
 ✅ **09:00 daily brief DELIVERED (RC=0)** — "queued, not cancelled" died with its session.
 **A `ps` result is a claim about a PROCESS; never escalate it to one about the destination.**
 ⛔ **AN ERROR RUN IS A RETRY LADDER, NOT A RATE — DIFFERENCE THE TIMESTAMPS BEFORE YOU COUNT LINES**
-(2026-08-20 09:5x ICT, 0254z). Today's **12** `httpx.ConnectError` lines are **ONE** DNS failure
-(09:29:40) plus 11 backoff retries — gaps 1,1,2,4,5,7,12,17,26,30,30 s. So 0514z's *"nine
-`ConnectError` lines"* is very likely n=1 too: its MECHANISM holds (first error 2 s after the
-09:29:38 DarkWake), its COUNT does not. 2053z's denominator rule on a NUMERATOR the client's own
-retry policy generates. ⛔ **And the free lid-detector it suggests is REFUTED BY ITS OWN SILENCE:**
-the identical DarkWake duty cycle ran on through 09:32:56+ with zero errors, so the regime is not
-sufficient. **RULE: check a candidate detector against the stretch where it stayed SILENT, not only
-where it fired.** Today's only sleep DECISIONS are 2 `Clamshell`, 0 `Idle` — 0016z again.
-Ev: `memory/t0/2026-08-20/heartbeat-0254z.md`.
+(0254z). Today's **12** `httpx.ConnectError` lines are **ONE** DNS failure (09:29:40) plus 11
+backoff retries — gaps 1,1,2,4,5,7,12,17,26,30,30 s. So 0514z's *"nine `ConnectError` lines"* is
+very likely n=1: its MECHANISM holds (first error 2 s after the 09:29:38 DarkWake), its COUNT does
+not — 2053z's denominator rule on a numerator the client's own retry policy generates.
+⛔ **And the free lid-detector it suggests is REFUTED BY ITS OWN SILENCE:** the identical DarkWake
+duty cycle ran through 09:32:56+ with zero errors. **RULE: check a candidate detector against the
+stretch where it stayed SILENT, not only where it fired.** Ev: `…/heartbeat-0254z.md`.
 
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
