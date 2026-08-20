@@ -2579,3 +2579,22 @@ end, and it rots first.** Ev: `…/heartbeat-1205z-pmset-density-is-assertion-ch
   of the restart re-phase two paragraphs up. It then re-derives a wrong anchor from a `Bot starting` line
   that never happened, and every downstream prediction inherits it. That is the same false alarm the next
   line warns about, produced one slot later by the formula itself. Confidence high.
+
+## §BB — 0409z boundary score: the ~551-line page-1 cut re-derives page-2 findings (n=4)
+
+⛔ **1755z's ~551-LINE BOUNDARY IS NOW SCORED, AND IT COST ME A WHOLE RE-DERIVED FINDING THIS CYCLE.**
+I observed `MISSED vidnotes-weekly … (0.1h ago)` while the job's child (`grok -p`, PID 37087) was alive
+in `ps`, worked out that `state.json.last_run` is stamped at COMPLETION so every job reads MISSED for
+its own runtime, priced the weekly false-positive window at **10 minutes** — and then found **all of
+it already filed** in §0's *"THE SUPPRESSION RACE IS REAL AND WIDER THAN FILED"* (2026-08-15, grep that
+phrase), down to the same ten-minute figure. It sits at **~line 840, page 2**, so a default `Read`
+never delivered it. 1755z asked for exactly this score and it is now **n=4** (0648z, 0836z, 1755z,
+this). **The boundary is not a nuisance, it is a duplicate-work engine: the file's page-2 prescriptions
+are re-derived by cycles that pay full price for them.** Only additive half, keep it: the existing
+discriminator is *"a MISSED row whose `expected` is within one job-duration of `now` is suspect —
+re-run the detector"*; **cheaper and deterministic is `grep "Running job: <id>" logs/infra.log | tail -1`
+— same-slot `Running job:` with no terminal line ⇒ RUNNING, not missed. No wait, no second run.**
+**RULE, and it is the cheap general fix: before filing ANY finding, `grep` this file for your own
+finding's key noun — `grep -n "missed\|suppression" HEARTBEAT.md` would have cost one call and saved
+the derivation.** Trigger it on the *subject*, not on a hunch; the whole point is you do not know the
+page-2 entry exists.

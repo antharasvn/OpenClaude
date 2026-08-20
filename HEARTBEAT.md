@@ -406,22 +406,13 @@ Do not retype a documented invocation from memory.** ✅ QUEUE #1 capacity: `vid
 **536 s = 89 % of the 600 s cap** wholly inside an assertion window — the sleep-free reference duration.
 Narrative §AR.
 
-⛔ **1755z's ~551-LINE BOUNDARY IS NOW SCORED, AND IT COST ME A WHOLE RE-DERIVED FINDING THIS CYCLE.**
-I observed `MISSED vidnotes-weekly … (0.1h ago)` while the job's child (`grok -p`, PID 37087) was alive
-in `ps`, worked out that `state.json.last_run` is stamped at COMPLETION so every job reads MISSED for
-its own runtime, priced the weekly false-positive window at **10 minutes** — and then found **all of
-it already filed** in §0's *"THE SUPPRESSION RACE IS REAL AND WIDER THAN FILED"* (2026-08-15, grep that
-phrase), down to the same ten-minute figure. It sits at **~line 840, page 2**, so a default `Read`
-never delivered it. 1755z asked for exactly this score and it is now **n=4** (0648z, 0836z, 1755z,
-this). **The boundary is not a nuisance, it is a duplicate-work engine: the file's page-2 prescriptions
-are re-derived by cycles that pay full price for them.** Only additive half, keep it: the existing
-discriminator is *"a MISSED row whose `expected` is within one job-duration of `now` is suspect —
-re-run the detector"*; **cheaper and deterministic is `grep "Running job: <id>" logs/infra.log | tail -1`
-— same-slot `Running job:` with no terminal line ⇒ RUNNING, not missed. No wait, no second run.**
-**RULE, and it is the cheap general fix: before filing ANY finding, `grep` this file for your own
-finding's key noun — `grep -n "missed\|suppression" HEARTBEAT.md` would have cost one call and saved
-the derivation.** Trigger it on the *subject*, not on a hunch; the whole point is you do not know the
-page-2 entry exists.
+
+⛔ **BEFORE FILING ANY FINDING, `grep -n "<your finding's key noun>" HEARTBEAT.md` FIRST — page-2
+prescriptions get re-derived at full price by cycles a default `Read` never delivered them to (n=4:
+0648z, 0836z, 1755z, 2259z; boundary ~line 551, and compaction moves it). Trigger on the SUBJECT, not
+on a hunch — the whole point is you do not know the page-2 entry exists.** Cheap deterministic
+MISSED-vs-RUNNING test: `grep "Running job: <id>" logs/infra.log | tail -1` — a same-slot
+`Running job:` with no terminal line ⇒ RUNNING, not missed. No wait, no second run. Narrative §BB.
 
 ⛔ **NEVER KEY A PROTECTION ON LINE NUMBERS — THE STRICTLY WORSE HALF OF 1559z's ROT.** A rotted
 citation yields a wrong claim you may catch by following it; a rotted `Do NOT` **keeps being obeyed**,
