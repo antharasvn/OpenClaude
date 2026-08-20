@@ -371,7 +371,11 @@ a signature (12:00 is the first slot the two share). 1756z and three cycles befo
 (2) Two runners of one class must agree on what counts as FAILURE — the sibling that skips the exit code
 is not lenient, it is un-instrumented, and both emit the same success line. (3) If you neuter a script
 you believe is descheduled, exit NON-ZERO; an early `return` is indistinguishable from a silent healthy
-run.** Sent to the user (1540z r4); both fixes are asks, not acts. Ev: `…/heartbeat-1814z-two-causes-one-slot.md`.
+run.** Sent to the user (1540z r4); both fixes are asks, not acts. ⛔ **STILL 402 ON 08-21 2230z (day 3; re-run the
+binary, it is one `gtimeout 45 grok -p` call) — 17 silent-OK `vidnotes-alerts` fires since. THE VETOED
+DETECTOR'S SIGNAL IS ALREADY IN `infra.log`: paired `Running job:`/`completed` runtimes are 129.4 s mean
+over n=902 before 08-19 vs 16/13/16 s for the last three. A veto on RAISING is not a veto on OBSERVING,
+and quote the TAIL not the mean when the window contains the transition you are dating.** Ev: `…/heartbeat-1814z-two-causes-one-slot.md`, `…/2026-08-21/heartbeat-2230z-the-dead-jobs-runtime-is-the-signal-rc-was-vetoed.md`.
 ⛔ **THE 08-19 DESCHEDULE WAS AN **11-JOB** INTENT AND EVERY CYCLE CALLED IT "THE 3 ALERT JOBS" —
 §1's `14→3` WAS ARITHMETICALLY RIGHT AND HID 8 OF THE 11** (1835z). One diff of job IDs, loaded blob
 vs today's file: **3 DELETED** (`cleanpro-alerts`, `cleanpro-exp-monitor`, `vidnotes-alerts`) **+ 8
