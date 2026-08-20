@@ -2233,3 +2233,14 @@ outcome and the one QUEUE #1 cannot express.** Evidence: `memory/t0/2026-08-18/h
 `vidnotes-weekly`'s observed fires are **Tuesdays 12:30 ICT** (07-28, 08-11, 08-18; 07-21 at 13:30).
 The next-draw time was right so the pre-registered test stood, but **do not re-quote 37 % until the
 slot set is rebuilt on the right weekday.**
+
+## §AQ — 0224z density test (one-sided), superseded by 1205z assertion-churn measurement
+
+⛔ **1500z's DENSITY TEST IS ONE-SIDED — `Entering Sleep state` IS DISPOSITIVE IN BOTH DIRECTIONS**
+(0224z). Sleep REFUTED for the 08:55–09:15 shell stall (`pmset -g log` 08:00–09:30 has zero sleep,
+wake or DarkWake lines until 09:24:53): a `printf` failed to return in 60 s on a demonstrably awake
+host. That window is **20 % populated, SPARSER than the 32 % 0437z read as proof of sleep** — which
+survives only because its surviving lines WERE the sleep machinery.
+**Dense ⇒ awake is valid; sparse ⇒ asleep is not. RULES: (1) enumerate the sleep
+DECISIONS — one call, dispositive both ways. (2) Citing a sparse window, say what the surviving
+lines ARE.** General: **a one-sided test acquires its second side by being quoted.**

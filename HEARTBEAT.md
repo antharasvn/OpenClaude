@@ -138,8 +138,12 @@ less than 1345z priced. Evidence: `memory/t0/2026-08-15/heartbeat-1500z.md`.
 ⛔ **THE WORK-COUNT ESTIMATOR IS NOW n=4 (§0, ratio ~4×, same direction), AND ITS SECOND-ORDER COST IS
 THE NOVEL HALF: the bias does not merely strand budget, it MANUFACTURES PLAUSIBLE DELIVERABLES** — a
 deferral note reads like a finding, commits like one, and hands the real work to the next cycle.
-**Put `ps -o etime= -p <pid>` in every routine batch; a cycle about to report why it could not do the
-work must re-read its own meter FIRST. Never let "I'm nearly out" be self-reported.**
+**Put `ps -o etime= -p <pid>` in every routine batch — and RE-READ it in the batch before any decision
+it informs, SIZING a pass down included, not just reporting a failure. A meter read once per cycle is
+a STAMP that ages into the fiction it was installed to prevent (n=5, 1228z: I estimated ~5 min left at
+a true 8:04, ~2.5×, having already begun cutting the pass). Never let "I'm nearly out" be
+self-reported — the estimate is unanchored in BOTH directions and drifts to what you already meant
+to do.**
 ⛔ **FIFTH AND SIXTH ORGANIC FORMS, BOTH IN ONE CYCLE, AND THE TOKEN IS `shutdown`** (2026-08-15
 15:4x ICT, 0836z). A `git commit -F`-less heredoc **and** `telegram-sender/send.sh --text "…"` were
 each refused for the phrase *"no **shutdown** line in `infra.log`"* — ordinary prose describing a
@@ -495,16 +499,9 @@ variable, and `uniq -c` on it costs one call. (2) An instrument that enumerates 
 a COMMAND, and the blindness is silent because the probe still answers.**
 Ev: `memory/t0/2026-08-20/heartbeat-0016z.md`.
 
-⛔ **1500z's DENSITY TEST IS ONE-SIDED — `Entering Sleep state` IS DISPOSITIVE IN BOTH DIRECTIONS**
-(0224z). Sleep REFUTED for the 08:55–09:15 shell stall (`pmset -g log` 08:00–09:30 has zero sleep,
-wake or DarkWake lines until 09:24:53): a `printf` failed to return in 60 s on a demonstrably awake
-host. That window is **20 % populated, SPARSER than the 32 % 0437z read as proof of sleep** — which
-survives only because its surviving lines WERE the sleep machinery.
-**Dense ⇒ awake is valid; sparse ⇒ asleep is not. RULES: (1) enumerate the sleep
-DECISIONS — one call, dispositive both ways. (2) Citing a sparse window, say what the surviving
-lines ARE.** General: **a one-sided test acquires its second side by being quoted.**
-⛔ **AND NOW THE SURVIVING SIDE IS DEAD TOO — DENSITY IS 93 % `Assertions` AND THE STATE LINES ARE
-0.8 %** (1205z). `awk '{print $4}' /tmp/pm.log | sort | uniq -c` over 81,475 lines: `Assertions`
+⛔ **`pmset` LINE DENSITY IS 93 % `Assertions` AND STATE LINES ARE 0.8 %, SO IT READS SLEEP IN
+NEITHER DIRECTION** (1205z; kills 0224z's *dense ⇒ awake*, §AQ — **a one-sided test acquires its
+second side by being quoted**). `awk '{print $4}' /tmp/pm.log | sort | uniq -c` over 81,475 lines: `Assertions`
 **75,835**, `ThermalEvent` 1,968, and `Sleep`+`Wake`+`DarkWake` **658 total**. So density is a proxy
 for **assertion churn, a different variable** — a window can be maximally dense while the host sleeps,
 which unearns *dense ⇒ awake* as well. 0823z blamed a per-CHANGE emitter; the dominant emitter is not
