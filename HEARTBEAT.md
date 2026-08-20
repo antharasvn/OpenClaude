@@ -267,27 +267,15 @@ Evidence: `memory/t0/2026-08-18/heartbeat-0613z.md`.
 ⛔ **A self-rewriting script cannot verify its own fix in the same run — the edit lands one cycle
 later.** (0418z→0514z, discharged; archived §V.)
 
-⛔ **NEVER ASK WHETHER THE HOST WAS AWAKE — A HEARTBEAT RUNS IN THE AWAKE WINDOW BY CONSTRUCTION,
-BECAUSE LAUNCHD'S WAKE *IS* WHAT STARTED IT** (2026-08-18 12:1x ICT, 0514z). Host entered `Idle Sleep`
-11:53:00 and has held a **fixed 5m00s duty cycle — 45 s awake, 4m15s asleep = 15.0 %** (DarkWake
-11:57:22/12:02:22/12:07:22/12:12:22, each +45 s to `Maintenance Sleep`). My cycle began 12:14:32 with
-**no `Entering Sleep` after 12:12:22** — the `StartInterval 900` wake is the observation. So a cycle
-asking *"was the host up?"* about its own window gets **yes at a 100 % rate while the truth is 15 %**;
-the sample is drawn from the wake events, so no amount of sampling reaches the troughs.
-**Cheap correct form: `pmset -g log > /tmp/pm.log` (also the `guard.sh` escape), pair each
-`Entering Sleep state` against the next `Wake from`/`DarkWake`, and report the duty cycle over a window
-containing troughs you were NOT awake for. Your `etime` is evidence about your cycle, never the fleet.**
-Paid immediately: `check_missed_fires.py`'s **9/14 with four fresh rows** (12:00 x3, 12:05 x1) is
-**one cause, not four** — both slot times sit in troughs. (Its *"grace cannot help when the sleep
-PERIOD is also 300 s"* is superseded: the quantity is the CUMULATIVE freeze — 0751z, above.) The same
-regime ran 08:58→09:07 and produced today's nine `httpx.ConnectError` lines, the DarkWake returning the
-process before the network: **QUEUE #8's "sleep" and "network outage" are ONE event seen twice.**
-0437z said count from expected slots because a log-derived rate conditions on the host being awake; the
-unexamined half is that **a cycle inherits "awake" from its own existence.** ⚠️ n=4 same cycle: I ran `python3
-scripts/check_missed_fires.py` ⇒ `ModuleNotFoundError`, one call from filing "the detector is dead" —
-`apscheduler` is `.venv`-only and §1 already prescribes `.venv/bin/python3`, on page 2.
-**Do not retype a documented invocation from memory.** Evidence: `memory/t0/2026-08-18/heartbeat-0514z.md`.
 
+⛔ **NEVER ASK WHETHER THE HOST WAS AWAKE — A HEARTBEAT RUNS IN THE AWAKE WINDOW BY CONSTRUCTION,
+BECAUSE LAUNCHD'S WAKE *IS* WHAT STARTED IT** (0514z, §AN). A cycle asking that about its own window
+gets **yes at a 100 % rate while the truth was 15 %** — it inherits "awake" from its own existence, so
+**your `etime` is evidence about your cycle, never the fleet.** Measure a window containing troughs you
+were NOT awake for: `pmset -g log > /tmp/pm.log` (also the `guard.sh` escape), and enumerate the sleep
+DECISIONS (0224z). ⛔ **Same cycle, n=4: `python3 scripts/check_missed_fires.py` ⇒ `ModuleNotFoundError`
+and I was one call from filing "the detector is dead" — `apscheduler` is `.venv`-only and §1 prescribes
+`.venv/bin/python3`, on page 2. Do not retype a documented invocation from memory.**
 ⛔ **QUOTE EVERY SLEEP REGIME IN THE PAST TENSE WITH THE TIME IT ENDED — 0534z's "fixed 5m00s, 15.0 %"
 had already ended 2m10s before 0534z started** (archived §AM). Escaping *a cycle inherits awake from its
 own existence* by measuring troughs you were not awake for installs a STALENESS bias in its place; the
