@@ -195,7 +195,7 @@ def get_running_experiments():
         return []
     result = subprocess.run(
         [firebase_path, 'remoteconfig:experiments:list', '--project', PROJECT_ID, '--pageSize', '0'],
-        capture_output=True, text=True
+        capture_output=True, text=True, timeout=120
     )
     experiments = []
     for line in result.stdout.split('\n'):

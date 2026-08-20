@@ -438,6 +438,7 @@ def main():
             subprocess.run(
                 ["python3", str(heatmap_script), "Mangii", PROJECT_ID, DATASET_ID, str(LOGO_PATH)],
                 capture_output=True,
+                timeout=600,
             )
             if heatmap_output.exists():
                 subprocess.run(

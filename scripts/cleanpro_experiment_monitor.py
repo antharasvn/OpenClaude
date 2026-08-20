@@ -19,7 +19,7 @@ PROJECT_ID = 'cleaner-app-e98f0'
 def bq_query(sql: str):
     cp = subprocess.run(
         ['bq', 'query', '--use_legacy_sql=false', f'--project_id={PROJECT_ID}', '--format=json'],
-        input=sql, text=True, capture_output=True, check=False
+        input=sql, text=True, capture_output=True, check=False, timeout=600
     )
     if cp.returncode != 0:
         raise RuntimeError(cp.stderr or cp.stdout)
@@ -39,7 +39,7 @@ def get_running_experiments():
     """Get list of running experiments from Firebase CLI."""
     result = subprocess.run(
         ['firebase', 'remoteconfig:experiments:list', '--project', PROJECT_ID, '--pageSize', '0'],
-        capture_output=True, text=True
+        capture_output=True, text=True, timeout=120
     )
     
     experiments = []

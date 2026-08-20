@@ -109,7 +109,7 @@ WHERE _TABLE_SUFFIX >= FORMAT_DATE('%Y%m%d', CURRENT_DATE('Asia/Saigon'))
         print(f'No anomalies detected. paywall_shown={paywall_shown} conv_pct={conv_pct} baseline={baseline}')
         return
     drop_pct = round((1 - (conv_pct / baseline)) * 100, 1) if baseline else 0
-    now_et = subprocess.run(['bash','-lc','TZ="Asia/Saigon" date +"%H:%M ET"'], capture_output=True, text=True).stdout.strip()
+    now_et = subprocess.run(['bash','-lc','TZ="Asia/Saigon" date +"%H:%M ET"'], capture_output=True, text=True, timeout=30).stdout.strip()
     alert = (
         f'🚨 CleanPro Alert — {now_et}\n\n'
         f'💰 CONVERSION: {conv_pct}% in last 4h ({drop_pct}% drop vs {baseline}% baseline)\n'

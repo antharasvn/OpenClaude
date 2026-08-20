@@ -159,7 +159,7 @@ def main():
     
     # Build alert message
     now_et = subprocess.run(['bash', '-lc', 'TZ="America/New_York" date +"%H:%M ET"'], 
-                           capture_output=True, text=True).stdout.strip()
+                           capture_output=True, text=True, timeout=30).stdout.strip()
     
     func_breakdown = "\n".join([f"  • {k}: {v}" for k, v in sorted(by_function.items(), key=lambda x: -x[1])[:5]])
     type_breakdown = "\n".join([f"  • {k}: {v}" for k, v in sorted(by_type.items(), key=lambda x: -x[1])])

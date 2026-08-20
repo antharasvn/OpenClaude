@@ -444,7 +444,7 @@ def main():
     heatmap_script = PROJECT_ROOT / "scripts" / "experiment_heatmap_pro.py"
     if heatmap_script.exists():
         print("\n📊 Generating experiment heatmap...")
-        result = subprocess.run(["python3", str(heatmap_script)], capture_output=True, text=True)
+        result = subprocess.run(["python3", str(heatmap_script)], capture_output=True, text=True, timeout=600)
         heatmap_path = PROJECT_ROOT / "reports" / "experiments_heatmap_pro.png"
         if result.returncode == 0 and heatmap_path.exists():
             # send via curl multipart

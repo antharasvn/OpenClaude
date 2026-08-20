@@ -79,7 +79,7 @@ def get_metric_color(value, metric='conv'):
 def bq_query(sql: str, project_id: str):
     cp = subprocess.run(
         ['bq', 'query', '--use_legacy_sql=false', f'--project_id={project_id}', '--format=json'],
-        input=sql, text=True, capture_output=True, check=False
+        input=sql, text=True, capture_output=True, check=False, timeout=600
     )
     if cp.returncode != 0:
         raise RuntimeError(cp.stderr or cp.stdout)
@@ -90,7 +90,7 @@ def get_running_experiments(project_id: str):
     """Get list of running experiments."""
     result = subprocess.run(
         ['firebase', 'remoteconfig:experiments:list', '--project', project_id, '--pageSize', '0'],
-        capture_output=True, text=True
+        capture_output=True, text=True, timeout=120
     )
     
     experiments = []
