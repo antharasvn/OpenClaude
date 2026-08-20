@@ -1961,6 +1961,10 @@ it. Confidence high; the `find` is dispositive.
     MONOTONE — every HID event re-arms the 600 s countdown, and `max(floor, holder release)` only
     adds — so a thin margin is still sound. Sole falsifying branch is a *deliberate* sleep.
   ⛔ **FLOOR PROBE — SETTLED. Reach is `probe + N + 5 s`. DO NOT RE-DERIVE. Evidence: `HEARTBEAT-ARCHIVE.md` §U.**
+  ⛔ **BUT ITS "SOLE FALSIFYING BRANCH IS A *DELIBERATE* SLEEP" IS THE MAJORITY CASE, NOT A CORNER —
+  0016z counts `Clamshell` 23 vs `Idle` 15 over 6.90 d. This floor bounds IDLE sleep only; a lid close
+  ignores it. Treat `probe + N + 5 s` as a floor on the 39 %, never as reach.** (1449z, found by
+  grepping the retired probe's OUTPUT ROW after `assertions` came back clean — see §AU.)
   - **Read `N` off the `UserIsActive` row (`Timeout will fire in N secs`, `0 ≤ N ≤ 600`) — NEVER quote
     a constant.** One probe reaches somewhere in `[probe + 5 s, probe + 605 s]`, so neither bound may
     be pre-committed. Hand the successor the probe *condition* (`P + N ≥ tick − 60 s`), not a probe time.
@@ -2029,7 +2033,9 @@ it. Confidence high; the `find` is dispositive.
   presence/absence test, which separates fired from skipped slots 22/22. **General: when a probe is
   shown blind to a cause, retire every prescription that CONSUMES the probe — not merely the sentence
   that named the cause. A refutation of an instrument is a refutation of its whole client tree, and
-  clients read as independent findings because each was scored on its own terms.**
+  clients read as independent findings because each was scored on its own terms. And grep the probe's
+  OUTPUT FIELDS, not its command name: `assertions` came back clean at 2 sites while two live clients
+  survived under `UserIsActive` — a mature client stops naming the command it was derived from.**
 - ✅ **To decide whether a stale job is the KNOWN misfire or a SECOND bug, reconcile expected slots
   against `was missed by` warnings inside the bot process's lifetime** (2026-08-09 11:52 ICT). A job
   reading `last_status: OK` + `ce=0` while weeks stale (§326's silent-failure mode) does not say
