@@ -322,8 +322,8 @@ run.** Sent to the user (1540z r4); both fixes are asks, not acts. Ev: `…/hear
 ⛔ **THE 08-19 DESCHEDULE WAS AN **11-JOB** INTENT AND EVERY CYCLE CALLED IT "THE 3 ALERT JOBS" —
 §1's `14→3` WAS ARITHMETICALLY RIGHT AND HID 8 OF THE 11** (1835z). One diff of job IDs, loaded blob
 vs today's file: **3 DELETED** (`cleanpro-alerts`, `cleanpro-exp-monitor`, `vidnotes-alerts`) **+ 8
-DISABLED** (`aividly/mangii/pdfai-daily`, `auto-commit`, `cleanpro-weekly`, `echo-backend-alerts`,
-`vidnotes-weekly`, `weekly-conjecture`), 0 added — all 11 still fire. ⛔ **`cleanpro-exp-monitor` is
+DISABLED** (3 dailies, `auto-commit`, `echo-backend-alerts`, 3 weeklies; full list in the log),
+0 added — all 11 still fire. ⛔ **`cleanpro-exp-monitor` is
 NOT an alert job, must not inherit `cleanpro-alerts`' diagnosis: no early-`return` guard, real body,
 `:15` hardcodes the publicly-exposed `8628864855:…` token, and it fired **12×/24 h — tied 2nd busiest
 in the fleet**. Its 0–2 s runtimes are a healthy no-op (Firebase CLI ⇒ empty ⇒ exits before any
