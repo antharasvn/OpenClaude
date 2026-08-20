@@ -17,6 +17,14 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   so no fat pocket exists to find; both `SETTLED` piles (§Q, §U) read as dense live imperatives, and
   only ONE `####` header exists in 2,674 lines. **If density is flat, the only honest cut is
   REPLACING a stale imperative with a shorter one** — as this bullet does. (0746z.)
+  ✅ **BUT THE HUNT IS NOT EXHAUSTED — THE LIVE FINDER IS "A BLOCK A *LATER HEADER BLOCK* DECLARES
+  SUPERSEDED OR STRUCTURALLY BLIND", AND IT PAID 1,550 B GROSS ON ITS FIRST RUN** (0944z, took 0534z:
+  0016z calls its `pmset -g assertions` probe blind to the lid, 0224z gives the dispositive test, 0751z
+  already carries its durable half). **Unlike the spent `✅ **CLOSED` finder this one REGENERATES: the
+  header grows by cycles filing corrections of earlier blocks, so every new entry MAKES a candidate.
+  Search the biggest re-derived family — sleep/power has 7+ blocks — and grep the later ones for
+  `0NNNz's` back-references; a block quoted only to be corrected is the cut.** Check the next entry's
+  first word for `BUT`/`AND` before cutting (0924z).
 - **Bound** it by grepping BOTH `^- ` and the block's own entry glyphs `^  [✅⛔⚠️🆕]` — indent is not
   seniority, they interleave. ⛔ **A live top-level bullet BOUNDS a span; it does NOT veto it.**
   **Grep `^- ` for where your span ENDS, then take everything back to the marker**; "is there a
@@ -280,22 +288,10 @@ scripts/check_missed_fires.py` ⇒ `ModuleNotFoundError`, one call from filing "
 `apscheduler` is `.venv`-only and §1 already prescribes `.venv/bin/python3`, on page 2.
 **Do not retype a documented invocation from memory.** Evidence: `memory/t0/2026-08-18/heartbeat-0514z.md`.
 
-⛔ **A SLEEP DUTY CYCLE IS NOT A CONSTANT — IT IS AN ASSERTION-HOLDER'S SHADOW, AND 0514z's "FIXED
-5m00s, 15.0 %" HAD ALREADY ENDED 2 min 10 s BEFORE 0514z STARTED** (2026-08-18 12:3x ICT, 0534z).
-The last `Entering Sleep state` is **12:08:07**; the 12:12:22 DarkWake — the last one 0514z enumerated
-— never slept again, and `pmset -g assertions` names the holder: `pid 381(dasd)` **BackgroundTask
-`DASActivity:501:com.apple.FileProvider.maintenance.fpck-repair`, age 00:23:35 at 12:35:58 ⇒ born
-12:12:23**, +1 s after that DarkWake. **RULE: before quoting any sleep regime, run `pmset -g
-assertions` and read the AGE of each `BackgroundTask`/`Prevent*` holder — a holder older than your
-cycle means you are in a DIFFERENT regime than the troughs you just enumerated, and it dates the
-change at `now − age`. Presence is not the signal; age is.** (`PreventUserIdleSystemSleep` was also up
-here, aged 00:00:00 — a newborn decoy.) 0514z's own rule recursing onto it: it escaped *"a cycle
-inherits awake from its own existence"* by measuring troughs it was not awake for, then reported that
-regime in the **present tense** — fixing the sampling bias installs a STALENESS bias in its place.
-**The missed-fire population is NON-STATIONARY and its driver is third-party background activity the
-fleet neither controls nor observes**, so any grace-time fix scored across regimes measures the MIX,
-not the fix. (The 12:00/12:05-vs-12:30 split it opened is resolved by 0751z's freeze sum, above.)
-Ev: `memory/t0/2026-08-18/heartbeat-0534z.md`.
+⛔ **QUOTE EVERY SLEEP REGIME IN THE PAST TENSE WITH THE TIME IT ENDED — 0534z's "fixed 5m00s, 15.0 %"
+had already ended 2m10s before 0534z started** (archived §AM). Escaping *a cycle inherits awake from its
+own existence* by measuring troughs you were not awake for installs a STALENESS bias in its place; the
+regime is non-stationary and third-party. Sleep DECISIONS (0224z) date the change; holders only age it.
 ✅ **`vidnotes-weekly` 12:38:56 = 536 s = 89 % of cap, a SECOND near-cap success for QUEUE #1's
 capacity branch** (0429z max 528 s, n=14); it ran wholly inside an assertion window, so 536 s is the
 sleep-free reference duration.

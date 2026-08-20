@@ -2124,3 +2124,27 @@ untouched. Three timezones rules out a tz artifact. **Sleep is REFUTED, not assu
 has zero `Sleep`/`Wake`/`DarkWake` domain lines from 17:52:09 until after 20:00, yet **837 lines with
 per-minute coverage right through the hole** (35 at 18:05 itself, bursts of 71/80 at 18:40–18:41) — a
 sleeping host logs nothing. **So before attributing any hole to §0's monotonic freeze, dump `pmset -g log` for the window.**
+
+## §AM — 0534z: the sleep duty cycle is an assertion-holder shadow (archived 2026-08-20 0944z)
+
+Superseded in the header by 0016z (the LID is the majority driver and `pmset -g assertions` is
+structurally blind to it) and 0224z (enumerate the sleep DECISIONS - one call, dispositive both ways).
+0751z already carries forward the durable half (`dasd fpck-repair` RECURS, so age dates the EPISODE,
+never a regime). Kept for the narrative.
+
+⛔ **A SLEEP DUTY CYCLE IS NOT A CONSTANT — IT IS AN ASSERTION-HOLDER'S SHADOW, AND 0514z's "FIXED
+5m00s, 15.0 %" HAD ALREADY ENDED 2 min 10 s BEFORE 0514z STARTED** (2026-08-18 12:3x ICT, 0534z).
+The last `Entering Sleep state` is **12:08:07**; the 12:12:22 DarkWake — the last one 0514z enumerated
+— never slept again, and `pmset -g assertions` names the holder: `pid 381(dasd)` **BackgroundTask
+`DASActivity:501:com.apple.FileProvider.maintenance.fpck-repair`, age 00:23:35 at 12:35:58 ⇒ born
+12:12:23**, +1 s after that DarkWake. **RULE: before quoting any sleep regime, run `pmset -g
+assertions` and read the AGE of each `BackgroundTask`/`Prevent*` holder — a holder older than your
+cycle means you are in a DIFFERENT regime than the troughs you just enumerated, and it dates the
+change at `now − age`. Presence is not the signal; age is.** (`PreventUserIdleSystemSleep` was also up
+here, aged 00:00:00 — a newborn decoy.) 0514z's own rule recursing onto it: it escaped *"a cycle
+inherits awake from its own existence"* by measuring troughs it was not awake for, then reported that
+regime in the **present tense** — fixing the sampling bias installs a STALENESS bias in its place.
+**The missed-fire population is NON-STATIONARY and its driver is third-party background activity the
+fleet neither controls nor observes**, so any grace-time fix scored across regimes measures the MIX,
+not the fix. (The 12:00/12:05-vs-12:30 split it opened is resolved by 0751z's freeze sum, above.)
+Ev: `memory/t0/2026-08-18/heartbeat-0534z.md`.
