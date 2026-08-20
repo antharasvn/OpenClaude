@@ -146,12 +146,17 @@ timezones with the host awake (1500z; §AL). Its `pmset` density argument is dea
 below (archived §AY): `pmset` lines are 93 % `Assertions`, state lines 0.8 %, so density reads sleep
 in NEITHER direction — **drop that heuristic, never refine it.** Freeze-vs-drop half: 1404z below.
 **Measure the SURVIVORS before filing a threshold — on a large varying quantity almost any threshold
-fits the first case checked.** ⛔ **And do not promote the survivor: APScheduler misfire is the obvious
-rival and it is UNTESTABLE here — `missed`/`maximum number of running instances`/`Execution of job`
-occur ZERO times in `infra.log`, i.e. the instrument has never spoken** (contrast `Skipping disabled
-job:`, 166 hits). **RULE: a negative result about one mechanism is not a positive result about its
-rival — check the rival has an instrument that has EVER emitted a line before you file it as the
-cause.** Ev: `…/heartbeat-1500z.md`, `…/heartbeat-0823z-darkwake-refutes-density.md`.
+fits the first case checked.** ⛔ **ITS *"APScheduler misfire is UNTESTABLE — the instrument has never
+spoken"* IS REFUTED, AND THE FLEET'S MISSED-FIRE LEDGER HAS EXISTED ALL ALONG** (2151z): `was missed
+by` = **0** in `infra.log`, **57** in the bot's `.err`, 08-15 18:10→08-20 19:45, all WARNING — Echo 20,
+CleanPro 14, VidNotes 10, Auto-Commit 6, PDFAI/Mangii/AIVidly 2 each, Weekly 1. Every cycle that
+rebuilt missed slots by inference (0437z, 1522z, 1539z) had a direct ledger. It is also UNIQUE to that
+sink, refuting 1700z's *"superset with no unique job-outcome signal"* — that diff read only ERRORs.
+**RULES: (1) "the instrument has never spoken" needs EVERY DECLARED SINK checked, at every LEVEL — a
+plist names two and 1700z's guard bug makes the second unsayable, so the silence was enforced by the
+MATCHER, not by the mechanism, and a negative keyed on one sink is not a negative. (2) A diff scoped
+to one severity is not a diff.** Read it with `F=$(ls /tmp/claude-tele*bot.err)`; reconciliation
+method archived §AZ. Ev: `…/heartbeat-2151z.md`, `…/heartbeat-1500z.md`.
 ⛔ **THE WORK-COUNT ESTIMATOR IS NOW n=4 (§0, ratio ~4×, same direction), AND ITS SECOND-ORDER COST IS
 THE NOVEL HALF: the bias does not merely strand budget, it MANUFACTURES PLAUSIBLE DELIVERABLES** — a
 deferral note reads like a finding, commits like one, and hands the real work to the next cycle.
@@ -2182,21 +2187,6 @@ it. Confidence high; the `find` is dispositive.
   shown blind to a cause, retire every prescription that CONSUMES the probe — not merely the sentence
   that named the cause. A refutation of an instrument is a refutation of its whole client tree, and
   clients read as independent findings because each was scored on its own terms. And grep the probe's
-  OUTPUT FIELDS, not its command name: `assertions` came back clean at 2 sites while two live clients
-  survived under `UserIsActive` — a mature client stops naming the command it was derived from.**
-- ✅ **To decide whether a stale job is the KNOWN misfire or a SECOND bug, reconcile expected slots
-  against `was missed by` warnings inside the bot process's lifetime** (2026-08-09 11:52 ICT). A job
-  reading `last_status: OK` + `ce=0` while weeks stale (§326's silent-failure mode) does not say
-  *which* fault it is. Method: `ps -o lstart -p $(pgrep -f "python.*-m bot")` to date the process
-  (the `.err` file starts there, §1 caveat (a)), enumerate the slots each stale job owed since then
-  from `cron/jobs.json`, and count its warnings via
-  `grep "was missed by" /tmp/claude-telegram-bot.err | sed -E 's/.*job "([^(]*)\(.*/\1/' | sort | uniq -c`.
-  Worked example — the six-job reporting blackout: process up since 08-07 19:54, owed slots CleanPro
-  Daily 2 + VidNotes Daily 1 + the 14:00 quad 1 each = **7**, observed warnings **7**, zero
-  unexplained ⇒ entirely the `CLOCK_MONOTONIC` misfire mechanism, no second fault. **A shortfall is
-  the interesting result** — it means slots were never evaluated at all, which is a different bug.
-  Mind `coalesce` (below): the count is a lower bound, so reconcile per job, not in aggregate, and
-  treat an exact match as strong evidence rather than proof.
 - `coalesce=True` is ALREADY in effect (APScheduler 3.11.3 default; verified in `.venv` —
   `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). ⛔ **Neither
   knob is a fix — raising `misfire_grace_time` recovers nothing (refuted n=22, page 1).**

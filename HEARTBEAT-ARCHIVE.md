@@ -2537,3 +2537,21 @@ against 0707z's cadence excess (`start − prev completion − 900`) of **2,447 
 n+1 on 0707z's 1.6 %**, two independent meters. ⛔ **0016z's thermal "nothing in the 6.4 d since"
 EXPIRED on a second episode: an "and nothing since" clause carries an expiry stamped by its meter's
 end, and it rots first.** Ev: `…/heartbeat-1205z-pmset-density-is-assertion-churn.md`.
+
+## §AZ — stale-job vs second-bug reconciliation (moved from HEARTBEAT.md 2151z; its instrument is now page 1)
+
+  OUTPUT FIELDS, not its command name: `assertions` came back clean at 2 sites while two live clients
+  survived under `UserIsActive` — a mature client stops naming the command it was derived from.**
+- ✅ **To decide whether a stale job is the KNOWN misfire or a SECOND bug, reconcile expected slots
+  against `was missed by` warnings inside the bot process's lifetime** (2026-08-09 11:52 ICT). A job
+  reading `last_status: OK` + `ce=0` while weeks stale (§326's silent-failure mode) does not say
+  *which* fault it is. Method: `ps -o lstart -p $(pgrep -f "python.*-m bot")` to date the process
+  (the `.err` file starts there, §1 caveat (a)), enumerate the slots each stale job owed since then
+  from `cron/jobs.json`, and count its warnings via
+  `grep "was missed by" /tmp/claude-telegram-bot.err | sed -E 's/.*job "([^(]*)\(.*/\1/' | sort | uniq -c`.
+  Worked example — the six-job reporting blackout: process up since 08-07 19:54, owed slots CleanPro
+  Daily 2 + VidNotes Daily 1 + the 14:00 quad 1 each = **7**, observed warnings **7**, zero
+  unexplained ⇒ entirely the `CLOCK_MONOTONIC` misfire mechanism, no second fault. **A shortfall is
+  the interesting result** — it means slots were never evaluated at all, which is a different bug.
+  Mind `coalesce` (below): the count is a lower bound, so reconcile per job, not in aggregate, and
+  treat an exact match as strong evidence rather than proof.

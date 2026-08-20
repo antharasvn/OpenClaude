@@ -121,6 +121,7 @@ def main() -> None:
                 ["pgrep", "-f", "claude.*stream-json"],
                 capture_output=True,
                 text=True,
+                timeout=10,
             )
             if result.returncode != 0:
                 return  # No claude processes found
@@ -133,6 +134,7 @@ def main() -> None:
                 ["pgrep", "-P", str(bot_pid)],
                 capture_output=True,
                 text=True,
+                timeout=10,
             )
             child_pids = set()
             if children_result.returncode == 0:
@@ -150,13 +152,13 @@ def main() -> None:
             # Kill orphans (SIGTERM first, then SIGKILL)
             for pid in orphans:
                 with contextlib.suppress(Exception):
-                    subprocess.run(["kill", str(pid)], check=False)
+                    subprocess.run(["kill", str(pid)], check=False, timeout=10)
             # Give them 2 seconds to gracefully exit
             await asyncio.sleep(2)
             # Force kill any survivors
             for pid in orphans:
                 with contextlib.suppress(Exception):
-                    subprocess.run(["kill", "-9", str(pid)], check=False)
+                    subprocess.run(["kill", "-9", str(pid)], check=False, timeout=10)
 
             infra_logger.info("Cleaned up %d orphan claude process(es)", len(orphans))
             logger.info("Cleaned up %d orphan claude process(es)", len(orphans))
