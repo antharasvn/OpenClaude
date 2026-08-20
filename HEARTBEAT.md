@@ -117,9 +117,18 @@ missed exactly one slot and resumed; `infra.log` is empty 17:50:51→19:05:00; b
 untouched. Three timezones rules out a tz artifact. **Sleep is REFUTED, not assumed:** `pmset -g log`
 has zero `Sleep`/`Wake`/`DarkWake` domain lines from 17:52:09 until after 20:00, yet **837 lines with
 per-minute coverage right through the hole** (35 at 18:05 itself, bursts of 71/80 at 18:40–18:41) — a
-sleeping host logs nothing. **So before attributing any hole to §0's monotonic freeze, dump `pmset -g
-log` and count lines INSIDE the window, not just transitions at its edges; log density is the awake
-test, transitions are not.** ⛔ **And do not promote the survivor: APScheduler misfire is the obvious
+sleeping host logs nothing. **So before attributing any hole to §0's monotonic freeze, dump `pmset -g log` for the window.**
+⛔ **BUT DENSITY ONLY REFUTES A TOTAL SLEEP — IT IS NOT AN AWAKE TEST, AND THE OPPOSITE CLAIM STOOD
+HERE UNTIL 0823z.** 2026-08-20's 14:05 miss had **18 pmset lines in that very minute** and the job
+still died: no `to FullWake` between 11:36:08 and 14:10:17, the host cycling Sleep↔DarkWake in Deep
+Idle, which is its CHATTIEST state because every pair writes lines. **Read the `to FullWake`
+transitions and the `Entering Sleep state … N secs` durations; silence ⇒ asleep, chatter ⇒ UNKNOWN.**
+General: **an instrument emitting a line per state CHANGE measures churn, not state — a system
+flapping outproduces a system sitting in either state, so its volume never names which one you are
+in.** ⛔ Same cycle, same file: cumulative frozen seconds per inter-fire interval does **NOT** predict
+a drop (453 s⇒dropped, **665 s⇒fired 99 s late**, 951 s⇒dropped), so `6d7da94`'s 12:05 fit was
+coincidence. **Measure the SURVIVORS before filing a threshold — on a large varying quantity almost
+any threshold fits the first case checked.** Ev: `…/heartbeat-0823z-darkwake-refutes-density.md`. ⛔ **And do not promote the survivor: APScheduler misfire is the obvious
 rival and it is UNTESTABLE here — `missed`/`maximum number of running instances`/`Execution of job`
 occur ZERO times in the whole of `infra.log`, i.e. the instrument has never spoken** (contrast
 `Skipping disabled job:`, 166 hits, which is why 1246z's silence argument was valid there).
@@ -558,21 +567,8 @@ stretch where it stayed SILENT, not only where it fired.**
 > which silently *manufactures* budget you do not have. There is nothing to subtract and no
 > tolerance band that works; the bias is variable with no known driver. Reasoning at lines 294–383.
 >
-> *(Added 2026-08-14 16:53 ICT after **four consecutive cycles** — 0852z, 0909z, 0926z, 0949z — made
-> exactly this mistake while the correct form sat 300 lines below their first tool call. If you are
-> about to defer a checklist fix to the boss, re-read line 215 first: you are probably allowed to
-> make it yourself.)*
->
-> ⛔ **That edit did NOT stop the streak — 1006z tripped it too (n=5), and the reason is that this
-> block is still INSIDE the document.** A cycle's habitual first move is to orient with `date`, and
-> it makes that call *before* it has Read HEARTBEAT.md at all, so no placement within this file can
-> reach it — moving the text to the top only shortened the distance, it did not change the ordering.
-> **The only text every cycle sees before its first tool call is the `claude -p` prompt itself**, so
-> 1006z put the imperative there: `skills/heartbeat/run.sh` now opens with "YOUR FIRST TOOL CALL …
-> must be `ps -eo … | grep '[g]timeout 600 claude'`". Verified by expansion (`\$\$` survives
-> literally, `$LAST_RUN` still interpolates, `bash -n` clean). **Score it: if a cycle still uses
-> `date` first, the prompt channel is refuted too and the fix has to become mechanical** — stamp the
-> wrapper start into the state file or an env var so it needs no discipline at all.
+> ✅ **That fix is CONFIRMED, not pending — the imperative now lives in the `claude -p` prompt itself
+> (`skills/heartbeat/run.sh`) and cycles comply; stop re-scoring it.** Narrative §AK.
 > **Transferable: when a rule is violated N times in a row, ask WHEN the reader reaches it, not just
 > where it sits. Documentation cannot govern behaviour that precedes reading the documentation.**
 >
