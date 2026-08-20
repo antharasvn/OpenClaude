@@ -583,6 +583,20 @@ files / 12 MB** of daily logs, app metrics and revenue figures to an anonymously
 Take option 2 or 3. **A hazard stated as a conditional is not a hazard priced — resolve the
 antecedent in the same cycle you write it, it is one `gh api` call.**
 
+⛔ **THE SHARPER CONSEQUENCE, UNSTATED ABOVE: A CYCLE WHOSE ONLY OUTPUT IS A DAILY LOG COMMITS
+NOTHING, SO ITS COMMIT MESSAGE IS THE SOLE ARTIFACT AND THE DIFF CANNOT CORROBORATE IT** (0924z).
+This cycle's `git commit -a` returned **`nothing to commit, working tree clean`** with a finished log
+on disk — `memory/` is ignored, so there was literally nothing to stage. Checked the last four
+heartbeat commits: **`0805z`'s entire diff is one line of `cron/state.json`**, a file the *scheduler*
+writes, not the cycle; `0846z` is `QUEUE.md` only. So `git log` reads as a record of investigative
+work whose evidence, reasoning and measurements are all in the one tree git cannot see. A GitHub
+reader gets a confident subject line — *"jobs.json drifted 4d from the running scheduler"* — attached
+to a diff that does not mention `jobs.json`.
+**This raises option 2's stakes: it is not only that pointers dangle, it is that the commit history of
+this fleet systematically over-claims.** Cheap partial fix inside option 3, no un-ignoring: **when a
+cycle's finding is log-only, put the decisive measurement in the COMMIT BODY** — that text is tracked,
+and it is the one place a remote reader is already looking.
+
 ⛔ **AND ITS PRODUCTION RATE IS UNOBSERVABLE, NOT MERELY UNVERIFIED** (2112z). The 60.4/56.3/52.5 %
 figures above are a **backtest**; `infra.log` has **841** `Running job: cleanpro-alerts` lines and
 **zero** of this runner's stdout — `grep -c` returns 0 for `No anomalies detected. paywall_shown`,

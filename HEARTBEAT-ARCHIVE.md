@@ -2113,3 +2113,14 @@ Ev: `memory/t0/2026-08-20/heartbeat-2033z.md`.
 > literally, `$LAST_RUN` still interpolates, `bash -n` clean). **Score it: if a cycle still uses
 > `date` first, the prompt channel is refuted too and the fix has to become mechanical** — stamp the
 > wrapper start into the state file or an env var so it needs no discipline at all.
+
+## §AL — 1500z cron-hole-vs-sleep-hole narrative (archived 2026-08-20 0924z; imperative superseded by 0823z + 0224z)
+
+⛔ **AND A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE — THE FLEET LOST 18:00–18:05 ICT WITH THE HOST
+AWAKE** (2026-08-15 22:0x ICT, 1500z). `echo-backend-alerts` (America/New_York, `:05` hourly, 18
+unbroken runs 00:05→17:05), `cleanpro-alerts` (Asia/Saigon) and `vidnotes-alerts` (Europe/Warsaw) all
+missed exactly one slot and resumed; `infra.log` is empty 17:50:51→19:05:00; bot PID 927 spans it
+untouched. Three timezones rules out a tz artifact. **Sleep is REFUTED, not assumed:** `pmset -g log`
+has zero `Sleep`/`Wake`/`DarkWake` domain lines from 17:52:09 until after 20:00, yet **837 lines with
+per-minute coverage right through the hole** (35 at 18:05 itself, bursts of 71/80 at 18:40–18:41) — a
+sleeping host logs nothing. **So before attributing any hole to §0's monotonic freeze, dump `pmset -g log` for the window.**
