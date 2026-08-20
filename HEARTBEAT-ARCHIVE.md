@@ -2176,3 +2176,29 @@ unexamined half is that **a cycle inherits "awake" from its own existence.** ⚠
 scripts/check_missed_fires.py` ⇒ `ModuleNotFoundError`, one call from filing "the detector is dead" —
 `apscheduler` is `.venv`-only and §1 already prescribes `.venv/bin/python3`, on page 2.
 **Do not retype a documented invocation from memory.** Evidence: `memory/t0/2026-08-18/heartbeat-0514z.md`.
+
+## §AO — 2112z scheduler announce asymmetry, compressed 2026-08-20 1004z (halved by 2205z exposure-set correction and 2224z loaded-config refutation; surviving core rewritten inline)
+
+⛔ **THE SCHEDULER'S TELEGRAM DELIVERY PATH IS WIRED TO THE ONE JOB TYPE THAT NEVER ALERTS, AND THAT
+ASYMMETRY IS WHY SEVEN SCRIPTS INLINE A LIVE BOT TOKEN — QUEUE #11 IS A SYMPTOM, SO ROTATION ALONE
+RE-CREATES IT** (2026-08-20 04:1x ICT, 2112z). `bot/scheduler.py:182-187` reads
+`job["delivery"]["announce"]` and sends the result to Telegram — a plain per-job key any job could
+carry — but **the block sits inside `_run_prompt`; `_run_script` (108-129) never reads it**
+(`grep -n announce bot/scheduler.py` ⇒ 5 lines, all 181–189). The config is **8 script jobs to 3
+prompt jobs**, and the three prompt jobs are the weeklies + `weekly-conjecture` — **every ALERTING
+job is a script job, i.e. exactly the set locked out.** So all of them built their own client:
+`grep -c api.telegram.org scripts/*.py` ⇒ **7 files**, which is #11's exposure set. **RULE: when N
+components each reimplement one capability, find the single place that offers it CONDITIONALLY — the
+duplication is a workaround for an access asymmetry, not N authorship decisions. You cannot price a
+credential exposure until you know what the credential is doing there.**
+⛔ **Same edit closes a blind spot: `_run_script:129` returns `stdout.decode()[-500:]`, `_run_job`
+logs `completed successfully` and returns it, and `:52-53`'s `add_job(self._run_job, …)` DISCARDS a
+job coroutine's return value** (only `:73`, run-now, receives it). Measured: **841
+`Running job: cleanpro-alerts` lines in `infra.log`, and 0 for the runner's own
+`No anomalies detected`, 0 for `💰 CONVERSION`, 0 for `TELEGRAM_SENT_OK`.** **A script job that
+stayed silent and one that fired a 🚨 to the user emit the IDENTICAL log line**, so QUEUE #3's
+coin-flip backtest (~60 % of slots) is **unobservable in production, not merely unverified** — do not
+quote an alert count from it. Distinct from QUEUE #6 (stderr on TIMEOUT); this is the success path.
+General: **a return value truncated for presentation and then dropped is dead intent — `[-500:]` on
+a value nobody reads marks a delivery path that was removed or never finished**, and it is the tell
+that found this. Ev: `memory/t0/2026-08-20/heartbeat-2112z.md`.

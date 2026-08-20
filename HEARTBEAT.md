@@ -404,29 +404,26 @@ failure. A meter younger than the regime it is asked about produces only confide
 (0437z's *count from expected slots* is this rule on the numerator side.) ✅ `com.claude.daily-brief`
 is exit **0** — 0613z's outage is over, its detector gap is not. Ev: `…/heartbeat-2053z.md`.
 
-⛔ **THE SCHEDULER'S TELEGRAM DELIVERY PATH IS WIRED TO THE ONE JOB TYPE THAT NEVER ALERTS, AND THAT
-ASYMMETRY IS WHY SEVEN SCRIPTS INLINE A LIVE BOT TOKEN — QUEUE #11 IS A SYMPTOM, SO ROTATION ALONE
-RE-CREATES IT** (2026-08-20 04:1x ICT, 2112z). `bot/scheduler.py:182-187` reads
-`job["delivery"]["announce"]` and sends the result to Telegram — a plain per-job key any job could
-carry — but **the block sits inside `_run_prompt`; `_run_script` (108-129) never reads it**
-(`grep -n announce bot/scheduler.py` ⇒ 5 lines, all 181–189). The config is **8 script jobs to 3
-prompt jobs**, and the three prompt jobs are the weeklies + `weekly-conjecture` — **every ALERTING
-job is a script job, i.e. exactly the set locked out.** So all of them built their own client:
-`grep -c api.telegram.org scripts/*.py` ⇒ **7 files**, which is #11's exposure set. **RULE: when N
-components each reimplement one capability, find the single place that offers it CONDITIONALLY — the
-duplication is a workaround for an access asymmetry, not N authorship decisions. You cannot price a
-credential exposure until you know what the credential is doing there.**
-⛔ **Same edit closes a blind spot: `_run_script:129` returns `stdout.decode()[-500:]`, `_run_job`
-logs `completed successfully` and returns it, and `:52-53`'s `add_job(self._run_job, …)` DISCARDS a
-job coroutine's return value** (only `:73`, run-now, receives it). Measured: **841
-`Running job: cleanpro-alerts` lines in `infra.log`, and 0 for the runner's own
-`No anomalies detected`, 0 for `💰 CONVERSION`, 0 for `TELEGRAM_SENT_OK`.** **A script job that
-stayed silent and one that fired a 🚨 to the user emit the IDENTICAL log line**, so QUEUE #3's
-coin-flip backtest (~60 % of slots) is **unobservable in production, not merely unverified** — do not
-quote an alert count from it. Distinct from QUEUE #6 (stderr on TIMEOUT); this is the success path.
-General: **a return value truncated for presentation and then dropped is dead intent — `[-500:]` on
-a value nobody reads marks a delivery path that was removed or never finished**, and it is the tell
-that found this. Ev: `memory/t0/2026-08-20/heartbeat-2112z.md`.
+
+⛔ **A SCRIPT JOB CANNOT ALERT THROUGH THE SCHEDULER, AND ITS SUCCESS PATH IS UNINSTRUMENTED** (2112z,
+halved by 2205z/2224z). `bot/scheduler.py:182-187` reads `job["delivery"]["announce"]` and sends the
+result to Telegram, but the block sits inside `_run_prompt`; **`_run_script` (108-129) never reads it**
+(`grep -n announce bot/scheduler.py` ⇒ 5 lines, all 181–189). Latent, never exercised: on the LOADED
+config all 4 `announce` carriers are prompt jobs and 0 of the 10 script jobs carry it (2224z).
+⛔ **Blind spot, still live: `_run_script:129` returns `stdout.decode()[-500:]`, `_run_job` logs
+`completed successfully` and returns it, and `:52-53`'s `add_job(self._run_job, …)` DISCARDS a job
+coroutine's return value** — only `:73`, run-now, receives it. Measured: **841 `Running job:
+cleanpro-alerts` lines in `infra.log`, and 0 for the runner's own `No anomalies detected`, 0 for
+`💰 CONVERSION`, 0 for `TELEGRAM_SENT_OK`** ⇒ **a script job that stayed silent and one that fired a
+🚨 to the user emit the IDENTICAL log line**, so QUEUE #3's coin-flip backtest is **unobservable in
+production, not merely unverified** — do not quote an alert count from it. (Distinct from QUEUE #6,
+stderr on TIMEOUT; this is the success path.) **RULE: a return value truncated for presentation and
+then dropped is dead intent — `[-500:]` on a value nobody reads marks a delivery path that was removed
+or never finished.** ⛔ **Cut with its evidence: 2112z's *"N components each reimplementing one
+capability ⇒ find the place that offers it CONDITIONALLY"* rested on *every alerting job is a script
+job*, which 2224z voided on the loaded config. A transferable RULE dies with the premise that produced
+it — do not keep the moral of a refuted story, because a rule reads as portable exactly when its
+evidence has stopped being checked.** Narrative §AO.
 
 ⛔ **QUEUE #11's BLOCKER IS A MISSING *NAME*, NOT MISSING MACHINERY — THE ENV HATCH IS ALREADY WIRED
 END TO END AND HAS BEEN ALL ALONG** (2026-08-20 05:0x ICT, 2205z, four links each checked). 0634z's
