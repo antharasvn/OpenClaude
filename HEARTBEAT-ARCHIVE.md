@@ -2279,3 +2279,23 @@ daily brief unmonitored through the same outage. (2) `launchctl list`'s middle c
 status and it is free in the liveness check you already run — read it, do not just confirm the label
 is present.** Sent to the user this cycle; schedule fix is QUEUE #9.
 Evidence: `memory/t0/2026-08-18/heartbeat-0613z.md`.
+
+## §AT — the §3 log-compression RETIREMENT POINTER (cut 2026-08-20 1424z)
+
+A 10-line blockquote that opened §3 restating the retirement carried by the bullet directly below it.
+Live imperatives all duplicated there (do not compress daily logs for context cost; bundle is
+persisted not injected; evidence in §G). Its narrative half was the story of its own rotted
+`HEARTBEAT.md:NNNN` self-cite, whose rule is a page-1 imperative. Kept inline: 0236z deleting the
+corpse rather than marking it.
+
+> ⛔ **READ FIRST — the log-compression thread that opened this section is RETIRED, and as of
+> 2026-08-15 09:4x ICT (0236z) its evidence is gone from here entirely: `HEARTBEAT-ARCHIVE.md` §G.
+> Do not `ls -S` today's log dir and compress anything for context cost.** The bundle is *persisted,
+> not injected*; the saving is ~0 and compressing below the truncation threshold makes it **worse**.
+> *(Pointer added 2026-08-15 07:4x ICT by 0034z, which ran the `ls -S` and was one call from
+> compressing before it reached the retraction — the ordering, not the content, cost those calls.
+> 0236z closed the gap the only way that fully works: it deleted the corpse instead of marking it,
+> which is rule (a) below taken to its conclusion. Note this pointer originally read "RETIRED at
+> line 2320" — a `HEARTBEAT.md:NNNN` self-cite, exactly what §1 forbids, and it had already rotted
+> before the archival moved it.)*
+

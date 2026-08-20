@@ -1699,9 +1699,8 @@ it. Confidence high; the `find` is dispositive.
   222 s** ⇒ predicted **14:37:05**, observed `Running job:` **14:37:03**. A cycle applying the bare rule
   sees silence at 14:33:23 and reads a **dropped slot** — the exact false alarm the next line warns
   about, produced by the formula itself. **`next_fire = last_bot_start + n × interval_seconds + S`.**
-  Note the grace is now the binding constraint, not the arithmetic: 222 s late against a 300 s
-  `misfire_grace_time` left **78 s** of margin, so **any sleep window >300 s before an interval slot
-  discards it outright** — check the meter before predicting an interval fire, not just the anchor.
+  ⛔ **The 300 s margin reading is REFUTED at n=22 (page 1, "freeze on SKIPPED slots"): 516 s and
+  665 s FIRED, 453 s did not. Read the meter for PRESENCE of freeze, never against a threshold.**
   ⛔ **`+ S` is a PER-SLOT deviation and does NOT re-phase the anchor — recompute S fresh for every slot,
   and never read a snap-back to the grid as a restart** (2026-08-13 21:56 ICT, n=3 interval + n=1 cron,
   one uninterrupted bot process). The line above scores S on ONE slot and is silent on whether it carries
@@ -2188,8 +2187,8 @@ it. Confidence high; the `find` is dispositive.
   Mind `coalesce` (below): the count is a lower bound, so reconcile per job, not in aggregate, and
   treat an exact match as strong evidence rather than proof.
 - `coalesce=True` is ALREADY in effect (APScheduler 3.11.3 default; verified in `.venv` —
-  `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). Don't propose
-  it as a fix; only raising `misfire_grace_time` at `bot/scheduler.py:24` is a real change.
+  `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). ⛔ **Neither
+  knob is a fix — raising `misfire_grace_time` recovers nothing (refuted n=22, page 1).**
 
 ### 2. Bot Health
 - Check if the Telegram bot process is running: `pgrep -f "python.*-m bot"`
@@ -2376,17 +2375,6 @@ it. Confidence high; the `find` is dispositive.
 - Alert if bot is down or throwing repeated errors
 
 ### 3. Memory & Reminders
-
-> ⛔ **READ FIRST — the log-compression thread that opened this section is RETIRED, and as of
-> 2026-08-15 09:4x ICT (0236z) its evidence is gone from here entirely: `HEARTBEAT-ARCHIVE.md` §G.
-> Do not `ls -S` today's log dir and compress anything for context cost.** The bundle is *persisted,
-> not injected*; the saving is ~0 and compressing below the truncation threshold makes it **worse**.
-> *(Pointer added 2026-08-15 07:4x ICT by 0034z, which ran the `ls -S` and was one call from
-> compressing before it reached the retraction — the ordering, not the content, cost those calls.
-> 0236z closed the gap the only way that fully works: it deleted the corpse instead of marking it,
-> which is rule (a) below taken to its conclusion. Note this pointer originally read "RETIRED at
-> line 2320" — a `HEARTBEAT.md:NNNN` self-cite, exactly what §1 forbids, and it had already rotted
-> before the archival moved it.)*
 
 - ⛔ **RETIRED THREAD — the log-compression argument that used to fill this bullet is dead. Do not
   compress daily logs for context cost.** The SessionStart hook `cat`s every same-day log uncapped
