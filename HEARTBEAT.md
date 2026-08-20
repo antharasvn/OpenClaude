@@ -542,7 +542,7 @@ very likely n=1: its MECHANISM holds (first error 2 s after the 09:29:38 DarkWak
 not. 2053z's denominator rule, on a numerator the client's retry policy generates.
 ⛔ **And the free lid-detector it suggests is REFUTED BY ITS OWN SILENCE:** the identical DarkWake
 duty cycle ran through 09:32:56+ with zero errors. **RULE: check a candidate detector against the
-stretch where it stayed SILENT, not only where it fired.** Ev: `…/heartbeat-0254z.md`.
+stretch where it stayed SILENT, not only where it fired.**
 
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
 
