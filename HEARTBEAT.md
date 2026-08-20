@@ -78,22 +78,12 @@ asking too weakly** — ten passes escalated one question; one pass changed it. 
 on structure, never on text the subject writes*): which is trustworthy depends on **who wrote it** —
 a subject forges its own failure vocabulary, but nobody forges a `CLOSED` on work they still owe.
 Ev: `memory/t0/2026-08-20/heartbeat-2033z.md`.
-⛔ **AND EVERY PASS SILENTLY FALSIFIES THIS FILE'S OWN CROSS-REFERENCES — ALL 56 `line NNN` POINTERS
-ARE NOW WRONG, AND EACH ONE LANDS ON REAL, UNRELATED PROSE** (2026-08-15 23:0x ICT, 1559z; 8 of 8
-sampled wrong, 0 right). *(56 from `grep -o … | wc -l`; `grep -c` said 47 because **`-c` counts
-matching LINES, never occurrences** — the same instrument-sets-the-denominator trap as §0's
-`ConnectError` window counts, and it undercounted by 19 % in the one call I nearly filed from.)* Measured offsets, ref → true: `line 504`→97 (−407), `§3 line 2251`→2123
-(−128), `line 542`→710 (+168), `line 543`→687 (+144), `§0 line 92`→~262 (+170), `line 215`→466 (+251),
-`line 143`→368 (+225). **Both signs, spread 658 lines ⇒ no constant recovers them** — each was written
-at a different file state, and in-section growth (~2.3 KB/cycle) and deletion (1540z took 93 lines off
-the very top, shifting every pointer in the file at once) push opposite ways. A *dangling* pointer
-would be safe; these all resolve, so following one yields a confident wrong citation — the failure
-mode that launders a fabrication into the record. **RULE: cite by `§N` plus a distinctive quoted
-phrase, NEVER by line number.** `sed`'s move preserves text, so a phrase survives every pass and a
-number survives none; `§N` references are unaffected and stay cheap. **Treat every existing
-`line NNN` here as VOID — re-find the claim by `grep` before relying on it, and do NOT repair the
-numbers: they rot again on the next pass.** The compaction duty that keeps this file readable is the
-same duty that corrupts its citations, and nine passes have repaired none.
+⛔ **CITE BY `§N` PLUS A DISTINCTIVE QUOTED PHRASE, NEVER BY LINE NUMBER — and treat every existing
+`line NNN` in this file as VOID.** All 56 of them were measured wrong in 2026-08-15 1559z (8/8 sampled,
+both signs, spread 658 lines ⇒ no constant recovers them), and each still RESOLVES onto real unrelated
+prose, so following one yields a confident wrong citation. Do NOT repair the numbers — every pass rots
+them again; `sed`'s move preserves text, so a phrase survives and a number never does. The compaction
+duty that keeps this file readable is the same duty that corrupts its citations. Series: §AH.
 ⛔ **NEVER LET AN EXTREMUM CARRY THE IMPERATIVE — state a rate as a MEAN WITH ITS n.** A mean survives
 one new sample; a min/max is the order statistic the next sample is likeliest to break, and it is the
 form these entries keep reaching for because it sounds decisive.

@@ -2040,3 +2040,25 @@ costs and called them two branches. Actuator unchanged (`restart.sh` is a no-op,
 `safe-restart.sh` unsanctioned) — the ask is with the user and was SENT this cycle.
 Evidence: `memory/t0/2026-08-16/heartbeat-1814z.md`.
 
+
+## §AH — line-number pointer rot: the 2026-08-15 1559z measurement series
+
+Moved out of HEARTBEAT.md 2026-08-19 2356z (06:56 ICT 08-20). The live imperative stays on page 1;
+the seven measured offsets and the grep -c undercount are here.
+
+⛔ **AND EVERY PASS SILENTLY FALSIFIES THIS FILE'S OWN CROSS-REFERENCES — ALL 56 `line NNN` POINTERS
+ARE NOW WRONG, AND EACH ONE LANDS ON REAL, UNRELATED PROSE** (2026-08-15 23:0x ICT, 1559z; 8 of 8
+sampled wrong, 0 right). *(56 from `grep -o … | wc -l`; `grep -c` said 47 because **`-c` counts
+matching LINES, never occurrences** — the same instrument-sets-the-denominator trap as §0's
+`ConnectError` window counts, and it undercounted by 19 % in the one call I nearly filed from.)* Measured offsets, ref → true: `line 504`→97 (−407), `§3 line 2251`→2123
+(−128), `line 542`→710 (+168), `line 543`→687 (+144), `§0 line 92`→~262 (+170), `line 215`→466 (+251),
+`line 143`→368 (+225). **Both signs, spread 658 lines ⇒ no constant recovers them** — each was written
+at a different file state, and in-section growth (~2.3 KB/cycle) and deletion (1540z took 93 lines off
+the very top, shifting every pointer in the file at once) push opposite ways. A *dangling* pointer
+would be safe; these all resolve, so following one yields a confident wrong citation — the failure
+mode that launders a fabrication into the record. **RULE: cite by `§N` plus a distinctive quoted
+phrase, NEVER by line number.** `sed`'s move preserves text, so a phrase survives every pass and a
+number survives none; `§N` references are unaffected and stay cheap. **Treat every existing
+`line NNN` here as VOID — re-find the claim by `grep` before relying on it, and do NOT repair the
+numbers: they rot again on the next pass.** The compaction duty that keeps this file readable is the
+same duty that corrupts its citations, and nine passes have repaired none.
