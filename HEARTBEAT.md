@@ -1853,27 +1853,6 @@ it. Confidence high; the `find` is dispositive.
   **:33:23** (`auto-commit` / `cleanpro-exp-monitor` next at **14:33:23**, a one-off 3 h 20 m gap).
   **Rule: `next_fire = last_bot_start + n × interval_seconds`, re-derived every cycle from
   `grep "Bot starting" logs/infra.log | tail -1`.** Cost of not doing so is a false alarm in both
-  ⛔ **That formula is MISSING `+ S` — `IntervalTrigger` waits on the same `CLOCK_MONOTONIC` as every
-  other timer in §1, so the anchor arithmetic inherits the sleep term** (2026-08-13 14:37 ICT, n=1,
-  residual **−2 s**). Measured: anchor **12:33:23** + 7200 = 14:33:23, sleep **14:19:49 → 14:23:31 =
-  222 s** ⇒ predicted **14:37:05**, observed `Running job:` **14:37:03**. A cycle applying the bare rule
-  sees silence at 14:33:23 and reads a **dropped slot** — the exact false alarm the next line warns
-  about, produced by the formula itself. **`next_fire = last_bot_start + n × interval_seconds + S`.**
-  ⛔ **The 300 s margin reading is REFUTED at n=22 (page 1, "freeze on SKIPPED slots"): 516 s and
-  665 s FIRED, 453 s did not. Read the meter for PRESENCE of freeze, never against a threshold.**
-  ⛔ **`+ S` is a PER-SLOT deviation and does NOT re-phase the anchor — recompute S fresh for every slot,
-  and never read a snap-back to the grid as a restart** (2026-08-13 21:56 ICT, n=3 interval + n=1 cron,
-  one uninterrupted bot process). The line above scores S on ONE slot and is silent on whether it carries
-  forward. It does not: `IntervalTrigger.get_next_fire_time` computes from the previous **nominal**
-  (scheduled) fire time, not the actual run time, so a late fire snaps straight back to
-  `anchor + n × interval`. Measured on the 12:33:23 anchor, all three slots after the S = 222 s shifted
-  fire: **14:37:03** (shifted) → **16:33:23 / 18:33:23 / 20:33:23**, i.e. exactly on grid, never
-  14:37:03 + n×7200. Same for `cron` triggers: the alerts pair fired **18:02:13** (133 s late, inside
-  grace) and the next slot landed **20:00:00** exact. **The dangerous sign:** a cycle carrying S forward
-  predicts 16:37:05, observes 16:33:23, and reads it as **3 m 42 s EARLY** — which is the exact signature
-  of the restart re-phase two paragraphs up. It then re-derives a wrong anchor from a `Bot starting` line
-  that never happened, and every downstream prediction inherits it. That is the same false alarm the next
-  line warns about, produced one slot later by the formula itself. Confidence high.
   directions — a cycle watching the stale anchor sees silence and reads a healthy job as a dropped
   slot, while the real fire goes unwatched. **Why this survived two ⛔-grade rewrites of §1: for
   interval jobs there is no cron expression to re-derive from**, so "re-derive from state, never from
@@ -1889,6 +1868,11 @@ it. Confidence high; the `find` is dispositive.
   anchor**, the stronger half. Method note: 0553z attached a **zero-cost falsifier** to its
   prediction, which is why a successor could settle it in one grep — **a prediction with a scoreable
   falsifier beats a prediction with a confidence label; only one of the two can be checked.**
+  ⛔ **Full form is `next_fire = last_bot_start + n × interval_seconds + S`, S = THAT slot's freeze —
+  recompute S fresh per slot; it does NOT re-phase the anchor. A late fire snaps back to the grid, so
+  carrying S forward predicts a fire ~S EARLY, which is the signature of a restart re-phase, and the
+  cycle then re-derives an anchor from a `Bot starting` that never happened. Never test S against a
+  300 s threshold (refuted n=22, page 1: read the freeze meter for PRESENCE). Derivation §BA.**
 - **Do NOT compare `now - last_run` against a nominal interval** (this checklist said "alert if > 2x
   the interval" until 2026-08-07 00:23Z — it was wrong). Cron jobs with designed overnight gaps fail
   that test every night: `vidnotes-alerts` (`0 7-23/2` Warsaw) is dark 23:00→07:00 Warsaw = 8h = 4x
