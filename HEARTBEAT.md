@@ -127,9 +127,8 @@ to a file, then `./skills/telegram-sender/send.sh --text "$(cat <file>)"`.
 
 ⛔ **A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE** — the fleet lost 18:00–18:05 ICT across three
 timezones with the host awake (1500z; narrative §AL). ⛔ **Its `pmset` LINE-DENSITY argument is dead in BOTH directions, and the *measures churn, not state*
-rule dies with it (1205z below: 93 % `Assertions`, plus the replacement meter). Do not re-derive.** ⛔ Same cycle, same file: cumulative frozen seconds per inter-fire interval does **NOT** predict
-a drop (453 s⇒dropped, **665 s⇒fired 99 s late**, 951 s⇒dropped), so `6d7da94`'s 12:05 fit was
-coincidence. **Measure the SURVIVORS before filing a threshold — on a large varying quantity almost
+rule dies with it (1205z below: 93 % `Assertions`, plus the replacement meter). Do not re-derive.** ⛔ Same cycle: its freeze-vs-drop refutation is now carried in full by 1404z's n=22 block below.
+**Measure the SURVIVORS before filing a threshold — on a large varying quantity almost
 any threshold fits the first case checked.** Ev: `…/heartbeat-0823z-darkwake-refutes-density.md`. ⛔ **And do not promote the survivor: APScheduler misfire is the obvious
 rival and it is UNTESTABLE here — `missed`/`maximum number of running instances`/`Execution of job`
 occur ZERO times in the whole of `infra.log`, i.e. the instrument has never spoken** (contrast
@@ -335,12 +334,18 @@ variable already in the row is the model's missing term, not a finding; calibrat
 regime you will apply it to.** `heartbeat-state.json` is at the REPO ROOT.
 ⛔ **A MISSED SLOT IS EXPLAINED BY THE MONOTONIC FREEZE ACCUMULATED BEFORE IT, NOT BY THE POWER STATE
 AT IT — SUM THE `Entering Sleep state` LINES' OWN TRAILING `N secs` (1205z's meter; 0751z's
-`→DarkWake` PAIRING IS RETIRED, it matched nothing in this log era) AND COMPARE TO
-`misfire_grace_time: 300` (`bot/scheduler.py:26`)** (0751z/0813z; 5 slots, monotone). Skips 12:05
-**517 s**, 14:05 **808 s**; fires 09:05 (42 s, late), 12:30, 13:05, 15:05 ~0 s. **No single interval
-reached 300 at 14:05 — the quantity is the SUM.** ⛔ **DarkWake is NOT the cause — a sustained
-DarkWake fired on time (12:30).** Kills a fix class: **raising the grace helps only if it exceeds the
-freeze, which is third-party (`dasd fpck-repair` RECURS) hence unbounded.**
+`→DarkWake` PAIRING IS RETIRED, it matched nothing in this log era).** ⛔ **BUT NEVER COMPARE THAT SUM
+TO `misfire_grace_time: 300` (`bot/scheduler.py:26`) — THE MAGNITUDE SEPARATES NOTHING AND THE
+*PRESENCE* SEPARATES PERFECTLY** (1404z; all **22** `echo-backend-alerts` slots of 08-20, the first run
+on a full hourly day instead of 3–5 hand-picked slots). Prior-hour freeze **0 s ⇒ fired at +0 s, 16/16;
+>0 s ⇒ late or lost, 6/6.** Magnitudes interleave — skips {453, 951, 2457} vs **fires** {21, 332, 516,
+665} — so 300 scores 3 correct skips and 3 false ones, and lateness is the graded response (332⇒16 s,
+516⇒158 s, 665⇒99 s). **Keep the sum only as a NECESSARY condition: a hole with ZERO preceding freeze
+is a different bug — look elsewhere.** Confirms 0823z at n=22 (its 453/665/951 are three of these rows)
+and kills the fix class outright: **no grace value separates these classes, so raising it is not a weak
+fix, it is not a fix.** ⛔ **DarkWake is NOT the cause — a sustained DarkWake fired on time.**
+**General: when a threshold on a magnitude keeps needing re-derivation, test the BINARY version first —
+presence/absence is the cheaper hypothesis, and here it is the true one.**
 ⛔ **AND THE WINDOW RESETS AT A SKIP, NOT AT A RUN — SO MISSED FIRES NEVER CASCADE** (0813z, the
 discriminating case). Between the 14:05 skip and 15:05 `pmset` shows **zero sleep events**, so
 "freeze since the last COMPLETED job (13:22:09)" sums 808 s and predicts a skip — **refuted, 15:05
