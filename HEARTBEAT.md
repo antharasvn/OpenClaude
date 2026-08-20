@@ -53,8 +53,10 @@ that check on the LETTER, never the `§`
 - **Extract imperatives FIRST, then move the residue.** Never move a block and hope a summary caught
   it. A **withdrawn** ask stays inline as a live NEGATIVE prescription — archiving a retraction
   silently un-retracts it.
-- **Measure after your LAST edit — "after BOTH halves" is not enough**: 1646z's `wc -c` sat between the
-  delete and its imperative rewrite (+335 B, 29 % of the recovery) and nearly filed +14 % for a −19 %.
+- **Measure after your LAST edit — "after BOTH halves" is not enough. n=2 (1646z +335 B, 1228z +323 B),
+  both `wc -c`s sat between the delete and the imperative rewrite; 1228z published a −633 that was a
+  −310.** Naming the trap does not stop it: **a pass has TWO writers — the cut, and the finding that
+  justifies it — and only the first FEELS like the pass**, so the second is booked nowhere.
   **Keep the note to the imperative** — the
   narrative belongs in the daily log, which nothing re-`cat`s into `HEARTBEAT.md`.
 ⛔ **SCORE COMPACTION AGAINST THE FILE'S LEVEL, NEVER YOUR OWN PASS DELTA — 24 COMMITS AND 38 h OF
