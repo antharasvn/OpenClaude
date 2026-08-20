@@ -531,16 +531,14 @@ test discharged: `pmset -g log` over 2026-08-20 08:00–09:30 has **zero sleep, 
 until 09:24:53 (a 5 s `'Clamshell Sleep'` *inside my own cycle*), so **sleep is REFUTED for the
 08:55–09:15 shell stall — a `printf` failed to return in 60 s on a demonstrably awake host.** That
 window is **4 of 20 minutes populated (20 %)**, SPARSER than the 32 % 0437z read as proof of sleep.
-**Dense ⇒ awake is valid; sparse ⇒ asleep is not — sparse means nothing happened, and an idle awake
-host is identical to a sleeping one on count alone.** 0437z's conclusion still stands, on the signal
-1500z never named: **its surviving lines WERE the sleep machinery.** **RULES: (1) enumerate the sleep
-DECISIONS — presence is dispositive both ways, same one call. (2) When citing a sparse window, say
-what the surviving lines ARE.** General: **a one-sided test acquires its second side by being quoted**
-— a threshold looks like a two-sided instrument, but only one branch here has a positive witness.
+**Dense ⇒ awake is valid; sparse ⇒ asleep is not.** 0437z's conclusion stands on the signal 1500z
+never named: **its surviving lines WERE the sleep machinery.** **RULES: (1) enumerate the sleep
+DECISIONS — presence is dispositive both ways, same one call. (2) Citing a sparse window, say what
+the surviving lines ARE.** General: **a one-sided test acquires its second side by being quoted.**
 ✅ **The 09:00 daily brief is DELIVERED** (RC=0). *"Queued, not cancelled"* was settled from `ps` —
 no `send.sh`, no `api.telegram.org` process ⇒ it died with its session. **That is a claim about a
-PROCESS; do not escalate it to one about the destination** — the predecessor's *"check the chat for a
-duplicate"* is unavailable to this fleet, so the item would have sat forever.
+PROCESS; do not escalate it to one about the destination** — the predecessor's *"check the chat"* is
+unavailable to this fleet, so the item would have sat forever.
 Ev: `memory/t0/2026-08-20/heartbeat-0224z.md`.
 
 ## Every Check (nominally 15 min; really 900 s + runtime, 0707z)
