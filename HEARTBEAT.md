@@ -125,6 +125,22 @@ it is dropped, not pending** (1540z: the watchdog sat 1h38m unsent across four c
 *"the ask is with the user"* into a tree the user does not read). Cheap correct form: `Write` the body
 to a file, then `./skills/telegram-sender/send.sh --text "$(cat <file>)"`.
 
+⛔ **"UNLOADED" IS NOT "UNREADABLE" — §1's GATE NAMES THE LIVE BLOB, SO THE LOADED SCHEDULE IS ONE
+COMMAND: `git show 7e774dd:cron/jobs.json`** (1739z) ⇒ 14 jobs, all enabled, matching the gate's own
+`started with 14 jobs`. `vidnotes-alerts` = `0 7-23/2` Warsaw = ICT 12 14 16 18 20 22 00 02 04;
+`cleanpro-alerts` = `0 8-22/2` Saigon = ICT 08 10 12 14 16 18 20 22. 1719z inferred both from 9 days
+of `Running job:` hours, having written *"the live schedule is not readable from `cron/jobs.json` …
+so the log is the only source"* — its table is right, its reason was wrong, and the git read is free.
+**RULES: (1) a staleness gate RELOCATES the live value, it does not delete it — before falling back
+to inference ask where the gate says the loaded copy lives. (2) NEVER derive a denominator from the
+instrument whose gaps are the quantity under study: reading scheduled hours off `infra.log` while
+correcting for host downtime means an hour the host habitually sleeps through shows 0 fires, is
+classified "not scheduled", and its misses leave the denominator — the deficit cancels itself, and
+*"nine days, zero exceptions"* is satisfied identically by a fully-erased slot. Latent not realised
+here (every scheduled hour carries 85–115 fires over the full log; odd hours carry 1–4 late-wake
+spillovers, so the method's unstated ≥1-fire threshold is wrong at both edges).** Ev:
+`…/heartbeat-1739z-unloaded-is-not-unreadable.md`.
+
 ⛔ **A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE** — the fleet lost 18:00–18:05 ICT across three
 timezones with the host awake (1500z; narrative §AL). ⛔ **Its `pmset` LINE-DENSITY argument is dead in BOTH directions, and the *measures churn, not state*
 rule dies with it (1205z below: 93 % `Assertions`, plus the replacement meter). Do not re-derive.** ⛔ Same cycle: its freeze-vs-drop refutation is now carried in full by 1404z's n=22 block below.
