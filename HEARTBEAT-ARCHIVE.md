@@ -2202,3 +2202,34 @@ quote an alert count from it. Distinct from QUEUE #6 (stderr on TIMEOUT); this i
 General: **a return value truncated for presentation and then dropped is dead intent — `[-500:]` on
 a value nobody reads marks a delivery path that was removed or never finished**, and it is the tell
 that found this. Ev: `memory/t0/2026-08-20/heartbeat-2112z.md`.
+
+## §AP — 0437z expected-slots block and its 0648z weekday correction (archived 2026-08-20 1020z)
+
+⛔ **COUNT A JOB'S FAILURES FROM ITS EXPECTED SLOTS, NEVER FROM THE LOG — A LOG-DERIVED FAILURE RATE
+CONDITIONS ON THE HOST HAVING BEEN AWAKE, AND `weekly-conjecture` HAS NO-SHOWED 7 OF 19 SLOTS (37 %)**
+(2026-08-18 11:4x ICT, 0437z). QUEUE #1 predicted it would fire Mon 08-17 19:00 ICT and time out at
+cap; it **never ran** — `infra.log` jumps 18:05:38 → 19:25:22, host slept at **18:06:46** (`Idle
+Sleep`). Enumerating all 19 Mondays 04-13→08-17 against the 12 observed fires: **3** hit the cap,
+**7** never fired. **So QUEUE #1's `600 → 1800` addresses the minority mode and would read as fixed
+while 37 % of slots stay silent.** 0333z's rule (*are the failures all at the cap?*) one level up: it
+still assumed the failure population was runs that failed — **the larger population is slots that
+never became runs, and no instrument here sees it.** `infra.log` writes nothing; `cron/state.json`
+still says `last_run 08-10, consecutive_errors 1`, which is **indistinguishable from a stale
+success** — a timeout stamps fresh and looks healthy, a no-show stamps nothing and looks like one old
+failure. Sleep-loss concentrates on weeklies: a daily job redraws the awake condition 7×/week, a
+weekly gets one draw. **Applying 1500z's density test in the NEGATIVE: 26 of 81 minutes populated
+(32 %), and the lines present are the sleep machinery itself** — sparse ⇒ sleep, where 1500z's 837
+lines with per-minute coverage ⇒ awake. Second instrument agrees: fixed-2 h `auto-commit` ran
+19:25:22 on 08-17 vs 09:21:46/11:21:46 today, a +3m36s frozen-countdown drift. Not a config artifact
+— live scheduler loaded **14 jobs at 08-15 15:21:46**, `cron/jobs.json`'s 3-enabled edit is 19:39 and
+unread (§1's gate). ⚠️ Pre-registered, n=1, do NOT re-plot: **07-20 fired at 20:00, not 19:00**, a
+clean 1 h shift with no DST to explain it. **Next live draw: `vidnotes-weekly` at 12:30 ICT today —
+a cycle after that should `grep vidnotes-weekly logs/infra.log`; "no line at all" is the third
+outcome and the one QUEUE #1 cannot express.** Evidence: `memory/t0/2026-08-18/heartbeat-0437z.md`.
+
+--- its later correction (was inline at 303-306) ---
+
+⚠️ **And 0437z's `weekly-conjecture` "7 of 19 slots (37 %)" is UNSCORED — it enumerated MONDAYS.**
+`vidnotes-weekly`'s observed fires are **Tuesdays 12:30 ICT** (07-28, 08-11, 08-18; 07-21 at 13:30).
+The next-draw time was right so the pre-registered test stood, but **do not re-quote 37 % until the
+slot set is rebuilt on the right weekday.**
