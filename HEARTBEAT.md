@@ -290,8 +290,7 @@ copy-paste family with the twist that hides it: THE FAMILY COPIED THE CALL, NOT 
 `run/check_output/call/Popen/urlopen` lacking `timeout` is the whole-hazard instrument. (3) Match the
 in-repo convention when patching: the `bq` site needed `timeout=600` like
 `daily_report_common.bq_query`, else the fix newly kills healthy slow queries. (4) A line-keyed
-`grep -v` CANNOT audit a statement-keyed call — it flagged `notify-interrupted.sh:64` whose flags are
-on line 65.** ✅ 2046z's 9 Telegram sites re-verified genuinely bounded. Ev:
+`grep -v` CANNOT audit a statement-keyed call.** ✅ 2046z's 9 Telegram sites re-verified bounded. Ev:
 `…/heartbeat-2105z-four-samenamed-run-shims-one-bounded.md`.
 ⛔ **`heartbeat-state.json`'s `last_message_sent` IS DEAD — SEEDED, DOCUMENTED, WRITTEN BY NOTHING,
 READ BY NOTHING** (1943z). `run.sh:23` names it only in the fresh-file seed; cycles send via
