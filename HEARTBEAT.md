@@ -266,21 +266,16 @@ Evidence: `memory/t0/2026-08-18/heartbeat-0613z.md`.
 later.** (0418z→0514z, discharged; archived §V.)
 
 
-⛔ **NEVER ASK WHETHER THE HOST WAS AWAKE — A HEARTBEAT RUNS IN THE AWAKE WINDOW BY CONSTRUCTION,
-BECAUSE LAUNCHD'S WAKE *IS* WHAT STARTED IT** (0514z, §AN). A cycle asking that about its own window
-gets **yes at a 100 % rate while the truth was 15 %** — it inherits "awake" from its own existence, so
-**your `etime` is evidence about your cycle, never the fleet.** Measure a window containing troughs you
-were NOT awake for: `pmset -g log > /tmp/pm.log` (also the `guard.sh` escape), and enumerate the sleep
-DECISIONS (0224z). ⛔ **Same cycle, n=4: `python3 scripts/check_missed_fires.py` ⇒ `ModuleNotFoundError`
-and I was one call from filing "the detector is dead" — `apscheduler` is `.venv`-only and §1 prescribes
-`.venv/bin/python3`, on page 2. Do not retype a documented invocation from memory.**
-⛔ **QUOTE EVERY SLEEP REGIME IN THE PAST TENSE WITH THE TIME IT ENDED — 0534z's "fixed 5m00s, 15.0 %"
-had already ended 2m10s before 0534z started** (archived §AM). Escaping *a cycle inherits awake from its
-own existence* by measuring troughs you were not awake for installs a STALENESS bias in its place; the
-regime is non-stationary and third-party. Sleep DECISIONS (0224z) date the change; holders only age it.
-✅ **`vidnotes-weekly` 12:38:56 = 536 s = 89 % of cap, a SECOND near-cap success for QUEUE #1's
-capacity branch** (0429z max 528 s, n=14); it ran wholly inside an assertion window, so 536 s is the
-sleep-free reference duration.
+
+⛔ **NEVER ASK WHETHER THE HOST WAS AWAKE — a heartbeat runs in the awake window by construction, so
+it inherits `yes` at a 100 % rate while the truth was 15 %: your `etime` is evidence about YOUR cycle,
+never the fleet** (0514z; still live after 0707z refuted its *"no sampling reaches the troughs"* half).
+Measure troughs you were not awake for — 0707z's cadence residual, or 1205z's `Entering Sleep state`
+`N secs` sum. ⛔ **Same cycle, n=4: `python3 scripts/check_missed_fires.py` ⇒ `ModuleNotFoundError` and
+I nearly filed "the detector is dead" — `apscheduler` is `.venv`-only, §1 prescribes `.venv/bin/python3`.
+Do not retype a documented invocation from memory.** ✅ QUEUE #1 capacity: `vidnotes-weekly` ran
+**536 s = 89 % of the 600 s cap** wholly inside an assertion window — the sleep-free reference duration.
+Narrative §AR.
 
 ⛔ **1755z's ~551-LINE BOUNDARY IS NOW SCORED, AND IT COST ME A WHOLE RE-DERIVED FINDING THIS CYCLE.**
 I observed `MISSED vidnotes-weekly … (0.1h ago)` while the job's child (`grok -p`, PID 37087) was alive

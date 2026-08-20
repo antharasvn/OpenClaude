@@ -2244,3 +2244,21 @@ survives only because its surviving lines WERE the sleep machinery.
 **Dense ⇒ awake is valid; sparse ⇒ asleep is not. RULES: (1) enumerate the sleep
 DECISIONS — one call, dispositive both ways. (2) Citing a sparse window, say what the surviving
 lines ARE.** General: **a one-sided test acquires its second side by being quoted.**
+
+## §AR — 0514z/0534z sleep-probe block, cut 2026-08-20 1344z (superseded by 0707z, 0016z, 1205z)
+
+⛔ **NEVER ASK WHETHER THE HOST WAS AWAKE — A HEARTBEAT RUNS IN THE AWAKE WINDOW BY CONSTRUCTION,
+BECAUSE LAUNCHD'S WAKE *IS* WHAT STARTED IT** (0514z, §AN). A cycle asking that about its own window
+gets **yes at a 100 % rate while the truth was 15 %** — it inherits "awake" from its own existence, so
+**your `etime` is evidence about your cycle, never the fleet.** Measure a window containing troughs you
+were NOT awake for: `pmset -g log > /tmp/pm.log` (also the `guard.sh` escape), and enumerate the sleep
+DECISIONS (0224z). ⛔ **Same cycle, n=4: `python3 scripts/check_missed_fires.py` ⇒ `ModuleNotFoundError`
+and I was one call from filing "the detector is dead" — `apscheduler` is `.venv`-only and §1 prescribes
+`.venv/bin/python3`, on page 2. Do not retype a documented invocation from memory.**
+⛔ **QUOTE EVERY SLEEP REGIME IN THE PAST TENSE WITH THE TIME IT ENDED — 0534z's "fixed 5m00s, 15.0 %"
+had already ended 2m10s before 0534z started** (archived §AM). Escaping *a cycle inherits awake from its
+own existence* by measuring troughs you were not awake for installs a STALENESS bias in its place; the
+regime is non-stationary and third-party. Sleep DECISIONS (0224z) date the change; holders only age it.
+✅ **`vidnotes-weekly` 12:38:56 = 536 s = 89 % of cap, a SECOND near-cap success for QUEUE #1's
+capacity branch** (0429z max 528 s, n=14); it ran wholly inside an assertion window, so 536 s is the
+sleep-free reference duration.
