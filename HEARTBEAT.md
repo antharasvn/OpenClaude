@@ -346,6 +346,14 @@ and kills the fix class outright: **no grace value separates these classes, so r
 fix, it is not a fix.** ⛔ **DarkWake is NOT the cause — a sustained DarkWake fired on time.**
 **General: when a threshold on a magnitude keeps needing re-derivation, test the BINARY version first —
 presence/absence is the cheaper hypothesis, and here it is the true one.**
+⛔ **ITS OWN REPAIR SWEEP REACHED ONLY THE PRESCRIPTION SITES (1503z).** 7 page-2 `misfire_grace_time`
+sites: the one saying *raising it is not a fix* was already annotated; the two stating the MECHANISM
+(*"discards are caused by sleep windows EXCEEDING the 300 s grace"*) were not, and are now repaired.
+Both sites' CONCLUSIONS were sound — presence is necessary — so a repairer checking whether each site
+is still *right* keeps them all. **RULE: after refuting a model, grep for the sites that state its
+MECHANISM, not the sites that state what to DO about it. A cycle repairing a refutation greps for what
+to stop doing; the belief clause survives inside conclusions that are independently true, and it is the
+belief clause that regenerates the prescription.** Ev: `…/heartbeat-1503z-*.md`.
 ⛔ **AND THE WINDOW RESETS AT A SKIP, NOT AT A RUN — SO MISSED FIRES NEVER CASCADE** (0813z, the
 discriminating case). Between the 14:05 skip and 15:05 `pmset` shows **zero sleep events**, so
 "freeze since the last COMPLETED job (13:22:09)" sums 808 s and predicts a skip — **refuted, 15:05
@@ -1129,8 +1137,8 @@ settle it.** Nothing in a crontab-shaped string ever prompts you to ask what rea
 ⛔ **`last_status: OK` does NOT mean the job ran — and for a WEEKLY job the difference lasts a week.**
 (2026-08-15, observed on `cleanpro-weekly`.) Its `last_run` was **265.7 h** old against a 168 h period
 with `last_status: OK`, `consecutive_errors: 0`: the Tue 08-11 03:30 fire fell inside a ~63 min sleep
-hole (`infra.log` 03:02:19 → 04:05:33), and `misfire_grace_time: 300` (`bot/scheduler.py:26`, no
-`coalesce`) **discarded** it. One CleanPro report simply does not exist. **`grep -n last_run bot/*.py`
+hole (`infra.log` 03:02:19 → 04:05:33), and APScheduler **discarded** it (cause is the freeze's
+PRESENCE, not its size vs `misfire_grace_time: 300` — refuted n=22, page 1). One CleanPro report simply does not exist. **`grep -n last_run bot/*.py`
 returns writes only — nothing in the repo compares `last_run` age to the period**, so this is
 undetectable by the fleet's normal pass. **Add the age column to your §1 sweep** (`age(last_run)` vs
 declared period) — it is one `python3` block over `cron/state.json` and it is the only check that
@@ -1375,8 +1383,10 @@ it. Confidence high; the `find` is dispositive.
   **03:17:11**, ~20.x h clean"*, and it reads like an accumulating body of evidence. It is not:
   `pmset -g log | grep -E "Entering Sleep|Wake from" | tail` shows the host's **last wake at
   03:15:26 ICT**, so that discard is the **wake-flush from the 03:03:11 → 03:15:26 sleep**, landing
-  1 min 45 s after it. Discards are *caused by* sleep windows exceeding the 300 s
-  `misfire_grace_time`; on a host that has not slept, a clean discard log is guaranteed a priori and
+  1 min 45 s after it. Discards are *caused by* the PRESENCE of a preceding freeze — ⛔ **not
+  by its exceeding the 300 s `misfire_grace_time`; that magnitude model is refuted n=22, page 1**
+  (fires at 332/516/665 s). The conclusion below survives because presence is NECESSARY. On a host
+  that has not slept, a clean discard log is guaranteed a priori and
   carries **zero** information. "20.4 h without a discard" and "20.4 h without a sleep" are the same
   measurement. The two break in the same instant, so the streak also has **no early-warning value**.
   **Do this instead:** report the discard count *and* the last-wake time together, and say which one
