@@ -461,8 +461,11 @@ do-nothing floor, then 18:00 at 355 s, then 20:00 **TIMED OUT at 600 s** (1317z)
 between 16:00 and 18:00, three slots AFTER the block credited it, and the first two funded runs cost
 355 s and >600 s. **A recovery certified by the single fastest healthy sample is certified by the sample
 least able to fail; take the LAST pre-fix and FIRST post-fix runs, not the one that proves the point.**
-Timeout base rate is 10 since 04-11 (~1 per 13 d) so the single timeout is not the event — the RUNTIME
-REGIME SHIFT is (13 s ⇒ 355 s ⇒ cap). ⛔ **AND A TIMED-OUT `prompt` JOB IS A TOTAL LOSS, NOT A SLOW
+⛔ **AND ITS OWN EXONERATION IS SELF-REFUTING — the *~1 per 13 d* base rate AVERAGES ACROSS THE VERY
+BREAK IT WAS ANNOUNCING.** `vidnotes-alerts` timeouts (n=11, whole log): **3 in the 108 d to 07-28
+(1/36 d), then 8 in the 24 d since (1/3 d) — 12×**. A mean spanning a change point is diluted toward
+*normal* BY CONSTRUCTION and can never test whether the break exists — **cut the window at the break
+BEFORE quoting the rate.** The RUNTIME REGIME SHIFT (13 s ⇒ 355 s ⇒ cap) stands. ⛔ **AND A TIMED-OUT `prompt` JOB IS A TOTAL LOSS, NOT A SLOW
 ONE — 20:00 WROTE ZERO BYTES to `memory/`, the vidnotes workspace and `temp/` (`find -newermt`, 10-min
 window, only an unrelated heartbeat log). The cap is hardcoded GLOBAL at `bot/scheduler.py:163` with no
 per-job override in the schema, so QUEUE #1 is one number for 14 jobs. Its 0437z re-scoping (*minority
