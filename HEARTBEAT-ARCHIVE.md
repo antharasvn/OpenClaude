@@ -2626,3 +2626,35 @@ job, so ENUMERATE EVERY JOB WHOSE SLOT FALLS IN THE GAP before quoting an impact
 the units of the meter that found it, and those units are always the smallest thing in it** (1522z,
 archived §AW). **Alert jobs SELF-HEAL (next slot re-reads the same state); DAILIES DO NOT** — nothing
 re-runs them and `state.json` keeps a D−1 stamp 0437z's stale-success reader cannot tell from fresh.
+
+## §BD — assertion-timing prescriptions, retired by the §AU apparatus retirement (cut 2026-08-21 0317z)
+
+- ⛔ **Never dismiss a power assertion using a sleep window that closed BEFORE the hold was created —
+  order the two timestamps first** (2026-08-11 04:16 ICT). 2051z read `pid 407(dasd)` `BackgroundTask`
+  `DASActivity:501:com.apple.FileProvider.maintenance.fpck-repair` id `0x0000fa48000b862c` at 03:56:58
+  (age 00:01:05 ⇒ creation **03:55:53**) and filed it "demonstrably not blocking — the host is sleeping
+  through it." The sleep it cited ended **03:56:06**, thirteen seconds *after* the hold was created,
+  and no sleep occurred for the next 20 min: same id still up at 04:16:19, aged **00:20:27**, meter flat
+  at 3378.0. The hold was the thing that **ended** the cycling regime. This also contradicted §1's own
+  record (the 00:37 ICT cycle "ran clean on transient `dasd` BackgroundTask assertions with the display
+  off"), so check the checklist before overriding it. `BackgroundTask` is not an idle-sleep assertion
+  type, but a `dasd` batch demonstrably suppresses sleep anyway — treat it as §1's unbounded holder
+  (measured batches 26 / 40 / 55+ min / **≥57 min**), conditional in both directions.
+  ⛔ **NEVER SCHEDULE AGAINST A HOLD'S RELEASE IN EITHER DIRECTION, HOWEVER OLD IT IS.** The
+  unbounded-holder rule is **not** a claim about typical length that a long observation can erode:
+  the measured maxima keep moving (a lone `dasd` `BackgroundTask` suppresses system sleep by itself
+  for ≈65 min; a grok "agent turn in progress" held S = 0 for **2 h 50 min**), and the bands do not
+  cluster by class. **So neither "approaching an hour" nor "longer than anything ever measured" is a
+  release signal.** Series and per-probe arithmetic: `HEARTBEAT-ARCHIVE.md` §L.
+  ⛔ **TRACK THE ASSERTION ID, NEVER THE PID — a pid is not a hold identity, and joining on pid
+  OVERSTATES a class length.** grok re-arms per *turn*; one pid was measured holding two different
+  ids with a gap between them, which a pid-joined read renders as one continuous ≥27-minute hold.
+  The id is the instrument for every holder class, not just `UserIsActive`. Corollary, confirmed four
+  times: **process liveness is not a proxy for a held assertion** — a pid alive 2 h 40 m with no
+  assertion at all.
+  ⛔ **A hold that ends near a wake is LEFT-BOUNDED ONLY: the `sleep 1` back-out dates a release
+  only when that release is what PERMITTED the sleep.** If HID returns first and holds the host awake
+  across the release, there is no onset to back out of and the length bounds only to the probe
+  interval ([78:53, 97:50] in the measured case, vs a release pinned to the second when sleep resumed
+  ~60 s after it). **Expect this loss whenever a long hold ends near a wake — which is when they most
+  often end — so record the bracketing probe times on any hold you are timing; they are all you get.**
