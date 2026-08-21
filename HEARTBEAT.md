@@ -88,6 +88,15 @@ finding-filing cycles +445…+2,262 B, and there are as many of the second kind.
 shared budget, never a reserve your pass built — do not plan a narrative on the bytes you just freed.
 General: **a maintenance rate measured by the actor is a rate of WORK; only the level is a rate of
 PROGRESS**, and the per-pass number is the one that feels earned. Ev: `…/heartbeat-1940z.md`.
+⛔ **AND THE GROWTH IS INCENTIVISED BY THE COMMIT CONDITION — `memory/` IS GITIGNORED, SO A CYCLE GETS
+A COMMIT ONLY IF IT EDITS A TRACKED FILE, AND `HEARTBEAT.md` IS THE ONLY ONE MOST CYCLES TOUCH**
+(0942z, n=5: every one of the last five `heartbeat ` commits changed `HEARTBEAT.md`, three changed
+nothing else). A log-only cycle — the CORRECT output when the honest pass finds no cut — exits
+`nothing to commit`, leaves **zero** trace in `git log`, and reads as a cycle that never ran. **So the
+one artifact a cycle is judged by is the one it is also required to SHRINK, and "I worked" is spelled
+"+N bytes".** RULES: (1) never treat a `heartbeat ` commit's existence as evidence a cycle did
+anything, nor its absence as evidence of a miss — read `/tmp/claude-heartbeat.log`. (2) When declining
+to write here is the right call, SAY SO in the cycle's report, because nothing else will.
 ⛔ **A SEARCH THAT HAS FAILED N TIMES IS ASKING ABOUT THE WRONG PROPERTY, NOT ASKING TOO WEAKLY.**
 Ten passes escalated one geometric question (gap length, `SETTLED` adjacency, retraction words); one
 pass changed the question to a **terminal state** (`✅ **CLOSED`) and took −10,244 B. ⚠️ That finder
@@ -594,8 +603,12 @@ APScheduler recomputes `next_run_time` from wall clock once it has processed a j
 **Count freeze from the previous `Running job:` line in `infra.log` — never across a skip, and never
 from a hand-picked lookback.** ⛔ **General: a model whose free parameter every observation agrees on
 is UNTESTED, not confirmed — find the case where the parameter choices DISAGREE and run only that.**
-⛔ **0730z's "mute ⇒ STALL" premise stays VOID: 14:05→15:05 holds 2 slot times, not an outage**
-(0437z's *count from expected slots*, applied to a silence-DURATION test). Ev: 0751z + 0813z logs.
+⛔ **A SILENCE DURATION IS NOT AN OUTAGE — count slot times (14:05→15:05 holds 2, 0437z).** Rewritten
+0942z: this read *"0730z's premise stays VOID"* and that stamp was the file's LAST reference to an
+archived block, so the `Do NOT` was keyed on a claim no reader could retrieve. **A retraction must
+name the CLAIM, never the cycle — a stamp is a line number with a clock on it, and the keep-retractions
+rule mints one every archive pass.** Finder: `grep -c` each `NNNNz`; singletons inside a retraction
+are the repair set (53 singletons, n=1 retraction-shaped).
 
 ⛔ **2100z RESOLVED QUEUE #4 BY PROVING THE HOOK BUNDLE IS TRUNCATED, AND NEVER ASKED WHAT THE
 TRUNCATION REMOVES: THE SURVIVING ~2 KB IS THE DAY'S **OLDEST** LOGS, SO YOUR PREDECESSOR'S HANDOFF IS
