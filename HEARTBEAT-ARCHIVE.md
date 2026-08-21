@@ -2681,3 +2681,13 @@ text the subject writes*, INVERTED — so knowing it did not prevent this: the s
 CLEAN and the text was the only honest witness. A subject forges its failure vocabulary but never
 forges a CONFESSION — a self-reported failure inside a success-coded run is the highest-trust signal
 there is. (3) When two consumers of one harness differ in health, diff how they receive PERMISSIONS,
+
+## §BG — 1922z exit-124 discriminator: cause narrative (CLOSED in code, superseded by the refusal/recovery block)
+
+⛔ **BUT ON THE `exit 124` BRANCH THAT SIZE TEST HAS ZERO POWER — IT IS SATISFIED BY CONSTRUCTION**
+(1922z; shipped, live in `run.sh`). A cap-kill leaves **0 B of stdout however much work landed**:
+18:57:33Z pushed `19e56f1` 24 s before its kill and was still booked a refusal. Now rc=124 **plus** an
+in-window `git log --since="$CYCLE_START" --grep="^heartbeat "` hit ⇒ truncated success (`--grep`
+excludes `auto-commit`, else a genuinely dead cap-kill is masked ~8 %). **7 of 440 starts (1.6 %)** —
+a class. **RULE: a structural discriminator is only structural ON THE BRANCH WHERE IT CAN VARY; a test
+the failure mode SETS is a tautology in the costume of 0418z's principle.**

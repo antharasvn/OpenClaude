@@ -276,15 +276,11 @@ its failure strings live in its **success** output. Detection is now `rc != 0` *
 (real refusals **68 B**, healthy transcript **3,155 B**). **RULE: when a detector reads a channel its
 subject also writes to, key on a STRUCTURAL property (exit code, output size, timing), never on the
 text — the subject forges the text precisely when it is working.**
-⛔ **BUT ON THE `exit 124` BRANCH THAT SIZE TEST HAS ZERO POWER — IT IS SATISFIED BY CONSTRUCTION**
-(1922z; shipped, live in `run.sh`). A cap-kill leaves **0 B of stdout however much work landed**:
-18:57:33Z pushed `19e56f1` 24 s before its kill and was still booked a refusal. Now rc=124 **plus** an
-in-window `git log --since="$CYCLE_START" --grep="^heartbeat "` hit ⇒ truncated success (`--grep`
-excludes `auto-commit`, else a genuinely dead cap-kill is masked ~8 %). **7 of 440 starts (1.6 %)** —
-a class. **RULE: a structural discriminator is only structural ON THE BRANCH WHERE IT CAN VARY; a test
-the failure mode SETS is a tautology in the costume of 0418z's principle.**
-⛔ **AND THAT FIX SWITCHED OFF THE ONLY ALARM COVERING A HUNG DELIVERY — AUDIT A NEW DISCRIMINATOR BY
-ITS *LOSS* SET** (2004z). `send.sh` made **4 curl calls with 0 timeout flags**; curl has no default
+⛔ **A DISCRIMINATOR IS ONLY STRUCTURAL ON THE BRANCH WHERE IT CAN VARY** — `run.sh`'s ≤400 B size test
+is satisfied BY CONSTRUCTION on `exit 124`, so a test the failure mode SETS is a tautology wearing
+0418z's principle. Fixed, live, and CLOSED below; do not re-file. §BG.
+⛔ **AND `run.sh`'s rc=124 SUCCESS BRANCH SWITCHED OFF THE ONLY ALARM COVERING A HUNG DELIVERY —
+AUDIT A NEW DISCRIMINATOR BY ITS *LOSS* SET** (2004z). `send.sh` made **4 curl calls with 0 timeout flags**; curl has no default
 overall timeout, and the bot's `.err` carries **201 NetworkError / 200 httpx.ConnectError** to
 `api.telegram.org`. Sends happen at cycle END (1540z r4) ⇒ a hang burns the cap ⇒ rc=124 **after** the
 commit ⇒ 1922z's branch calls it healthy, no alert, user sees silence. **Fixed: `--connect-timeout 10`,
