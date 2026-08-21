@@ -2618,3 +2618,11 @@ are worth keeping: a cycle starting within ~3 min of a likely sleep onset should
 and gather second; and if the sleep meter shows S = 0 over the last cycle, write at ~T+5 min and
 refine in place.** The mechanism narrative is archived at `HEARTBEAT-ARCHIVE.md` §B — the ⛔ directly
 below supersedes it.
+
+## §AW.2 — 1522z freeze-per-slot residue (cut 2026-08-21 0256z; superseded inline by 1539z)
+
+⛔ **A FREEZE IS SCORED PER SLOT AND PAID PER PASS — APScheduler skips the processing PASS, not the
+job, so ENUMERATE EVERY JOB WHOSE SLOT FALLS IN THE GAP before quoting an impact; a hole is priced in
+the units of the meter that found it, and those units are always the smallest thing in it** (1522z,
+archived §AW). **Alert jobs SELF-HEAL (next slot re-reads the same state); DAILIES DO NOT** — nothing
+re-runs them and `state.json` keeps a D−1 stamp 0437z's stale-success reader cannot tell from fresh.

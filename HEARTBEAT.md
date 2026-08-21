@@ -491,14 +491,10 @@ presence/absence is the cheaper hypothesis, and here it is the true one.**
 DO ABOUT IT** (1503z, sweep discharged, archived §AX): a repairer greps for what to stop doing, so the
 belief clause survives inside conclusions that are independently true — and it regenerates the
 prescription.
-⛔ **A FREEZE IS SCORED PER SLOT AND PAID PER PASS — APScheduler skips the processing PASS, not the
-job, so ENUMERATE EVERY JOB WHOSE SLOT FALLS IN THE GAP before quoting an impact; a hole is priced in
-the units of the meter that found it, and those units are always the smallest thing in it** (1522z,
-archived §AW). **Alert jobs SELF-HEAL (next slot re-reads the same state); DAILIES DO NOT** — nothing
-re-runs them and `state.json` keeps a D−1 stamp 0437z's stale-success reader cannot tell from fresh.
-⛔ **BUT ITS ENUMERATION MERGED **TWO** HOLES INTO ONE — IT LISTED A JOB BY CATEGORY INSTEAD OF BY
-RESOLVED SLOT, AND THE ABSORBED JOB MADE ITS REAL HOLE VANISH** (1539z, caught by checking
-`cron/state.json` against `infra.log`). `vidnotes-daily` has **no 14:00 slot**: loaded config gives it
+⛔ **1522z's ENUMERATION MERGED **TWO** HOLES INTO ONE — IT LISTED A JOB BY CATEGORY INSTEAD OF BY
+RESOLVED SLOT, AND THE ABSORBED JOB MADE ITS REAL HOLE VANISH** (1539z, `cron/state.json` vs
+`infra.log`; 1522z archived §AW.2 — a freeze is scored per SLOT and paid per PASS, and **alert jobs
+SELF-HEAL, DAILIES DO NOT**). `vidnotes-daily` has **no 14:00 slot**: loaded config gives it
 `0 7 * * *` **Europe/Warsaw = 12:00 ICT**, while echo/mangii/pdfai/aividly are `0 3 * * *`
 America/New_York = 14:00. 08-20 had **hole A 11:21:49→13:21:47** (2 h 00 m; took 12:00 `vidnotes-daily`
 and `echo-backend-alerts` 12:05 **and** 13:05) and **hole B 13:21:47→15:05:00** (1522z's, its other four
