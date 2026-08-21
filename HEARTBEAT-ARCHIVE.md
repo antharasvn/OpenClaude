@@ -2901,3 +2901,25 @@ archived block, so the `Do NOT` was keyed on a claim no reader could retrieve. *
 name the CLAIM, never the cycle — a stamp is a line number with a clock on it, and the keep-retractions
 rule mints one every archive pass.** Finder: `grep -c` each `NNNNz`; singletons inside a retraction
 are the repair set (53 singletons, n=1 retraction-shaped).
+
+## §BS — the 402 outage narrative (1814z, 1120z, 1139z), archived 2026-08-21 1200z after grok rc=0
+
+⛔ **THE 08-19 ALERT COLLAPSE IS **TWO** UNRELATED FAULTS SHARING ONE SLOT, AND THE LIVE HALF IS THAT
+`AGENT_CLI=grok` IS OUT OF MONEY — ALL FOUR PROMPT JOBS ARE DEAD AND EVERY ROW READS `OK`** (1814z).
+Run the binary, don't infer: `grok -p …` ⇒ **rc=1, stdout 0 B, `status 402 Payment Required: Grok Build
+usage balance exhausted`** ⇒ `vidnotes-alerts`/`vidnotes-weekly`/`weekly-conjecture`/`cleanpro-weekly`
+all down since 08-19 02:00–12:00 ICT. Silent because **`_run_prompt` NEVER INSPECTS `proc.returncode`**
+while its sibling `_run_script:125` raises on it — so rc=1 logs `completed successfully`, and `announce`
+is gated on `result.strip()`, i.e. **the delivery path fires only when the job works.** ⛔ The rc-check veto is LIFTED. Cause 2, independent: `05d474a` (08-19 11:21) put `print("…no longer scheduled; exiting"); return` at the top of
+`cleanpro_alerts_runner.main()` **and** deleted the job from `cron/jobs.json` — but §1's gate says that
+file is unloaded since 08-15, so it still fires, exits **0** in **0 s**, and reads OK.
+**RULES: (1) when N members of a class fail together, FIND THE MEMBER THAT DIDN'T — `echo-backend-alerts`
+was healthy throughout (5–17 s), which alone refutes any common cause; a shared onset is the stride, not
+a signature (12:00 is the first slot the two share). 1756z and three cycles before it hunted one cause.
+(2) Two runners of one class must agree on what counts as FAILURE — the sibling that skips the exit code
+is not lenient, it is un-instrumented, and both emit the same success line. (3) If you neuter a script
+you believe is descheduled, exit NON-ZERO; an early `return` is indistinguishable from a silent healthy
+run.** Sent to the user (1540z r4); both fixes are asks, not acts. ⛔ **NEVER SUBTRACT TWO CLOCKS IN DIFFERENT ZONES; RE-MEASURE A SYMPTOM ONLY IN A SLOT THE REPAIR COULD
+REACH — so a recovery claim inherits the DIAGNOSTIC REACH of its FASTEST member. The 402 is clear (rc=0
+direct + `vidnotes-alerts` 355 s), but the 3 weekly prompt jobs cannot speak until 08-24/25, in EITHER
+direction.** (1120z, 1139z.)
