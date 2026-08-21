@@ -2598,3 +2598,23 @@ re-run the detector"*; **cheaper and deterministic is `grep "Running job: <id>" 
 finding's key noun — `grep -n "missed\|suppression" HEARTBEAT.md` would have cost one call and saved
 the derivation.** Trigger it on the *subject*, not on a hunch; the whole point is you do not know the
 page-2 entry exists.
+
+## §BC — the n=1 sleep-freezes-the-cycle-timer measurement (moved 2026-08-21 0135z; live prescriptions kept inline in §0)
+
+⛔ **"killed at T+600 s" meant wall clock until 2026-08-09 02:50 ICT. It does not.** The same
+`CLOCK_MONOTONIC`-freezes-during-sleep mechanism that blinds APScheduler (§1) also freezes this timer.
+Measured, n=1: cycle 83477 started 02:31:46, host slept **1007.6 s** mid-cycle, and at `etime`
+**18:30 (1110 s wall)** the process was **still alive** on ~102 s of awake time. It was not a deferred
+kill either — 600 s of wall had already elapsed at the 02:49:16 wake and nothing fired.
+**Two consequences, opposite in sign:**
+- Don't abort a cheap observation just because wall clock passed T+10 min — check awake time
+  (wall `etime` minus the cum_sleep delta from §1's meter) before believing you are out of budget.
+- A heartbeat can now outlive its own 15-min interval in wall time and overlap the next cycle.
+  If `ps` shows two `gtimeout 600 claude` processes, that is this, not a hung cycle.
+**Still never schedule an observation later than ~T+7 min of awake time.** A slot outside that window
+belongs to the NEXT cycle: write the log now and hand it over with the exact commands to resolve it.
+⚠️ **Cycles do die logless, and the two prescriptions that survived the (refuted) sleep explanation
+are worth keeping: a cycle starting within ~3 min of a likely sleep onset should write its log FIRST
+and gather second; and if the sleep meter shows S = 0 over the last cycle, write at ~T+5 min and
+refine in place.** The mechanism narrative is archived at `HEARTBEAT-ARCHIVE.md` §B — the ⛔ directly
+below supersedes it.
