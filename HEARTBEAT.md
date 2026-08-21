@@ -468,13 +468,17 @@ BREAK IT WAS ANNOUNCING.** `vidnotes-alerts` timeouts (n=11, whole log): **3 in 
 BEFORE quoting the rate.** The RUNTIME REGIME SHIFT (13 s ⇒ 355 s ⇒ cap) stands. ⛔ **AND A TIMED-OUT `prompt` JOB IS A TOTAL LOSS, NOT A SLOW
 ONE — 20:00 WROTE ZERO BYTES to `memory/`, the vidnotes workspace and `temp/` (`find -newermt`, 10-min
 window, only an unrelated heartbeat log). The cap is hardcoded GLOBAL at `bot/scheduler.py:163` with no
-per-job override in the schema, so QUEUE #1 is one number for 14 jobs. Its 0437z re-scoping (*minority
-cause, recovers 3 of 10*) was measured on WEEKLIES pre-402; the binding population is now an
-every-2-h job — 8 slots/day — whose funded runs are 355 s and >600 s (n=2, both ≥59 % of cap).
+per-job override in the schema, so QUEUE #1 is one number for 14 jobs. 0437z's re-scoping was measured
+on WEEKLIES pre-402; the binding population is an
+every-2-h job — 8 slots/day — funded runs 355 s, cap, cap (n=3, 08-21 18/20/22 ICT). ⛔ **THE
+20:00+22:00 PAIR IS THE FIRST `2x` IN THE WHOLE LOG ON TWO *ADJACENT EXECUTED* SLOTS — the only other
+one (07-30 04:10) had an unrun 02:00 between, so it was 2 failures over 3 slots. A consecutive-failure
+counter is a count of RUNS, never of SLOTS (`bot/scheduler.py:197` zeroes on success, `:203` increments
+on error, and a no-show touches neither), so the same `2x` means "sporadic" or "the job no longer fits"
+depending on a gap the number does not carry. RULE: before reading a run-keyed counter as a trend,
+enumerate the SLOTS it skipped — a no-show preserves the count and reads as continuity.**
 RULE: re-price a queued fix when the failing POPULATION changes, not when its cause does — a
-re-scoping note is dated to the job class that was failing when it was written.** Concrete cost, not
-hypothetical: the 18:01 report closed with *"Next slot (20:00 ICT) should resolve `d10959ea`"*, so the
-destroyed run was the designated follow-up on a named open question.
+re-scoping note is dated to the job class that was failing when it was written.**
 ⛔ **THAT PROBE'S rc IS FABRICATED IF YOU PIPE IT — `cmd | head -3; echo $?` REPORTS `head`'s STATUS,
 SO THE PRESCRIBED `grok -p` CHECK RETURNS **0** ON A 402 AND READS HEALTHY** (0806z, demonstrated on my
 own probe this cycle, then `(exit 7) | head -1` ⇒ `$?=0`). The 402 block orders *run the binary, don't
