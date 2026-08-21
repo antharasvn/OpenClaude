@@ -183,8 +183,7 @@ both. Read it with the gate's own hit: `L=$(grep -n 'Cron scheduler started with
 tail -1 | cut -d: -f1); sed -n "$((L-25)),${L}p" logs/infra.log`. Last start **08-15 15:21:46**
 registered all **14**, `pdfai-daily`/`aividly-daily` INCLUDED — they appear under `Skipping disabled`
 only in EARLIER starts, so the enabled/disabled split is self-reported per start and no config file
-need be read for it at all. 1739z reached for `git show 7e774dd:cron/jobs.json` and 1835z diffed job
-IDs against today's file; both reconstructions were correct and both were unnecessary.
+need be read for it at all.
 **RULES: (1) when a program logs a SUMMARY LINE you already grep, read its NEIGHBOURHOOD — a count is
 the last line of an enumeration, and the enumeration is the answer to the question the count made you
 ask. (2) A component that loads a config is a SECOND WITNESS to that config's contents, and it
