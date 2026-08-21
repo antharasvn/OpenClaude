@@ -13,6 +13,36 @@ here *and* keep the evidence in `HEARTBEAT.md`. A finding filed only in the chec
 
 ## 1. `prompt`-job cap: `timeout=600` → 1800
 
+🔺 **RE-PRICED UP 2026-08-21 (1421z) — THE 0437z RE-SCOPING BELOW IS STALE, AND THE STALENESS IS IN
+THE POPULATION, NOT THE CAUSE.** 0437z measured weeklies (1 slot/week) in the pre-402 era and
+concluded *minority cause, recovers at most 3 of 10*. Since the grok refill landed 08-21 between
+16:00 and 18:00 ICT, the binding population is **`vidnotes-alerts`, an every-2-hours job — 8 slots/day**:
+
+| slot (ICT) | runtime | outcome |
+| --- | --- | --- |
+| 12:00 / 14:00 / 16:00 | 13 s | unfunded 402 floor, no work |
+| 18:00 | **355 s** (59 % of cap) | delivered — `memory/t0/2026-08-21/vidnotes-anomaly-1801-ict.md`, 5,379 B |
+| 20:00 | **>600 s** | **timed out, zero output** |
+
+**n=2 funded runs, both ≥59 % of cap, one over it.** Verified this cycle:
+- The cap is **hardcoded global** at `bot/scheduler.py:163` (`asyncio.wait_for(..., timeout=600)`).
+  There is **no per-job timeout field** in `cron/jobs.json`'s schema — so this is one number governing
+  all 14 jobs, and it cannot be raised for the slow job alone without adding the field.
+- **A timeout is a TOTAL loss, not a slow success.** `find -newermt` over `memory/`, the vidnotes
+  workspace and `temp/` across 19:59–20:12 returned only an unrelated heartbeat log. Ten minutes of
+  model work produced nothing.
+- **Concrete cost:** the 18:01 report ends *"Next slot (20:00 ICT) should resolve `d10959ea`
+  (in-flight vs silent drop)"* — the destroyed run was the designated follow-up on a named open
+  anomaly question, not a routine no-op.
+
+**Decision needed:** raise the global `600`, or add a per-job `timeout_seconds` and raise it only for
+the prompt jobs. ⚠️ Note the interaction: at 8 slots/day a 1800 s cap means a wedged run occupies its
+slot past the next fire. Confidence moderate on the regime (n=2); high on the cap being global and on
+the total-loss property. Next unattended reading is **22:00 ICT**.
+Evidence: `memory/t0/2026-08-21/heartbeat-1421z-the-cap-changed-population-not-cause.md`.
+
+---
+
 ⛔ **RE-SCOPED 2026-08-18 (0437z) — THE CAP IS THE MINORITY CAUSE. `weekly-conjecture` fired 12 of
 19 scheduled Mondays (04-13→08-17); of the 7 misses, ZERO involve the timeout — the host was asleep
 and the slot never fired.** Only **3** of the 12 fires hit the cap. So `600 → 1800` recovers at most

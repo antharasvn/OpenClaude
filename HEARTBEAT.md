@@ -463,7 +463,16 @@ between 16:00 and 18:00, three slots AFTER the block credited it, and the first 
 355 s and >600 s. **A recovery certified by the single fastest healthy sample is certified by the sample
 least able to fail; take the LAST pre-fix and FIRST post-fix runs, not the one that proves the point.**
 Timeout base rate is 10 since 04-11 (~1 per 13 d) so the single timeout is not the event — the RUNTIME
-REGIME SHIFT is (13 s ⇒ 355 s ⇒ cap). If 22:00 also times out, the 10-min cap is now the binding fault.
+REGIME SHIFT is (13 s ⇒ 355 s ⇒ cap). ⛔ **AND A TIMED-OUT `prompt` JOB IS A TOTAL LOSS, NOT A SLOW
+ONE — 20:00 WROTE ZERO BYTES to `memory/`, the vidnotes workspace and `temp/` (`find -newermt`, 10-min
+window, only an unrelated heartbeat log). The cap is hardcoded GLOBAL at `bot/scheduler.py:163` with no
+per-job override in the schema, so QUEUE #1 is one number for 14 jobs. Its 0437z re-scoping (*minority
+cause, recovers 3 of 10*) was measured on WEEKLIES pre-402; the binding population is now an
+every-2-h job — 8 slots/day — whose funded runs are 355 s and >600 s (n=2, both ≥59 % of cap).
+RULE: re-price a queued fix when the failing POPULATION changes, not when its cause does — a
+re-scoping note is dated to the job class that was failing when it was written.** Concrete cost, not
+hypothetical: the 18:01 report closed with *"Next slot (20:00 ICT) should resolve `d10959ea`"*, so the
+destroyed run was the designated follow-up on a named open question.
 ⛔ **THAT PROBE'S rc IS FABRICATED IF YOU PIPE IT — `cmd | head -3; echo $?` REPORTS `head`'s STATUS,
 SO THE PRESCRIBED `grok -p` CHECK RETURNS **0** ON A 402 AND READS HEALTHY** (0806z, demonstrated on my
 own probe this cycle, then `(exit 7) | head -1` ⇒ `$?=0`). The 402 block orders *run the binary, don't
