@@ -2774,3 +2774,28 @@ over the meter's full span before modelling on it — the quoted `due to` field 
 variable, and `uniq -c` on it costs one call. (2) An instrument that enumerates PREVENTERS cannot see
 a COMMAND, and the blindness is silent because the probe still answers.**
 Ev: `memory/t0/2026-08-20/heartbeat-0016z.md`.
+
+## §BL — ConnectError episode census (0254z, 1105z, 0016z second instance), archived 2026-08-21 0728z
+
+Cut as a re-derivation family: page 1 0340z already closes the httpx.ConnectError signal as benign.
+Surviving imperatives folded into the 0016z summary block on page 2.
+
+✅ **09:00 daily brief DELIVERED (RC=0); the "queued" send died with its session. A `ps` result is
+a claim about a PROCESS — never escalate it to one about the destination.**
+⛔ **AN ERROR RUN IS A RETRY LADDER, NOT A RATE — DIFFERENCE THE TIMESTAMPS BEFORE YOU COUNT LINES**
+(0254z; 12 lines = ONE DNS failure + 11 backoff retries, so 0514z's *"nine `ConnectError` lines"* is
+n=1 — its MECHANISM holds, its COUNT does not. 2053z's denominator rule on a numerator the retry
+policy generates).
+✅ **WHOLE LOG (1105z): 6,884 stamped lines = 537 EPISODES, mean 12.8 lines each ⇒ any
+`grep -c` incident count is ~13× HIGH. And the line count is a CLOCK, not a count** — every episode
+>20 min in the 05-11→06-04 era sits at **2.00–2.04 lines/min** (n=10, durations 25–173 min), i.e. the
+30 s backoff cap emitting 2 lines/min for as long as the outage lasts; later ones drift to 1.15–1.85,
+always a cadence, never a failure count. **RULE: when a client logs one line per RETRY, only episode
+COUNT and episode DURATION are honest numbers.** Honest totals: **47.8 h inside an episode of a
+3,129 h span (1.5 %)**; per month 5/88/239/170/35 — **falling**; last 30 d 132 episodes / 389 min.
+⛔ **The 8 longest (91–173 min) are ALL 05-11/05-12 — one ~20 h night, an EPISODE not a population**
+(0016z's thermal row, second instance: **check whether a tail row's members share a DATE before it
+becomes a rate**). Ev: `…/heartbeat-1105z-connecterror-is-a-clock.md`.
+⛔ **And the free lid-detector it suggests is REFUTED BY ITS OWN SILENCE:** the identical DarkWake
+duty cycle ran through 09:32:56+ with zero errors. **RULE: check a candidate detector against the
+stretch where it stayed SILENT, not only where it fired.**

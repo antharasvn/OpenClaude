@@ -33,6 +33,12 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   what makes the block look safely dead, while a live citation of its surviving imperative can be
   anywhere (0256z, −418 B; 1522z's *alerts self-heal, dailies do not* was load-bearing 6 lines away).
   Page 1's `^⛔ **BUT IT` openers are CONSUMED, n=1 — do not re-run that grep expecting a hit.**
+  🆕 **SECOND FINDER, REGENERATING, NEEDS NO POINTER: AFTER ANY BLOCK SAYING *"DO NOT RE-DERIVE X"*,
+  GREP THE FILE FOR X** — a closure names a TOPIC, so the apparatus sits under headers never mentioning
+  it, and the cycle writing the closure just measured X and is likeliest not to check who measured it
+  first. Gross −1,739 B first run (0728z: 0340z closes `httpx.ConnectError`; page 2 held 19 more lines
+  of that census). ⛔ **A purely DIRECTIONAL cross-ref (*"restated below"*) is a line citation with the
+  number hidden — inline the survivor, never re-aim the arrow.**
 - **Bound** it by grepping BOTH `^- ` and the block's own entry glyphs `^  [✅⛔⚠️🆕]` — indent is not
   seniority, they interleave. ⛔ **A live top-level bullet BOUNDS a span; it does NOT veto it.**
   **Grep `^- ` for where your span ENDS, then take everything back to the marker**; "is there a
@@ -693,30 +699,22 @@ Ev: `memory/t0/2026-08-20/heartbeat-1558z-exit-0-is-a-turn-not-a-delivery.md` + 
 
 ⛔ **0016z's SLEEP-DRIVER TABULATION IS ARCHIVED §BK — its lid-beats-idle 1.5× numbers and its
 preventer-blindness rule are BOTH already carried by the `pmset` RETIREMENT block, and its
-thermal-episode catch is restated in full at *"second instance"* below. Sole unique survivor: when you
-name a cause from ONE incident's log line, `uniq -c` that cause's DISTRIBUTION over the meter's full
-span before modelling on it — a quoted `due to` field is a categorical variable, and five cycles modelled
-on an 8.8 % minority for want of one call.**
+thermal-episode catch is inlined here, its *"second instance"* restatement archived §BL. Sole unique
+survivor: when you name a cause from ONE incident's log line, `uniq -c` that cause's DISTRIBUTION over
+the meter's full span before modelling on it — a quoted `due to` field is a categorical variable, and
+five cycles modelled on an 8.8 % minority for want of one call. **Thermal catch, n=2: before a tail row
+becomes a rate, check whether its members share a DATE — the 8 longest `ConnectError` episodes are all
+one 05-11/05-12 night.**
+⛔ **THE `httpx.ConnectError` CENSUS IS CLOSED — DO NOT RE-DERIVE IT (page 1's 0340z, plus §BL).**
+Three results worth keeping. (1) **A client that logs one line per RETRY emits a CLOCK, not a count:**
+6,884 lines = 537 episodes, mean 12.8 ⇒ **any `grep -c` incident count is ~13× high**, and long episodes
+sit at a flat 1.15–2.04 lines/min for as long as the outage lasts. Only episode COUNT and episode
+DURATION are honest numbers. (2) Honest totals: **47.8 h inside an episode of a 3,129 h span (1.5 %),
+falling month over month** — benign, do not alert. (3) **Check a candidate detector against the stretch
+where it stayed SILENT, not only where it fired** — the "free lid-detector" died on an identical
+DarkWake duty cycle that logged zero errors. And **a `ps` result is a claim about a PROCESS, never one
+about the destination.**
 
-✅ **09:00 daily brief DELIVERED (RC=0); the "queued" send died with its session. A `ps` result is
-a claim about a PROCESS — never escalate it to one about the destination.**
-⛔ **AN ERROR RUN IS A RETRY LADDER, NOT A RATE — DIFFERENCE THE TIMESTAMPS BEFORE YOU COUNT LINES**
-(0254z; 12 lines = ONE DNS failure + 11 backoff retries, so 0514z's *"nine `ConnectError` lines"* is
-n=1 — its MECHANISM holds, its COUNT does not. 2053z's denominator rule on a numerator the retry
-policy generates).
-✅ **WHOLE LOG (1105z): 6,884 stamped lines = 537 EPISODES, mean 12.8 lines each ⇒ any
-`grep -c` incident count is ~13× HIGH. And the line count is a CLOCK, not a count** — every episode
->20 min in the 05-11→06-04 era sits at **2.00–2.04 lines/min** (n=10, durations 25–173 min), i.e. the
-30 s backoff cap emitting 2 lines/min for as long as the outage lasts; later ones drift to 1.15–1.85,
-always a cadence, never a failure count. **RULE: when a client logs one line per RETRY, only episode
-COUNT and episode DURATION are honest numbers.** Honest totals: **47.8 h inside an episode of a
-3,129 h span (1.5 %)**; per month 5/88/239/170/35 — **falling**; last 30 d 132 episodes / 389 min.
-⛔ **The 8 longest (91–173 min) are ALL 05-11/05-12 — one ~20 h night, an EPISODE not a population**
-(0016z's thermal row, second instance: **check whether a tail row's members share a DATE before it
-becomes a rate**). Ev: `…/heartbeat-1105z-connecterror-is-a-clock.md`.
-⛔ **And the free lid-detector it suggests is REFUTED BY ITS OWN SILENCE:** the identical DarkWake
-duty cycle ran through 09:32:56+ with zero errors. **RULE: check a candidate detector against the
-stretch where it stayed SILENT, not only where it fired.**
 
 ⛔ **`memory/` IS GITIGNORED — ALL 32 `Ev:` CITATIONS IN THIS FILE POINT AT UNTRACKED FILES, AND
 "COMMITTED AND PUSHED" HAS BEEN HALF FALSE EVERY CYCLE** (1205z). `.gitignore:27` `memory/`; tracked
