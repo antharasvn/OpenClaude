@@ -2949,3 +2949,21 @@ direction.** (1120z, 1139z.)
     slot (40 s false-alarms — the real runtime band reaches 77–101 s).
   - **Prefer the pairing — exclusion primitive + survival forecast — over a handoff whenever the tick
     clears §0's awake-time budget.** Write the log first, then wait, then two greps.
+
+## §BU — 1739z "unloaded is not unreadable" (the git-blob reconstruction), superseded by 0614z
+
+⛔ **"UNLOADED" IS NOT "UNREADABLE" — §1's GATE NAMES THE LIVE BLOB, SO THE LOADED SCHEDULE IS ONE
+COMMAND: `git show 7e774dd:cron/jobs.json`** (1739z) ⇒ 14 jobs, all enabled, matching the gate's own
+`started with 14 jobs`. `vidnotes-alerts` = `0 7-23/2` Warsaw = ICT 12 14 16 18 20 22 00 02 04;
+`cleanpro-alerts` = `0 8-22/2` Saigon = ICT 08 10 12 14 16 18 20 22. 1719z inferred both from 9 days
+of `Running job:` hours, having written *"the live schedule is not readable from `cron/jobs.json` …
+so the log is the only source"* — its table is right, its reason was wrong, and the git read is free.
+**RULES: (1) a staleness gate RELOCATES the live value, it does not delete it — before falling back
+to inference ask where the gate says the loaded copy lives. (2) NEVER derive a denominator from the
+instrument whose gaps are the quantity under study: reading scheduled hours off `infra.log` while
+correcting for host downtime means an hour the host habitually sleeps through shows 0 fires, is
+classified "not scheduled", and its misses leave the denominator — the deficit cancels itself, and
+*"nine days, zero exceptions"* is satisfied identically by a fully-erased slot. Latent not realised
+here (every scheduled hour carries 85–115 fires over the full log; odd hours carry 1–4 late-wake
+spillovers, so the method's unstated ≥1-fire threshold is wrong at both edges).** Ev:
+`…/heartbeat-1739z-unloaded-is-not-unreadable.md`.

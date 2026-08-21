@@ -170,23 +170,14 @@ it is dropped, not pending** (1540z: the watchdog sat 1h38m unsent across four c
 *"the ask is with the user"* into a tree the user does not read). Cheap correct form: `Write` the body
 to a file, then `./skills/telegram-sender/send.sh --text "$(cat <file>)"`.
 
-⛔ **"UNLOADED" IS NOT "UNREADABLE" — §1's GATE NAMES THE LIVE BLOB, SO THE LOADED SCHEDULE IS ONE
-COMMAND: `git show 7e774dd:cron/jobs.json`** (1739z) ⇒ 14 jobs, all enabled, matching the gate's own
-`started with 14 jobs`. `vidnotes-alerts` = `0 7-23/2` Warsaw = ICT 12 14 16 18 20 22 00 02 04;
-`cleanpro-alerts` = `0 8-22/2` Saigon = ICT 08 10 12 14 16 18 20 22. 1719z inferred both from 9 days
-of `Running job:` hours, having written *"the live schedule is not readable from `cron/jobs.json` …
-so the log is the only source"* — its table is right, its reason was wrong, and the git read is free.
-**RULES: (1) a staleness gate RELOCATES the live value, it does not delete it — before falling back
-to inference ask where the gate says the loaded copy lives. (2) NEVER derive a denominator from the
-instrument whose gaps are the quantity under study: reading scheduled hours off `infra.log` while
-correcting for host downtime means an hour the host habitually sleeps through shows 0 fires, is
-classified "not scheduled", and its misses leave the denominator — the deficit cancels itself, and
-*"nine days, zero exceptions"* is satisfied identically by a fully-erased slot. Latent not realised
-here (every scheduled hour carries 85–115 fires over the full log; odd hours carry 1–4 late-wake
-spillovers, so the method's unstated ≥1-fire threshold is wrong at both edges).** Ev:
-`…/heartbeat-1739z-unloaded-is-not-unreadable.md`.
-⛔ **AND THE GIT BLOB IS NOT NEEDED EITHER — THE SCHEDULER PRINTS ITS OWN LOADED ROSTER AT EVERY
-START, 15 LINES ABOVE THE LINE §1's GATE ALREADY GREPS** (0614z). `Registered job: <Name> (<id>)` per
+⛔ **THE LOADED SCHEDULE NEEDS NEITHER `cron/jobs.json` NOR A GIT BLOB — THE SCHEDULER PRINTS ITS OWN
+LOADED ROSTER AT EVERY START, 15 LINES ABOVE THE LINE §1's GATE ALREADY GREPS** (0614z, superseding
+1739z's `git show 7e774dd:` reconstruction and 1835z's job-ID diff — both correct, both unnecessary;
+§BU). ⛔ **1739z's surviving general rule: NEVER DERIVE A DENOMINATOR FROM THE INSTRUMENT WHOSE GAPS
+ARE THE QUANTITY UNDER STUDY** — counting scheduled hours off `infra.log` while correcting for host
+downtime means an hour the host habitually sleeps through shows 0 fires, is classified "not
+scheduled", and its misses leave the denominator; the deficit cancels itself and *"nine days, zero
+exceptions"* is satisfied identically by a fully-erased slot. `Registered job: <Name> (<id>)` per
 job, `Skipping disabled job: <id>` for each one it declined, and `Loaded N job definitions` above
 both. Read it with the gate's own hit: `L=$(grep -n 'Cron scheduler started with' logs/infra.log |
 tail -1 | cut -d: -f1); sed -n "$((L-25)),${L}p" logs/infra.log`. Last start **08-15 15:21:46**
