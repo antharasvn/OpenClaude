@@ -23,8 +23,13 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   already carries its durable half). **Unlike the spent `✅ **CLOSED` finder this one REGENERATES: the
   header grows by cycles filing corrections of earlier blocks, so every new entry MAKES a candidate.
   Search the biggest re-derived family — sleep/power has 7+ blocks — and grep the later ones for
-  `0NNNz's` back-references; a block quoted only to be corrected is the cut.** Check the next entry's
-  first word for `BUT`/`AND` before cutting (0924z).
+  `0NNNz's` back-references; a block quoted only to be corrected is the cut.** ⛔ **The `BUT`/`AND`
+  opener check (0924z) is a REPAIR ORDER, NOT A VETO — cut, then rename the successor's now-dangling
+  `ITS`, which otherwise re-points at whatever floats up beneath it. And grep for phrases QUOTED FROM
+  the block ELSEWHERE, never references TO it: the successor's own back-reference sits adjacent and is
+  what makes the block look safely dead, while a live citation of its surviving imperative can be
+  anywhere (0256z, −418 B; 1522z's *alerts self-heal, dailies do not* was load-bearing 6 lines away).
+  Page 1's `^⛔ **BUT IT` openers are CONSUMED, n=1 — do not re-run that grep expecting a hit.**
 - **Bound** it by grepping BOTH `^- ` and the block's own entry glyphs `^  [✅⛔⚠️🆕]` — indent is not
   seniority, they interleave. ⛔ **A live top-level bullet BOUNDS a span; it does NOT veto it.**
   **Grep `^- ` for where your span ENDS, then take everything back to the marker**; "is there a
