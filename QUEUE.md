@@ -834,6 +834,58 @@ since 08-19 11:21 ICT, so any backtest of it is scoring code that never ran.
 
 Ev: `memory/t0/2026-08-21/heartbeat-1814z-two-causes-one-slot.md`. Sent to the user 1814z.
 
+## 17. The config/process divergence went from DISABLED to DELETED — three jobs are gone from `cron/jobs.json`, and a restart now takes the fleet from 14 to 3
+
+⚠️ **Not a new mechanism.** `HEARTBEAT.md` §1 (1227z/1656z/1717z) already settled that
+`cron/jobs.json` is a wish and the disabled set is the set still running. **New here:** on 08-18 and
+08-19 three of those jobs were **deleted outright** from the file, not merely disabled; the restore
+JSON is recoverable from git; and the resulting restart cost is now countable — **14 → 3**.
+
+The scheduler reads `cron/jobs.json` **once at start** (`bot/scheduler.py:23`, loop at `:32-60`) and
+skips `enabled: false`. Bot PID 927 started 2026-08-15 15:21:46 ICT and registered **14** jobs
+(`logs/infra.log:25544-25557`). Today's on-disk file (mtime 08-19 11:09) declares **11**, of which
+**6 are `enabled: false`**:
+
+| state | jobs |
+| --- | --- |
+| live, **deleted** from the file | `vidnotes-alerts`, `cleanpro-alerts`, `cleanpro-exp-monitor` |
+| live, but `enabled: false` in the file | `echo-backend-alerts`, `auto-commit`, `vidnotes-weekly`, `cleanpro-weekly`, `mangii-daily`, `weekly-conjecture` |
+| agree | `echo-daily`, `vidnotes-daily`, `cleanpro-daily` |
+
+All nine are alive **today**: `echo-backend-alerts` 06:05/07:05/08:05 ICT, `auto-commit` +
+`cleanpro-exp-monitor` 05:21:46/07:21:46, `cleanpro-alerts` 08:00:00, `vidnotes-alerts` 00/02/04.
+So the next `./bin/restart.sh`, crash, or reboot leaves **three daily report jobs and nothing else** —
+no alerting, no `auto-commit` safety net (the thing that writes the `auto-commit safety net:` commits),
+no experiment monitor. Nothing warns: the scheduler logs a per-job `Registered job:` line and a count,
+and no check compares that count across boots.
+
+**It has already cost a live alert.** A cycle read the file, concluded `cleanpro-alerts` was
+descheduled, and committed an early `return` into `scripts/cleanpro_alerts_runner.py:60-61`
+(`05d474a`). That job fired at 08:00:00 ICT today, printed *"cleanpro_alerts_runner is no longer
+scheduled; exiting"*, and was recorded `last_status: OK`. #3's coin-flip logic at `:99` has not
+executed since. The file being wrong is not hypothetical — it is actively teaching cycles false facts.
+
+Mechanism: both deletions ride in on **`auto-commit` commits** (`93f0c25` 08-18, `05d474a` 08-19), so
+the safety net swept up an editor's in-progress state as routine churn, with a commit message that
+gives no hint. Whoever edited never restarted the bot.
+
+**Restore JSON, recovered verbatim via `git show <deleting-commit>^:cron/jobs.json`:**
+```json
+{"id":"vidnotes-alerts","name":"VidNotes Alerts","enabled":true,"schedule":{"cron":"0 7-23/2 * * *","timezone":"Europe/Warsaw"},"type":"prompt","skill":"skills/vidnotes-alerts/SKILL.md","delivery":{"chat_id":"-5201056067","announce":"352342178","on_error":"352342178"}}
+{"id":"cleanpro-alerts","name":"CleanPro Alerts","enabled":true,"schedule":{"cron":"0 8-22/2 * * *","timezone":"Asia/Saigon"},"type":"script","script":"scripts/cleanpro_alerts_runner.py","delivery":{"chat_id":"-5201056067","on_error":"352342178"}}
+{"id":"cleanpro-exp-monitor","name":"CleanPro Experiment Monitor","enabled":true,"schedule":{"interval_seconds":7200},"type":"script","script":"scripts/cleanpro_experiment_monitor.py","delivery":{"chat_id":"-5201056067","on_error":"352342178"}}
+```
+
+**Yours — which of the six disables were intentional?** I did not edit the file: guessing wrong either
+re-enables something you deliberately silenced or hard-deletes a job that is running right now.
+1. Reconcile `cron/jobs.json` to the live 14, then restart. Fleet survives the next boot.
+2. Confirm the disables were deliberate and restart now, accepting the 3-job fleet — at least the
+   drop becomes a decision instead of an accident.
+**Mine, independent of your answer:** log the registered-job **count** at start and warn when it
+differs from the previous boot's; and revert the `:60-61` early `return`, which is false today.
+
+Ev: `memory/t0/2026-08-21/heartbeat-0114z.md`. Sent to the user 0114z.
+
 ## Resolved
 
 - **#4 — SessionStart hook: uncapped daily-log injection.** Removed 2026-08-15 04:0x ICT by heartbeat
