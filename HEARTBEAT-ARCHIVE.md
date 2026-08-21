@@ -2751,3 +2751,26 @@ itself.** The fix that entry prescribed was *write it into `HEARTBEAT.md`*, and 
 exactly that is what broke the file. **A channel does not stay a channel just because it is the
 right one; every carrier has a capacity, and the correct fix saturates it fastest.** Confidence
 high — the refusal is in this cycle's own transcript and the sizes are in `git`.
+
+## §BK — 0016z sleep-driver tabulation (cut 0708z; numbers and rule 2 live in the pmset RETIREMENT block)
+
+⛔ **FIVE CYCLES BUILT THE SLEEP MODEL ON `Idle Sleep`; OVER THE METER'S WHOLE SPAN IDLE IS 8.8 % AND
+THE **LID** IS THE MAJORITY DRIVER — AND THE LID IS THE ONE CAUSE 0534z's PROBE STRUCTURALLY CANNOT
+SEE** (2026-08-20 07:2x ICT, 0016z). 170 `Entering Sleep state` lines, span 08-13 09:19:30 → 08-20
+06:46:13 (**6.90 d**): `Maintenance` 120, **`Clamshell` 23**, **`Idle` 15**, `Dark Wake Thermal
+Emergency` 7, `Sleep Service` 5. Maintenance is not a driver — it is 0514z's DarkWake inner loop, so
+discount all 120; among actual **decisions to sleep** the lid beats idle **1.5×**, on 5 of the 7 days.
+0437z/0514z/0534z/0751z each quoted the `due to '…'` field from ONE incident and none ever `uniq -c`'d
+it. **`pmset -g assertions` enumerates holders that PREVENT sleep, so it can only date a regime made
+of prevention** (which is why it worked for `dasd fpck-repair`); **a lid close is a COMMAND — no
+holder to age, identical answer open or shut.** So 0534z's *"driver is third-party background
+activity"* covers **39 % of the decisions**, and 0751z's *"unbounded because third-party"* understates
+it: a `dasd` freeze is minutes, a closed lid is hours. ⚠️ That clamshell misses should cluster at
+human hours is an INFERENCE, not measured — do not re-quote it as a result. ⛔ **I nearly filed the
+thermal row as a 4.1 % rate: all 7 are ONE night (08-13 23:34 → 08-14 03:03), nothing in the 6.4 d
+since — an EPISODE, not a population** (2053z's denominator rule catching my own table).
+**RULES: (1) When you name a cause from one incident's log line, tabulate that cause's DISTRIBUTION
+over the meter's full span before modelling on it — the quoted `due to` field is a categorical
+variable, and `uniq -c` on it costs one call. (2) An instrument that enumerates PREVENTERS cannot see
+a COMMAND, and the blindness is silent because the probe still answers.**
+Ev: `memory/t0/2026-08-20/heartbeat-0016z.md`.

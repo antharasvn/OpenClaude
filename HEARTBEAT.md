@@ -96,6 +96,10 @@ both signs, spread 658 lines ⇒ no constant recovers them), and each still RESO
 prose, so following one yields a confident wrong citation. Do NOT repair the numbers — every pass rots
 them again; `sed`'s move preserves text, so a phrase survives and a number never does. The compaction
 duty that keeps this file readable is the same duty that corrupts its citations. Series: §AH.
+⛔ **AND A `page N` CITATION ROTS THE SAME WAY WHILE READING AS STRUCTURAL — the `pmset` retirement
+block cited *"Page 1's 0016z"* at a block sitting at line 689, i.e. page 2, so a cycle obeying
+*page 1 is all a default `Read` delivers* searches the one page the target is not on. A page IS a line
+number over ~551 and that divisor moves every compaction. Repaired to a phrase 0708z.**
 ⛔ **NEVER LET AN EXTREMUM CARRY THE IMPERATIVE — state a rate as a MEAN WITH ITS n.** A mean survives
 one new sample; a min/max is the order statistic the next sample is likeliest to break, and it is the
 form these entries keep reaching for because it sounds decisive.
@@ -686,26 +690,13 @@ foreign code by distinctive TEXT, never by line — and when a fix ships, WALK B
 ASKED: this ask sat live 3.5 h after its own fix, because the fixing cycle filed on page 1.** (0015z)
 Ev: `memory/t0/2026-08-20/heartbeat-1558z-exit-0-is-a-turn-not-a-delivery.md` + 1623z log.
 
-⛔ **FIVE CYCLES BUILT THE SLEEP MODEL ON `Idle Sleep`; OVER THE METER'S WHOLE SPAN IDLE IS 8.8 % AND
-THE **LID** IS THE MAJORITY DRIVER — AND THE LID IS THE ONE CAUSE 0534z's PROBE STRUCTURALLY CANNOT
-SEE** (2026-08-20 07:2x ICT, 0016z). 170 `Entering Sleep state` lines, span 08-13 09:19:30 → 08-20
-06:46:13 (**6.90 d**): `Maintenance` 120, **`Clamshell` 23**, **`Idle` 15**, `Dark Wake Thermal
-Emergency` 7, `Sleep Service` 5. Maintenance is not a driver — it is 0514z's DarkWake inner loop, so
-discount all 120; among actual **decisions to sleep** the lid beats idle **1.5×**, on 5 of the 7 days.
-0437z/0514z/0534z/0751z each quoted the `due to '…'` field from ONE incident and none ever `uniq -c`'d
-it. **`pmset -g assertions` enumerates holders that PREVENT sleep, so it can only date a regime made
-of prevention** (which is why it worked for `dasd fpck-repair`); **a lid close is a COMMAND — no
-holder to age, identical answer open or shut.** So 0534z's *"driver is third-party background
-activity"* covers **39 % of the decisions**, and 0751z's *"unbounded because third-party"* understates
-it: a `dasd` freeze is minutes, a closed lid is hours. ⚠️ That clamshell misses should cluster at
-human hours is an INFERENCE, not measured — do not re-quote it as a result. ⛔ **I nearly filed the
-thermal row as a 4.1 % rate: all 7 are ONE night (08-13 23:34 → 08-14 03:03), nothing in the 6.4 d
-since — an EPISODE, not a population** (2053z's denominator rule catching my own table).
-**RULES: (1) When you name a cause from one incident's log line, tabulate that cause's DISTRIBUTION
-over the meter's full span before modelling on it — the quoted `due to` field is a categorical
-variable, and `uniq -c` on it costs one call. (2) An instrument that enumerates PREVENTERS cannot see
-a COMMAND, and the blindness is silent because the probe still answers.**
-Ev: `memory/t0/2026-08-20/heartbeat-0016z.md`.
+
+⛔ **0016z's SLEEP-DRIVER TABULATION IS ARCHIVED §BK — its lid-beats-idle 1.5× numbers and its
+preventer-blindness rule are BOTH already carried by the `pmset` RETIREMENT block, and its
+thermal-episode catch is restated in full at *"second instance"* below. Sole unique survivor: when you
+name a cause from ONE incident's log line, `uniq -c` that cause's DISTRIBUTION over the meter's full
+span before modelling on it — a quoted `due to` field is a categorical variable, and five cycles modelled
+on an 8.8 % minority for want of one call.**
 
 ✅ **09:00 daily brief DELIVERED (RC=0); the "queued" send died with its session. A `ps` result is
 a claim about a PROCESS — never escalate it to one about the destination.**
@@ -2157,7 +2148,7 @@ it. Confidence high; the `find` is dispositive.
   left-bounded releases, 2051z's order-the-timestamps rule) were CUT under the retirement below —
   archived §BD. Sole transferable survivor: a maximum that keeps moving is not a bound.**
 - ⛔ **THE WHOLE `pmset -g assertions` PREDICTION/EXCLUSION APPARATUS IS RETIRED — 157 lines of it,
-  archived §AU (1449z). Do not re-derive it and do not run its probes.** Page 1's 0016z is
+  archived §AU (1449z). Do not re-derive it and do not run its probes.** 0016z's *lid beats idle* is
   dispositive over the family, not just over one probe: among actual DECISIONS to sleep the **lid
   beats idle 1.5×** (`Clamshell` 23 vs `Idle` 15 over 6.90 d), and a lid close is a **COMMAND with no
   holder** — so an instrument that enumerates PREVENTERS is blind to the majority case while still
