@@ -1540,26 +1540,13 @@ it. Confidence high; the `find` is dispositive.
   08-13 `logs/infra.err` discard-check false negative — a grep against a path that cannot contain the
   pattern returns clean and *reads* as evidence of health.
   **Grep `/tmp/claude-telegram-bot.err`, not `logs/infra.log`, for misfires.**
-  ⛔ **The "N hours with no discard" streak is NOT independent evidence of health — it is the sleep
-  history restated, and reporting both as two clean signals double-counts one fact** (2026-08-14
-  23:44 ICT, found by 1640z). Eight consecutive cycles reported *"discards unchanged at 35, newest
-  **03:17:11**, ~20.x h clean"*, and it reads like an accumulating body of evidence. It is not:
-  `pmset -g log | grep -E "Entering Sleep|Wake from" | tail` shows the host's **last wake at
-  03:15:26 ICT**, so that discard is the **wake-flush from the 03:03:11 → 03:15:26 sleep**, landing
-  1 min 45 s after it. Discards are *caused by* the PRESENCE of a preceding freeze — ⛔ **not
-  by its exceeding the 300 s `misfire_grace_time`; that magnitude model is refuted n=22, page 1**
-  (fires at 332/516/665 s). The conclusion below survives because presence is NECESSARY. On a host
-  that has not slept, a clean discard log is guaranteed a priori and
-  carries **zero** information. "20.4 h without a discard" and "20.4 h without a sleep" are the same
-  measurement. The two break in the same instant, so the streak also has **no early-warning value**.
-  **Do this instead:** report the discard count *and* the last-wake time together, and say which one
-  is doing the work. If the host has not slept, the correct phrasing is "no discards, as expected —
-  no sleep since HH:MM", not "Nth consecutive clean cycle."
-  **Transferable, and it generalises past this checklist: when two independent-looking metrics have
-  been flat for the same duration, check whether they measure the same underlying event before
-  counting them as two witnesses.** Confidence high — the causal path (sleep > grace ⇒ discard) is
-  already documented at line 566, and the timestamps are 105 s apart.
-  ✅ **The demoted witness has been REPLACED by a real one — a two-arm control on the SAME slot,
+  ⛔ **The "N hours with no discard" STREAK was demoted (1640z, archived §BQ): it is the sleep history
+  restated, so on a host that has not slept a clean discard log is guaranteed a priori and carries zero
+  information — and it has no early-warning value, both breaking in the same instant. Report the discard
+  count AND the last-wake time together and say which is doing the work. General: when two
+  independent-looking metrics have been flat for the same duration, check whether they measure the same
+  underlying event before counting them as two witnesses.**
+  ✅ **That demoted STREAK witness has been REPLACED by a real one — a two-arm control on the SAME slot,
   24 h apart** (2026-08-15 00:0x ICT, 1659z). Same job, same cron (`vidnotes-alerts`, `0 7-23/2`
   Europe/Warsaw), same detector, reader position within ±10 min both nights; the only variable that
   differed was the host regime. **08-14 00:00:** host cycling into `Maintenance Sleep` every few

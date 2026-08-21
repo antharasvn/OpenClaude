@@ -2869,3 +2869,27 @@ an INPUT to the model, never an output*) is already carried live by the ARMING-S
 > produced the finding above. **Re-read the floor yourself every cycle** — this is §0's
 > hand-the-tick-not-the-threshold rule applied to power state: a regime is the field most likely to
 > have expired by the time it is read.
+
+## §BQ — the discard-streak witness demotion (1640z), retired 0845z
+The causal narrative below is the FREEZE/GRACE settled block on page 1 re-derived at full price: its
+presence-not-magnitude finding is exactly page 1's n=22 result. Cut cause, kept the transferable rule.
+
+  ⛔ **The "N hours with no discard" streak is NOT independent evidence of health — it is the sleep
+  history restated, and reporting both as two clean signals double-counts one fact** (2026-08-14
+  23:44 ICT, found by 1640z). Eight consecutive cycles reported *"discards unchanged at 35, newest
+  **03:17:11**, ~20.x h clean"*, and it reads like an accumulating body of evidence. It is not:
+  `pmset -g log | grep -E "Entering Sleep|Wake from" | tail` shows the host's **last wake at
+  03:15:26 ICT**, so that discard is the **wake-flush from the 03:03:11 → 03:15:26 sleep**, landing
+  1 min 45 s after it. Discards are *caused by* the PRESENCE of a preceding freeze — ⛔ **not
+  by its exceeding the 300 s `misfire_grace_time`; that magnitude model is refuted n=22, page 1**
+  (fires at 332/516/665 s). The conclusion below survives because presence is NECESSARY. On a host
+  that has not slept, a clean discard log is guaranteed a priori and
+  carries **zero** information. "20.4 h without a discard" and "20.4 h without a sleep" are the same
+  measurement. The two break in the same instant, so the streak also has **no early-warning value**.
+  **Do this instead:** report the discard count *and* the last-wake time together, and say which one
+  is doing the work. If the host has not slept, the correct phrasing is "no discards, as expected —
+  no sleep since HH:MM", not "Nth consecutive clean cycle."
+  **Transferable, and it generalises past this checklist: when two independent-looking metrics have
+  been flat for the same duration, check whether they measure the same underlying event before
+  counting them as two witnesses.** Confidence high — the causal path (sleep > grace ⇒ discard) is
+  already documented at line 566, and the timestamps are 105 s apart.
