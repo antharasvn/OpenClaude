@@ -1130,12 +1130,6 @@ exact claim under test, contradicting a correct patch shipped one cycle earlier.
 history, and **either alone still matches something old**. Same family as the proxy-measurement trap
 above: I measured *a* 17:21 and labelled it *this* 17:21. **Print the current time in every poll's
 output** — that is the only reason this cost nothing instead of a wrong finding.
-✅ **Free shortcut nobody had used: your predecessor's completion is ALREADY IN YOUR PROMPT.** The
-harness line `Last heartbeat ran at: <ISO>` is the same stamp `run.sh` writes *after* `claude -p`
-exits — i.e. exactly the "completion" in `completion + 900 s + S`. Scored 2026-08-14 09:23:
-`02:08:19Z + 900 s + S(=0)` ⇒ 09:23:19 vs observed **09:23:20**, **residual +1 s, n=19**. So don't dig
-the predecessor's completion out of its log or the state file — read it off the prompt and spend the
-call on the one thing that *does* need `ps`: your own start.
 
 ### 1. Cron Job Health
 

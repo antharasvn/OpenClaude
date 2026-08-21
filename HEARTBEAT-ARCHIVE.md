@@ -2843,3 +2843,14 @@ floor covers your remaining budget ⇒ you may spend it on a live read; non-flat
 write at T+3 and gather second.** The usage-limit mode is unaffected (it kills in seconds, before there
 is anything to protect). Confidence **high** on the arithmetic, **moderate** on `mid-response` being
 purely a sleep mode (n=3, all in sleep windows — one counterexample in an S = 0 window falsifies it).
+
+## §BO — the prompt-line completion shortcut (scoring apparatus, cut 0806z)
+
+Surviving imperative lives in page 1 header "Successor placement & reach", bullet "Take `completion` off your own prompt`s `Last heartbeat ran at:` line". Only the n=19 scoring narrative was moved here.
+
+✅ **Free shortcut nobody had used: your predecessor's completion is ALREADY IN YOUR PROMPT.** The
+harness line `Last heartbeat ran at: <ISO>` is the same stamp `run.sh` writes *after* `claude -p`
+exits — i.e. exactly the "completion" in `completion + 900 s + S`. Scored 2026-08-14 09:23:
+`02:08:19Z + 900 s + S(=0)` ⇒ 09:23:19 vs observed **09:23:20**, **residual +1 s, n=19**. So don't dig
+the predecessor's completion out of its log or the state file — read it off the prompt and spend the
+call on the one thing that *does* need `ps`: your own start.
