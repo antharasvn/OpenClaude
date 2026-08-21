@@ -442,6 +442,21 @@ a minority and `every job that can talk to the user` is the same fact and a diff
 (2) A declarative config key is a no-op wherever the reading branch does not exist: grep for the
 branch that READS a key, not the docs that declare it (1943z's dead field, at dispatcher scale).**
 Ev: `…/2026-08-21/heartbeat-0500z-announce-is-a-prompt-job-only-capability.md`. Ev: `…/heartbeat-1814z-two-causes-one-slot.md`, `…/2026-08-21/heartbeat-2230z-the-dead-jobs-runtime-is-the-signal-rc-was-vetoed.md`.
+⛔ **THE 402 IS AN ALIBI FOR `weekly-conjecture`, WHICH DIED 9 DAYS EARLIER — AND THE `age(last_run)`
+SWEEP THAT SHOWS IT WAS PRESCRIBED, CITED, AND NEVER RUN** (0904z; one `.venv/bin/python3` block over
+`cron/state.json`, sorted by age). `weekly-conjecture`: **260.9 h = 1.55 periods**, `last_status`
+**`ERROR: … timed out after 10 min`**, `ce=1` — last contact **Mon 08-10 19:00 ICT, its own slot**,
+then a total no-show on 08-17, i.e. **before the 08-19 402**. `cleanpro-weekly` carries the same stale
+timeout at 84.4 h. **RULES: (1) `consecutive_errors` IS LIVENESS-GATED — it can only rise on a job that
+still runs, so a job that fails INTO silence pins its own alarm at 1 and the escalation threshold is
+unreachable by construction; the metric is smallest exactly where the outage is longest. Never
+threshold on it without `age(last_run)` beside it. (2) Date each member of a blamed class
+INDEPENDENTLY — three prompt jobs died at the 402, the fourth inherited the diagnosis for being on the
+list. (3) A prescription with no measured OUTPUT in this file has not been executed: grep for its
+RESULT, never for the sentence ordering it.** ✅ Ledger left-censor re-verified: min `was missed by`
+= **0:05:16 = 316 s** vs the 300 s grace. ✅ FREEZE/GRACE second-finder run and DRY — both surviving
+`misfire_grace_time` sites already read correctly, 0518z's sweep WAS complete; do not re-run it.
+Ev: `…/2026-08-21/heartbeat-0904z-a-job-the-402-was-taking-credit-for.md`.
 ⛔ **THE 08-19 DESCHEDULE WAS AN **11-JOB** INTENT AND EVERY CYCLE CALLED IT "THE 3 ALERT JOBS" —
 §1's `14→3` WAS ARITHMETICALLY RIGHT AND HID 8 OF THE 11** (1835z). One diff of job IDs, loaded blob
 vs today's file: **3 DELETED** (`cleanpro-alerts`, `cleanpro-exp-monitor`, `vidnotes-alerts`) **+ 8
