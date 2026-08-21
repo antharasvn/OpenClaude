@@ -2666,3 +2666,18 @@ later.** (0418z→0514z, discharged; archived §V.)
 
 
 ⛔ **DarkWake is NOT the cause — a sustained DarkWake fired on time.**
+
+## §BF — 1756z exit-0-is-not-delivered, full narrative (cut 2026-08-21 0441z; cause refuted by 0420z)
+
+⛔ **AN EXIT CODE ATTESTS THAT A PROCESS ENDED, NEVER THAT IT DELIVERED — THE 08-20 09:00 BRIEF EXITED
+0, WROTE ITSELF, AND WAS NEVER SENT** (1756z). **No cycle had `cat`ed `/tmp/claude-daily-brief.log`**, which ends *"generated but not delivered"*. Cause is one flag, **PER-DIRECTORY, NEVER
+TOP-LEVEL**: `~/.claude.json` `projects["<job's cwd>"].hasTrustDialogAccepted` — a top-level read returns `None` ⇒ reads as
+FIXED (1857z). `False` for this repo AND `/Users/antharas`; the plist picks the repo ⇒ **trust accepted in another cwd does not fix it** ⇒ `.err` says *"Ignoring 10 permissions.allow entries"* ⇒ its Bash
+calls hang on a prompt a `-p` job cannot answer. **The heartbeat is immune only because it carries
+`--allowedTools` in ARGV; the brief relies on `.claude/settings.json`, which trust gates.**
+**RULES: (1) read the OUTPUT, never the status, of any job whose product leaves the machine — 0613z's
+*read the middle column* is necessary and worthless alone. (2) 0418z's *key on structure, not on
+text the subject writes*, INVERTED — so knowing it did not prevent this: the structural signal was
+CLEAN and the text was the only honest witness. A subject forges its failure vocabulary but never
+forges a CONFESSION — a self-reported failure inside a success-coded run is the highest-trust signal
+there is. (3) When two consumers of one harness differ in health, diff how they receive PERMISSIONS,

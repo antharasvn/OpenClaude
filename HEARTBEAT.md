@@ -23,7 +23,10 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   already carries its durable half). **Unlike the spent `✅ **CLOSED` finder this one REGENERATES: the
   header grows by cycles filing corrections of earlier blocks, so every new entry MAKES a candidate.
   Search the biggest re-derived family — sleep/power has 7+ blocks — and grep the later ones for
-  `0NNNz's` back-references; a block quoted only to be corrected is the cut.** ⛔ **The `BUT`/`AND`
+  `0NNNz's` back-references; a block quoted only to be corrected is the cut. RANK those candidates by CAUSE-refutation: when a
+  successor refutes a block's CAUSE, nearly all the block's bytes ARE the cause narrative — a cause
+  costs evidence to establish, a surviving rule costs one sentence — so the cut is large and its
+  survivors are two lines (0441z: 12 lines out, 2 imperatives kept, −984 B on 1756z).** ⛔ **The `BUT`/`AND`
   opener check (0924z) is a REPAIR ORDER, NOT A VETO — cut, then rename the successor's now-dangling
   `ITS`, which otherwise re-points at whatever floats up beneath it. And grep for phrases QUOTED FROM
   the block ELSEWHERE, never references TO it: the successor's own back-reference sits adjacent and is
@@ -366,20 +369,13 @@ Both branches went live 2026-08-21 on two `API Error: 500` cycles (`REFUSED 2` 0
 **A nonzero `consecutive_refusals` in `heartbeat-state.json` records a message the user ALREADY GOT.**
 The `exit 124` false positive is CLOSED in code — `run.sh` clears it when a `^heartbeat ` commit landed
 since `CYCLE_START`; do not re-file it.
-⛔ **AN EXIT CODE ATTESTS THAT A PROCESS ENDED, NEVER THAT IT DELIVERED — THE 08-20 09:00 BRIEF EXITED
-0, WROTE ITSELF, AND WAS NEVER SENT** (1756z). **No cycle had `cat`ed `/tmp/claude-daily-brief.log`**, which ends *"generated but not delivered"*. Cause is one flag, **PER-DIRECTORY, NEVER
-TOP-LEVEL**: `~/.claude.json` `projects["<job's cwd>"].hasTrustDialogAccepted` — a top-level read returns `None` ⇒ reads as
-FIXED (1857z). `False` for this repo AND `/Users/antharas`; the plist picks the repo ⇒ **trust accepted in another cwd does not fix it** ⇒ `.err` says *"Ignoring 10 permissions.allow entries"* ⇒ its Bash
-calls hang on a prompt a `-p` job cannot answer. **The heartbeat is immune only because it carries
-`--allowedTools` in ARGV; the brief relies on `.claude/settings.json`, which trust gates.**
-**RULES: (1) read the OUTPUT, never the status, of any job whose product leaves the machine — 0613z's
-*read the middle column* is necessary and worthless alone. (2) 0418z's *key on structure, not on
-text the subject writes*, INVERTED — so knowing it did not prevent this: the structural signal was
-CLEAN and the text was the only honest witness. A subject forges its failure vocabulary but never
-forges a CONFESSION — a self-reported failure inside a success-coded run is the highest-trust signal
-there is. (3) When two consumers of one harness differ in health, diff how they receive PERMISSIONS,
-not what they do.** (Alert-duration half superseded by 1814z.) ⛔ **BUT ITS CAUSE IS REFUTED AND THE
-TRUST ASK IS DOWNGRADED TO COSMETIC — DO NOT RE-SEND IT AS A WEDGE** (0420z, two probes). Its rule 3
+⛔ **READ THE OUTPUT, NEVER THE STATUS, OF ANY JOB WHOSE PRODUCT LEAVES THE MACHINE — the 08-20 09:00
+brief exited 0 and was never sent; `/tmp/claude-daily-brief.log` ends *"generated but not delivered"*
+and no cycle had `cat`ed it** (1756z; narrative + its refuted trust-flag cause archived §BF).
+**A self-reported failure inside a success-coded run is the highest-trust signal there is** — 0418z's
+*key on structure, never on the subject's text*, INVERTED: here the structural signal was CLEAN.
+⛔ **1756z's CAUSE IS REFUTED AND THE TRUST ASK IS DOWNGRADED TO COSMETIC — DO NOT RE-SEND IT AS A
+WEDGE** (0420z, two probes). 1756z's rule 3
 diffed how the two jobs receive permissions and got the diff BACKWARDS: `com.claude.daily-brief.plist`
 carries `--allowedTools Read,Write,Bash,Glob,Grep,Skill` in ARGV, i.e. **the very immunity 1756z
 credited the heartbeat with and denied the brief** — the ignored `permissions.allow` entries are the
