@@ -2658,3 +2658,11 @@ re-runs them and `state.json` keeps a D−1 stamp 0437z's stale-success reader c
   interval ([78:53, 97:50] in the measured case, vs a release pinned to the second when sleep resumed
   ~60 s after it). **Expect this loss whenever a long hold ends near a wake — which is when they most
   often end — so record the bracketing probe times on any hold you are timing; they are all you get.**
+
+## §BE — two discharged stubs cut 0340z (self-rewriting-script note; DarkWake-not-the-cause)
+
+⛔ **A self-rewriting script cannot verify its own fix in the same run — the edit lands one cycle
+later.** (0418z→0514z, discharged; archived §V.)
+
+
+⛔ **DarkWake is NOT the cause — a sustained DarkWake fired on time.**

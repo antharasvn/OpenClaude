@@ -198,6 +198,18 @@ READING while advertising protection of execution — audit a matcher by which a
 (2) A new instrument's yield is a DIFF, never a size; run the diff the same cycle you find the sink,
 or "7.6 MB unread" stands as a permanent implication that something was missed.** Same line 27 as
 QUEUE #5's `skill ` bug — one edit site, `guard.sh` unmodifiable, ASKED NOT APPLIED.
+⛔ **AND ITS `.err` CENSUS SIZED THE WRONG SINK — `logs/infra.log`, WHICH EVERY CYCLE ALREADY TAILS,
+HOLDS 34× THAT POPULATION AND NOBODY HAD `uniq -c`'d IT** (0340z): **7,151 `[ERROR]` lines, 6,853 of
+them (95.8 %) one benign family** — `httpx.ConnectError: [Errno 8] nodename nor servname`, the
+Telegram long-poll losing DNS on network transitions, 2026-04-12→today, **18–33/day, flat, all
+hours**, self-recovering. Do NOT alert on it and do not re-derive it. Two dead leads pre-chased:
+`Conflict: terminated by other getUpdates` (two bot instances) is **66 events ending 08-14 22:26**,
+none since, single pid now — **NOT** `ouroboros.sh`, which was armed all week; and
+`vidnotes-alerts timed out after 10 min` **last fired 08-19 04:10**, i.e. the job's last real work
+before the 402, not a new fault. **RULE: an instrument read every cycle through ONE lens is
+unmeasured everywhere else, and that is worse than an unread one — an unread sink advertises its gap
+("7.6 MB unread"), a read sink advertises coverage. 2151z's *check every declared sink* needs its
+second half: at every CHANNEL within the sink.** Ev: `…/2026-08-21/heartbeat-0340z-a-sink-you-read-is-not-a-sink-you-measured.md`.
 ⛔ **THE DAILY LOG YOU WRITE BETWEEN 17:00Z AND 24:00Z IS READ BY NOBODY — THE FLEET WRITES A
 UTC-DATED DIRECTORY AND THE INJECTION HOOK READS A LOCAL-DATED ONE** (2026-08-15 23:5x ICT, 1656z,
 both halves measured). `.claude/settings.json:24` builds `memory/t$TID/$(date +%Y-%m-%d)` — **no
@@ -406,10 +418,6 @@ find-the-one-that-didn't, mirrored onto naming): when N things are acted on toge
 of the named type. (3) §1's gate prompts "what still runs", never "what was the author trying to
 STOP" — the second is the answer the user thinks they already got.**
 Ev: `…/heartbeat-1835z-the-deschedule-covered-eleven-jobs-not-three.md`.
-⛔ **A self-rewriting script cannot verify its own fix in the same run — the edit lands one cycle
-later.** (0418z→0514z, discharged; archived §V.)
-
-
 ⛔ **NEVER ASK WHETHER THE HOST WAS AWAKE — a heartbeat runs in the awake window by construction, so
 it inherits `yes` at a 100 % rate while the truth was 15 %: your `etime` is evidence about YOUR cycle,
 never the fleet** (0514z; still live after 0707z refuted its *"no sampling reaches the troughs"* half).
@@ -489,7 +497,6 @@ the variable the tuner compares — a correlate of a control variable licenses n
 (2) A `was missed by` ledger is LEFT-CENSORED at the grace itself (min 316 s vs 300): it prices
 moving the threshold outward exactly, and CANNOT measure how often jobs run late. A ledger emitted
 by a threshold cannot measure the quantity that threshold acts on.** QUEUE #13 option 2.
-⛔ **DarkWake is NOT the cause — a sustained DarkWake fired on time.**
 **General: when a threshold on a magnitude keeps needing re-derivation, test the BINARY version first —
 presence/absence is the cheaper hypothesis, and here it is the true one.**
 ⛔ **AFTER REFUTING A MODEL, GREP FOR THE SITES STATING ITS MECHANISM, NOT THE SITES STATING WHAT TO
