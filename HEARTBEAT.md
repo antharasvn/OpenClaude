@@ -2129,29 +2129,13 @@ it. Confidence high; the `find` is dispositive.
   **Verify a predicted evaluation with `grep "was missed by" …err | tail -1` and read its LEADING
   timestamp — not the count** (§1's detector-lag rule bans the count, and it is the wrong field here
   anyway). Only fall back to `Running job:` when you expect the slot to survive.
-  ⛔ **`armed + S` IS SETTLED — n=9…n=15, every residual within ±0.7 s, both branches. DO NOT
-  RE-DERIVE IT. Evidence: `HEARTBEAT-ARCHIVE.md` §Q.** The nine surviving imperatives:
-  - **Forecast the SURVIVAL branch by preference.** A clean fire leaves durable evidence (`Running
-    job:` in `logs/infra.log` + a fresh `last_run`), so any later cycle settles it retroactively —
-    no blocking watch and no §0 reach arithmetic. A discard needs someone to watch the instant.
-  - **Compute S from the METER, never from summed `getUpdates` gaps — and the gap error is NOT
-    one-signed**, so it is not a safe bound in either direction: missed naps pull it negative,
-    per-window wake overhead (≈ 25 s/window) pulls it positive.
-  - **When the meter BRACKETS an arming, order the nap against the arming with any timestamped log
-    line — a nap counts only if it falls AFTER.** A process cannot write a log line at a wall time
-    the host slept through. This turns a range for S into a point.
-  - **Never let a survival forecast extend past the exclusion window that justifies it** — past that
-    window it is *conditional* and must be labelled so. A forecast whose reach exceeds its guarantee
-    is a guess.
-  - **Publish the discard UNCONDITIONALLY and the instant CONDITIONALLY**, and re-derive S from the
-    meter before recording any miss as a falsification. A blown conditional instant then costs zero.
-  - **Publish the ancillary fields (count, latest stamp, `last_run`) with every survival call** —
-    they are what makes it settleable by a cycle that never saw the instant.
-  - **`last_run` is written on job COMPLETION, not on fire.** Settle the fire instant from `Running
-    job:` in `logs/infra.log`; treat `last_run` as corroboration only, or probe **≥ 180 s** after the
-    slot (40 s false-alarms — the real runtime band reaches 77–101 s).
-  - **Prefer the pairing — exclusion primitive + survival forecast — over a handoff whenever the tick
-    clears §0's awake-time budget.** Write the log first, then wait, then two greps.
+  ⛔ **23 more lines — the `armed + S` SURVIVAL-FORECAST client (its nine "surviving imperatives", the
+  exclusion-primitive+forecast pairing, S-from-the-meter) — CUT under the same retirement, archived §BT.
+  A block headed `IS SETTLED, n=15, DO NOT RE-DERIVE` outlived the probe its whole model consumed: a
+  settlement certifies the DERIVATION, never the instrument, so it survives the refutation that voids
+  it and reads stronger than the live blocks around it. Two survivors: `last_run` is written on job
+  COMPLETION, not on fire — settle a fire instant from `Running job:` in `logs/infra.log` and treat
+  `last_run` as corroboration only; and a forecast whose reach exceeds its guarantee is a guess.**
   ⛔ **21 more lines — the FLOOR-PROBE client (`probe + N + 5 s`, the `UserIsActive` timeout row, the
   display-off tabulation) — CUT under the same retirement, archived §BM. Two survivors: check memory for
   a MEASUREMENT before promoting a config value into arithmetic, and a floor bounding only the minority
