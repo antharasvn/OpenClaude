@@ -2691,3 +2691,29 @@ in-window `git log --since="$CYCLE_START" --grep="^heartbeat "` hit ⇒ truncate
 excludes `auto-commit`, else a genuinely dead cap-kill is masked ~8 %). **7 of 440 starts (1.6 %)** —
 a class. **RULE: a structural discriminator is only structural ON THE BRANCH WHERE IT CAN VARY; a test
 the failure mode SETS is a tautology in the costume of 0418z's principle.**
+
+## §BH — freeze-vs-grace, full narrative (1404z n=22 + 0215z n=57), archived 2026-08-21 0556z
+
+⛔ **A MISSED SLOT IS EXPLAINED BY THE MONOTONIC FREEZE ACCUMULATED BEFORE IT, NOT BY THE POWER STATE
+AT IT — SUM THE `Entering Sleep state` LINES' OWN TRAILING `N secs` (1205z's meter; 0751z's
+`→DarkWake` PAIRING IS RETIRED, it matched nothing in this log era).** ⛔ **BUT NEVER COMPARE THAT SUM
+TO `misfire_grace_time: 300` (`bot/scheduler.py:26`) — THE MAGNITUDE SEPARATES NOTHING AND THE
+*PRESENCE* SEPARATES PERFECTLY** (1404z; all **22** `echo-backend-alerts` slots of 08-20, the first run
+on a full hourly day instead of 3–5 hand-picked slots). Prior-hour freeze **0 s ⇒ fired at +0 s, 16/16;
+>0 s ⇒ late or lost, 6/6.** Magnitudes interleave, so no threshold on the SUM separates; lateness is
+the graded response. **Keep the sum only as a NECESSARY condition: a hole with ZERO preceding freeze
+is a different bug — look elsewhere.** Confirms 0823z at n=22 (its 453/665/951 are three of these rows).
+⛔ **ITS *"raising the grace is not a fix"* IS REFUTED — IT THRESHOLDED THE WRONG VARIABLE AND THE
+WRONG JOB** (0215z). APScheduler compares **lateness**, never freeze duration; freeze is a cause of
+lateness and a bad proxy (665 s of freeze fired on time). On the real variable — all 57 `was missed
+by` rows — **grace 1800 recovers 50/57 fleet-wide and 9/9 of the five DAILY jobs** (max lateness
+946 s at 14:00 ICT, 1436 s at 12:00 ICT). 1404z's whole dataset is `echo-backend-alerts`: the worst
+tail in the fleet (max 3192 s, n=18) AND, being hourly, the member that least needs catch-up per
+1522z's *alerts self-heal, dailies do not* — the veto came from the least representative job. The
+7 it misses are all in that self-healing class. **RULES: (1) a veto on a TUNABLE must be tested on
+the variable the tuner compares — a correlate of a control variable licenses no verdict about it.
+(2) A `was missed by` ledger is LEFT-CENSORED at the grace itself (min 316 s vs 300): it prices
+moving the threshold outward exactly, and CANNOT measure how often jobs run late. A ledger emitted
+by a threshold cannot measure the quantity that threshold acts on.** QUEUE #13 option 2.
+**General: when a threshold on a magnitude keeps needing re-derivation, test the BINARY version first —
+presence/absence is the cheaper hypothesis, and here it is the true one.**

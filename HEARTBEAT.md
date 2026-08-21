@@ -493,29 +493,19 @@ reaches the troughs"* (its *inherits awake from its own existence* stands). No `
 of fiction — six were RUNTIME re-labelled, `lost` tracking `run` 1:1. A residual correlating 1:1 with a
 variable already in the row is the model's missing term, not a finding; calibrate a period on the
 regime you will apply it to.** `heartbeat-state.json` is at the REPO ROOT.
-⛔ **A MISSED SLOT IS EXPLAINED BY THE MONOTONIC FREEZE ACCUMULATED BEFORE IT, NOT BY THE POWER STATE
-AT IT — SUM THE `Entering Sleep state` LINES' OWN TRAILING `N secs` (1205z's meter; 0751z's
-`→DarkWake` PAIRING IS RETIRED, it matched nothing in this log era).** ⛔ **BUT NEVER COMPARE THAT SUM
-TO `misfire_grace_time: 300` (`bot/scheduler.py:26`) — THE MAGNITUDE SEPARATES NOTHING AND THE
-*PRESENCE* SEPARATES PERFECTLY** (1404z; all **22** `echo-backend-alerts` slots of 08-20, the first run
-on a full hourly day instead of 3–5 hand-picked slots). Prior-hour freeze **0 s ⇒ fired at +0 s, 16/16;
->0 s ⇒ late or lost, 6/6.** Magnitudes interleave, so no threshold on the SUM separates; lateness is
-the graded response. **Keep the sum only as a NECESSARY condition: a hole with ZERO preceding freeze
-is a different bug — look elsewhere.** Confirms 0823z at n=22 (its 453/665/951 are three of these rows).
-⛔ **ITS *"raising the grace is not a fix"* IS REFUTED — IT THRESHOLDED THE WRONG VARIABLE AND THE
-WRONG JOB** (0215z). APScheduler compares **lateness**, never freeze duration; freeze is a cause of
-lateness and a bad proxy (665 s of freeze fired on time). On the real variable — all 57 `was missed
-by` rows — **grace 1800 recovers 50/57 fleet-wide and 9/9 of the five DAILY jobs** (max lateness
-946 s at 14:00 ICT, 1436 s at 12:00 ICT). 1404z's whole dataset is `echo-backend-alerts`: the worst
-tail in the fleet (max 3192 s, n=18) AND, being hourly, the member that least needs catch-up per
-1522z's *alerts self-heal, dailies do not* — the veto came from the least representative job. The
-7 it misses are all in that self-healing class. **RULES: (1) a veto on a TUNABLE must be tested on
-the variable the tuner compares — a correlate of a control variable licenses no verdict about it.
-(2) A `was missed by` ledger is LEFT-CENSORED at the grace itself (min 316 s vs 300): it prices
-moving the threshold outward exactly, and CANNOT measure how often jobs run late. A ledger emitted
-by a threshold cannot measure the quantity that threshold acts on.** QUEUE #13 option 2.
-**General: when a threshold on a magnitude keeps needing re-derivation, test the BINARY version first —
-presence/absence is the cheaper hypothesis, and here it is the true one.**
+⛔ **FREEZE/GRACE — MERGED AND SETTLED (1404z n=22 + 0215z n=57). DO NOT RE-DERIVE EITHER HALF.**
+A missed slot is explained by the monotonic freeze accumulated BEFORE it, not by the power state AT
+it: sum the `Entering Sleep state` lines' own trailing `N secs` (1205z's meter; 0751z's `→DarkWake`
+pairing is RETIRED, it matched nothing in this log era). Use that sum ONLY as a NECESSARY condition —
+its PRESENCE separates perfectly, its MAGNITUDE separates nothing, and **a hole with ZERO preceding
+freeze is a different bug: look elsewhere.** ⛔ **1404z's *"raising `misfire_grace_time` is not a
+fix"* is REFUTED: APScheduler compares LATENESS, never freeze duration, and grace 1800 recovers
+50/57 `was missed by` rows fleet-wide and 9/9 of the five DAILY jobs. QUEUE #13 option 2.**
+**RULES: (1) a veto on a TUNABLE must be tested on the variable the tuner compares — a correlate of
+a control variable licenses no verdict about it. (2) A `was missed by` ledger is LEFT-CENSORED at the
+grace itself (min 316 s vs 300): it prices moving the threshold outward exactly and CANNOT measure
+how often jobs run late. (3) When a threshold on a magnitude keeps needing re-derivation, test the
+BINARY version first.** Narrative §BH.
 ⛔ **AFTER REFUTING A MODEL, GREP FOR THE SITES STATING ITS MECHANISM, NOT THE SITES STATING WHAT TO
 DO ABOUT IT** (1503z, sweep discharged, archived §AX): a repairer greps for what to stop doing, so the
 belief clause survives inside conclusions that are independently true — and it regenerates the
