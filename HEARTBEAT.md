@@ -466,6 +466,13 @@ member. ⛔ **AND THE CLOSURE ITSELF IS THE LESSON: an outage block goes on orde
 resource as dead long after it is funded, because the block is written by the cycle that found the
 fault and re-read by cycles that only re-file it. A state claim needs a RE-PROBE date beside it or it
 outlives its own fact — this one was refuted by two commands.**
+⛔ **AND THAT CLOSURE'S EVIDENCE WAS n=1 ON THE WRONG SIDE — 08-21 ICT ran 12/14/16 at the 13 s
+do-nothing floor, then 18:00 at 355 s, then 20:00 **TIMED OUT at 600 s** (1317z). So the refill landed
+between 16:00 and 18:00, three slots AFTER the block credited it, and the first two funded runs cost
+355 s and >600 s. **A recovery certified by the single fastest healthy sample is certified by the sample
+least able to fail; take the LAST pre-fix and FIRST post-fix runs, not the one that proves the point.**
+Timeout base rate is 10 since 04-11 (~1 per 13 d) so the single timeout is not the event — the RUNTIME
+REGIME SHIFT is (13 s ⇒ 355 s ⇒ cap). If 22:00 also times out, the 10-min cap is now the binding fault.
 ⛔ **THAT PROBE'S rc IS FABRICATED IF YOU PIPE IT — `cmd | head -3; echo $?` REPORTS `head`'s STATUS,
 SO THE PRESCRIBED `grok -p` CHECK RETURNS **0** ON A 402 AND READS HEALTHY** (0806z, demonstrated on my
 own probe this cycle, then `(exit 7) | head -1` ⇒ `$?=0`). The 402 block orders *run the binary, don't
