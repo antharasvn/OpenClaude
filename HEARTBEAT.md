@@ -503,10 +503,10 @@ then 0 of 2; at p=0.37 a 2-gap lands 14 % of the time, ~2× expected in 19 Monda
 MEASURED that 37 % four hours before 0904z read the same silence as an event. **RULE: compute an intermittent
 series' BASE MISS RATE before calling a gap a failure — an alarm keyed on silence fires at the base rate
 on losses you already accepted.** `cleanpro-weekly` is NOT its twin: it RAN Tue 08-18 03:30, timed out,
-is mid-period, NOT overdue. **RULES: (1) `consecutive_errors` IS LIVENESS-GATED — it can only rise on a job that
-still runs, so a job that fails INTO silence pins its own alarm at 1 and the escalation threshold is
-unreachable by construction; the metric is smallest exactly where the outage is longest. Never
-threshold on it without `age(last_run)` beside it. (2) Date each member of a blamed class
+is mid-period, NOT overdue. **RULES: (1) `consecutive_errors` HAS NO READER — zero comparisons repo-wide; `list_jobs()`
+(`bot/scheduler.py:76`), its only surfacer, is called by NOTHING. `vidnotes-alerts` sits at **2** and
+nothing escalates, ever. **A caveat about a metric's VALIDITY presupposes a CONSUMER — grep for the
+comparison before refining the number.** (2) Date each member of a blamed class
 INDEPENDENTLY — three prompt jobs died at the 402, the fourth inherited the diagnosis for being on the
 list. (3) A prescription with no measured OUTPUT in this file has not been executed: grep for its
 RESULT, never for the sentence ordering it.** ✅ Ledger left-censor re-verified: min `was missed by`
