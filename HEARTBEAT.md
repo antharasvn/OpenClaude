@@ -418,6 +418,13 @@ Both branches went live 2026-08-21 on two `API Error: 500` cycles (`REFUSED 2` 0
 00:19:50Z), each **verified delivered by the ABSENCE of `backpressure alert send FAILED`** in
 `/tmp/claude-heartbeat.log` — `send.sh` exits non-zero on any non-200, so silence there is a receipt.
 **A nonzero `consecutive_refusals` in `heartbeat-state.json` records a message the user ALREADY GOT.**
+⛔ **AND THAT FILE IS AT THE REPO ROOT, NOT BESIDE `run.sh` — ALL 4 CITATIONS HERE NAME IT BARE** (1258z,
+own near-miss): `run.sh:19` = `$PROJECT_DIR/heartbeat-state.json`, gitignored, and `skills/heartbeat/`
+holds only `run.sh` + `SKILL.md` — so `cat skills/heartbeat/heartbeat-state.json` returns EMPTY, and
+empty on a state file reads as *never written* ⇒ *detector dead*. **RULE: a bare filename resolves to
+wherever the reader is standing, and the doc DESCRIBING a state file (1943z's `SKILL.md`) is the
+strongest wrong pointer to where it SITS — path a filename the first time a header names it.**
+✅ Healthy this cycle: `consecutive_refusals: 0`, `last_success 12:43:26Z`.
 The `exit 124` false positive is CLOSED in code — `run.sh` clears it when a `^heartbeat ` commit landed
 since `CYCLE_START`; do not re-file it.
 ⛔ **READ THE OUTPUT, NEVER THE STATUS, OF ANY JOB WHOSE PRODUCT LEAVES THE MACHINE — the 08-20 09:00
