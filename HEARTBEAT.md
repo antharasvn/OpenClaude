@@ -470,13 +470,11 @@ ONE — 20:00 WROTE ZERO BYTES to `memory/`, the vidnotes workspace and `temp/` 
 window, only an unrelated heartbeat log). The cap is hardcoded GLOBAL at `bot/scheduler.py:163` with no
 per-job override in the schema, so QUEUE #1 is one number for 14 jobs. 0437z's re-scoping was measured
 on WEEKLIES pre-402; the binding population is an
-every-2-h job — 8 slots/day — funded runs 355 s, cap, cap (n=3, 08-21 18/20/22 ICT). ⛔ **THE
-20:00+22:00 PAIR IS THE FIRST `2x` IN THE WHOLE LOG ON TWO *ADJACENT EXECUTED* SLOTS — the only other
-one (07-30 04:10) had an unrun 02:00 between, so it was 2 failures over 3 slots. A consecutive-failure
-counter is a count of RUNS, never of SLOTS (`bot/scheduler.py:197` zeroes on success, `:203` increments
-on error, and a no-show touches neither), so the same `2x` means "sporadic" or "the job no longer fits"
-depending on a gap the number does not carry. RULE: before reading a run-keyed counter as a trend,
-enumerate the SLOTS it skipped — a no-show preserves the count and reads as continuity.**
+every-2-h job — funded runs 355 s, cap, cap (08-21 18/20/22). ⛔ **THAT
+20:00+22:00 PAIR IS THE ONLY `2x` IN THE LOG ON TWO ADJACENT EXECUTED SLOTS — the other
+(07-30 04:10) had an unrun 02:00 between. A failure counter counts RUNS, not SLOTS
+(`:197` zeroes on success, `:203` increments on error; a no-show touches neither), so one `2x` means
+"sporadic", the other "no longer fits". RULE: before reading a run-keyed counter as a trend, enumerate the SLOTS it skipped — a no-show preserves it.**
 RULE: re-price a queued fix when the failing POPULATION changes, not when its cause does — a
 re-scoping note is dated to the job class that was failing when it was written.**
 ⛔ **THAT PROBE'S rc IS FABRICATED IF YOU PIPE IT — `cmd | head -3; echo $?` REPORTS `head`'s STATUS,
