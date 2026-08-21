@@ -148,6 +148,23 @@ classified "not scheduled", and its misses leave the denominator — the deficit
 here (every scheduled hour carries 85–115 fires over the full log; odd hours carry 1–4 late-wake
 spillovers, so the method's unstated ≥1-fire threshold is wrong at both edges).** Ev:
 `…/heartbeat-1739z-unloaded-is-not-unreadable.md`.
+⛔ **AND THE GIT BLOB IS NOT NEEDED EITHER — THE SCHEDULER PRINTS ITS OWN LOADED ROSTER AT EVERY
+START, 15 LINES ABOVE THE LINE §1's GATE ALREADY GREPS** (0614z). `Registered job: <Name> (<id>)` per
+job, `Skipping disabled job: <id>` for each one it declined, and `Loaded N job definitions` above
+both. Read it with the gate's own hit: `L=$(grep -n 'Cron scheduler started with' logs/infra.log |
+tail -1 | cut -d: -f1); sed -n "$((L-25)),${L}p" logs/infra.log`. Last start **08-15 15:21:46**
+registered all **14**, `pdfai-daily`/`aividly-daily` INCLUDED — they appear under `Skipping disabled`
+only in EARLIER starts, so the enabled/disabled split is self-reported per start and no config file
+need be read for it at all. 1739z reached for `git show 7e774dd:cron/jobs.json` and 1835z diffed job
+IDs against today's file; both reconstructions were correct and both were unnecessary.
+**RULES: (1) when a program logs a SUMMARY LINE you already grep, read its NEIGHBOURHOOD — a count is
+the last line of an enumeration, and the enumeration is the answer to the question the count made you
+ask. (2) A component that loads a config is a SECOND WITNESS to that config's contents, and it
+witnesses the version actually in force — prefer it over any re-read of the file. (3) The non-INFO
+channel of `infra.log` is DISCHARGED, do not re-census it: 85 `[WARNING]`, all one benign
+`[FILE] finalize: resp=N live=0` family, 05-09→08-19; zero `CRITICAL`, zero `DEBUG`. 0340z's
+*read every channel within the sink* is now paid on both remaining levels.**
+Ev: `…/2026-08-21/heartbeat-0614z-the-scheduler-is-its-own-config-witness.md`.
 
 ⛔ **A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE** — the fleet lost 18:00–18:05 ICT across three
 timezones with the host awake (1500z; §AL). Its `pmset` density argument is dead and NO LONGER
