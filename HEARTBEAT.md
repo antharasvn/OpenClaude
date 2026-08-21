@@ -175,6 +175,21 @@ channel of `infra.log` is DISCHARGED, do not re-census it: 85 `[WARNING]`, all o
 `[FILE] finalize: resp=N live=0` family, 05-09→08-19; zero `CRITICAL`, zero `DEBUG`. 0340z's
 *read every channel within the sink* is now paid on both remaining levels.**
 Ev: `…/2026-08-21/heartbeat-0614z-the-scheduler-is-its-own-config-witness.md`.
+⛔ **AND THE THIRD WITNESS IS IN THE TAIL EVERY CYCLE ALREADY READS — AN INTERVAL JOB'S FIRE PHASE IS
+THE SCHEDULER START, RESTATED TO THE SECOND, FOREVER** (0923z). The loaded blob has exactly two
+`interval_seconds: 7200` jobs (`auto-commit`, `cleanpro-exp-monitor`); APScheduler anchors
+`IntervalTrigger` at scheduler start, so both fire at **`HH:21:46`, HH ≡ 15 mod 2** — i.e. the
+`08-15 15:21:46` start §1's gate greps for, republished 24×/day at the BOTTOM of `infra.log`.
+**RULES: (1) `tail logs/infra.log` answers §1's gate; the head-grep is optional. (2) THE PHASE IS THE
+RESTART DETECTOR THIS FLEET LACKS — §1 says a restart drops 11 live jobs, and nothing here would
+notice one had happened. A shift off `:21:46` IS that alarm, free, and it is the only instrument that
+survives the restart it reports. (3) General: an INTERVAL trigger's phase records process start
+permanently, a CRON trigger's does not — so in a mixed fleet the interval jobs are the clock witnesses
+and the cron jobs are silent about it.** ⚠️ Paid for itself immediately: `auto_commit.py` was filed
+here as a **10 min** job (2105z, corrected below). It is **2 h — 12× over**, and 2105z was RANKING
+unbounded-`run()` hazard by cadence, so the one number it ranked on was the one nobody measured.
+**A cadence quoted in prose beside a `file:line` inherits that citation's credibility and none of its
+verification.** Ev: `…/2026-08-21/heartbeat-0923z-an-interval-jobs-phase-is-the-restart-detector.md`.
 
 ⛔ **A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE** — the fleet lost 18:00–18:05 ICT across three
 timezones with the host awake (1500z; §AL). Its `pmset` density argument is dead and NO LONGER
@@ -309,7 +324,8 @@ prose.** Ev: `…/heartbeat-2004z-the-anti-hang-rule-exempted-the-send-path.md`.
 `daily_report_common.py:31` WAS BOUNDED — SO AN AUDIT KEYED ON THE CALL SITE CANNOT CLASSIFY SAFETY**
 (2105z; patched, all five now `timeout=300`). Unbounded were `cleanpro_alerts_runner.py:13`
 (`cleanpro-alerts`, 841 fires), `echo_alerts_runner.py:28` (`echo-backend-alerts`, the only hourly
-job), `auto_commit.py:19` (10 min), `echo_weekly_runner.py:19` (dormant) — wrapping `bq query`,
+job), `auto_commit.py:19` (**2 h**, not the "10 min" first filed here), `echo_weekly_runner.py:19`
+(dormant) — wrapping `bq query`,
 `gcloud logging read`, `git push`. Byte-identical to the bounded one except the missing parameter; a
 hang runs to the 600 s cap and QUEUE #6 discards stderr on timeout, so it is silent. **RULES: (1) when
 N files each define a same-named wrapper, resolve the callee's DEFINITION per file — `run(cmd)` is the
