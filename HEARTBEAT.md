@@ -435,8 +435,8 @@ Run the binary, don't infer: `grok -p …` ⇒ **rc=1, stdout 0 B, `status 402 P
 usage balance exhausted`** ⇒ `vidnotes-alerts`/`vidnotes-weekly`/`weekly-conjecture`/`cleanpro-weekly`
 all down since 08-19 02:00–12:00 ICT. Silent because **`_run_prompt` NEVER INSPECTS `proc.returncode`**
 while its sibling `_run_script:125` raises on it — so rc=1 logs `completed successfully`, and `announce`
-is gated on `result.strip()`, i.e. **the delivery path fires only when the job works.** ⛔ Do NOT add the
-rc check before the balance is topped up: it converts 4 silent jobs into `on_error` every 2 h. Cause 2,
+is gated on `result.strip()`, i.e. **the delivery path fires only when the job works.** ⛔ The rc check's
+veto is LIFTED — the balance is topped up (below). Cause 2,
 independent: `05d474a` (08-19 11:21) put `print("…no longer scheduled; exiting"); return` at the top of
 `cleanpro_alerts_runner.main()` **and** deleted the job from `cron/jobs.json` — but §1's gate says that
 file is unloaded since 08-15, so it still fires, exits **0** in **0 s**, and reads OK.
@@ -446,11 +446,12 @@ a signature (12:00 is the first slot the two share). 1756z and three cycles befo
 (2) Two runners of one class must agree on what counts as FAILURE — the sibling that skips the exit code
 is not lenient, it is un-instrumented, and both emit the same success line. (3) If you neuter a script
 you believe is descheduled, exit NON-ZERO; an early `return` is indistinguishable from a silent healthy
-run.** Sent to the user (1540z r4); both fixes are asks, not acts. ⛔ **STILL 402 ON 08-21 2230z (day 3; re-run the
-binary, it is one `gtimeout 45 grok -p` call) — 17 silent-OK `vidnotes-alerts` fires since. THE VETOED
-DETECTOR'S SIGNAL IS ALREADY IN `infra.log`: paired `Running job:`/`completed` runtimes are 129.4 s mean
-over n=902 before 08-19 vs 16/13/16 s for the last three. A veto on RAISING is not a veto on OBSERVING,
-and quote the TAIL not the mean when the window contains the transition you are dating.**
+run.** Sent to the user (1540z r4); both fixes are asks, not acts. ✅ **402 CLEARED 08-21 between 09:00Z and
+10:21Z, day 4 (`gtimeout 45 grok -p` ⇒ rc=0, stdout `OK`), so the rc-check veto is lifted — but that
+patch loads only at a restart, which is the user's call. CONFIRM RECOVERY BY RUNTIME, NEVER STATUS:
+paired `Running job:`/`completed` is 129.4 s mean (n=902, pre-08-19) vs 11–16 s while dead, and the last
+fire before the clear (09:00Z) was still 11 s. A veto on RAISING was never a veto on OBSERVING, and
+quote the TAIL not the mean when the window holds the transition you are dating.**
 ⛔ **THAT PROBE'S rc IS FABRICATED IF YOU PIPE IT — `cmd | head -3; echo $?` REPORTS `head`'s STATUS,
 SO THE PRESCRIBED `grok -p` CHECK RETURNS **0** ON A 402 AND READS HEALTHY** (0806z, demonstrated on my
 own probe this cycle, then `(exit 7) | head -1` ⇒ `$?=0`). The 402 block orders *run the binary, don't
