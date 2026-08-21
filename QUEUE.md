@@ -881,6 +881,15 @@ Evidence: `memory/t0/2026-08-20/heartbeat-1844z.md`; rule in `HEARTBEAT.md` head
 
 ## 16. The Grok Build balance is exhausted — all 4 prompt jobs dead since 08-19, every row reads `OK`
 
+> ✅ **BALANCE HALF RESOLVED 2026-08-21 1623z — do not re-file the four prompt jobs as dead.**
+> The 1814z probe below was taken at the trough; HEARTBEAT.md's 1200z block re-verified
+> `grok -p` rc=0 and `vidnotes-alerts` ran funded (355 s) at 18:00 ICT on its Warsaw stride.
+> Decision 1 happened without us — the balance was topped up. What remains is decision 2, the
+> `returncode` check in `_run_prompt`, and it is now **gated behind QUEUE #1, not behind the
+> balance**: the current failure mode on the funded job is the 600 s cap (20:00 and 22:00 ICT
+> timed out, total loss), not a non-zero exit, so an rc check added today would alert on nothing
+> while the capacity fix that actually matters is still pending. Sequence: #1 lands → then this.
+
 **Measured 2026-08-21 1814z, by running the binary the scheduler runs:**
 
 ```
