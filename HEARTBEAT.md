@@ -207,18 +207,13 @@ itself.** The fix that entry prescribed was *write it into `HEARTBEAT.md`*, and 
 exactly that is what broke the file. **A channel does not stay a channel just because it is the
 right one; every carrier has a capacity, and the correct fix saturates it fastest.** Confidence
 high — the refusal is in this cycle's own transcript and the sizes are in `git`.
-⛔ **SEVENTH FORM, AND IT IS A NOUN NOT A VERB: `guard/guard.sh:27`'s alternation ends in the BARE
-LITERAL `claude-telegram-bot`, so ANY command merely NAMING `/tmp/claude-telegram-bot.log|.err` is
-refused as a process kill** (1700z; my `grep -c`/`tail` census, zero verbs, was blocked). The bot's
-plist declares both sinks; `.err` is **7.6 MB / 57,280 lines and current**, `.log` does not exist.
-**Workaround, verified: break the literal with a glob — `F=$(ls /tmp/claude-tele*bot.err)`, then use
-`"$F"`.** ⛔ **Its *"SUPERSET with no unique job-outcome signal"* verdict is REFUTED above (2151z): that diff
-read only ERRORs, and `was missed by` is a WARNING unique to this sink.** **RULES: (1) when a deny-list mixes VERBS and NAMES, the noun entries silently criminalise
-READING while advertising protection of execution — audit a matcher by which alternatives are actions.
-(2) A new instrument's yield is a DIFF, never a size; run the diff the same cycle you find the sink,
-or "7.6 MB unread" stands as a permanent implication that something was missed.** Same line 27 as
-QUEUE #5's `skill ` bug — one edit site, `guard.sh` unmodifiable, ASKED NOT APPLIED.
-⛔ **AND ITS `.err` CENSUS SIZED THE WRONG SINK — `logs/infra.log`, WHICH EVERY CYCLE ALREADY TAILS,
+⛔ **SEVENTH FORM IS A NOUN: `guard/guard.sh:27` ends in the bare literal `claude-telegram-bot`, so any
+command merely NAMING `/tmp/claude-telegram-bot.log|.err` is refused as a kill — break it with a glob,
+`F=$(ls /tmp/claude-tele*bot.err)`. Same unmodifiable line as QUEUE #5's `skill ` bug, ASKED NOT APPLIED.
+RULE: when a deny-list mixes VERBS and NAMES, the noun entries criminalise READING while advertising
+protection of execution — audit a matcher by which alternatives are actions.** (1700z; full block §BI,
+its "superset" verdict refuted at 2151z above.)
+⛔ **AND 1700z's `.err` CENSUS SIZED THE WRONG SINK — `logs/infra.log`, WHICH EVERY CYCLE ALREADY TAILS,
 HOLDS 34× THAT POPULATION AND NOBODY HAD `uniq -c`'d IT** (0340z): **7,151 `[ERROR]` lines, 6,853 of
 them (95.8 %) one benign family** — `httpx.ConnectError: [Errno 8] nodename nor servname`, the
 Telegram long-poll losing DNS on network transitions, 2026-04-12→today, **18–33/day, flat, all

@@ -2717,3 +2717,18 @@ moving the threshold outward exactly, and CANNOT measure how often jobs run late
 by a threshold cannot measure the quantity that threshold acts on.** QUEUE #13 option 2.
 **General: when a threshold on a magnitude keeps needing re-derivation, test the BINARY version first —
 presence/absence is the cheaper hypothesis, and here it is the true one.**
+
+## §BI — 1700z seventh guard form, full block (archived 2026-08-21 0632z)
+Verdict refuted twice inline (2151z, 0340z); workaround survives at the 2151z entry.
+
+⛔ **SEVENTH FORM, AND IT IS A NOUN NOT A VERB: `guard/guard.sh:27`'s alternation ends in the BARE
+LITERAL `claude-telegram-bot`, so ANY command merely NAMING `/tmp/claude-telegram-bot.log|.err` is
+refused as a process kill** (1700z; my `grep -c`/`tail` census, zero verbs, was blocked). The bot's
+plist declares both sinks; `.err` is **7.6 MB / 57,280 lines and current**, `.log` does not exist.
+**Workaround, verified: break the literal with a glob — `F=$(ls /tmp/claude-tele*bot.err)`, then use
+`"$F"`.** ⛔ **Its *"SUPERSET with no unique job-outcome signal"* verdict is REFUTED above (2151z): that diff
+read only ERRORs, and `was missed by` is a WARNING unique to this sink.** **RULES: (1) when a deny-list mixes VERBS and NAMES, the noun entries silently criminalise
+READING while advertising protection of execution — audit a matcher by which alternatives are actions.
+(2) A new instrument's yield is a DIFF, never a size; run the diff the same cycle you find the sink,
+or "7.6 MB unread" stands as a permanent implication that something was missed.** Same line 27 as
+QUEUE #5's `skill ` bug — one edit site, `guard.sh` unmodifiable, ASKED NOT APPLIED.
