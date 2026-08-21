@@ -448,9 +448,7 @@ Run the binary, don't infer: `grok -p …` ⇒ **rc=1, stdout 0 B, `status 402 P
 usage balance exhausted`** ⇒ `vidnotes-alerts`/`vidnotes-weekly`/`weekly-conjecture`/`cleanpro-weekly`
 all down since 08-19 02:00–12:00 ICT. Silent because **`_run_prompt` NEVER INSPECTS `proc.returncode`**
 while its sibling `_run_script:125` raises on it — so rc=1 logs `completed successfully`, and `announce`
-is gated on `result.strip()`, i.e. **the delivery path fires only when the job works.** ⛔ The rc check's
-veto is LIFTED — the balance is topped up (below). Cause 2,
-independent: `05d474a` (08-19 11:21) put `print("…no longer scheduled; exiting"); return` at the top of
+is gated on `result.strip()`, i.e. **the delivery path fires only when the job works.** ⛔ The rc-check veto is LIFTED. Cause 2, independent: `05d474a` (08-19 11:21) put `print("…no longer scheduled; exiting"); return` at the top of
 `cleanpro_alerts_runner.main()` **and** deleted the job from `cron/jobs.json` — but §1's gate says that
 file is unloaded since 08-15, so it still fires, exits **0** in **0 s**, and reads OK.
 **RULES: (1) when N members of a class fail together, FIND THE MEMBER THAT DIDN'T — `echo-backend-alerts`
@@ -459,11 +457,10 @@ a signature (12:00 is the first slot the two share). 1756z and three cycles befo
 (2) Two runners of one class must agree on what counts as FAILURE — the sibling that skips the exit code
 is not lenient, it is un-instrumented, and both emit the same success line. (3) If you neuter a script
 you believe is descheduled, exit NON-ZERO; an early `return` is indistinguishable from a silent healthy
-run.** Sent to the user (1540z r4); both fixes are asks, not acts. ⛔ **`vidnotes-alerts` RECOVERED — 355 s at 18:00 ICT 08-21, first slot after the 402 cleared; and
-1039z's *"still 11 s, 7 h later"* WAS A TIMEZONE SIGN ERROR: 16:00 ICT is 09:00Z, an hour BEFORE the
-~10Z clear, so the dead samples PREDATE the fix. **NEVER SUBTRACT TWO CLOCKS IN DIFFERENT ZONES.**
-1039z's survivor stands, plus the clause that makes it work: re-measure the SYMPTOM in a slot the
-repair could REACH.** (1120z.)
+run.** Sent to the user (1540z r4); both fixes are asks, not acts. ⛔ **NEVER SUBTRACT TWO CLOCKS IN DIFFERENT ZONES; RE-MEASURE A SYMPTOM ONLY IN A SLOT THE REPAIR COULD
+REACH — so a recovery claim inherits the DIAGNOSTIC REACH of its FASTEST member. The 402 is clear (rc=0
+direct + `vidnotes-alerts` 355 s), but the 3 weekly prompt jobs cannot speak until 08-24/25, in EITHER
+direction.** (1120z, 1139z.)
 ⛔ **THAT PROBE'S rc IS FABRICATED IF YOU PIPE IT — `cmd | head -3; echo $?` REPORTS `head`'s STATUS,
 SO THE PRESCRIBED `grok -p` CHECK RETURNS **0** ON A 402 AND READS HEALTHY** (0806z, demonstrated on my
 own probe this cycle, then `(exit 7) | head -1` ⇒ `$?=0`). The 402 block orders *run the binary, don't
@@ -486,12 +483,13 @@ a minority and `every job that can talk to the user` is the same fact and a diff
 (2) A declarative config key is a no-op wherever the reading branch does not exist: grep for the
 branch that READS a key, not the docs that declare it (1943z's dead field, at dispatcher scale).**
 Ev: `…/2026-08-21/heartbeat-0500z-announce-is-a-prompt-job-only-capability.md`. Ev: `…/heartbeat-1814z-two-causes-one-slot.md`, `…/2026-08-21/heartbeat-2230z-the-dead-jobs-runtime-is-the-signal-rc-was-vetoed.md`.
-⛔ **THE 402 IS AN ALIBI FOR `weekly-conjecture`, WHICH DIED 9 DAYS EARLIER — AND THE `age(last_run)`
-SWEEP THAT SHOWS IT WAS PRESCRIBED, CITED, AND NEVER RUN** (0904z; one `.venv/bin/python3` block over
-`cron/state.json`, sorted by age). `weekly-conjecture`: **260.9 h = 1.55 periods**, `last_status`
-**`ERROR: … timed out after 10 min`**, `ce=1` — last contact **Mon 08-10 19:00 ICT, its own slot**,
-then a total no-show on 08-17, i.e. **before the 08-19 402**. `cleanpro-weekly` carries the same stale
-timeout at 84.4 h. **RULES: (1) `consecutive_errors` IS LIVENESS-GATED — it can only rise on a job that
+⛔ **`weekly-conjecture` HAS NO ONSET — IT MISSES 37 % OF ITS SLOTS AND HAS SINCE APRIL, SO 0904z's
+"DIED 9 DAYS EARLIER" IS THE BASE RATE WEARING A DEATH** (1139z): fired 07-06/07-20/08-10 = 3 of 6,
+then 0 of 2; at p=0.37 a 2-gap lands 14 % of the time, ~2× expected in 19 Mondays — and 0437z had
+MEASURED that 37 % four hours before 0904z read the same silence as an event. **RULE: compute an intermittent
+series' BASE MISS RATE before calling a gap a failure — an alarm keyed on silence fires at the base rate
+on losses you already accepted.** `cleanpro-weekly` is NOT its twin: it RAN Tue 08-18 03:30, timed out,
+is mid-period, NOT overdue. **RULES: (1) `consecutive_errors` IS LIVENESS-GATED — it can only rise on a job that
 still runs, so a job that fails INTO silence pins its own alarm at 1 and the escalation threshold is
 unreachable by construction; the metric is smallest exactly where the outage is longest. Never
 threshold on it without `age(last_run)` beside it. (2) Date each member of a blamed class
