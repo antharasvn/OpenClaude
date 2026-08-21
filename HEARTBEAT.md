@@ -340,6 +340,15 @@ brief unmonitored through the same outage. 2336z closed that enumeration: the `c
 heartbeat + daily-brief, complete. (2) `launchctl list`'s middle column is the last exit status and it
 is free in the liveness check you already run — read it, don't just confirm the label is present.**
 Narrative §AS.
+⛔ **THE REFUSAL/RECOVERY ALERTS ARE AUTOMATIC — NEVER HAND-SEND A SECOND ONE.** `skills/heartbeat/run.sh`
+books a cycle refused on rc≠0 **and** ≤400 B stdout, pages the user on the **2nd consecutive** one, then sends
+`✅ …running again` on the first success — both from the NEXT cycle's wrapper, never from inside yours.
+Both branches went live 2026-08-21 on two `API Error: 500` cycles (`REFUSED 2` 00:00:35Z, `RECOVERED 2`
+00:19:50Z), each **verified delivered by the ABSENCE of `backpressure alert send FAILED`** in
+`/tmp/claude-heartbeat.log` — `send.sh` exits non-zero on any non-200, so silence there is a receipt.
+**A nonzero `consecutive_refusals` in `heartbeat-state.json` records a message the user ALREADY GOT.**
+The `exit 124` false positive is CLOSED in code — `run.sh` clears it when a `^heartbeat ` commit landed
+since `CYCLE_START`; do not re-file it.
 ⛔ **AN EXIT CODE ATTESTS THAT A PROCESS ENDED, NEVER THAT IT DELIVERED — THE 08-20 09:00 BRIEF EXITED
 0, WROTE ITSELF, AND WAS NEVER SENT** (1756z). **No cycle had `cat`ed `/tmp/claude-daily-brief.log`**, which ends *"generated but not delivered"*. Cause is one flag, **PER-DIRECTORY, NEVER
 TOP-LEVEL**: `~/.claude.json` `projects["<job's cwd>"].hasTrustDialogAccepted` — a top-level read returns `None` ⇒ reads as
@@ -1912,8 +1921,7 @@ it. Confidence high; the `find` is dispositive.
   APScheduler logs `Run time of job "<name>" was missed by H:MM:SS` for every slot it discards, with a
   timestamp and the job name. **This never appears in `logs/infra.log`** — `bot/logging_setup.py` gives
   `bot.infra` its own handler with `propagate=False`, while `apscheduler.executors.default` goes to the
-  ROOT logger → console → launchd's stderr file. That is why cycles up to 2026-08-07 00:41Z believed the
-  drops were invisible and rebuilt them by hand from cron expressions + `pmset`. Caveats: (a) the file
+  ROOT logger → console → launchd's stderr file. Caveats: (a) the file
   covers the CURRENT bot process only (it starts at process launch; `pgrep`+`ps -o etime` to date it),
   and (b) `coalesce` collapses some consecutive misses, so the warning count is a **lower bound** —
   it reconciled exactly on 08-05 (20 ran + 4 missed = 24) and was one short on 08-06 (18 + 5 = 23).
