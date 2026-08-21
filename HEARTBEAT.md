@@ -2197,22 +2197,11 @@ it. Confidence high; the `find` is dispositive.
   and says nothing about the tunable, which APScheduler compares against LATENESS. QUEUE #13 option 2.**
 
 ### 2. Bot Health
-- Check if the Telegram bot process is running: `pgrep -f "python.*-m bot"`
-  ⚠️ **That pattern matches only by ACCIDENT of the Homebrew path — prefer `pgrep -f -- "-m bot"`**
-  (2026-08-15 02:05 ICT, n=1, observed). The real command line is
-  `/opt/homebrew/Cellar/python@3.14/…/MacOS/Python -m bot`: the invoked binary is **`Python`, capital
-  P**, so the literal `python -m bot` **cannot** match a healthy bot — the prescribed regex survives
-  purely because `python@3.14` appears lowercase *earlier in the Cellar path*. Move the bot to a
-  pyenv/system interpreter with no lowercase `python` in its path and the detector goes silent, i.e.
-  a **false service-down** with no change to the bot at all. Note the trap is *inside this checklist*:
-  the ⛔ below explains the fix with the sentence "the bot is launched as **`python -m bot`**", which
-  reads like a safe grep string and is not one — that is what this cycle pasted, and it returned
-  empty. **Match on `-m bot` (interpreter-independent); run the positive control either way.**
-  ✅ **CHEAPER AND ARGV-FREE, USE IT FIRST: `launchctl list | grep -i claude`** (2026-08-15 15:4x ICT,
-  0836z). Returns the live PID for `com.claude.telegram-bot` (plus `heartbeat` and `daily-brief`) with
-  no pattern to get wrong, and the PID feeds `ps -o lstart -p <pid>` directly to date the process. I
-  reached it only after paraphrasing the prescription **again** — `grep '[p]ython -m bot'` returned
-  nothing on a healthy bot, n=2 for this exact trap, so treat the argv route as the fallback.
+- **Liveness = `launchctl list | grep -i claude`** (PID + last exit status for all three labels);
+  fallback `pgrep -f -- "-m bot"`. NEVER an argv paraphrase — page 1's 1755z block holds the n=3
+  false-service-down history and the Homebrew-path accident that made `python.*-m bot` work; cut here
+  1603z, narrative §BV. A `pgrep` self-matches its own shell, so confirm any extra PID with
+  `ps -o pid,ppid,lstart,command -p <pid>` before reporting a second bot instance.
   ⛔ **A BOT DEATH CAN BE COMPLETELY TRACELESS — DO NOT LOOK FOR A SHUTDOWN LINE, LOOK FOR THE START
   LINE.** Same cycle: `logs/infra.log` runs `15:05:04 Job echo-backend-alerts completed` → `15:21:43
   Bot starting` with **nothing** between, no crash report in `~/Library/DiagnosticReports`, and

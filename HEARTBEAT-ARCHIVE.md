@@ -2967,3 +2967,22 @@ classified "not scheduled", and its misses leave the denominator — the deficit
 here (every scheduled hour carries 85–115 fires over the full log; odd hours carry 1–4 late-wake
 spillovers, so the method's unstated ≥1-fire threshold is wrong at both edges).** Ev:
 `…/heartbeat-1739z-unloaded-is-not-unreadable.md`.
+
+## §BV — the §2 pgrep/Homebrew bot-liveness narrative (cut 1603z; imperative lives on page 1, 1755z block)
+
+- Check if the Telegram bot process is running: `pgrep -f "python.*-m bot"`
+  ⚠️ **That pattern matches only by ACCIDENT of the Homebrew path — prefer `pgrep -f -- "-m bot"`**
+  (2026-08-15 02:05 ICT, n=1, observed). The real command line is
+  `/opt/homebrew/Cellar/python@3.14/…/MacOS/Python -m bot`: the invoked binary is **`Python`, capital
+  P**, so the literal `python -m bot` **cannot** match a healthy bot — the prescribed regex survives
+  purely because `python@3.14` appears lowercase *earlier in the Cellar path*. Move the bot to a
+  pyenv/system interpreter with no lowercase `python` in its path and the detector goes silent, i.e.
+  a **false service-down** with no change to the bot at all. Note the trap is *inside this checklist*:
+  the ⛔ below explains the fix with the sentence "the bot is launched as **`python -m bot`**", which
+  reads like a safe grep string and is not one — that is what this cycle pasted, and it returned
+  empty. **Match on `-m bot` (interpreter-independent); run the positive control either way.**
+  ✅ **CHEAPER AND ARGV-FREE, USE IT FIRST: `launchctl list | grep -i claude`** (2026-08-15 15:4x ICT,
+  0836z). Returns the live PID for `com.claude.telegram-bot` (plus `heartbeat` and `daily-brief`) with
+  no pattern to get wrong, and the PID feeds `ps -o lstart -p <pid>` directly to date the process. I
+  reached it only after paraphrasing the prescription **again** — `grep '[p]ython -m bot'` returned
+  nothing on a healthy bot, n=2 for this exact trap, so treat the argv route as the fallback.
