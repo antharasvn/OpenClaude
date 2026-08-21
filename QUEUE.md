@@ -23,8 +23,9 @@ concluded *minority cause, recovers at most 3 of 10*. Since the grok refill land
 | 12:00 / 14:00 / 16:00 | 13 s | unfunded 402 floor, no work |
 | 18:00 | **355 s** (59 % of cap) | delivered — `memory/t0/2026-08-21/vidnotes-anomaly-1801-ict.md`, 5,379 B |
 | 20:00 | **>600 s** | **timed out, zero output** |
+| 22:00 | **>600 s** | **timed out, zero output — second consecutive cap-kill** |
 
-**n=2 funded runs, both ≥59 % of cap, one over it.** Verified this cycle:
+**n=3 funded runs, all ≥59 % of cap, the last two over it.** Verified this cycle:
 - The cap is **hardcoded global** at `bot/scheduler.py:163` (`asyncio.wait_for(..., timeout=600)`).
   There is **no per-job timeout field** in `cron/jobs.json`'s schema — so this is one number governing
   all 14 jobs, and it cannot be raised for the slow job alone without adding the field.
@@ -37,8 +38,8 @@ concluded *minority cause, recovers at most 3 of 10*. Since the grok refill land
 
 **Decision needed:** raise the global `600`, or add a per-job `timeout_seconds` and raise it only for
 the prompt jobs. ⚠️ Note the interaction: at 8 slots/day a 1800 s cap means a wedged run occupies its
-slot past the next fire. Confidence moderate on the regime (n=2); high on the cap being global and on
-the total-loss property. Next unattended reading is **22:00 ICT**.
+slot past the next fire. Confidence moderate→high on the regime (n=3, two consecutive cap-kills);
+high on the cap being global and on the total-loss property. Next unattended reading is **00:00 ICT**.
 Evidence: `memory/t0/2026-08-21/heartbeat-1421z-the-cap-changed-population-not-cause.md`.
 
 ---
