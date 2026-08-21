@@ -1034,23 +1034,13 @@ All three API deaths fell in sleep-cycling windows, so `mid-response` is a **sle
 moderate, n=3 — one counterexample in an S=0 window falsifies it). Evidence, the full failure population
 and the per-cycle timestamps: `HEARTBEAT-ARCHIVE.md` §F. **Cross-applies to §1's third non-delivery mode:
 same binary, same shape.**
-✅ **Run that implication the OTHER way: if `mid-response` is a sleep mode, then §1's `UserIsActive`
-floor ARITHMETICALLY EXCLUDES it — so write-early is insurance against a risk that is measurable
-per-cycle, not a constant** (2026-08-11 19:52 ICT, used and paid off in-cycle). The floor has only ever
-been pointed at *cron slots*; it applies to the heartbeat process itself, which is the one consumer
-that can act on it. Probe **19:54:11**: `UserIsActive` id `0x0001c5e4000987ec`, age 0,
-`Timeout will fire in 600 secs` ⇒ display timeout 20:04:11, **+5 s** (the corrected term, n=38 — not
-the old 60 s) ⇒ onset **≥ 20:04:16**, past that cycle's **20:02:51** kill; `max(floor, holder release)`
-only adds, and grok + `xcodebuild` "Xcode running tests" were both up. **No sleep possible inside the
-cycle ⇒ the one mode that kills a cycle *after* it has started work was off the table**, so blocking
-~2 min on a live tick was safe rather than a gamble against §0. It settled the 20:00:00 two-job slot at
-**residual 0 s**, all five ancillary fields (count stayed 13, stamp stayed 19:17:06,
-`cleanpro-alerts.last_run` `13:00:10.588763Z`, meter flat 5860.0) — an observation the write-early
-default would have handed forward. **So: read the floor every cycle and let it choose the posture —
-floor covers your remaining budget ⇒ you may spend it on a live read; non-flat meter and no floor ⇒
-write at T+3 and gather second.** The usage-limit mode is unaffected (it kills in seconds, before there
-is anything to protect). Confidence **high** on the arithmetic, **moderate** on `mid-response` being
-purely a sleep mode (n=3, all in sleep windows — one counterexample in an S = 0 window falsifies it).
+✅ **17 lines of floor-ARITHMETIC posture rules (write-early vs. spend-the-remaining-budget-on-a-live-read,
+keyed on the `UserIsActive` row) CUT with the probe that fed them — archived §BN. Survivor: the
+usage-limit mode is unaffected by ANY sleep reasoning; it ends a cycle in seconds, before there is
+anything to protect. THIRD consumer, READ this cycle with exact bounds, cut it next: the 7-line
+*"A HANDOFF MUST NEVER CARRY A REGIME LABEL"* block, whose *"Re-read the floor yourself every cycle"*
+is retired and whose survivor the ARMING-SET block already carries as *a regime label selects an INPUT
+to the model.*
 ⚠️ **And arm a watch against an ABSOLUTE target instant, never `now + delta`** (same cycle): the first
 loop was armed `now + 165 s` off a mis-estimated current time and expired at **19:58:56**, 64 s short of
 the slot. That is §0's biased self-estimate one level down — same error, same sign, inside a single
@@ -2107,27 +2097,10 @@ it. Confidence high; the `find` is dispositive.
     slot (40 s false-alarms — the real runtime band reaches 77–101 s).
   - **Prefer the pairing — exclusion primitive + survival forecast — over a handoff whenever the tick
     clears §0's awake-time budget.** Write the log first, then wait, then two greps.
-  - **Re-read the floor against every INHERITED conditional call: a tick you cannot reach is often one
-    you can still de-risk**, and that is cheaper than both a blocking wait and a handoff. The floor is
-    MONOTONE — every HID event re-arms the 600 s countdown, and `max(floor, holder release)` only
-    adds — so a thin margin is still sound. Sole falsifying branch is a *deliberate* sleep.
-  ⛔ **FLOOR PROBE — SETTLED. Reach is `probe + N + 5 s`. DO NOT RE-DERIVE. Evidence: `HEARTBEAT-ARCHIVE.md` §U.**
-  ⛔ **BUT ITS "SOLE FALSIFYING BRANCH IS A *DELIBERATE* SLEEP" IS THE MAJORITY CASE, NOT A CORNER —
-  0016z counts `Clamshell` 23 vs `Idle` 15 over 6.90 d. This floor bounds IDLE sleep only; a lid close
-  ignores it. Treat `probe + N + 5 s` as a floor on the 39 %, never as reach.** (1449z, found by
-  grepping the retired probe's OUTPUT ROW after `assertions` came back clean — see §AU.)
-  - **Read `N` off the `UserIsActive` row (`Timeout will fire in N secs`, `0 ≤ N ≤ 600`) — NEVER quote
-    a constant.** One probe reaches somewhere in `[probe + 5 s, probe + 605 s]`, so neither bound may
-    be pre-committed. Hand the successor the probe *condition* (`P + N ≥ tick − 60 s`), not a probe time.
-  - **The trailing term is 5 s (n=38), not 60.** `pmset -g custom`'s `sleep 1` is a *setting*; the idle
-    timer cannot run while the display is on (powerd holds `PreventUserIdleSystemSleep`), so the two
-    terms are **sequential, not alternative**: timeout fires → display off → onset in median 6 s, min 5 s.
-    A floor takes the minimum. Do not shave below 5 s. **Recompute every INHERITED floor** — a sub-minute
-    margin that cleared on `+60` does not clear on `+5`.
-  - **Check memory for a MEASUREMENT before promoting a config value into arithmetic.** That single
-    substitution put a 55 s overstatement into every floor built on it.
-  - **Only 35/69 display-off events ever slept** (34 never did, incl. dark-but-awake windows of 316 min),
-    so a call made under a live holder is unaffected — `max(floor, holder release)` already covers it.
+  ⛔ **21 more lines — the FLOOR-PROBE client (`probe + N + 5 s`, the `UserIsActive` timeout row, the
+  display-off tabulation) — CUT under the same retirement, archived §BM. Two survivors: check memory for
+  a MEASUREMENT before promoting a config value into arithmetic, and a floor bounding only the minority
+  driver is not reach.**
   ⛔ **ARMING SET — derive it from `cron/jobs.json` EVERY cycle; never carry one forward in prose.**
   - **Enumerate BOTH families and take the min.** Interval jobs have no cron expression; cron jobs are
     not the default either. Each family has been forgotten once, in consecutive cycles.
