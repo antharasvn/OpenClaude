@@ -378,8 +378,23 @@ text the subject writes*, INVERTED — so knowing it did not prevent this: the s
 CLEAN and the text was the only honest witness. A subject forges its failure vocabulary but never
 forges a CONFESSION — a self-reported failure inside a success-coded run is the highest-trust signal
 there is. (3) When two consumers of one harness differ in health, diff how they receive PERMISSIONS,
-not what they do.** (Alert-duration half superseded by 1814z.) Sent 1756z + 1857z; the flag is
-theirs. ⛔ **A `wc -c` BATCHED WITH THE COMMIT IS NOT A GATE: 1857z shipped 250,148 B.** Ev: `…/heartbeat-1756z-exit-zero-is-not-delivered.md`.
+not what they do.** (Alert-duration half superseded by 1814z.) ⛔ **BUT ITS CAUSE IS REFUTED AND THE
+TRUST ASK IS DOWNGRADED TO COSMETIC — DO NOT RE-SEND IT AS A WEDGE** (0420z, two probes). Its rule 3
+diffed how the two jobs receive permissions and got the diff BACKWARDS: `com.claude.daily-brief.plist`
+carries `--allowedTools Read,Write,Bash,Glob,Grep,Skill` in ARGV, i.e. **the very immunity 1756z
+credited the heartbeat with and denied the brief** — the ignored `permissions.allow` entries are the
+finer-grained Bash allowlist, redundant under a bare `Bash` grant. And the discriminator has zero
+power: `/tmp/claude-daily-brief.err` holds **that warning and nothing else, 6 identical lines, 1,824 B,
+last written 09:00:06 ICT TODAY** — so the run that DELIVERED (09:00:06→09:03:38, `Message sent
+successfully`) emitted it too, with `hasTrustDialogAccepted` still `false` in both cwds, verified this
+cycle. **08-20's hang therefore has an UNFOUND cause; three cycles asked the user to flip a flag that
+would not have fixed it.** **RULES: (1) 1922z's tautology test applies to CAUSES, not just detectors —
+before crediting a condition, find the run where it was ABSENT; a condition present in every run of
+both outcomes explains neither. (2) When you diff two consumers' permissions, read the ARGV of BOTH —
+1756z read the failing job's stderr and the healthy job's argv, never the failing job's argv, so the
+asymmetry was in the SAMPLING. (3) A warning that names its own fix is the most quotable line in any
+log and therefore the likeliest to be promoted to cause without a control.** Sent 1756z + 1857z +
+0420z; the flag is theirs but it is not blocking. ⛔ **A `wc -c` BATCHED WITH THE COMMIT IS NOT A GATE: 1857z shipped 250,148 B.** Ev: `…/heartbeat-1756z-exit-zero-is-not-delivered.md`.
 ⛔ **THE 08-19 ALERT COLLAPSE IS **TWO** UNRELATED FAULTS SHARING ONE SLOT, AND THE LIVE HALF IS THAT
 `AGENT_CLI=grok` IS OUT OF MONEY — ALL FOUR PROMPT JOBS ARE DEAD AND EVERY ROW READS `OK`** (1814z).
 Run the binary, don't infer: `grok -p …` ⇒ **rc=1, stdout 0 B, `status 402 Payment Required: Grok Build
