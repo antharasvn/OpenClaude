@@ -31,8 +31,7 @@ no commit records the crossing — the first cycle to hit it was the first to `R
   `ITS`, which otherwise re-points at whatever floats up beneath it. And grep for phrases QUOTED FROM
   the block ELSEWHERE, never references TO it: the successor's own back-reference sits adjacent and is
   what makes the block look safely dead, while a live citation of its surviving imperative can be
-  anywhere (0256z, −418 B; 1522z's *alerts self-heal, dailies do not* was load-bearing 6 lines away).
-  Page 1's `^⛔ **BUT IT` openers are CONSUMED, n=1 — do not re-run that grep expecting a hit.**
+  anywhere (0256z, −418 B; 1522z's *alerts self-heal, dailies do not* was load-bearing 6 lines away). Page 1's `^⛔ **BUT IT` openers are CONSUMED, n=1.**
   🆕 **SECOND FINDER, REGENERATING, NEEDS NO POINTER: AFTER ANY BLOCK SAYING *"DO NOT RE-DERIVE X"*,
   GREP THE FILE FOR X** — a closure names a TOPIC, so the apparatus sits under headers never mentioning
   it, and the cycle writing the closure just measured X and is likeliest not to check who measured it
@@ -131,8 +130,12 @@ block cited *"Page 1's 0016z"* at a block sitting at line 689, i.e. page 2, so a
 *page 1 is all a default `Read` delivers* searches the one page the target is not on. A page IS a line
 number over ~551 and that divisor moves every compaction. Repaired to a phrase 0708z.**
 ⛔ **NEVER LET AN EXTREMUM CARRY THE IMPERATIVE — state a rate as a MEAN WITH ITS n.** A mean survives
-one new sample; a min/max is the order statistic the next sample is likeliest to break, and it is the
-form these entries keep reaching for because it sounds decisive.
+one new sample; a min/max is the order statistic the next sample is likeliest to break; it merely
+sounds decisive. ⛔ **A CONTROL IS MEASURED ONCE, SO IT IS ALWAYS AN EXTREMUM IN A CONSTANT'S
+COSTUME** (1059z): the SUBJECT samples free (n=6), a CONTROL costs a probe
+(n=1); every `X vs baseline B` is lopsided in n on the side you trust. My n=1 grok baseline of 17 s
+"proved" `vidnotes-alerts` exits before any model turn; n=3 ⇒ 17/14/12, total overlap; its 13.7 s
+mean IS the 14.3 s do-nothing floor — 1039z's symptom QUANTIFIED. **Give a control the subject's n.**
 ⛔ **THE §1 ARCHIVE LICENCE IS VETOED AND THE GATE HAS NOW BEEN RUN — §1 IS FULLY LIVE. DO NOT
 RE-DERIVE THIS; RE-RUN THE GATE.** It is two commands: `grep "Cron scheduler started with"
 logs/infra.log | tail -1` against `stat -f %Sm cron/jobs.json`. **A config NEWER than the last
@@ -254,8 +257,9 @@ its "superset" verdict refuted at 2151z above.)
 ⛔ **AND 1700z's `.err` CENSUS SIZED THE WRONG SINK — `logs/infra.log`, WHICH EVERY CYCLE ALREADY TAILS,
 HOLDS 34× THAT POPULATION AND NOBODY HAD `uniq -c`'d IT** (0340z): **7,151 `[ERROR]` lines, 6,853 of
 them (95.8 %) one benign family** — `httpx.ConnectError: [Errno 8] nodename nor servname`, the
-Telegram long-poll losing DNS on network transitions, 2026-04-12→today, **18–33/day, flat, all
-hours**, self-recovering. Do NOT alert on it and do not re-derive it. Two dead leads pre-chased:
+Telegram long-poll losing DNS on network transitions, 2026-04-12→today, **18–33/day in 2 BURSTS,
+NEVER flat** (08-21: 18 in h09, 15 in h17, 0 in the other 22 — so
+`tail` lands inside one twice a day: ~12 errors in 4 min, reads as an incident), self-recovering. Do NOT alert on it and do not re-derive it. Two dead leads pre-chased:
 `Conflict: terminated by other getUpdates` (two bot instances) is **66 events ending 08-14 22:26**,
 none since, single pid now — **NOT** `ouroboros.sh`, which was armed all week; and
 `vidnotes-alerts timed out after 10 min` **last fired 08-19 04:10**, i.e. the job's last real work
@@ -470,7 +474,7 @@ finding. Use `${PIPESTATUS[0]}` (bash) / `$pipestatus[1]` (zsh), or redirect ins
 ALREADY reads `PIPESTATUS[0]` — the refusal detector is sound, do not re-audit it.
 **RULES: (1) a context-saving reflex is an INSTRUMENT MODIFICATION — price what it drops, not just what
 it costs. (2) When one rule's recipe silently disarms another rule's measurement, the failure is at the
-JOINT and neither rule's own review can see it.** Paid no bytes back this pass (see log).
+JOINT and neither rule's own review can see it.**
 ⛔ **AND "4 OF 14 JOBS" UNDERPRICES IT — `delivery.announce` IS READ ONLY IN `_run_prompt`
 (`bot/scheduler.py:183-187`); `_run_script` HAS NO ANNOUNCE BRANCH, SO THE FOUR DEAD JOBS ARE
 EXACTLY THE FOUR THE SCHEDULER CAN DELIVER AT ALL** (0500z; loaded blob enumerated: prompt 4/4 have
@@ -494,8 +498,7 @@ threshold on it without `age(last_run)` beside it. (2) Date each member of a bla
 INDEPENDENTLY — three prompt jobs died at the 402, the fourth inherited the diagnosis for being on the
 list. (3) A prescription with no measured OUTPUT in this file has not been executed: grep for its
 RESULT, never for the sentence ordering it.** ✅ Ledger left-censor re-verified: min `was missed by`
-= **0:05:16 = 316 s** vs the 300 s grace. ✅ FREEZE/GRACE second-finder run and DRY — both surviving
-`misfire_grace_time` sites already read correctly, 0518z's sweep WAS complete; do not re-run it.
+= **0:05:16 = 316 s** vs the 300 s grace. ✅ FREEZE/GRACE sweep CLOSED (0518z complete); do not re-run.
 Ev: `…/2026-08-21/heartbeat-0904z-a-job-the-402-was-taking-credit-for.md`.
 ⛔ **THE 08-19 DESCHEDULE WAS AN **11-JOB** INTENT AND EVERY CYCLE CALLED IT "THE 3 ALERT JOBS" —
 §1's `14→3` WAS ARITHMETICALLY RIGHT AND HID 8 OF THE 11** (1835z). One diff of job IDs, loaded blob
