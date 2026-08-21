@@ -412,7 +412,18 @@ run.** Sent to the user (1540z r4); both fixes are asks, not acts. ⛔ **STILL 4
 binary, it is one `gtimeout 45 grok -p` call) — 17 silent-OK `vidnotes-alerts` fires since. THE VETOED
 DETECTOR'S SIGNAL IS ALREADY IN `infra.log`: paired `Running job:`/`completed` runtimes are 129.4 s mean
 over n=902 before 08-19 vs 16/13/16 s for the last three. A veto on RAISING is not a veto on OBSERVING,
-and quote the TAIL not the mean when the window contains the transition you are dating.** Ev: `…/heartbeat-1814z-two-causes-one-slot.md`, `…/2026-08-21/heartbeat-2230z-the-dead-jobs-runtime-is-the-signal-rc-was-vetoed.md`.
+and quote the TAIL not the mean when the window contains the transition you are dating.**
+⛔ **AND "4 OF 14 JOBS" UNDERPRICES IT — `delivery.announce` IS READ ONLY IN `_run_prompt`
+(`bot/scheduler.py:183-187`); `_run_script` HAS NO ANNOUNCE BRANCH, SO THE FOUR DEAD JOBS ARE
+EXACTLY THE FOUR THE SCHEDULER CAN DELIVER AT ALL** (0500z; loaded blob enumerated: prompt 4/4 have
+`announce`, script 0/10). Same set, not overlapping sets — both `announce` and `grok -p` hang off
+that one branch, so the 402 disabled **100 % of the scheduler's delivery path**, and every report
+still reaching the user goes through a per-script hardcoded `api.telegram.org` POST. **RULES: (1)
+name a failed class by the CAPABILITY that defines it, never by its member count — `4/14` reads as
+a minority and `every job that can talk to the user` is the same fact and a different decision.
+(2) A declarative config key is a no-op wherever the reading branch does not exist: grep for the
+branch that READS a key, not the docs that declare it (1943z's dead field, at dispatcher scale).**
+Ev: `…/2026-08-21/heartbeat-0500z-announce-is-a-prompt-job-only-capability.md`. Ev: `…/heartbeat-1814z-two-causes-one-slot.md`, `…/2026-08-21/heartbeat-2230z-the-dead-jobs-runtime-is-the-signal-rc-was-vetoed.md`.
 ⛔ **THE 08-19 DESCHEDULE WAS AN **11-JOB** INTENT AND EVERY CYCLE CALLED IT "THE 3 ALERT JOBS" —
 §1's `14→3` WAS ARITHMETICALLY RIGHT AND HID 8 OF THE 11** (1835z). One diff of job IDs, loaded blob
 vs today's file: **3 DELETED** (`cleanpro-alerts`, `cleanpro-exp-monitor`, `vidnotes-alerts`) **+ 8
