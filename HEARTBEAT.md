@@ -503,9 +503,8 @@ AT IT — SUM THE `Entering Sleep state` LINES' OWN TRAILING `N secs` (1205z's m
 TO `misfire_grace_time: 300` (`bot/scheduler.py:26`) — THE MAGNITUDE SEPARATES NOTHING AND THE
 *PRESENCE* SEPARATES PERFECTLY** (1404z; all **22** `echo-backend-alerts` slots of 08-20, the first run
 on a full hourly day instead of 3–5 hand-picked slots). Prior-hour freeze **0 s ⇒ fired at +0 s, 16/16;
->0 s ⇒ late or lost, 6/6.** Magnitudes interleave — skips {453, 951, 2457} vs **fires** {21, 332, 516,
-665} — so 300 scores 3 correct skips and 3 false ones, and lateness is the graded response (332⇒16 s,
-516⇒158 s, 665⇒99 s). **Keep the sum only as a NECESSARY condition: a hole with ZERO preceding freeze
+>0 s ⇒ late or lost, 6/6.** Magnitudes interleave, so no threshold on the SUM separates; lateness is
+the graded response. **Keep the sum only as a NECESSARY condition: a hole with ZERO preceding freeze
 is a different bug — look elsewhere.** Confirms 0823z at n=22 (its 453/665/951 are three of these rows).
 ⛔ **ITS *"raising the grace is not a fix"* IS REFUTED — IT THRESHOLDED THE WRONG VARIABLE AND THE
 WRONG JOB** (0215z). APScheduler compares **lateness**, never freeze duration; freeze is a cause of
@@ -524,7 +523,13 @@ presence/absence is the cheaper hypothesis, and here it is the true one.**
 ⛔ **AFTER REFUTING A MODEL, GREP FOR THE SITES STATING ITS MECHANISM, NOT THE SITES STATING WHAT TO
 DO ABOUT IT** (1503z, sweep discharged, archived §AX): a repairer greps for what to stop doing, so the
 belief clause survives inside conclusions that are independently true — and it regenerates the
-prescription.
+prescription. ⛔ **AND THE INVERSE STRANDED A LIVE WRONG `Do NOT` FOR 3 h: 0215z refuted a VETO and
+swept nothing, so §2 still read *"raising `misfire_grace_time` recovers nothing (refuted n=22,
+page 1)"* — repaired 0518z. Two rules. (1) A REFUTING cycle owes the sweep; it is the one actor that
+knows which sites are now wrong, and its own block reads as the fix. (2) A cross-reference is a
+SIGN-FREE pointer: this one cited `page 1` as its authority, page 1 later flipped, and the citation
+kept resolving — so it grew MORE credible as it became wrong. Grep the CITING sites whenever a cited
+block changes verdict, never only the sites naming the mechanism.**
 ⛔ **1522z's ENUMERATION MERGED **TWO** HOLES INTO ONE — IT LISTED A JOB BY CATEGORY INSTEAD OF BY
 RESOLVED SLOT, AND THE ABSORBED JOB MADE ITS REAL HOLE VANISH** (1539z, `cron/state.json` vs
 `infra.log`; 1522z archived §AW.2 — a freeze is scored per SLOT and paid per PASS, and **alert jobs
@@ -2179,8 +2184,11 @@ it. Confidence high; the `find` is dispositive.
   that named the cause. A refutation of an instrument is a refutation of its whole client tree, and
   clients read as independent findings because each was scored on its own terms. And grep the probe's
 - `coalesce=True` is ALREADY in effect (APScheduler 3.11.3 default; verified in `.venv` —
-  `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). ⛔ **Neither
-  knob is a fix — raising `misfire_grace_time` recovers nothing (refuted n=22, page 1).**
+  `job_defaults -> {'misfire_grace_time': 300, 'coalesce': True, 'max_instances': 1}`). ⛔ **`coalesce`
+  is not a fix; RAISING `misfire_grace_time` IS — grace 1800 recovers 50/57 fleet-wide and 9/9 of the
+  five DAILY jobs (0215z, all `was missed by` rows). This line read *"raising it recovers nothing
+  (refuted n=22, page 1)"* until 0518z: the n=22 result kills FREEZE-MAGNITUDE as a CAUSE of discard,
+  and says nothing about the tunable, which APScheduler compares against LATENESS. QUEUE #13 option 2.**
 
 ### 2. Bot Health
 - Check if the Telegram bot process is running: `pgrep -f "python.*-m bot"`
