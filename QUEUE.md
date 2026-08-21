@@ -755,6 +755,30 @@ the original filing lacked: every drop receipt in `/tmp/claude-telegram-bot.err`
 misfire of **5–26 min** (08-20: `12:16:30` missed by 16 m 30 s, `14:15:46` missed by 15 m 46 s), so
 a grace of **1800 s** would have caught all of them; 300 s catches none.
 
+✅ **OPTION 2 IS NOW THE RECOMMENDATION, AND THE `HEARTBEAT.md` IMPERATIVE THAT FORBADE IT IS
+REFUTED** (0215z). Page 1 of `HEARTBEAT.md` (1404z) carried *"no grace value separates these
+classes, so raising it is not a weak fix, it is not a fix"* — i.e. this item and the header
+disagreed, and the user was being asked to choose an option the fleet had declared impossible.
+Measured on the variable APScheduler actually compares (**lateness**, not the freeze duration 1404z
+thresholded), over all **57** `was missed by` rows in `/tmp/claude-tele*bot.err`:
+
+- **`misfire_grace_time: 1800` recovers 9 of 9 daily misses** — max lateness is **946 s** for the
+  four 14:00 ICT jobs and **1436 s** for `vidnotes-daily`. 0154z's 1800 was sized from n=2 and holds
+  at n=9 across both troughs.
+- Fleet-wide it recovers **50/57 (87.7 %)**. The 7 exceptions are 3× `echo-backend-alerts` and 4×
+  the two 2-hourly interval jobs — **the residual sits entirely in the self-healing class**.
+- 1404z's whole dataset was `echo-backend-alerts`, which is both the worst tail (max 3192 s, n=18)
+  and, being hourly, the member least needing catch-up. The veto generalised from the class extremum.
+- **No downside branch to price:** raising a grace only converts skips into runs, never the reverse,
+  and `coalesce` defaults `True`, so a post-wake catch-up fires once, not N times.
+
+⚠️ **Caveat on the instrument, which binds anyone re-deriving this:** `min lateness = 316 s` against
+a 300 s grace is not coincidence — a `was missed by` line is only emitted once the grace is already
+exceeded, so **the ledger is left-censored at exactly the parameter under study.** That is sound for
+the recovered-count above (raising the threshold can only reclaim rows already in it) and unsound
+for any *rate* of lateness, which it cannot see. **A ledger emitted by a threshold cannot measure
+the quantity that threshold acts on.** Ev: `memory/t0/2026-08-21/heartbeat-0215z.md`.
+
 **Transferable:** this item was filed from the four jobs that *share* a slot, and sharing a slot is
 what made them easy to see together — the fifth job with the same defect was invisible precisely
 because it was alone on a different slot. **Group by mechanism, not by co-occurrence**; the
