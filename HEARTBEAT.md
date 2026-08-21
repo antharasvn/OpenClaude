@@ -111,6 +111,12 @@ both signs, spread 658 lines ⇒ no constant recovers them), and each still RESO
 prose, so following one yields a confident wrong citation. Do NOT repair the numbers — every pass rots
 them again; `sed`'s move preserves text, so a phrase survives and a number never does. The compaction
 duty that keeps this file readable is the same duty that corrupts its citations. Series: §AH.
+⛔ **AND A RETRACTION MUST NAME THE CLAIM, NEVER THE CYCLE — A STAMP IS A LINE NUMBER WITH A CLOCK ON
+IT.** The keep-retractions rule mints one per archive pass: the archived block leaves an inline `Do NOT`
+whose only handle on its subject is the stamp that just left, so it guards nothing a reader can retrieve.
+Finder, REGENERATING: `grep -c` each `NNNNz`, keep singletons, cut those sitting in a RETRACTION — the
+rest are healthy citations (53 singletons, n=1 retraction-shaped). Rewrite, never delete: the claim form
+is shorter than the citation form, so the finder pays as applied. §BR.
 ⛔ **AND A `page N` CITATION ROTS THE SAME WAY WHILE READING AS STRUCTURAL — the `pmset` retirement
 block cited *"Page 1's 0016z"* at a block sitting at line 689, i.e. page 2, so a cycle obeying
 *page 1 is all a default `Read` delivers* searches the one page the target is not on. A page IS a line
@@ -603,12 +609,7 @@ APScheduler recomputes `next_run_time` from wall clock once it has processed a j
 **Count freeze from the previous `Running job:` line in `infra.log` — never across a skip, and never
 from a hand-picked lookback.** ⛔ **General: a model whose free parameter every observation agrees on
 is UNTESTED, not confirmed — find the case where the parameter choices DISAGREE and run only that.**
-⛔ **A SILENCE DURATION IS NOT AN OUTAGE — count slot times (14:05→15:05 holds 2, 0437z).** Rewritten
-0942z: this read *"0730z's premise stays VOID"* and that stamp was the file's LAST reference to an
-archived block, so the `Do NOT` was keyed on a claim no reader could retrieve. **A retraction must
-name the CLAIM, never the cycle — a stamp is a line number with a clock on it, and the keep-retractions
-rule mints one every archive pass.** Finder: `grep -c` each `NNNNz`; singletons inside a retraction
-are the repair set (53 singletons, n=1 retraction-shaped).
+⛔ **A SILENCE DURATION IS NOT AN OUTAGE — count slot times (14:05→15:05 holds 2, 0437z).**
 
 ⛔ **2100z RESOLVED QUEUE #4 BY PROVING THE HOOK BUNDLE IS TRUNCATED, AND NEVER ASKED WHAT THE
 TRUNCATION REMOVES: THE SURVIVING ~2 KB IS THE DAY'S **OLDEST** LOGS, SO YOUR PREDECESSOR'S HANDOFF IS

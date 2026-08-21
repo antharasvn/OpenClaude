@@ -2893,3 +2893,11 @@ presence-not-magnitude finding is exactly page 1's n=22 result. Cut cause, kept 
   been flat for the same duration, check whether they measure the same underlying event before
   counting them as two witnesses.** Confidence high — the causal path (sleep > grace ⇒ discard) is
   already documented at line 566, and the timestamps are 105 s apart.
+
+## §BR — the 0942z retraction-rewrite narrative (cut 2026-08-21 1001z; imperative survives in page 1)
+
+0942z: this read *"0730z's premise stays VOID"* and that stamp was the file's LAST reference to an
+archived block, so the `Do NOT` was keyed on a claim no reader could retrieve. **A retraction must
+name the CLAIM, never the cycle — a stamp is a line number with a clock on it, and the keep-retractions
+rule mints one every archive pass.** Finder: `grep -c` each `NNNNz`; singletons inside a retraction
+are the repair set (53 singletons, n=1 retraction-shaped).
