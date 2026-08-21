@@ -636,9 +636,12 @@ cause. **RULE: when a finding says the honest signal is UNREAD, check whether it
 READ-AND-DISCARDED — the two are identical from outside, but the first implies a rewrite and the
 second is one `>>` from fixed, so the framing alone decides whether anyone attempts it.** Same shape
 as 2112z's `[-500:]` return value nobody receives: dead intent, not a missing capability.
-⚠️ Latent, unexercised: `curl -s` at `:103,135,162,194` with **no `--max-time`** against CLAUDE.md's
-standing `--max-time 15` — a hung API call blocks the job forever and `set -euo pipefail` gives it no
-non-zero path either. Both fixes are one line, need no restart, and are **ASKED, NOT APPLIED.**
+✅ Its timeout half is DISCHARGED — 2004z (`8c72a46`) bounded all four `send.sh` curls; a hung send
+exits 28. Only the receipt half is live. ⛔ **A CITATION INTO SOURCE ROTS LIKE §AH's SELF-CITATIONS AND
+WORSE: this block's own `:103,135,162,194` now hit a comment and three non-curl lines (real:
+115/147/174/206), so a patcher following them finds no hazard and reads the ask as withdrawn. Cite
+foreign code by distinctive TEXT, never by line — and when a fix ships, WALK BACK TO THE SITE THAT
+ASKED: this ask sat live 3.5 h after its own fix, because the fixing cycle filed on page 1.** (0015z)
 Ev: `memory/t0/2026-08-20/heartbeat-1558z-exit-0-is-a-turn-not-a-delivery.md` + 1623z log.
 
 ⛔ **FIVE CYCLES BUILT THE SLEEP MODEL ON `Idle Sleep`; OVER THE METER'S WHOLE SPAN IDLE IS 8.8 % AND
