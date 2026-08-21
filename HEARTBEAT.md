@@ -912,7 +912,24 @@ The real fix is structural (own the buffer, don't let a cancelled coroutine own 
 a shared module behind six live jobs (why no cycle has applied it); #6 is local, diagnostics-only, and
 makes the *next* failure self-describing without touching them. A row that names a single cause
 invites a fix that leaves the symptom intact. Confidence high — both paths read from source.
-#### Successor placement & reach — SETTLED (n=16, every residual 0 s, S=0…1394 s). DO NOT RE-DERIVE. Imperatives only; full text §Y, reasoning §K, series §H.
+#### Successor placement & reach — SETTLED (n=478 pairs; placement residual **0 s 63 % / +1 s 33 % / 2–5 s 4 %**). DO NOT RE-DERIVE. Imperatives only; full text §Y, reasoning §K, series §H.
+⛔ **THIS HEADER READ `n=16, every residual 0 s` UNTIL 0826z, AND §BO'S ARCHIVED APPARATUS READ
+`n=19, residual +1 s`. BOTH ARE THE SAME POPULATION REPORTING ITS OWN MODE AS AN ABSOLUTE.** Measured
+by pairing every `Completed at` with the next `Starting heartbeat at` in `/tmp/claude-heartbeat.log`:
+n=478 gaps, 449 within 5 s of 900 (the other 29 are §1 sleep deferrals, +6 s…+3288 s). The S≈0 subset
+is **282 / 149 / 18** across 0 / +1 / 2–5 s. Flip rate between consecutive pairs **43 %** with a
+longest identical run of **10** — independent draws off sub-second stamp truncation, *not* a clock and
+not the alternation the last six pairs (1,0,1,0,1,0) suggest. **So neither absolute survives, nothing
+downstream depends on 1 s, and the right form is a range: `completion + 900 s + S`, residual 0–1 s.**
+**The transferable half is where the evidence was: `/tmp/claude-heartbeat.log` is named three blocks
+below (line 938) as the free always-on meter for logless cycles, and holds 478 pairs of THIS series
+too — yet two cycles counted 16 and 19 by hand from it.** An absolute in a `SETTLED` header is a claim
+about a distribution's tail, made from a sample too small to contain one; before writing *every X is
+Y*, ask which already-cited always-on log holds the whole series. **And do not re-plot the past here:**
+16 straight zeros has p≈0.001 under the measured 63 %, so that sample counted something else — 
+unrecoverable, and the forward number above is the one to use.
+⚠️ **Term collision, live in this block: "residual" below means the *self-estimate* error (~±1.5 min),
+not this placement residual (0–1 s). Two quantities, one word, 13 lines apart.**
 - **Place your successor at `completion + 900 s + S`** — not start + 15 min, not memory's "17 min".
   launchd `StartInterval 900` counts from EXIT and **defers a missed interval by exactly the sleep
   duration**, so it takes §1's `armed + S` freeze. **A 38-min hole is that deferral, not a logless
@@ -986,13 +1003,6 @@ most wakes produce no window* — and keep 0803z's fourth mode as **contaminated
 **RULE: when a re-scoring reclassifies an event class as an artifact of instrument X, measure
 `P(event | X)` too — it is the conditional a causal claim needs and it is the CHEAPER one, because
 the no-X periods require no pairing at all.** Confidence moderate (n=1 quiet window, 4 idle wakes).
-⛔ **AND A HANDOFF MUST NEVER CARRY A REGIME LABEL, ONLY A MEASUREMENT.** 1049z handed forward *"the
-host is in an active clamshell-cycling regime, treat `UserIsActive` as absent"*; 18 min later the
-floor read `Timeout will fire in 409 secs` and sleep was excluded for all but the last ~100 s of the
-cycle. Acting on the inherited label would have forced write-at-T+3 and forfeited the budget that
-produced the finding above. **Re-read the floor yourself every cycle** — this is §0's
-hand-the-tick-not-the-threshold rule applied to power state: a regime is the field most likely to
-have expired by the time it is read.
 ⛔ **And the window COUNT is not a fact — it is a clustering threshold.** 0803z's 307 (median 175 s)
 vs my **530** off the same file, differing only in gap rule (mine: >120 s starts a new window).
 **Never quote a window count without its threshold**, and prefer "N lines under rule R" to "N outages."
@@ -1048,10 +1058,10 @@ same binary, same shape.**
 ✅ **17 lines of floor-ARITHMETIC posture rules (write-early vs. spend-the-remaining-budget-on-a-live-read,
 keyed on the `UserIsActive` row) CUT with the probe that fed them — archived §BN. Survivor: the
 usage-limit mode is unaffected by ANY sleep reasoning; it ends a cycle in seconds, before there is
-anything to protect. THIRD consumer, READ this cycle with exact bounds, cut it next: the 7-line
-*"A HANDOFF MUST NEVER CARRY A REGIME LABEL"* block, whose *"Re-read the floor yourself every cycle"*
-is retired and whose survivor the ARMING-SET block already carries as *a regime label selects an INPUT
-to the model.*
+anything to protect. ✅ **THIRD consumer CUT 0826z → §BP, on the bounds this line recorded** — the
+7-line *"A HANDOFF MUST NEVER CARRY A REGIME LABEL"* block; survivor already live in the ARMING-SET
+block as *a regime label selects an INPUT to the model.* **The retirement's client tree is now swept
+to zero, and the mechanism that got it there was recording exact bounds instead of a deferral.**
 ⚠️ **And arm a watch against an ABSOLUTE target instant, never `now + delta`** (same cycle): the first
 loop was armed `now + 165 s` off a mis-estimated current time and expired at **19:58:56**, 64 s short of
 the slot. That is §0's biased self-estimate one level down — same error, same sign, inside a single

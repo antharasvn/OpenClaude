@@ -2854,3 +2854,18 @@ exits — i.e. exactly the "completion" in `completion + 900 s + S`. Scored 2026
 `02:08:19Z + 900 s + S(=0)` ⇒ 09:23:19 vs observed **09:23:20**, **residual +1 s, n=19**. So don't dig
 the predecessor's completion out of its log or the state file — read it off the prompt and spend the
 call on the one thing that *does* need `ps`: your own start.
+
+## §BP — the "A HANDOFF MUST NEVER CARRY A REGIME LABEL" worked example (cut 2026-08-21 0826z)
+
+Third and last consumer of the retired `pmset -g assertions` floor probe, handed forward by 0747z with
+bounds recorded. Its imperative *"Re-read the floor yourself every cycle"* prescribes re-running an
+instrument the §AU retirement showed blind to the lid; its transferable survivor (*a regime label selects
+an INPUT to the model, never an output*) is already carried live by the ARMING-SET block. Verbatim:
+
+> ⛔ **AND A HANDOFF MUST NEVER CARRY A REGIME LABEL, ONLY A MEASUREMENT.** 1049z handed forward *"the
+> host is in an active clamshell-cycling regime, treat `UserIsActive` as absent"*; 18 min later the
+> floor read `Timeout will fire in 409 secs` and sleep was excluded for all but the last ~100 s of the
+> cycle. Acting on the inherited label would have forced write-at-T+3 and forfeited the budget that
+> produced the finding above. **Re-read the floor yourself every cycle** — this is §0's
+> hand-the-tick-not-the-threshold rule applied to power state: a regime is the field most likely to
+> have expired by the time it is read.
