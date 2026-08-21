@@ -1169,30 +1169,23 @@ call on the one thing that *does* need `ps`: your own start.
 > homogeneous-population rule, applied to the DENOMINATOR rather than the sample.
 > ⚠️ **Scope, checked before filing: this is a different population from 1539z's "dailies are 57-79 %
 > attended" and does not correct it.** Evidence: `memory/t0/2026-08-21/heartbeat-1719z-attendance-was-measuring-host-uptime.md`.
-> ⛔ **AND `n/14` IS NOW `3/3`, WHICH IS A GREEN LIGHT OVER A POPULATION DISJOINT FROM THE RUNNING
-> ONE — THE DETECTOR TAKES ITS DENOMINATOR FROM THE CONFIG, THE FILE 1227z PROVED IS A WISH**
-> (2026-08-16 00:0x ICT, 1656z). `check_missed_fires.py:88` skips `enabled: false`, so after the
-> 17:50 mass-disable it audits exactly the **3** ids chat re-enabled at 19:39 — none of which the
-> scheduler has loaded (last re-read **15:21:46**) — while the **6** ids actually firing since that
-> load (`auto-commit`, `cleanpro-alerts`, `cleanpro-exp-monitor`, `echo-backend-alerts`,
-> `vidnotes-alerts`, `weekly-conjecture`) are **not audited at all**. Their three `OK`s come off
-> `last_run` stamps written before the flip. **The header's own restore gate says read the PROCESS,
-> not the config; this detector reads the config — so quote it as `3/3 of the CONFIG-enabled jobs`
-> and never as fleet health while the two sets disagree.** Free tell that costs nothing: if the
-> denominator moves, the population changed under you — **read the denominator, not just the ratio.**
-> ⛔ **AND THE BLIND SPOT IS ANTI-CORRELATED WITH THE MISSES, WHICH IS STRICTLY WORSE THAN NO
-> DETECTOR** (2026-08-16 00:2x ICT, 1717z). Audited all 14 LOADED jobs by hand: exactly two fires
-> were lost since the 15:21:46 load — `echo-backend-alerts` 18:05 and `vidnotes-alerts` 18:00, both
-> inside a **74-min `infra.log` silence, 17:50:51 → 19:05:00**, preceded by `httpx.ConnectError`
-> ×13 (17:38–17:47) and a `powerd` darkwake at 17:32 ⇒ host sleep, the settled §1 mechanism, nothing
-> new. **New: both are `enabled: false`, so the detector CANNOT see them — and that is structural,
-> not luck. The disabled set is the set still running, therefore the only set that can miss; the
-> enabled set has never loaded, therefore can never miss.** A detector whose blind spot tracks the
-> failure launders silence into a green light. **RULE: before trusting any monitor, check whether its
-> exclusion rule and its failure population are the same predicate — if so, its all-clear is
-> evidence of nothing.** Impact of these two was nil (both jobs' next run overlaps the missed
-> window), so do NOT escalate on the count. Fix is `:88` (audit loaded, not enabled) — belongs to the
-> user's open restart/config ask, not to a cycle. Evidence: `memory/t0/2026-08-16/heartbeat-1717z.md`.
+> ⛔ **TWO RULES SURVIVING THE `3/3` ERA (1656z + 1717z); the defect itself is FIXED below — do not
+> re-chase it.** (1) **Read the denominator, not just the ratio** — this detector takes its population
+> from `cron/jobs.json`, so if the denominator moves, the population changed under you, not the fleet.
+> (2) **Before trusting any monitor, check whether its exclusion rule and its failure population are
+> the same predicate** — `:88`'s `enabled: false` skip once excluded exactly the set still running,
+> i.e. the only set that *could* miss, laundering silence into a green light.
+> Evidence: `memory/t0/2026-08-16/heartbeat-1717z.md`.
+> ⛔ **AND READ THE NUMERATOR'S CLOCK TOO — A MISS ALARM AGES AT THE JOB'S PERIOD, NOT THE OUTAGE'S
+> LENGTH, SO NEVER RANK OR TRIAGE MISSES BY `(NN.Nh ago)`** (2026-08-21 0401z, measured on today's
+> `5/11`). The script reports the LAST OWED fire, so a row does not clear until that job next fires.
+> Today's six rows decompose into three already-closed sleep holes, and the ranking is exactly
+> inverted: `weekly-conjecture` tops the list at **88.0 h** off the **shortest** outage (08-17
+> 18:05:38→19:25:22, **79 min**) — a **67×** inflation — while the four `*-daily` jobs read 21.0 h off
+> a 1 h 43 m hole (**12×**). Age is a *period × outage* product with the period dominating; triaging by
+> it spends the cycle on the least-affected job. ⚠️ Scope: this does not argue for suppressing rows —
+> detection is not recovery and those reports really are gone. Only **age ≠ severity**.
+> Evidence: `memory/t0/2026-08-21/heartbeat-0401z-a-miss-alarm-ages-at-the-jobs-period-not-the-outages.md`.
 > ✅ **FIXED THIS CYCLE, AND 1717z's DEFERRAL WAS THE ERROR — A READ-ONLY AUDIT SCRIPT IS NOT THE SAME
 > CLASS AS A SERVICE RESTART** (2026-08-16 00:4x ICT, 1735z). Three cycles routed this to the user's
 > ask because it sits *near* the restart; the restart is blocked because it stops a live process,
