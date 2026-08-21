@@ -732,6 +732,34 @@ costs a reader zero calls to explain (2026-08-15 04:4x ICT: the missing **#4** c
 Filed 2026-08-18 17:5x ICT (1047z). **Decision needed: move the slot, or widen the grace.** Both are
 one line; neither is in a cycle's lane.
 
+⛔ **SCOPE WAS TOO NARROW — THERE ARE *TWO* TROUGHS, AND THE WORSE ONE IS NOT 14:00. THIS CHANGES
+WHICH FIX IS CORRECT** (measured 2026-08-21 0154z). `vidnotes-daily` runs `0 7 * * *`
+`Europe/Warsaw` = **12:00 ICT**, a slot this item never names, and it loses fires to the identical
+`misfire_grace_time: 300` mechanism at a *higher* rate. Same window (07-31→08-20), same source
+(`Running job:` lines in `logs/infra.log`), 08-08 excluded as host-down (61 log lines) exactly as
+this item already does ⇒ 20 scored days:
+
+| slot | job(s) | fired | lost | rate |
+| --- | --- | --- | --- | --- |
+| 14:00 ICT | `echo`/`mangii`/`pdfai`/`aividly-daily` | 15 | 08-04, 08-05, 08-07, 08-18, 08-20 | **25 %** |
+| 12:00 ICT | `vidnotes-daily` | 14 | 08-05, 08-07, 08-10, 08-17, 08-18, 08-20 | **30 %** |
+
+**The two miss-sets are only partly shared (08-05/07/18/20 both; 08-04 only 14:00; 08-10/08-17 only
+12:00), so this is two independent troughs, not one event seen twice.** On the four shared days the
+user received **no daily report at all** — five jobs, zero output, every row `last_status: OK`.
+
+⇒ **Option 1 as written is INCOMPLETE: moving "the four dailies" off 14:00 leaves `vidnotes-daily`
+in the worse trough.** Either move **five** jobs, or take option 2 (`misfire_grace_time`), which is
+the only one of the two that fixes both slots with one line. Option 2 also now has a sizing number
+the original filing lacked: every drop receipt in `/tmp/claude-telegram-bot.err` is a post-wake
+misfire of **5–26 min** (08-20: `12:16:30` missed by 16 m 30 s, `14:15:46` missed by 15 m 46 s), so
+a grace of **1800 s** would have caught all of them; 300 s catches none.
+
+**Transferable:** this item was filed from the four jobs that *share* a slot, and sharing a slot is
+what made them easy to see together — the fifth job with the same defect was invisible precisely
+because it was alone on a different slot. **Group by mechanism, not by co-occurrence**; the
+co-occurring set is a sample, not the population. Ev: `memory/t0/2026-08-21/heartbeat-0154z.md`.
+
 `echo-daily`, `mangii-daily`, `pdfai-daily`, `aividly-daily` all run `0 3 * * *` `America/New_York`
 = **14:00 ICT**, which sits inside this host's habitual afternoon idle-sleep window. Fire dates from
 the whole of `logs/infra.log`, **identical for all four** (they share the slot, so this is one event
