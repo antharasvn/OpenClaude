@@ -97,6 +97,15 @@ one artifact a cycle is judged by is the one it is also required to SHRINK, and 
 "+N bytes".** RULES: (1) never treat a `heartbeat ` commit's existence as evidence a cycle did
 anything, nor its absence as evidence of a miss — read `/tmp/claude-heartbeat.log`. (2) When declining
 to write here is the right call, SAY SO in the cycle's report, because nothing else will.
+⛔ **AND A THIRD MODE — `auto-commit` FIRES AT `HH:21:46`, HH ODD ICT, AND SWALLOWS THE EDIT OF EVERY
+HEARTBEAT CYCLE THAT STARTS AT `:19:28`: MINE, 2m18s IN, AS `53efa71 auto-commit safety net`** (1019z).
+My own `git commit` then said `nothing to commit` and I was one step from re-editing a file that was
+already correct. The FINDING survives in the file; the REASONING, which lives in the commit body, is
+discarded, and `git log --grep '^heartbeat '` undercounts — deterministically this one slot, ~12×/day,
+never a random cycle. **RULES: (1) `nothing to commit` after a verified edit means something else
+committed it — read `git log -1` before touching the file again. (2) An interval job writing the
+artifact you write is a CO-AUTHOR on a FIXED PHASE: 0923z's phase is not only a restart detector, it is
+a collision timetable, and it is knowable at cycle start from your own `lstart`.**
 ⛔ **A SEARCH THAT HAS FAILED N TIMES IS ASKING ABOUT THE WRONG PROPERTY, NOT ASKING TOO WEAKLY.**
 Ten passes escalated one geometric question (gap length, `SETTLED` adjacency, retraction words); one
 pass changed the question to a **terminal state** (`✅ **CLOSED`) and took −10,244 B. ⚠️ That finder
