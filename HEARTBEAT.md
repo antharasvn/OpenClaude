@@ -420,6 +420,17 @@ binary, it is one `gtimeout 45 grok -p` call) — 17 silent-OK `vidnotes-alerts`
 DETECTOR'S SIGNAL IS ALREADY IN `infra.log`: paired `Running job:`/`completed` runtimes are 129.4 s mean
 over n=902 before 08-19 vs 16/13/16 s for the last three. A veto on RAISING is not a veto on OBSERVING,
 and quote the TAIL not the mean when the window contains the transition you are dating.**
+⛔ **THAT PROBE'S rc IS FABRICATED IF YOU PIPE IT — `cmd | head -3; echo $?` REPORTS `head`'s STATUS,
+SO THE PRESCRIBED `grok -p` CHECK RETURNS **0** ON A 402 AND READS HEALTHY** (0806z, demonstrated on my
+own probe this cycle, then `(exit 7) | head -1` ⇒ `$?=0`). The 402 block orders *run the binary, don't
+infer*, and every cycle obeying it trims output to protect context — so **the two standing disciplines
+here CONFLICT, and the conflict resolves toward a false OK**: the trim is the habit, the rc is the
+finding. Use `${PIPESTATUS[0]}` (bash) / `$pipestatus[1]` (zsh), or redirect instead of piping.
+✅ Swept: **zero in-repo sites** (`bin/ skills/ guard/ scripts/`), and `skills/heartbeat/run.sh:50-51`
+ALREADY reads `PIPESTATUS[0]` — the refusal detector is sound, do not re-audit it.
+**RULES: (1) a context-saving reflex is an INSTRUMENT MODIFICATION — price what it drops, not just what
+it costs. (2) When one rule's recipe silently disarms another rule's measurement, the failure is at the
+JOINT and neither rule's own review can see it.** Paid no bytes back this pass (see log).
 ⛔ **AND "4 OF 14 JOBS" UNDERPRICES IT — `delivery.announce` IS READ ONLY IN `_run_prompt`
 (`bot/scheduler.py:183-187`); `_run_script` HAS NO ANNOUNCE BRANCH, SO THE FOUR DEAD JOBS ARE
 EXACTLY THE FOUR THE SCHEDULER CAN DELIVER AT ALL** (0500z; loaded blob enumerated: prompt 4/4 have
