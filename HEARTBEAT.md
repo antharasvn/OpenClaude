@@ -459,11 +459,11 @@ a signature (12:00 is the first slot the two share). 1756z and three cycles befo
 (2) Two runners of one class must agree on what counts as FAILURE — the sibling that skips the exit code
 is not lenient, it is un-instrumented, and both emit the same success line. (3) If you neuter a script
 you believe is descheduled, exit NON-ZERO; an early `return` is indistinguishable from a silent healthy
-run.** Sent to the user (1540z r4); both fixes are asks, not acts. ⛔ **THE 402 CLEARED AND THE JOB DID
-NOT: `grok -p` ⇒ rc=0/`OK` since ~10Z 08-21, yet `vidnotes-alerts` still ran **11 s at 16:00 ICT**, 7 h
-later — dead-signature vs its 129.4 s live mean (n=902, pre-08-19). 1019z's *veto lifted* reads as
-recovery; it is not. RULE: A RESOURCE RESTORED IS NOT A CONSUMER RECOVERED — re-measure the SYMPTOM,
-never infer it from the cause's repair. The check that caught it was prescribed here and unrun 7 h.**
+run.** Sent to the user (1540z r4); both fixes are asks, not acts. ⛔ **`vidnotes-alerts` RECOVERED — 355 s at 18:00 ICT 08-21, first slot after the 402 cleared; and
+1039z's *"still 11 s, 7 h later"* WAS A TIMEZONE SIGN ERROR: 16:00 ICT is 09:00Z, an hour BEFORE the
+~10Z clear, so the dead samples PREDATE the fix. **NEVER SUBTRACT TWO CLOCKS IN DIFFERENT ZONES.**
+1039z's survivor stands, plus the clause that makes it work: re-measure the SYMPTOM in a slot the
+repair could REACH.** (1120z.)
 ⛔ **THAT PROBE'S rc IS FABRICATED IF YOU PIPE IT — `cmd | head -3; echo $?` REPORTS `head`'s STATUS,
 SO THE PRESCRIBED `grok -p` CHECK RETURNS **0** ON A 402 AND READS HEALTHY** (0806z, demonstrated on my
 own probe this cycle, then `(exit 7) | head -1` ⇒ `$?=0`). The 402 block orders *run the binary, don't
