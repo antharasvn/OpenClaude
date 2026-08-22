@@ -5,17 +5,17 @@
     "consecutive_errors": 0
   },
   "vidnotes-alerts": {
-    "last_run": "2026-08-22T19:06:36.132252+00:00",
+    "last_run": "2026-08-22T21:06:02.039302+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-08-22T20:05:03.274518+00:00",
-    "last_status": "OK",
-    "consecutive_errors": 0
+    "last_run": "2026-08-22T22:10:00.713121+00:00",
+    "last_status": "ERROR: Script echo-backend-alerts timed out after 5 min",
+    "consecutive_errors": 1
   },
   "auto-commit": {
-    "last_run": "2026-08-22T18:21:46.944489+00:00",
+    "last_run": "2026-08-22T20:21:47.414760+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
