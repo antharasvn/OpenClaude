@@ -1,26 +1,26 @@
 {
   "cleanpro-alerts": {
-    "last_run": "2026-08-23T03:00:00.746982+00:00",
+    "last_run": "2026-08-23T05:00:22.745773+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "vidnotes-alerts": {
-    "last_run": "2026-08-22T21:06:02.039302+00:00",
+    "last_run": "2026-08-23T05:10:02.412104+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "echo-backend-alerts": {
-    "last_run": "2026-08-23T04:05:10.970294+00:00",
+    "last_run": "2026-08-23T06:05:07.343321+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "auto-commit": {
-    "last_run": "2026-08-23T02:22:11.321179+00:00",
+    "last_run": "2026-08-23T04:21:56.656715+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
   "cleanpro-exp-monitor": {
-    "last_run": "2026-08-23T02:22:10.452903+00:00",
+    "last_run": "2026-08-23T06:21:46.403196+00:00",
     "last_status": "OK",
     "consecutive_errors": 0
   },
@@ -30,9 +30,9 @@
     "consecutive_errors": 0
   },
   "vidnotes-daily": {
-    "last_run": "2026-08-22T05:03:33.147465+00:00",
-    "last_status": "OK",
-    "consecutive_errors": 0
+    "last_run": "2026-08-23T05:05:02.348092+00:00",
+    "last_status": "ERROR: Script vidnotes-daily timed out after 5 min",
+    "consecutive_errors": 1
   },
   "weekly-conjecture": {
     "last_run": "2026-08-10T12:10:00.047485+00:00",
