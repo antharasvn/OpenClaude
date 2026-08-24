@@ -1,0 +1,99 @@
+{
+  "app_id": "1561471269",
+  "as_of": "2026-08-25",
+  "window": "20260817-20260823",
+  "source": "appeeky",
+  "astro": "unavailable",
+  "countries": {
+    "gb": {
+      "discovering": true,
+      "keywords": []
+    },
+    "us": {
+      "discovering": false,
+      "keywords": [
+        {
+          "keyword": "clean pro",
+          "rank": 9,
+          "rankChange7d": null,
+          "popularity": 20,
+          "difficulty": 74,
+          "lastSeenAt": "2026-08-12",
+          "trend": null
+        }
+      ]
+    },
+    "ro": {
+      "discovering": false,
+      "keywords": [
+        {
+          "keyword": "eliberează spațiu",
+          "rank": 2,
+          "rankChange7d": 0,
+          "popularity": 10,
+          "difficulty": 20,
+          "lastSeenAt": "2026-08-24",
+          "trend": "stable"
+        },
+        {
+          "keyword": "elibereaza spatiu",
+          "rank": 2,
+          "rankChange7d": 0,
+          "popularity": 10,
+          "difficulty": 20,
+          "lastSeenAt": "2026-08-24",
+          "trend": "stable"
+        },
+        {
+          "keyword": "poze duplicate",
+          "rank": 4,
+          "rankChange7d": 3,
+          "popularity": 10,
+          "difficulty": 20,
+          "lastSeenAt": "2026-08-24",
+          "trend": "improving"
+        },
+        {
+          "keyword": "sterge poze",
+          "rank": 5,
+          "rankChange7d": 0,
+          "popularity": 10,
+          "difficulty": 20,
+          "lastSeenAt": "2026-08-24",
+          "trend": "stable"
+        },
+        {
+          "keyword": "curatare poze",
+          "rank": 8,
+          "rankChange7d": 0,
+          "popularity": 11,
+          "difficulty": 20,
+          "lastSeenAt": "2026-08-24",
+          "trend": "stable"
+        }
+      ]
+    },
+    "ph": {
+      "discovering": true,
+      "keywords": []
+    },
+    "cr": {
+      "discovering": true,
+      "keywords": []
+    },
+    "es": {
+      "discovering": false,
+      "keywords": [
+        {
+          "keyword": "liberar espacio",
+          "rank": 19,
+          "rankChange7d": -1,
+          "popularity": 12,
+          "difficulty": 50,
+          "lastSeenAt": "2026-08-24",
+          "trend": "declining"
+        }
+      ]
+    }
+  }
+}
