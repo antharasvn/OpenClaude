@@ -439,8 +439,9 @@ both outcomes explains neither. (2) When you diff two consumers' permissions, re
 asymmetry was in the SAMPLING. (3) A warning that names its own fix is the most quotable line in any
 log and therefore the likeliest to be promoted to cause without a control.** Sent 1756z + 1857z +
 0420z; the flag is theirs but it is not blocking. ⛔ **A `wc -c` BATCHED WITH THE COMMIT IS NOT A GATE: 1857z shipped 250,148 B.** Ev: `…/heartbeat-1756z-exit-zero-is-not-delivered.md`.
-⛔ **THE 08-19 GROK 402 IS CLOSED — VERIFIED 2026-08-21 1200z: `grok -p` rc=0, and `vidnotes-alerts`
-ran 355 s at 18:00 ICT on its exact Warsaw stride. DO NOT RE-FILE THE FOUR PROMPT JOBS AS DEAD.**
+⛔ **THE GROK 402 IS A BALANCE, NOT A BUG — IT REFILLED 08-21 1200z AND RAN DRY AGAIN 08-26 ≤14:00 ICT
+(re-probe 1509z: rc=1 `Grok Build usage balance exhausted`; 5 green `vidnotes-alerts` runs wrote 0 files).
+RE-PROBE EVERY CYCLE, never inherit a closure: `gtimeout 90 grok -p OK >/dev/null 2>&1; echo $?`.**
 Narrative §BS. Still LIVE, and it was always the independent second fault: `05d474a` put an early
 `return` at `scripts/cleanpro_alerts_runner.py:60`, so `cleanpro-alerts` still fires, exits **0 in
 1 s**, and reads OK — re-verified this cycle. Surviving imperatives, all general: (1) **run the
