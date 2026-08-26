@@ -1,5 +1,7 @@
 # Heartbeat Checklist
 
+⛔ **Never put `claude-telegram-bot` in a Bash line — `guard/guard.sh:27` substring-blocks it as a kill (1907z). Bot liveness = `launchctl list` (own call); stderr via `Read`, not `tail`.**
+
 ⛔ **THIS FILE GREW PAST THE `Read` TOOL'S HARD 256 KiB CAP AND BECAME UNREADABLE IN ONE CALL**
 (2026-08-15 08:5x ICT, 0152z, observed on my own second tool call — `Read HEARTBEAT.md` returned
 *"File content (256.8KB) exceeds maximum allowed size (256KB)"* and **no content at all**).
