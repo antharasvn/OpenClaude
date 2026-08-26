@@ -1,0 +1,72 @@
+{
+  "cleanpro-alerts": {
+    "last_run": "2026-08-26T15:00:05.000721+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  },
+  "vidnotes-alerts": {
+    "last_run": "2026-08-26T17:00:36.134638+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  },
+  "echo-backend-alerts": {
+    "last_run": "2026-08-26T18:05:07.052431+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  },
+  "auto-commit": {
+    "last_run": "2026-08-26T16:21:56.782662+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  },
+  "cleanpro-exp-monitor": {
+    "last_run": "2026-08-26T18:21:46.175033+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  },
+  "cleanpro-daily": {
+    "last_run": "2026-08-25T20:02:31.331486+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  },
+  "vidnotes-daily": {
+    "last_run": "2026-08-25T05:01:55.377826+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  },
+  "weekly-conjecture": {
+    "last_run": "2026-08-10T12:10:00.047485+00:00",
+    "last_status": "ERROR: Prompt job weekly-conjecture timed out after 10 min",
+    "consecutive_errors": 1
+  },
+  "cleanpro-weekly": {
+    "last_run": "2026-08-24T20:40:00.059878+00:00",
+    "last_status": "ERROR: Prompt job cleanpro-weekly timed out after 10 min",
+    "consecutive_errors": 2
+  },
+  "vidnotes-weekly": {
+    "last_run": "2026-08-25T05:40:00.147751+00:00",
+    "last_status": "ERROR: Prompt job vidnotes-weekly timed out after 10 min",
+    "consecutive_errors": 1
+  },
+  "mangii-daily": {
+    "last_run": "2026-08-26T07:04:06.354074+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  },
+  "echo-daily": {
+    "last_run": "2026-08-26T07:03:03.942550+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  },
+  "pdfai-daily": {
+    "last_run": "2026-08-26T07:00:46.552218+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  },
+  "aividly-daily": {
+    "last_run": "2026-08-26T07:00:54.020701+00:00",
+    "last_status": "OK",
+    "consecutive_errors": 0
+  }
+}
