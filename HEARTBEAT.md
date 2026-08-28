@@ -253,8 +253,9 @@ them (95.8 %) one benign family** — `httpx.ConnectError: [Errno 8] nodename no
 Telegram long-poll losing DNS on network transitions, 2026-04-12→today, **18–33/day in 2 BURSTS,
 NEVER flat** (08-21: 18 in h09, 15 in h17, 0 in the other 22 — so
 `tail` lands inside one twice a day: ~12 errors in 4 min, reads as an incident), self-recovering. Do NOT alert on it and do not re-derive it. Two dead leads pre-chased:
-`Conflict: terminated by other getUpdates` (two bot instances) is **66 events ending 08-14 22:26**,
-none since, single pid now — **NOT** `ouroboros.sh`, which was armed all week; and
+`Conflict: terminated by other getUpdates` (409, two pollers on one token) is **84 events, last
+08-28 21:49 ICT** (3 that day; ONE local `-m bot` pid each time ⇒ off-host poller or a server-held
+stale long-poll; bot recovers on the next `getUpdates 200`, so log it, don't alert) — NOT `ouroboros.sh`; and
 `vidnotes-alerts timed out after 10 min` **last fired 08-19 04:10**, i.e. the job's last real work
 before the 402, not a new fault. **RULE: an instrument read every cycle through ONE lens is
 unmeasured everywhere else, and that is worse than an unread one — an unread sink advertises its gap
