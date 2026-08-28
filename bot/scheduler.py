@@ -18,12 +18,26 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 class JobScheduler:
+    TICK_ID = "_clock-tick"
+
+    async def _tick(self):
+        """No-op; exists so APScheduler re-arms its timer every 60 s."""
+
     def __init__(self, bot=None, config_path=None):
         self.bot = bot
         self.config_path = Path(config_path or PROJECT_ROOT / "cron" / "jobs.json")
         self.state_path = PROJECT_ROOT / "cron" / "state.json"
+        # asyncio timers run on time.monotonic() == mach_absolute_time(), which
+        # does NOT advance while macOS sleeps.  APScheduler arms ONE call_later
+        # for the earliest job, so every minute the host sleeps between arming
+        # and that slot fires it that much late, and past misfire_grace_time the
+        # run is dropped.  With only daily jobs loaded the timer is armed ~11 h
+        # out (2026-08-29: 65 min of sleep => cleanpro-daily 03:00 ICT never
+        # fired; the old hourly job had been re-anchoring it by accident).
+        # Fix: a 60 s tick keeps the timer within a minute of wall-clock, and a
+        # generous grace runs a slot that fell inside a sleep at wake.
         self.scheduler = AsyncIOScheduler(
-            job_defaults={"misfire_grace_time": 300}
+            job_defaults={"misfire_grace_time": 6 * 3600, "coalesce": True}
         )
         self.jobs = []
         self.state = {}
@@ -59,8 +73,20 @@ class JobScheduler:
             )
             logger.info("Registered job: %s (%s)", job["name"], job["id"])
 
+        # Clock tick: see __init__.  Excluded from the job count below so the
+        # "started with N jobs" line keeps meaning "N configured jobs".
+        self.scheduler.add_job(
+            self._tick,
+            IntervalTrigger(seconds=60),
+            id=self.TICK_ID,
+            name="clock tick",
+            misfire_grace_time=None,
+            replace_existing=True,
+        )
+
         self.scheduler.start()
-        logger.info("Cron scheduler started with %d jobs", len(self.scheduler.get_jobs()))
+        n_jobs = len([j for j in self.scheduler.get_jobs() if j.id != self.TICK_ID])
+        logger.info("Cron scheduler started with %d jobs", n_jobs)
 
     async def shutdown(self):
         self.scheduler.shutdown(wait=False)
