@@ -205,7 +205,7 @@ timer BY ACCIDENT (0923z's `:21:46` phase witness, archived §BW — DEAD since 
 6 h grace, INERT until the bot is relaunched (user's call). **RULES: (1) a fleet with no sub-hourly
 job has no clock — measure `wall − monotonic` before blaming a job for a missed slot. (2) Removing a
 "useless" job can remove a load-bearing side effect: price a deschedule's GAIN SET as strictly as a
-restart's.** Verify: `missed by 1:05` in `.err` at ~04:05 ICT 08-29 confirms. Ev: `…/2026-08-29/heartbeat-2019z-…md`.
+restart's.** ✅ Witnessed 04:05:49 ICT 08-29: `.err` `missed by 1:05:49`, next 08-30 03:00. Ev: `…/2026-08-29/heartbeat-2019z-…md`.
 
 ⛔ **A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE** — the fleet lost 18:00–18:05 ICT across three
 timezones with the host awake (1500z; §AL). Its `pmset` density argument is dead and NO LONGER
