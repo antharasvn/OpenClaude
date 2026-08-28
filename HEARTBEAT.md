@@ -445,7 +445,7 @@ log and therefore the likeliest to be promoted to cause without a control.** Sen
 0420z; the flag is theirs but it is not blocking. ⛔ **A `wc -c` BATCHED WITH THE COMMIT IS NOT A GATE: 1857z shipped 250,148 B.** Ev: `…/heartbeat-1756z-exit-zero-is-not-delivered.md`.
 ⛔ **THE GROK 402 IS A BALANCE, NOT A BUG — IT REFILLED 08-21 1200z AND RAN DRY AGAIN 08-26 ≤14:00 ICT
 (re-probe 1509z: rc=1 `Grok Build usage balance exhausted`; 5 green `vidnotes-alerts` runs wrote 0 files).
-RE-PROBE EVERY CYCLE, never inherit a closure: `gtimeout 90 grok -p OK >/dev/null 2>&1; echo $?`.**
+RE-PROBE EVERY CYCLE, never inherit a closure: `gtimeout 90 grok -p "Reply with the single word OK and take no other action" >/tmp/g.txt 2>&1; echo $?` — rc=0 + `OK` = funded. ⛔ A bare `grok -p OK` goes AGENTIC and returns **124 when funded** (n=2: 2337z, 1708z) — never use it.**
 Narrative §BS. Still LIVE, and it was always the independent second fault: `05d474a` put an early
 `return` at `scripts/cleanpro_alerts_runner.py:60`, so `cleanpro-alerts` still fires, exits **0 in
 1 s**, and reads OK — re-verified this cycle. Surviving imperatives, all general: (1) **run the
