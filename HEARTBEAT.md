@@ -142,11 +142,12 @@ mean IS the 14.3 s do-nothing floor — 1039z's symptom QUANTIFIED. **Give a con
 RE-DERIVE THIS; RE-RUN THE GATE.** It is two commands: `grep "Cron scheduler started with"
 logs/infra.log | tail -1` against `stat -f %Sm cron/jobs.json`. **A config NEWER than the last
 scheduler start has never been loaded — it is a WISH, not a regime**, because `bot/scheduler.py:36`
-reads `enabled` only inside `start()`. Executed 2026-08-20 1823z, the first cycle to actually run it
-after ten passes cited it: start **08-15 15:21:46, 14 jobs**; config mtime **08-19 11:09:38** ⇒
-unloaded by 3 d 20 h ⇒ **archive stays vetoed.** Live set is the 14-job one; today's file is
-11 jobs / 3 enabled with the 3 alert jobs DELETED, so a restart's delta is 14→3 and it would remove
-the monitoring, not merely disable it. Two survivors: **never inherit an archive target from a cycle
+reads `enabled` only inside `start()`. Executed 2026-08-20 1823z: start 08-15 15:21:46, 14 jobs vs config mtime 08-19 11:09:38 ⇒ unloaded.
+⛔ **RE-RUN 08-28 1435z: THE HOST CAME BACK ON macOS 26.5.2 AND THE START `08-28 15:59:02` LOADED THAT
+CONFIG — 3 JOBS LIVE (echo/vidnotes/cleanpro dailies). The 14→3 delta HAPPENED: every alert job,
+`auto-commit`, `cleanpro-exp-monitor` are gone, and with no interval job loaded the `:21:46` phase
+witness below is DEAD — detect restarts by start-count/bot pid/`uptime`. Restore = `git show
+7e774dd:cron/jobs.json` + a bot re-read; ask, never run `bin/safe-restart.sh`. User asked 1435z.** Two survivors: **never inherit an archive target from a cycle
 that has not READ the block** (ten passes moved §1, none moved its bounds), and, transferable,
 **a setting takes effect at a RE-READ — every "X is off" claim needs the timestamp of the last load
 beside it or it is unfalsifiable.** ✅ Free n+1 for the cite-by-phrase rule: this block's own
