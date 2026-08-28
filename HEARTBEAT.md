@@ -146,7 +146,7 @@ reads `enabled` only inside `start()`. Executed 2026-08-20 1823z: start 08-15 15
 ⛔ **RE-RUN 08-28 1435z: THE HOST CAME BACK ON macOS 26.5.2 AND THE START `08-28 15:59:02` LOADED THAT
 CONFIG — 3 JOBS LIVE (echo/vidnotes/cleanpro dailies). The 14→3 delta HAPPENED: every alert job,
 `auto-commit`, `cleanpro-exp-monitor` are gone, and with no interval job loaded the `:21:46` phase
-witness below is DEAD — detect restarts by start-count/bot pid/`uptime`. Restore = `git show
+witness (archived §BW) is DEAD — detect restarts by start-count/bot pid/`uptime`. Restore = `git show
 7e774dd:cron/jobs.json` + a bot re-read; ask, never run `bin/safe-restart.sh`. User asked 1435z.** Two survivors: **never inherit an archive target from a cycle
 that has not READ the block** (ten passes moved §1, none moved its bounds), and, transferable,
 **a setting takes effect at a RE-READ — every "X is off" claim needs the timestamp of the last load
@@ -195,21 +195,17 @@ channel of `infra.log` is DISCHARGED, do not re-census it: 85 `[WARNING]`, all o
 `[FILE] finalize: resp=N live=0` family, 05-09→08-19; zero `CRITICAL`, zero `DEBUG`. 0340z's
 *read every channel within the sink* is now paid on both remaining levels.**
 Ev: `…/2026-08-21/heartbeat-0614z-the-scheduler-is-its-own-config-witness.md`.
-⛔ **AND THE THIRD WITNESS IS IN THE TAIL EVERY CYCLE ALREADY READS — AN INTERVAL JOB'S FIRE PHASE IS
-THE SCHEDULER START, RESTATED TO THE SECOND, FOREVER** (0923z). The loaded blob has exactly two
-`interval_seconds: 7200` jobs (`auto-commit`, `cleanpro-exp-monitor`); APScheduler anchors
-`IntervalTrigger` at scheduler start, so both fire at **`HH:21:46`, HH ≡ 15 mod 2** — i.e. the
-`08-15 15:21:46` start §1's gate greps for, republished 24×/day at the BOTTOM of `infra.log`.
-**RULES: (1) `tail logs/infra.log` answers §1's gate; the head-grep is optional. (2) THE PHASE IS THE
-RESTART DETECTOR THIS FLEET LACKS — §1 says a restart drops 11 live jobs, and nothing here would
-notice one had happened. A shift off `:21:46` IS that alarm, free, and it is the only instrument that
-survives the restart it reports. (3) General: an INTERVAL trigger's phase records process start
-permanently, a CRON trigger's does not — so in a mixed fleet the interval jobs are the clock witnesses
-and the cron jobs are silent about it.** ⚠️ Paid for itself immediately: `auto_commit.py` was filed
-here as a **10 min** job (2105z, corrected below). It is **2 h — 12× over**, and 2105z was RANKING
-unbounded-`run()` hazard by cadence, so the one number it ranked on was the one nobody measured.
-**A cadence quoted in prose beside a `file:line` inherits that citation's credibility and none of its
-verification.** Ev: `…/2026-08-21/heartbeat-0923z-an-interval-jobs-phase-is-the-restart-detector.md`.
+⛔ **THE SCHEDULER HAS NO CLOCK OF ITS OWN — APScheduler ARMS ONE asyncio `call_later` FOR THE
+EARLIEST JOB, AND asyncio TIME IS `mach_absolute_time`, WHICH STOPS WHILE macOS SLEEPS** (2019z).
+With only dailies loaded the timer sat ~11 h out; 65.7 min of sleep (wall-since-boot −
+`time.monotonic()`) pushed cleanpro-daily 03:00 ICT 08-29 past the 300 s grace and it was DROPPED —
+no `Running job`, no error, `state.json` stale. The 14-job roster's hourly/2 h jobs re-anchored the
+timer BY ACCIDENT (0923z's `:21:46` phase witness, archived §BW — DEAD since the 3-job start
+15:59:02; detect restarts by start-count/bot pid/`uptime`). Patched `7c0abf0`: 60 s `_clock-tick` +
+6 h grace, INERT until the bot is relaunched (user's call). **RULES: (1) a fleet with no sub-hourly
+job has no clock — measure `wall − monotonic` before blaming a job for a missed slot. (2) Removing a
+"useless" job can remove a load-bearing side effect: price a deschedule's GAIN SET as strictly as a
+restart's.** Verify: `missed by 1:05` in `.err` at ~04:05 ICT 08-29 confirms. Ev: `…/2026-08-29/heartbeat-2019z-…md`.
 
 ⛔ **A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE** — the fleet lost 18:00–18:05 ICT across three
 timezones with the host awake (1500z; §AL). Its `pmset` density argument is dead and NO LONGER

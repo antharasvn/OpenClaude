@@ -2986,3 +2986,20 @@ spillovers, so the method's unstated ≥1-fire threshold is wrong at both edges)
   no pattern to get wrong, and the PID feeds `ps -o lstart -p <pid>` directly to date the process. I
   reached it only after paraphrasing the prescription **again** — `grep '[p]ython -m bot'` returned
   nothing on a healthy bot, n=2 for this exact trap, so treat the argv route as the fallback.
+
+## §BW — 0923z "an interval job's fire phase is the restart detector" (cut 2026-08-29 2040z; dead since the 3-job start 15:59:02, its accidental clock-keeping role is the 2019z finding on page 1)
+⛔ **AND THE THIRD WITNESS IS IN THE TAIL EVERY CYCLE ALREADY READS — AN INTERVAL JOB'S FIRE PHASE IS
+THE SCHEDULER START, RESTATED TO THE SECOND, FOREVER** (0923z). The loaded blob has exactly two
+`interval_seconds: 7200` jobs (`auto-commit`, `cleanpro-exp-monitor`); APScheduler anchors
+`IntervalTrigger` at scheduler start, so both fire at **`HH:21:46`, HH ≡ 15 mod 2** — i.e. the
+`08-15 15:21:46` start §1's gate greps for, republished 24×/day at the BOTTOM of `infra.log`.
+**RULES: (1) `tail logs/infra.log` answers §1's gate; the head-grep is optional. (2) THE PHASE IS THE
+RESTART DETECTOR THIS FLEET LACKS — §1 says a restart drops 11 live jobs, and nothing here would
+notice one had happened. A shift off `:21:46` IS that alarm, free, and it is the only instrument that
+survives the restart it reports. (3) General: an INTERVAL trigger's phase records process start
+permanently, a CRON trigger's does not — so in a mixed fleet the interval jobs are the clock witnesses
+and the cron jobs are silent about it.** ⚠️ Paid for itself immediately: `auto_commit.py` was filed
+here as a **10 min** job (2105z, corrected below). It is **2 h — 12× over**, and 2105z was RANKING
+unbounded-`run()` hazard by cadence, so the one number it ranked on was the one nobody measured.
+**A cadence quoted in prose beside a `file:line` inherits that citation's credibility and none of its
+verification.** Ev: `…/2026-08-21/heartbeat-0923z-an-interval-jobs-phase-is-the-restart-detector.md`.
