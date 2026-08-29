@@ -142,7 +142,7 @@ mean IS the 14.3 s do-nothing floor — 1039z's symptom QUANTIFIED. **Give a con
 RE-DERIVE THIS; RE-RUN THE GATE.** It is two commands: `grep "Cron scheduler started with"
 logs/infra.log | tail -1` against `stat -f %Sm cron/jobs.json`. **A config NEWER than the last
 scheduler start has never been loaded — it is a WISH, not a regime**, because `bot/scheduler.py:36`
-reads `enabled` only inside `start()`. Executed 2026-08-20 1823z: start 08-15 15:21:46, 14 jobs vs config mtime 08-19 11:09:38 ⇒ unloaded.
+reads `enabled` only inside `start()`.
 ⛔ **RE-RUN 08-28 1435z: THE HOST CAME BACK ON macOS 26.5.2 AND THE START `08-28 15:59:02` LOADED THAT
 CONFIG — 3 JOBS LIVE (echo/vidnotes/cleanpro dailies). The 14→3 delta HAPPENED: every alert job,
 `auto-commit`, `cleanpro-exp-monitor` are gone, and with no interval job loaded the `:21:46` phase
@@ -150,9 +150,7 @@ witness (archived §BW) is DEAD — detect restarts by start-count/bot pid/`upti
 7e774dd:cron/jobs.json` + a bot re-read; ask, never run `bin/safe-restart.sh`. User asked 1435z.** Two survivors: **never inherit an archive target from a cycle
 that has not READ the block** (ten passes moved §1, none moved its bounds), and, transferable,
 **a setting takes effect at a RE-READ — every "X is off" claim needs the timestamp of the last load
-beside it or it is unfalsifiable.** ✅ Free n+1 for the cite-by-phrase rule: this block's own
-correction *"§1 is 898–2109 = 1,212 of 2,669"* was filed to repair a rotted citation and had itself
-rotted to **874–2086 = 1,213 of 2,645** within four days. A bounds fix is not durable; the gate is.
+beside it or it is unfalsifiable.** (This block's own line-number bounds rotted twice in four days — the gate is the durable form, never a bounds fix.)
 ⛔ **THE RESTART CHAIN'S NARRATIVE IS IN §AE AND §AG; ITS FIVE RULES ARE ALL STILL LIVE.**
 (5) **Compute an action's GAIN SET before handing its cost forward — a cost with no benefit beside it
 means either the action is pointless or the cost you named is the point** (1814z, §AG): four cycles
@@ -206,7 +204,7 @@ timer BY ACCIDENT (0923z's `:21:46` phase witness, archived §BW — DEAD since 
 job has no clock — measure `wall − monotonic` before blaming a job for a missed slot. (2) Removing a
 "useless" job can remove a load-bearing side effect: price a deschedule's GAIN SET as strictly as a
 restart's.** ✅ Witnessed 04:05:49 ICT 08-29: `.err` `missed by 1:05:49`, next 08-30 03:00. Ev: `…/2026-08-29/heartbeat-2019z-…md`.
-⛔ **DISK/SWAP: swapfiles are `/System/Volumes/VM/swapfile*` (1 GiB each) — `/private/var/vm` shows only `sleepimage` and reads as no swap; `sysctl` is `/usr/sbin/sysctl` here. Size holders with `top -l 1 -o mem`, never `ps rss` (paged-out JVMs read 20–80 M). Idle Gradle/Kotlin daemons pin swap ⇒ disk; the fix is `gradlew --stop`. Re-alert only at <1 G, or if disk fails to recover within 2 cycles of a build ending (0009z). Load spikes: `top -l 2 -s 2 -o cpu`, read sample 2 — sample 1 always prints 0 % (0046z: load 25 = one `ffmpeg` at 508 %, user encode, not a fault).**
+⛔ **DISK/SWAP: swapfiles are `/System/Volumes/VM/swapfile*` (1 GiB each) — `/private/var/vm` shows only `sleepimage` and reads as no swap; `sysctl` is `/usr/sbin/sysctl` here. Size holders with `top -l 1 -o mem`, never `ps rss` (paged-out JVMs read 20–80 M). Idle Gradle/Kotlin daemons pin swap ⇒ disk; the fix is `gradlew --stop`. Re-alert only at <1 G, or if disk fails to recover within 2 cycles of a build ending (0009z). Load spikes: `top -l 2 -s 2 -o cpu`, read sample 2 — sample 1 always prints 0 %. ⛔ **A USER-LAUNCHED HOG IS NOT THEREBY "NOT A FAULT" — CHECK ITS TERMINATION CONDITION AND ITS PARENT**: 0046z's `ffmpeg` "brand render" was `-loop 1` on a PNG with no `-t`/`-shortest`/`-frames:v` into `ssim` (framesync `eof_action=repeat`) ⇒ never ends; a 1 s compare burned 35 CPU-h over 3.5 h, `zsh -c` parent reparented to launchd, four cycles waved it through (0407z, sent).**
 
 ⛔ **A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE** — the fleet lost 18:00–18:05 ICT across three
 timezones with the host awake (1500z; §AL). Its `pmset` density argument is dead and NO LONGER
