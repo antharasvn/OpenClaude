@@ -1071,7 +1071,7 @@ has been told is nominally off. **A staleness bug that runs in both directions c
 about by assuming which copy is more permissive.**
 
 
-## 16. `_on_error` alerts only at `consecutive >= 3` — a once-a-day job must fail THREE DAYS before you hear
+## 18. `_on_error` alerts only at `consecutive >= 3` — a once-a-day job must fail THREE DAYS before you hear
 
 Filed 2026-08-29 12:3x ICT (0526z). **Decision needed: lower the threshold to 1 for `cron` jobs that
 fire ≤ 1×/day (all five dailies, all three weeklies), or accept that a single missed daily/weekly report
