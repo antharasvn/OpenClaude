@@ -1090,6 +1090,11 @@ into `ssim` with no `-shortest`, 47 CPU-h by 12:29, load 30). `cron/state.json` 
 `consecutive_errors: 1`, and the bot sent nothing. The user learned of the missing VidNotes report from
 heartbeat 0506z, ~6 min after the failure — had the heartbeat been in one of its refusal outages
 (08-28 had a 14-hour one), the miss would have been invisible until 08-31 at the earliest.
+**Second instance, same day (0717z):** `echo-daily` 14:00:00 → `timed out after 5 min` at 14:05:00,
+same ffmpeg (6h44m, 65.6 CPU-h, load 36). Two independent dailies now sit at `consecutive_errors: 1`
+each; the bot sent nothing for either. Note the threshold counts per JOB, so N distinct jobs each
+failing once under one shared cause never sum to an alert — a fleet-wide cause is exactly the case the
+per-job counter is blind to.
 
 **Why 3 is the wrong number for this population.** The threshold was sized for the 2-hourly alert jobs
 (`vidnotes-alerts`, `cleanpro-alerts`, hourly `echo-backend-alerts`), where 3 consecutive failures is
