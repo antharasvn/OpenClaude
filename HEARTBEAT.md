@@ -206,6 +206,7 @@ timer BY ACCIDENT (0923z's `:21:46` phase witness, archived §BW — DEAD since 
 job has no clock — measure `wall − monotonic` before blaming a job for a missed slot. (2) Removing a
 "useless" job can remove a load-bearing side effect: price a deschedule's GAIN SET as strictly as a
 restart's.** ✅ Witnessed 04:05:49 ICT 08-29: `.err` `missed by 1:05:49`, next 08-30 03:00. Ev: `…/2026-08-29/heartbeat-2019z-…md`.
+⛔ **DISK/SWAP: swapfiles are `/System/Volumes/VM/swapfile*` (1 GiB each) — `/private/var/vm` shows only `sleepimage` and reads as no swap; `sysctl` is `/usr/sbin/sysctl` here. Size holders with `top -l 1 -o mem`, never `ps rss` (paged-out JVMs read 20–80 M). Idle Gradle/Kotlin daemons pin swap ⇒ disk; the fix is `gradlew --stop`. Re-alert only at <1 G, or if disk fails to recover within 2 cycles of a build ending (0009z).**
 
 ⛔ **A CRON HOLE IS NOT AUTOMATICALLY A SLEEP HOLE** — the fleet lost 18:00–18:05 ICT across three
 timezones with the host awake (1500z; §AL). Its `pmset` density argument is dead and NO LONGER
@@ -441,7 +442,7 @@ log and therefore the likeliest to be promoted to cause without a control.** Sen
 0420z; the flag is theirs but it is not blocking. ⛔ **A `wc -c` BATCHED WITH THE COMMIT IS NOT A GATE: 1857z shipped 250,148 B.** Ev: `…/heartbeat-1756z-exit-zero-is-not-delivered.md`.
 ⛔ **THE GROK 402 IS A BALANCE, NOT A BUG — IT REFILLED 08-21 1200z AND RAN DRY AGAIN 08-26 ≤14:00 ICT
 (re-probe 1509z: rc=1 `Grok Build usage balance exhausted`; 5 green `vidnotes-alerts` runs wrote 0 files).
-RE-PROBE EVERY CYCLE, never inherit a closure: `gtimeout 90 grok -p "Reply with the single word OK and take no other action" >/tmp/g.txt 2>&1; echo $?` — rc=0 + `OK` = funded. ⛔ A bare `grok -p OK` goes AGENTIC and returns **124 when funded** (n=2: 2337z, 1708z) — never use it. rc=124 + EMPTY output on THIS recipe = swap-starved host, not a 402: retry at 120 s (n=1, 2348z).**
+RE-PROBE EVERY CYCLE, never inherit a closure: `gtimeout 120 grok -p "Reply with the single word OK and take no other action" >/tmp/g.txt 2>&1; echo $?` — rc=0 + `OK` = funded. rc=124 = bare/agentic prompt (n=2) or swap-starved host (n=1, empty output) — never a 402.**
 Narrative §BS. Still LIVE, and it was always the independent second fault: `05d474a` put an early
 `return` at `scripts/cleanpro_alerts_runner.py:60`, so `cleanpro-alerts` still fires, exits **0 in
 1 s**, and reads OK — re-verified this cycle. Surviving imperatives, all general: (1) **run the
