@@ -1069,3 +1069,44 @@ disabled, scheduler is running it anyway.** So the drift is bidirectional, and t
 worse than filed — a restart would silently *stop* a job that is currently working and that nobody
 has been told is nominally off. **A staleness bug that runs in both directions cannot be reasoned
 about by assuming which copy is more permissive.**
+
+
+## 16. `_on_error` alerts only at `consecutive >= 3` — a once-a-day job must fail THREE DAYS before you hear
+
+Filed 2026-08-29 12:3x ICT (0526z). **Decision needed: lower the threshold to 1 for `cron` jobs that
+fire ≤ 1×/day (all five dailies, all three weeklies), or accept that a single missed daily/weekly report
+is silent by design and the heartbeat is its only alerting path.**
+
+**Mechanism (read from source, not inferred).** `bot/scheduler.py:227-249` `_on_error` increments
+`consecutive_errors`, stamps `cron/state.json`, logs `Job %s failed (%dx)`, and **only when
+`consecutive >= 3 and self.bot`** sends to `delivery.on_error`. Every job in `cron/jobs.json` (11/11)
+routes `on_error` to `352342178`, so the chat is wired — the threshold is the sole gate. There is no
+retry path for script jobs; a failed daily is simply gone until the next day's fire.
+
+**Instance.** 2026-08-29 12:00:00 ICT `vidnotes-daily` fired on time and was cap-killed at 12:05:00
+(`Script vidnotes-daily timed out after 5 min`; normal runtime 1m55s–3m11s over 08-24/25/27/28; 3rd
+timeout ever). Probable cause: CPU starvation from a runaway user `ffmpeg` (pid 44607, `-loop 1` PNG
+into `ssim` with no `-shortest`, 47 CPU-h by 12:29, load 30). `cron/state.json` reads
+`consecutive_errors: 1`, and the bot sent nothing. The user learned of the missing VidNotes report from
+heartbeat 0506z, ~6 min after the failure — had the heartbeat been in one of its refusal outages
+(08-28 had a 14-hour one), the miss would have been invisible until 08-31 at the earliest.
+
+**Why 3 is the wrong number for this population.** The threshold was sized for the 2-hourly alert jobs
+(`vidnotes-alerts`, `cleanpro-alerts`, hourly `echo-backend-alerts`), where 3 consecutive failures is
+~6 h and a single transient is noise worth suppressing. For a daily, 3 consecutive is 3 days; for a
+weekly, 3 weeks. Same shape as `HEARTBEAT.md` §0's *a cap is not a workload*: one constant is policing
+two populations whose failure cadence differs 24–168×.
+
+**Options.**
+1. **Threshold by cadence** — in `_on_error`, `threshold = 1 if job fires ≤ 1×/day else 3`. Cheapest
+   honest fix; derive from the `schedule.cron` hour field (a single hour ⇒ daily-or-slower). ~5 lines.
+2. **Per-job `delivery.on_error_after`** in `cron/jobs.json`, default 3, set 1 on the eight
+   daily/weekly rows. Explicit, but adds config the drift note in #15 says is already a wish, not state.
+3. **Leave it; rely on heartbeat** — then the 0506z rule (*a daily failure is heartbeat's to report*)
+   should be inlined into `HEARTBEAT.md` §1 so it survives, and the heartbeat's own outages become the
+   dailies' blind spot.
+
+Recommendation: **1.** Takes effect only after a bot restart (`./bin/restart.sh`), which is already
+owed for the 7c0abf0 clock patch — batch them.
+Evidence: `memory/t0/2026-08-29/heartbeat-0506z-…md`, `…/heartbeat-0526z-…md`; `logs/infra.log`
+12:00:00 / 12:05:00 lines.
