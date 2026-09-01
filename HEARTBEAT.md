@@ -200,7 +200,7 @@ With only dailies loaded the timer sat ~11 h out; 65.7 min of sleep (wall-since-
 no `Running job`, no error, `state.json` stale. The 14-job roster's hourly/2 h jobs re-anchored the
 timer BY ACCIDENT (0923z's `:21:46` phase witness, archived §BW — DEAD since the 3-job start
 15:59:02; detect restarts by start-count/bot pid/`uptime`). Patched `7c0abf0`: 60 s `_clock-tick` +
-6 h grace — LIVE since the 09-01 07:44 relaunch (tick logged every minute in the bot `.err`). **RULES: (1) a fleet with no sub-hourly
+6 h grace — LIVE since the 09-01 07:44 relaunch (ticks every minute in `.err`). **RULES: (1) a fleet with no sub-hourly
 job has no clock — measure `wall − monotonic` before blaming a job for a missed slot. (2) Removing a
 "useless" job can remove a load-bearing side effect: price a deschedule's GAIN SET as strictly as a
 restart's.** ✅ Witnessed 04:05:49 ICT 08-29: `.err` `missed by 1:05:49`, next 08-30 03:00. Ev: `…/2026-08-29/heartbeat-2019z-…md`.
