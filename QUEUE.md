@@ -1095,6 +1095,12 @@ same ffmpeg (6h44m, 65.6 CPU-h, load 36). Two independent dailies now sit at `co
 each; the bot sent nothing for either. Note the threshold counts per JOB, so N distinct jobs each
 failing once under one shared cause never sum to an alert — a fleet-wide cause is exactly the case the
 per-job counter is blind to.
+**The refusal-outage hypothetical HAPPENED (09-02 0110 ICT, 1810z cycle):** the heartbeat was refused
+for ~17.5 h on 09-01 — every cycle 00:58Z→17:55Z (47 of them) died in seconds on the Fable 5
+usage-limit message (`/tmp/claude-heartbeat.log`), so the sole alerting path for a single missed daily
+was down for a full waking day. No daily failed in the window (host restart 07:43 ICT ended ffmpeg
+44607; all 3 dailies completed 09-01), so nothing was lost — but the coincidence is luck, not design,
+and it is the second multi-hour refusal outage in 5 days (08-28: 14 h).
 
 **Why 3 is the wrong number for this population.** The threshold was sized for the 2-hourly alert jobs
 (`vidnotes-alerts`, `cleanpro-alerts`, hourly `echo-backend-alerts`), where 3 consecutive failures is
